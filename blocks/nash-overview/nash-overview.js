@@ -1,47 +1,77 @@
 /**
  * loads and decorates the nash-overview block
- * No authored content needed — fetches /reports/query.json (falls back to mock data).
+ * Fetches /qualifications/query.json for live data; falls back to mock data in dev.
+ * Document metadata fields used: title, description (domain), status, score, cms, user, lastModified
  * @param {Element} block The block element
  */
 
 const MOCK_REPORTS = [
   {
-    id: 1, company: 'Fluidra', domain: 'fluidra.com', status: 'generating', pct: 74, steps: 17, total: 23, task: 'Product Assessment & Success Story', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null,
+    id: 1, company: 'Fluidra', domain: 'fluidra.com', status: 'generating', pct: 74, steps: 17, total: 23, task: 'Product Assessment & Success Story', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null, path: null,
   },
   {
-    id: 2, company: 'Fnbo', domain: 'fnbo.com', status: 'generating', pct: 34, steps: 8, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null,
+    id: 2, company: 'Fnbo', domain: 'fnbo.com', status: 'generating', pct: 34, steps: 8, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null, path: null,
   },
   {
-    id: 3, company: 'Focus GTS', domain: 'focusgts.com', status: 'generating', pct: 21, steps: 5, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null,
+    id: 3, company: 'Focus GTS', domain: 'focusgts.com', status: 'generating', pct: 21, steps: 5, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null, path: null,
   },
   {
-    id: 4, company: 'Fanatics', domain: 'fanatics.com', status: 'generating', pct: 95, steps: 22, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null,
+    id: 4, company: 'Fanatics', domain: 'fanatics.com', status: 'generating', pct: 95, steps: 22, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null, path: null,
   },
   {
-    id: 5, company: 'Ford', domain: 'ford.com', status: 'generating', pct: 4, steps: 1, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null,
+    id: 5, company: 'Ford', domain: 'ford.com', status: 'generating', pct: 4, steps: 1, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null, path: null,
   },
   {
-    id: 6, company: 'Fiserv', domain: 'fiserv.com', status: 'generating', pct: 58, steps: 13, total: 23, task: 'Core Analysis', user: 'josec@adobe.com', cms: 'Unknown', time: '2m ago', score: null,
+    id: 6, company: 'Fiserv', domain: 'fiserv.com', status: 'generating', pct: 58, steps: 13, total: 23, task: 'Core Analysis', user: 'josec@adobe.com', cms: 'Unknown', time: '2m ago', score: null, path: null,
   },
   {
-    id: 7, company: 'Forescout', domain: 'forescout.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '18m ago', score: 78,
+    id: 7, company: 'Forescout', domain: 'forescout.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '18m ago', score: 78, path: null,
   },
   {
-    id: 8, company: 'Firstrand Group', domain: 'firstrand.co.za', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '32m ago', score: 62,
+    id: 8, company: 'Firstrand Group', domain: 'firstrand.co.za', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '32m ago', score: 62, path: null,
   },
   {
-    id: 9, company: 'Fortive Corp', domain: 'fortive.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '1h ago', score: 85,
+    id: 9, company: 'Fortive Corp', domain: 'fortive.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '1h ago', score: 85, path: null,
   },
   {
-    id: 10, company: 'Frontier Airlines', domain: 'flyfrontier.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Sitecore', time: '2h ago', score: 71,
+    id: 10, company: 'Frontier Airlines', domain: 'flyfrontier.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Sitecore', time: '2h ago', score: 71, path: null,
   },
   {
-    id: 11, company: 'FNZ Group', domain: 'fnz.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '3h ago', score: 44,
+    id: 11, company: 'FNZ Group', domain: 'fnz.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '3h ago', score: 44, path: null,
   },
   {
-    id: 12, company: 'Ferretti Group', domain: 'ferrettigroup.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '5h ago', score: 91,
+    id: 12, company: 'Ferretti Group', domain: 'ferrettigroup.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '5h ago', score: 91, path: null,
   },
 ];
+
+function relativeTime(ts) {
+  if (!ts) return '';
+  const diff = Math.floor((Date.now() - ts * 1000) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function mapQueryRow(row, idx) {
+  const score = parseInt(row.score, 10) || null;
+  const status = row.status === 'generating' ? 'generating' : 'done';
+  return {
+    id: idx,
+    company: row.title || 'Unknown',
+    domain: row.description || '',
+    status,
+    pct: status === 'done' ? 100 : (parseInt(row.progress, 10) || 0),
+    steps: parseInt(row.steps, 10) || 0,
+    total: parseInt(row.totalsteps, 10) || 23,
+    task: row.task || 'Processing',
+    user: row.user || '',
+    cms: row.cms || 'Unknown',
+    time: relativeTime(row.lastmodified || row.lastModified),
+    score: status === 'done' ? score : null,
+    path: row.path || null,
+  };
+}
 
 function scoreColor(s) {
   if (s >= 70) return 'var(--green, #0d7a45)';
@@ -132,7 +162,11 @@ function buildCard(r) {
 
   card.addEventListener('click', (e) => {
     if (e.target.closest('.nash-overview-menu-btn')) return;
-    document.dispatchEvent(new CustomEvent('nash:open-detail', { detail: { report: r }, bubbles: true }));
+    if (r.path) {
+      window.location.href = r.path;
+    } else {
+      document.dispatchEvent(new CustomEvent('nash:open-detail', { detail: { report: r }, bubbles: true }));
+    }
   });
 
   return card;
@@ -148,10 +182,10 @@ function renderCards(block, reports) {
 export default async function decorate(block) {
   let reports = MOCK_REPORTS;
   try {
-    const resp = await fetch('/reports/query.json');
+    const resp = await fetch('/qualifications/query.json');
     if (resp.ok) {
       const json = await resp.json();
-      if (json.data?.length) reports = json.data;
+      if (json.data?.length) reports = json.data.map(mapQueryRow);
     }
   } catch {
     // use mock

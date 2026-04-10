@@ -22,7 +22,7 @@ export default async function decorate(block) {
   let total = 12;
   let generating = 4;
   try {
-    const resp = await fetch('/reports/query.json');
+    const resp = await fetch('/qualifications/query.json');
     if (resp.ok) {
       const json = await resp.json();
       const rows2 = json.data || [];
