@@ -4,9 +4,13 @@ const NAV = [
   {
     label: 'Main',
     items: [
-      { view: 'overview', text: 'Overview', badge: 'count', icon: 'grid' },
+      {
+        view: 'overview', text: 'Overview', badge: 'count', icon: 'grid',
+      },
       { view: 'new-insight', text: 'New Insight', icon: 'plus' },
-      { view: 'campaigns', text: 'Campaigns', badge: '3', icon: 'activity' },
+      {
+        view: 'campaigns', text: 'Campaigns', badge: '3', icon: 'activity',
+      },
     ],
   },
   {

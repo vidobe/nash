@@ -1,0 +1,446 @@
+/* nash-overview block */
+
+.nash-overview {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ── Notification banner ─────────────────────────────── */
+
+.nash-overview .nash-overview-notif {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 32px 0;
+  padding: 11px 16px;
+  background: var(--blue-lt, #eff6ff);
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--blue, #1d4ed8);
+}
+
+.nash-overview .nash-overview-notif-close {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  color: var(--blue, #1d4ed8);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Toolbar ─────────────────────────────────────────── */
+
+.nash-overview .nash-overview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: var(--white, #fff);
+  border-bottom: 1px solid var(--border, #e5e6ea);
+  flex-shrink: 0;
+}
+
+.nash-overview .nash-overview-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+}
+
+.nash-overview .nash-overview-search-wrap svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  stroke: var(--ink-40, #9a9da6);
+  pointer-events: none;
+}
+
+.nash-overview .nash-overview-search {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  background: var(--surface, #f8f8fa);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  color: var(--ink, #111318);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nash-overview .nash-overview-search:focus {
+  border-color: var(--ink-40, #9a9da6);
+  background: var(--white, #fff);
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 4%);
+}
+
+.nash-overview .nash-overview-search::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-filter {
+  padding: 7px 28px 7px 11px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239a9da6' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+.nash-overview .nash-overview-toolbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nash-overview .nash-overview-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-overview .nash-overview-view-toggle {
+  display: flex;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.nash-overview .nash-overview-vt-btn {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-vt-btn.active {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+/* ── Cards area ──────────────────────────────────────── */
+
+.nash-overview .nash-overview-area {
+  padding: 20px 32px 32px;
+  flex: 1;
+}
+
+.nash-overview .nash-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.nash-overview .nash-overview-grid[data-layout="list"] {
+  grid-template-columns: 1fr;
+}
+
+/* ── Card ────────────────────────────────────────────── */
+
+.nash-overview .nash-overview-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.nash-overview .nash-overview-card:hover {
+  border-color: #d0d1d6;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  transform: translateY(-1px);
+}
+
+.nash-overview .nash-overview-card.generating {
+  border-color: #fde0de;
+}
+
+.nash-overview .nash-overview-card.generating::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--red, #eb1000) 0%, #ff6b6b 50%, var(--red, #eb1000) 100%);
+  background-size: 200% 100%;
+  animation: nash-shimmer 1.5s linear infinite;
+}
+
+@keyframes nash-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.nash-overview .nash-overview-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nash-overview .nash-overview-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nash-overview .nash-overview-favicon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface, #f8f8fa);
+  border: 1px solid var(--border, #e5e6ea);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-70, #4a4d55);
+  flex-shrink: 0;
+}
+
+.nash-overview .nash-overview-company {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.01em;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-domain {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--ink-40, #9a9da6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.nash-overview .nash-overview-time {
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+/* ── Badges ──────────────────────────────────────────── */
+
+.nash-overview .nash-overview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-badge.gen {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+  border: 1px solid #fde0de;
+}
+
+.nash-overview .nash-overview-badge.gen svg {
+  animation: nash-spin 0.7s linear infinite;
+}
+
+@keyframes nash-spin {
+  to { transform: rotate(360deg); }
+}
+
+.nash-overview .nash-overview-badge.done {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+/* ── Card body ───────────────────────────────────────── */
+
+.nash-overview .nash-overview-card-status {
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+  margin-bottom: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-card-live {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.nash-overview .nash-overview-live-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green-dot, #22c55e);
+  flex-shrink: 0;
+  animation: nash-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes nash-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+}
+
+.nash-overview .nash-overview-live-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.nash-overview .nash-overview-progress-label {
+  font-size: 11.5px;
+  color: var(--ink-70, #4a4d55);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-progress-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--red, #eb1000);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-progress-track {
+  height: 5px;
+  background: var(--ink-08, #f4f4f6);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.nash-overview .nash-overview-progress-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--red, #eb1000), #ff6060);
+  transition: width 0.6s ease;
+}
+
+.nash-overview .nash-overview-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.nash-overview .nash-overview-score {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-score-of {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-verdict {
+  margin-left: 4px;
+  padding: 2px 9px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+/* ── Card footer ─────────────────────────────────────── */
+
+.nash-overview .nash-overview-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #e5e6ea);
+  margin-top: 4px;
+}
+
+.nash-overview .nash-overview-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nash-overview .nash-overview-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-menu-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-40, #9a9da6);
+  transition: background 0.12s, color 0.12s;
+}
+
+.nash-overview .nash-overview-menu-btn:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}

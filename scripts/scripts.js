@@ -1,7 +1,7 @@
 import {
   buildBlock,
-  loadHeader,
-  loadFooter,
+  decorateBlock,
+  loadBlock,
   decorateIcons,
   decorateSections,
   decorateBlocks,
@@ -151,20 +151,47 @@ async function loadEager(doc) {
 }
 
 /**
+ * Loads the Nash topbar into the <header> element.
+ * @param {Element} header The header element
+ */
+async function loadNashTopbar(header) {
+  const block = buildBlock('nash-topbar', [['']]);
+  header.append(block);
+  decorateBlock(block);
+  return loadBlock(block);
+}
+
+/**
+ * Injects the Nash sidebar <nav> before <main> and loads the block.
+ * @param {Element} main The main element
+ */
+async function loadNashSidebar(main) {
+  const nav = document.createElement('nav');
+  nav.className = 'nash-app-nav';
+  nav.setAttribute('aria-label', 'Nash sidebar');
+  const block = buildBlock('nash-sidebar', [['']]);
+  nav.append(block);
+  main.before(nav);
+  decorateBlock(block);
+  return loadBlock(block);
+}
+
+/**
  * Loads everything that doesn't need to be delayed.
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  loadHeader(doc.querySelector('header'));
-
+  const header = doc.querySelector('header');
   const main = doc.querySelector('main');
+
+  loadNashTopbar(header);
+  loadNashSidebar(main);
+
   await loadSections(main);
 
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
-
-  loadFooter(doc.querySelector('footer'));
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();

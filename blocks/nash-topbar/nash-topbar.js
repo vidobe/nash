@@ -22,34 +22,34 @@ export default async function decorate(block) {
     .toUpperCase();
 
   block.innerHTML = `
-    <div class="nash-topbar__left">
-      <a class="nash-topbar__brand" href="/" aria-label="Nash home">
-        <span class="nash-topbar__adobe-logo" aria-hidden="true">
+    <div class="nash-topbar-left">
+      <a class="nash-topbar-brand" href="/" aria-label="Nash home">
+        <span class="nash-topbar-adobe-logo" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
             <rect width="20" height="20" rx="2" fill="#eb1000"/>
             <polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="white"/>
           </svg>
         </span>
-        <span class="nash-topbar__wordmark">Nash</span>
-        <span class="nash-topbar__subtitle">/ AEM Qualifier</span>
+        <span class="nash-topbar-wordmark">Nash</span>
+        <span class="nash-topbar-subtitle">/ AEM Qualifier</span>
       </a>
     </div>
-    <div class="nash-topbar__center">
-      <span class="nash-topbar__page-title" data-nash-page-title>Overview</span>
+    <div class="nash-topbar-center">
+      <span class="nash-topbar-page-title" data-nash-page-title>Overview</span>
     </div>
-    <div class="nash-topbar__right">
-      <button class="nash-topbar__new-btn" type="button" aria-label="Start new analysis">
+    <div class="nash-topbar-right">
+      <button class="nash-topbar-new-btn" type="button" aria-label="Start new analysis">
         <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
         New Analysis
       </button>
-      <button class="nash-topbar__avatar" type="button" aria-label="User profile: ${userName}" title="${userName} — ${userEmail}">${initials}</button>
+      <button class="nash-topbar-avatar" type="button" aria-label="User profile: ${userName}" title="${userName} — ${userEmail}">${initials}</button>
     </div>
   `;
 
   // Broadcast new-analysis intent so sidebar/chat can respond
-  block.querySelector('.nash-topbar__new-btn').addEventListener('click', () => {
+  block.querySelector('.nash-topbar-new-btn').addEventListener('click', () => {
     document.dispatchEvent(new CustomEvent('nash:new-analysis', { bubbles: true }));
   });
 

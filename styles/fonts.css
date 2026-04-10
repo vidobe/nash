@@ -1,4 +1,16 @@
 /* stylelint-disable max-line-length */
+
+/* Nash primary fonts — DM Sans + DM Serif Display */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Serif+Display:ital@0;1&display=swap');
+
+/* DM Sans fallback for CLS prevention */
+@font-face {
+  font-family: dm-sans-fallback;
+  size-adjust: 100.06%;
+  ascent-override: 95%;
+  src: local('Arial');
+}
+
 @font-face {
   font-family: roboto-condensed;
   font-style: normal;
