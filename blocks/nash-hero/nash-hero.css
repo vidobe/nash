@@ -1,0 +1,125 @@
+/* nash-hero block */
+
+.nash-hero {
+  padding: 32px 32px 24px;
+  background: var(--white, #fff);
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-hero .nash-hero-greeting {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-weight: 400;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-hero .nash-hero-title {
+  margin: 0 0 8px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink, #111318);
+  scroll-margin: 0;
+}
+
+.nash-hero .nash-hero-sub {
+  margin: 0 0 20px;
+  max-width: 500px;
+  font-size: 13.5px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.6;
+}
+
+/* ── Action buttons ──────────────────────────────────── */
+
+.nash-hero .nash-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.nash-hero .nash-hero-btn-primary,
+.nash-hero .nash-hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  border: none;
+}
+
+.nash-hero .nash-hero-btn-primary {
+  background: var(--red, #eb1000);
+  color: #fff;
+}
+
+.nash-hero .nash-hero-btn-primary:hover {
+  background: #c8000e;
+}
+
+.nash-hero .nash-hero-btn-secondary {
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
+  border: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-hero .nash-hero-btn-secondary:hover {
+  background: var(--surface, #f8f8fa);
+}
+
+.nash-hero .nash-hero-btn-primary:focus-visible,
+.nash-hero .nash-hero-btn-secondary:focus-visible {
+  outline: 2px solid var(--red, #eb1000);
+  outline-offset: 2px;
+}
+
+/* ── Stats ───────────────────────────────────────────── */
+
+.nash-hero .nash-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nash-hero .nash-hero-stat {
+  min-width: 120px;
+  padding: 14px 18px;
+  background: var(--surface, #f8f8fa);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 12px;
+}
+
+.nash-hero .nash-hero-stat.accent {
+  background: var(--red-lt, #fff0ef);
+  border-color: #fde0de;
+}
+
+.nash-hero .nash-hero-stat-val {
+  margin-bottom: 2px;
+  font-size: 22px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink, #111318);
+}
+
+.nash-hero .nash-hero-stat.accent .nash-hero-stat-val {
+  color: var(--red, #eb1000);
+}
+
+.nash-hero .nash-hero-stat-label {
+  font-size: 11px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-weight: 400;
+  color: var(--ink-40, #9a9da6);
+}

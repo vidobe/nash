@@ -1,0 +1,151 @@
+/* nash-sidebar block */
+
+.nash-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--white, #fff);
+  border-right: 1px solid var(--border, #e5e6ea);
+  overflow: hidden;
+}
+
+/* ── Nav ─────────────────────────────────────────────── */
+
+.nash-sidebar .nash-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 0;
+  scrollbar-width: none;
+}
+
+.nash-sidebar .nash-sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.nash-sidebar .nash-sidebar-section {
+  padding: 8px 12px;
+}
+
+.nash-sidebar .nash-sidebar-label {
+  display: block;
+  padding: 0 8px;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-sidebar .nash-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink-70, #4a4d55);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-item:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-item.active {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+  font-weight: 500;
+}
+
+.nash-sidebar .nash-sidebar-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nash-sidebar .nash-sidebar-item.active svg {
+  opacity: 1;
+}
+
+.nash-sidebar .nash-sidebar-badge {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 1px 7px;
+  border-radius: 100px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.nash-sidebar .nash-sidebar-badge.gray {
+  background: var(--ink-15, #e8e9ec);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-sidebar .nash-sidebar-divider {
+  height: 1px;
+  margin: 4px 12px;
+  border: none;
+  background: var(--border, #e5e6ea);
+}
+
+/* ── User card ───────────────────────────────────────── */
+
+.nash-sidebar .nash-sidebar-bottom {
+  padding: 12px;
+  flex-shrink: 0;
+}
+
+.nash-sidebar .nash-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--surface, #f8f8fa);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nash-sidebar .nash-sidebar-user:hover {
+  background: var(--ink-15, #e8e9ec);
+}
+
+.nash-sidebar .nash-sidebar-user-av {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.nash-sidebar .nash-sidebar-user-name {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-user-email {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+}
