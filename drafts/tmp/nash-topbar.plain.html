@@ -1,0 +1,25 @@
+<!-- Nash Topbar block — test page -->
+<!-- Preview at: http://localhost:3000/drafts/tmp/nash-topbar -->
+<!-- Start dev server with: aem up --html-folder drafts -->
+
+<div>
+  <div class="nash-topbar">
+    <div>
+      <div>VG Gabriel</div>
+      <div>vgabriel@adobe.com</div>
+    </div>
+  </div>
+</div>
+
+<div>
+  <h1>Nash Topbar Test Page</h1>
+  <p>This page tests the <strong>nash-topbar</strong> block. The topbar should be fixed to the top of the viewport at 52px height, showing:</p>
+  <ul>
+    <li>Adobe logo mark (red square + triangle) + "Nash" wordmark + "/ AEM Qualifier" subtitle</li>
+    <li>Current page title centred ("Overview" by default)</li>
+    <li>"New Analysis" primary red button (right side)</li>
+    <li>"VG" user avatar circle (red tint, right side)</li>
+  </ul>
+  <p>Clicking "New Analysis" dispatches a <code>nash:new-analysis</code> CustomEvent on document.</p>
+  <p>Other blocks can update the centred page title via: <code>document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: 'New title' } }))</code></p>
+</div>
