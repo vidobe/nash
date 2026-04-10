@@ -23,6 +23,27 @@
   --body-font-family: roboto, roboto-fallback, sans-serif;
   --heading-font-family: roboto-condensed, roboto-condensed-fallback, sans-serif;
 
+  /* nash design tokens */
+  --red: #eb1000;
+  --red-lt: #fff0ef;
+  --ink: #111318;
+  --ink-70: #4a4d55;
+  --ink-40: #9a9da6;
+  --ink-15: #e8e9ec;
+  --ink-08: #f4f4f6;
+  --white: #fff;
+  --surface: #f8f8fa;
+  --green: #0d7a45;
+  --green-lt: #edf7f2;
+  --green-dot: #22c55e;
+  --amber: #b45309;
+  --amber-lt: #fef3c7;
+  --blue: #1d4ed8;
+  --blue-lt: #eff6ff;
+  --border: #e5e6ea;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --serif: 'DM Serif Display', Georgia, serif;
+
   /* body sizes */
   --body-font-size-m: 22px;
   --body-font-size-s: 19px;
