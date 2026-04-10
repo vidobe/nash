@@ -1,0 +1,211 @@
+/**
+ * loads and decorates the nash-overview block
+ * No authored content needed — fetches /reports/query.json (falls back to mock data).
+ * @param {Element} block The block element
+ */
+
+const MOCK_REPORTS = [
+  { id: 1, company: 'Fluidra', domain: 'fluidra.com', status: 'generating', pct: 74, steps: 17, total: 23, task: 'Product Assessment & Success Story', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null },
+  { id: 2, company: 'Fnbo', domain: 'fnbo.com', status: 'generating', pct: 34, steps: 8, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null },
+  { id: 3, company: 'Focus GTS', domain: 'focusgts.com', status: 'generating', pct: 21, steps: 5, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null },
+  { id: 4, company: 'Fanatics', domain: 'fanatics.com', status: 'generating', pct: 95, steps: 22, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'Unknown', time: 'just now', score: null },
+  { id: 5, company: 'Ford', domain: 'ford.com', status: 'generating', pct: 4, steps: 1, total: 23, task: 'Building report content', user: 'josec@adobe.com', cms: 'AEM Sites', time: 'just now', score: null },
+  { id: 6, company: 'Fiserv', domain: 'fiserv.com', status: 'generating', pct: 58, steps: 13, total: 23, task: 'Core Analysis', user: 'josec@adobe.com', cms: 'Unknown', time: '2m ago', score: null },
+  { id: 7, company: 'Forescout', domain: 'forescout.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '18m ago', score: 78 },
+  { id: 8, company: 'Firstrand Group', domain: 'firstrand.co.za', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '32m ago', score: 62 },
+  { id: 9, company: 'Fortive Corp', domain: 'fortive.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '1h ago', score: 85 },
+  { id: 10, company: 'Frontier Airlines', domain: 'flyfrontier.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Sitecore', time: '2h ago', score: 71 },
+  { id: 11, company: 'FNZ Group', domain: 'fnz.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'Unknown', time: '3h ago', score: 44 },
+  { id: 12, company: 'Ferretti Group', domain: 'ferrettigroup.com', status: 'done', pct: 100, steps: 23, total: 23, task: 'Complete', user: 'josec@adobe.com', cms: 'AEM Sites', time: '5h ago', score: 91 },
+];
+
+function scoreColor(s) {
+  if (s >= 70) return 'var(--green, #0d7a45)';
+  if (s >= 50) return 'var(--amber, #b45309)';
+  return 'var(--red, #eb1000)';
+}
+
+function verdictLabel(s) {
+  if (s >= 70) return 'Go';
+  if (s >= 50) return 'Conditional';
+  return 'No-go';
+}
+
+function verdictStyle(s) {
+  if (s >= 70) return 'background:var(--green-lt,#edf7f2);color:var(--green,#0d7a45);';
+  if (s >= 50) return 'background:var(--amber-lt,#fef3c7);color:var(--amber,#b45309);';
+  return 'background:var(--red-lt,#fff0ef);color:var(--red,#eb1000);';
+}
+
+function buildCard(r) {
+  const card = document.createElement('div');
+  card.className = `nash-overview-card${r.status === 'generating' ? ' generating' : ''}`;
+  card.dataset.id = r.id;
+  card.dataset.status = r.status;
+  card.dataset.company = r.company.toLowerCase();
+
+  const badge = r.status === 'generating'
+    ? `<span class="nash-overview-badge gen">
+        <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Generating
+      </span>`
+    : `<span class="nash-overview-badge done">&#10003; Complete</span>`;
+
+  const body = r.status === 'generating'
+    ? `<div class="nash-overview-card-status">Your report is being generated.</div>
+       <div class="nash-overview-card-live">
+         <span class="nash-overview-live-dot" aria-hidden="true"></span>
+         <span class="nash-overview-live-label">Live updates</span>
+       </div>
+       <div class="nash-overview-progress-row">
+         <span class="nash-overview-progress-label">${r.task} (${r.steps}/${r.total} tasks)</span>
+         <span class="nash-overview-progress-pct">${r.pct}%</span>
+       </div>
+       <div class="nash-overview-progress-track">
+         <div class="nash-overview-progress-fill" style="width:${r.pct}%" aria-valuenow="${r.pct}" aria-valuemin="0" aria-valuemax="100" role="progressbar"></div>
+       </div>`
+    : `<div class="nash-overview-card-status">Qualification complete.</div>
+       <div class="nash-overview-score-row">
+         <span class="nash-overview-score" style="color:${scoreColor(r.score)}">${r.score}</span>
+         <span class="nash-overview-score-of">/ 100 fit score</span>
+         <span class="nash-overview-verdict" style="${verdictStyle(r.score)}">${verdictLabel(r.score)}</span>
+       </div>`;
+
+  card.innerHTML = `
+    <div class="nash-overview-card-top">
+      <div class="nash-overview-card-left">
+        <div class="nash-overview-favicon" aria-hidden="true">${r.company.charAt(0)}</div>
+        <div>
+          <div class="nash-overview-company">${r.company}</div>
+          <div class="nash-overview-domain">
+            <svg width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            ${r.domain}
+          </div>
+        </div>
+      </div>
+      <div class="nash-overview-card-meta">
+        ${badge}
+        <div class="nash-overview-time">${r.time}</div>
+      </div>
+    </div>
+    ${body}
+    <div class="nash-overview-card-footer">
+      <div class="nash-overview-footer-meta">
+        <span class="nash-overview-meta-item">
+          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          ${r.user}
+        </span>
+        <span class="nash-overview-meta-item">
+          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          ${r.cms}
+        </span>
+      </div>
+      <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+  `;
+
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.nash-overview-menu-btn')) return;
+    document.dispatchEvent(new CustomEvent('nash:open-detail', { detail: { report: r }, bubbles: true }));
+  });
+
+  return card;
+}
+
+function renderCards(block, reports) {
+  const grid = block.querySelector('.nash-overview-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  reports.forEach((r) => grid.appendChild(buildCard(r)));
+}
+
+export default async function decorate(block) {
+  let reports = MOCK_REPORTS;
+  try {
+    const resp = await fetch('/reports/query.json');
+    if (resp.ok) {
+      const json = await resp.json();
+      if (json.data?.length) reports = json.data;
+    }
+  } catch {
+    // use mock
+  }
+
+  const genCount = reports.filter((r) => r.status === 'generating').length;
+  const doneCount = reports.filter((r) => r.status === 'done').length;
+
+  block.innerHTML = `
+    <div class="nash-overview-notif" id="nash-notif" role="status">
+      <span>&#128203;&nbsp;&nbsp;Skills File for AEM has been updated — April 2026. <strong style="cursor:pointer">Review changes &#8594;</strong></span>
+      <button class="nash-overview-notif-close" type="button" aria-label="Dismiss notification">
+        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="nash-overview-toolbar">
+      <div class="nash-overview-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="nash-overview-search" type="search" placeholder="Search qualifications&#8230;" aria-label="Search qualifications"/>
+      </div>
+      <select class="nash-overview-filter" aria-label="Filter by status">
+        <option value="all">Status: All (${reports.length})</option>
+        <option value="generating">Generating (${genCount})</option>
+        <option value="done">Complete (${doneCount})</option>
+      </select>
+      <div class="nash-overview-toolbar-right">
+        <button class="nash-overview-sort-btn" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+          Last updated
+        </button>
+        <div class="nash-overview-view-toggle" role="group" aria-label="View layout">
+          <button class="nash-overview-vt-btn active" data-layout="grid" type="button" aria-pressed="true" aria-label="Grid view">
+            <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </button>
+          <button class="nash-overview-vt-btn" data-layout="list" type="button" aria-pressed="false" aria-label="List view">
+            <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="nash-overview-area">
+      <div class="nash-overview-grid" aria-label="Qualification reports" role="list"></div>
+    </div>
+  `;
+
+  renderCards(block, reports);
+
+  // Dismiss notification
+  block.querySelector('.nash-overview-notif-close').addEventListener('click', () => {
+    block.querySelector('#nash-notif').remove();
+  });
+
+  // Search
+  block.querySelector('.nash-overview-search').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    block.querySelectorAll('.nash-overview-card').forEach((card) => {
+      card.hidden = q && !card.dataset.company.includes(q);
+    });
+  });
+
+  // Filter
+  block.querySelector('.nash-overview-filter').addEventListener('change', (e) => {
+    const val = e.target.value;
+    block.querySelectorAll('.nash-overview-card').forEach((card) => {
+      card.hidden = val !== 'all' && card.dataset.status !== val;
+    });
+  });
+
+  // View toggle
+  block.querySelectorAll('.nash-overview-vt-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      block.querySelectorAll('.nash-overview-vt-btn').forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
+      block.querySelector('.nash-overview-grid').dataset.layout = btn.dataset.layout;
+    });
+  });
+}
