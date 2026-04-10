@@ -1,0 +1,34 @@
+version: 1
+indices:
+  qualifications:
+    include:
+      - /qualifications/**
+    properties:
+      title:
+        select: head > meta[property="og:title"]
+        value: attribute(el, "content")
+      description:
+        select: head > meta[name="description"]
+        value: attribute(el, "content")
+      status:
+        select: head > meta[name="status"]
+        value: attribute(el, "content")
+      score:
+        select: head > meta[name="score"]
+        value: attribute(el, "content")
+      cms:
+        select: head > meta[name="cms"]
+        value: attribute(el, "content")
+      user:
+        select: head > meta[name="user"]
+        value: attribute(el, "content")
+      progress:
+        select: head > meta[name="progress"]
+        value: attribute(el, "content")
+      task:
+        select: head > meta[name="task"]
+        value: attribute(el, "content")
+      lastModified:
+        select: head > meta[name="last-modified"]
+        value: attribute(el, "content")
+    target: /qualifications/query.json

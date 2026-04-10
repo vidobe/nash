@@ -444,3 +444,32 @@
   background: var(--ink-08, #f4f4f6);
   color: var(--ink, #111318);
 }
+
+/* ── Empty state ─────────────────────────────────────── */
+
+.nash-overview .nash-overview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 32px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Mock data banner ────────────────────────────────── */
+
+.nash-overview .nash-overview-mock-banner {
+  margin: 8px 32px 0;
+  padding: 8px 14px;
+  background: var(--amber-lt, #fef3c7);
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--amber, #b45309);
+}

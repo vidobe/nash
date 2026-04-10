@@ -180,15 +180,20 @@ function renderCards(block, reports) {
 }
 
 export default async function decorate(block) {
-  let reports = MOCK_REPORTS;
+  let reports = [];
+  let usingMock = false;
   try {
     const resp = await fetch('/qualifications/query.json');
     if (resp.ok) {
       const json = await resp.json();
-      if (json.data?.length) reports = json.data.map(mapQueryRow);
+      reports = (json.data || []).map(mapQueryRow);
+    } else {
+      reports = MOCK_REPORTS;
+      usingMock = true;
     }
   } catch {
-    // use mock
+    reports = MOCK_REPORTS;
+    usingMock = true;
   }
 
   const genCount = reports.filter((r) => r.status === 'generating').length;
@@ -228,6 +233,11 @@ export default async function decorate(block) {
     </div>
     <div class="nash-overview-area">
       <div class="nash-overview-grid" aria-label="Qualification reports" role="list"></div>
+      ${reports.length === 0 ? `<div class="nash-overview-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p>No qualifications yet. Start a new analysis to get going.</p>
+      </div>` : ''}
+      ${usingMock ? '<div class="nash-overview-mock-banner" role="status">Preview mode — showing sample data. Publish documents in /qualifications to see real results.</div>' : ''}
     </div>
   `;
 

@@ -1,0 +1,368 @@
+.nash-detail-view {
+  padding: 32px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.nash-detail-view .nash-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.nash-detail-view .nash-detail-back:hover {
+  color: var(--ink, #111318);
+}
+
+.nash-detail-view .nash-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.nash-detail-view .nash-detail-company {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0;
+}
+
+.nash-detail-view .nash-detail-version {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+  font-weight: 500;
+}
+
+.nash-detail-view .nash-detail-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.nash-detail-view .nash-detail-badge.gen {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-detail-view .nash-detail-badge.done {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+/* Tabs */
+.nash-detail-view .nash-detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+  margin-bottom: 32px;
+}
+
+.nash-detail-view .nash-detail-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.nash-detail-view .nash-detail-tab:hover {
+  color: var(--ink, #111318);
+}
+
+.nash-detail-view .nash-detail-tab.active {
+  color: var(--blue, #1d4ed8);
+  border-bottom-color: var(--blue, #1d4ed8);
+}
+
+/* Explainer */
+.nash-detail-view .nash-detail-explainer {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.nash-detail-view .nash-detail-explainer h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0 0 6px;
+}
+
+.nash-detail-view .nash-detail-explainer > p {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0 0 20px;
+}
+
+.nash-detail-view .nash-detail-stages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.nash-detail-view .nash-detail-stage {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface, #f8f8fa);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+}
+
+.nash-detail-view .nash-detail-stage-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--blue-lt, #eff6ff);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue, #1d4ed8);
+}
+
+.nash-detail-view .nash-detail-stage strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin-bottom: 4px;
+}
+
+.nash-detail-view .nash-detail-stage p {
+  font-size: 12px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Pipeline card */
+.nash-detail-view .nash-detail-pipeline {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.nash-detail-view .nash-detail-pipeline-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.nash-detail-view .nash-detail-pipeline-left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-detail-view .nash-detail-pipeline-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-detail-view .nash-detail-pipeline-sub {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+  margin-top: 2px;
+}
+
+.nash-detail-view .nash-detail-pipeline-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.nash-detail-view .nash-detail-pipeline-badge.gen {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-detail-view .nash-detail-pipeline-badge.done {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-detail-view .nash-detail-pipeline-progress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin-bottom: 8px;
+}
+
+.nash-detail-view .nash-detail-progress-track {
+  height: 6px;
+  background: var(--ink-15, #e8e9ec);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.nash-detail-view .nash-detail-progress-fill {
+  height: 100%;
+  background: var(--green, #0d7a45);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.nash-detail-view .nash-detail-progress-fill.running {
+  background: var(--red, #eb1000);
+}
+
+/* Step rows */
+.nash-detail-view .nash-detail-step {
+  display: grid;
+  grid-template-columns: 28px 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ink-15, #e8e9ec);
+}
+
+.nash-detail-view .nash-detail-step-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-40, #9a9da6);
+  padding: 0;
+  transition: transform 0.2s;
+}
+
+.nash-detail-view .nash-detail-step.expanded .nash-detail-step-toggle {
+  transform: rotate(90deg);
+}
+
+.nash-detail-view .nash-detail-step-icon {
+  flex-shrink: 0;
+}
+
+.nash-detail-view .nash-detail-step-icon.done {
+  color: var(--green, #0d7a45);
+}
+
+.nash-detail-view .nash-detail-step-icon.running {
+  color: var(--blue, #1d4ed8);
+  animation: nash-spin 1s linear infinite;
+}
+
+.nash-detail-view .nash-detail-step-icon.waiting {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-detail-view .nash-detail-step-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.nash-detail-view .nash-detail-step-desc {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-detail-view .nash-detail-step-status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.nash-detail-view .nash-detail-step-status.done {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-detail-view .nash-detail-step-status.running {
+  background: var(--blue-lt, #eff6ff);
+  color: var(--blue, #1d4ed8);
+}
+
+.nash-detail-view .nash-detail-step-status.waiting {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Subtasks */
+.nash-detail-view .nash-detail-subtasks {
+  grid-column: 3 / 5;
+  padding: 8px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nash-detail-view .nash-detail-subtask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface, #f8f8fa);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-detail-view .nash-detail-subtask svg {
+  color: var(--green, #0d7a45);
+  flex-shrink: 0;
+}
+
+.nash-detail-view .nash-detail-subtask-name {
+  flex: 1;
+}
+
+.nash-detail-view .nash-detail-subtask-time {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Empty panel */
+.nash-detail-view .nash-detail-placeholder {
+  padding: 40px;
+  text-align: center;
+  color: var(--ink-40, #9a9da6);
+  font-size: 14px;
+}
+
+@keyframes nash-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (width >= 600px) {
+  .nash-detail-view .nash-detail-stages {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
