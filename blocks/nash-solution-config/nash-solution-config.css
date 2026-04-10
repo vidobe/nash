@@ -1,0 +1,134 @@
+.nash-solution-config {
+  padding: 32px 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Header */
+.nash-solution-config .nash-config-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.nash-solution-config .nash-config-back:hover {
+  color: var(--ink, #111318);
+}
+
+.nash-solution-config .nash-config-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.nash-solution-config .nash-config-logo {
+  width: 48px;
+  height: 48px;
+  background: var(--red, #eb1000);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white, #fff);
+  flex-shrink: 0;
+}
+
+.nash-solution-config .nash-config-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0 0 3px;
+}
+
+.nash-solution-config .nash-config-desc {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0;
+}
+
+.nash-solution-config .nash-config-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.nash-solution-config .nash-config-badge.active {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-solution-config .nash-config-badge.beta {
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+}
+
+.nash-solution-config .nash-config-version {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Sections */
+.nash-solution-config .nash-config-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nash-solution-config .nash-config-section {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.nash-solution-config .nash-config-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  padding: 14px 20px;
+  margin: 0;
+  background: var(--surface, #f8f8fa);
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+/* Rows */
+.nash-solution-config .nash-config-rows {
+  padding: 0;
+}
+
+.nash-solution-config .nash-config-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+  align-items: start;
+}
+
+.nash-solution-config .nash-config-row:last-child {
+  border-bottom: none;
+}
+
+.nash-solution-config .nash-config-key {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-solution-config .nash-config-val {
+  font-size: 13px;
+  color: var(--ink, #111318);
+  line-height: 1.6;
+}

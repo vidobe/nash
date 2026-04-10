@@ -5,19 +5,17 @@ const NAV = [
     label: 'Main',
     items: [
       {
-        view: 'overview', text: 'Overview', badge: 'count', icon: 'grid',
+        view: 'overview', text: 'Overview', badge: 'count', icon: 'grid', href: '/',
       },
       { view: 'new-insight', text: 'New Insight', icon: 'plus' },
-      {
-        view: 'campaigns', text: 'Campaigns', badge: '3', icon: 'activity',
-      },
     ],
   },
   {
     label: 'Tools',
     items: [
-      { view: 'cms-detector', text: 'CMS Detector', icon: 'globe' },
-      { view: 'skills-files', text: 'Skills Files', icon: 'file' },
+      {
+        view: 'solutions', text: 'Solutions Files', icon: 'layers', href: '/solutions',
+      },
       { view: 'feedback', text: 'Feedback Hub', icon: 'signal' },
     ],
   },
@@ -36,6 +34,7 @@ const ICONS = {
   activity: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
   globe: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
   file: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  layers: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
   signal: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>',
   info: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
   book: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',
@@ -54,7 +53,7 @@ function renderNav(block, reportCount) {
     <div class="nash-sidebar-section">
       <span class="nash-sidebar-label">${section.label}</span>
       ${section.items.map((item) => `
-        <button class="nash-sidebar-item" data-view="${item.view}" type="button">
+        <button class="nash-sidebar-item" data-view="${item.view}" ${item.href ? `data-href="${item.href}"` : ''} type="button">
           ${ICONS[item.icon] || ''}
           ${item.text}
           ${badge(item, reportCount)}
@@ -98,7 +97,7 @@ export default async function decorate(block) {
   let reportCount = 0;
 
   try {
-    const resp = await fetch('/reports/query.json');
+    const resp = await fetch('/qualifications/query.json');
     if (resp.ok) {
       const data = await resp.json();
       reportCount = (data.data || []).length;
@@ -113,7 +112,11 @@ export default async function decorate(block) {
   block.addEventListener('click', (e) => {
     const btn = e.target.closest('.nash-sidebar-item');
     if (!btn) return;
-    const { view } = btn.dataset;
+    const { view, href } = btn.dataset;
+    if (href) {
+      window.location.href = href;
+      return;
+    }
     setActive(block, view);
     document.dispatchEvent(new CustomEvent('nash:navigate', { detail: { view }, bubbles: true }));
   });

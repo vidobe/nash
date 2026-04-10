@@ -32,3 +32,23 @@ indices:
         select: head > meta[name="last-modified"]
         value: attribute(el, "content")
     target: /qualifications/query.json
+  solutions:
+    include:
+      - /solutions/**
+    properties:
+      title:
+        select: head > title
+        value: text(el)
+      description:
+        select: head > meta[name="description"]
+        value: attribute(el, "content")
+      status:
+        select: head > meta[name="status"]
+        value: attribute(el, "content")
+      signalcount:
+        select: head > meta[name="signalcount"]
+        value: attribute(el, "content")
+      productcount:
+        select: head > meta[name="productcount"]
+        value: attribute(el, "content")
+    target: /solutions/query.json

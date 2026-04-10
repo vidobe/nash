@@ -1,0 +1,151 @@
+.nash-solutions {
+  padding: 32px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nash-solutions .nash-solutions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.nash-solutions .nash-solutions-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0 0 6px;
+}
+
+.nash-solutions .nash-solutions-subhead {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0;
+  max-width: 520px;
+}
+
+/* Grid */
+.nash-solutions .nash-solutions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* Card */
+.nash-solutions .nash-solutions-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.nash-solutions .nash-solutions-card:hover {
+  border-color: var(--red, #eb1000);
+  box-shadow: 0 2px 12px rgba(0 0 0 / 0.07);
+}
+
+.nash-solutions .nash-solutions-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.nash-solutions .nash-solutions-logo {
+  width: 44px;
+  height: 44px;
+  background: var(--red, #eb1000);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white, #fff);
+  flex-shrink: 0;
+}
+
+/* Badges */
+.nash-solutions .nash-solutions-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.nash-solutions .nash-solutions-badge.active {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-solutions .nash-solutions-badge.beta {
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+}
+
+/* Card body */
+.nash-solutions .nash-solutions-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0 0 6px;
+}
+
+.nash-solutions .nash-solutions-desc {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* Card footer */
+.nash-solutions .nash-solutions-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-solutions .nash-solutions-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-solutions .nash-solutions-configure {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--red, #eb1000);
+}
+
+/* Empty state */
+.nash-solutions .nash-solutions-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 32px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-solutions .nash-solutions-empty p {
+  font-size: 14px;
+  margin: 0;
+}
