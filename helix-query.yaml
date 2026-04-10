@@ -5,8 +5,8 @@ indices:
       - /qualifications/**
     properties:
       title:
-        select: head > meta[property="og:title"]
-        value: attribute(el, "content")
+        select: head > title
+        value: text(el)
       description:
         select: head > meta[name="description"]
         value: attribute(el, "content")

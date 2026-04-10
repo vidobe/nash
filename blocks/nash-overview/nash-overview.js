@@ -53,12 +53,20 @@ function relativeTime(ts) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function toTitleCase(str) {
+  return str.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function mapQueryRow(row, idx) {
   const score = parseInt(row.score, 10) || null;
-  const status = row.status === 'generating' ? 'generating' : 'done';
+  const status = (row.status || '').toLowerCase() === 'generating' ? 'generating' : 'done';
+  // Strip " | Nash" suffix from <title> and fall back to path slug
+  const rawTitle = (row.title || '').replace(/\s*\|.*$/, '').trim();
+  const pathSlug = (row.path || '').split('/').pop();
+  const company = rawTitle || toTitleCase(pathSlug) || 'Unknown';
   return {
     id: idx,
-    company: row.title || 'Unknown',
+    company,
     domain: row.description || '',
     status,
     pct: status === 'done' ? 100 : (parseInt(row.progress, 10) || 0),
