@@ -2,11 +2,13 @@
 .nash-login {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  width: 100vw;
   min-height: 100vh;
   background-color: #f0f0f2;
   background-image: radial-gradient(circle, rgb(0 0 0 / 9%) 1px, transparent 1px);
   background-size: 22px 22px;
   align-items: center;
+  box-sizing: border-box;
 }
 
 /* ─── Left panel — holds the card ───────────────────────────── */
@@ -43,21 +45,6 @@
   font-weight: 600;
   color: var(--ink, #111318);
   letter-spacing: -0.02em;
-}
-
-/* Personalised greeting */
-.nash-login .nash-login-personal {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--red, #eb1000);
-  margin: 0 0 4px;
-  min-height: 18px;
-  transition: opacity 0.3s;
-}
-
-.nash-login .nash-login-personal:empty {
-  opacity: 0;
 }
 
 .nash-login .nash-login-heading {

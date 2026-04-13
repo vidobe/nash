@@ -212,7 +212,6 @@ function renderSignIn(block, switchFn) {
           ${logo}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <p class="nash-login-personal" aria-live="polite"></p>
         <h1 class="nash-login-heading">Sign in to Nash</h1>
         <form class="nash-login-form" novalidate>
           <div class="nash-login-field">
@@ -249,20 +248,13 @@ function renderSignIn(block, switchFn) {
   const errorEl = block.querySelector('.nash-login-error');
   const btn = block.querySelector('.nash-login-btn');
   const emailEl = block.querySelector('#nl-email');
-  const personalEl = block.querySelector('.nash-login-personal');
   const quoteEl = block.querySelector('.nash-login-quote');
 
   const rotator = makeRotator(quoteEl, DEFAULT_SENTENCES);
 
   emailEl.addEventListener('input', () => {
     const person = getPerson(emailEl.value);
-    if (person) {
-      personalEl.textContent = person.greeting;
-      rotator.swap(person.sentences);
-    } else {
-      personalEl.textContent = '';
-      rotator.swap(DEFAULT_SENTENCES);
-    }
+    rotator.swap(person ? person.sentences : DEFAULT_SENTENCES);
   });
 
   block.querySelector('.nash-login-switch').addEventListener('click', () => {
@@ -310,7 +302,6 @@ function renderCreateAccount(block, switchFn) {
           ${logo}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <p class="nash-login-personal" aria-live="polite"></p>
         <h1 class="nash-login-heading">Create your account</h1>
         <form class="nash-login-form" novalidate>
           <div class="nash-login-field">
@@ -408,6 +399,17 @@ function renderCreateAccount(block, switchFn) {
 }
 
 export default async function decorate(block) {
+  // Break out of EDS section/main max-width so the login fills the full viewport
+  const section = block.closest('.section');
+  const main = block.closest('main');
+  [section, main].forEach((el) => {
+    if (!el) return;
+    el.style.maxWidth = 'none';
+    el.style.width = '100%';
+    el.style.margin = '0';
+    el.style.padding = '0';
+  });
+
   let rotator = null;
 
   function switchMode(mode) {
