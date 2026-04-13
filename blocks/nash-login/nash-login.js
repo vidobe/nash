@@ -63,7 +63,9 @@ const PERSONS = [
     name: 'Sanne',
     greeting: 'Hey Sanne.',
     sentences: [
-      'The best ideas in this tool probably came from you.',
+      'Strong opinions. Great taste. Correct, usually.',
+      'Someone has to keep this team together. Thanks for that.',
+      'Padel score: won. Meeting score: also won.',
       'Padel can wait. The pipeline won\'t.',
       'Already know what everyone else should be doing? Same.',
       'Are those new shoes? Bold choice for a Monday login.',
@@ -86,9 +88,10 @@ const PERSONS = [
   },
   {
     match: (email) => email.includes('wsmeets'),
-    name: 'Wouter',
+    name: 'Waldo',
     greeting: 'Goedemiddag, baas.',
     sentences: [
+      'You walked in and the room got 40% more organised.',
       'The boss has arrived. Typos are now being corrected.',
       '15 years at Adobe. Still no one reads the brief.',
       'Carnival is over. Time to qualify some deals.',
