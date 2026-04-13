@@ -144,12 +144,16 @@ async function doLogin(email, password) {
     const result = await callAuthApi({ action: 'login', email, hash });
     const workerDown = result.reason === 'http_404' || result.reason === 'http_500';
     if (!workerDown) return result;
-  } catch { /* fall through to sheet */ }
-  const rows = await readAuthSheet();
-  const row = rows.find((r) => r.email && r.email.toLowerCase() === email.toLowerCase());
-  if (!row) return { ok: false, reason: 'not_found' };
-  if (row.password !== hash) return { ok: false, reason: 'wrong_password' };
-  return { ok: true, name: row.name || '' };
+  } catch { /* worker unavailable, fall through to sheet */ }
+  try {
+    const rows = await readAuthSheet();
+    const row = rows.find((r) => r.email && r.email.toLowerCase() === email.toLowerCase());
+    if (!row) return { ok: false, reason: 'not_found' };
+    if (row.password !== hash) return { ok: false, reason: 'wrong_password' };
+    return { ok: true, name: row.name || '' };
+  } catch {
+    return { ok: false, reason: 'sheet_unavailable' };
+  }
 }
 
 async function doRegister(email, password, name) {
