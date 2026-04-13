@@ -202,7 +202,7 @@
   transform: translateY(0);
 }
 
-.nash-login .nash-login-quote.nash-login-quote--out {
+.nash-login .nash-login-quote.nash-login-quote-out {
   opacity: 0;
   transform: translateY(10px);
 }

@@ -183,10 +183,10 @@ function makeRotator(el, initialSentences) {
   let timer = null;
 
   function show(text) {
-    el.classList.add('nash-login-quote--out');
+    el.classList.add('nash-login-quote-out');
     setTimeout(() => {
       el.textContent = text;
-      el.classList.remove('nash-login-quote--out');
+      el.classList.remove('nash-login-quote-out');
     }, 380);
   }
 
