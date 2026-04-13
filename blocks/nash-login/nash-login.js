@@ -1,16 +1,51 @@
 /**
  * nash-login block
- * Two-mode auth: sign-in and create-account.
- * Passwords are SHA-256 hashed client-side before any network call.
- * Credentials stored in DA spreadsheet at /config/auth (columns: email, password, name, created).
+ * Two-column layout: dark form panel (left) + rotating quote panel (right).
+ * Quotes personalise when a known email is detected.
+ * Passwords are SHA-256 hashed client-side.
+ * Credentials stored in DA spreadsheet at /config/auth (email | password | name | created).
  * Login reads from /config/auth.json (published DA sheet).
  * Registration writes via POST /api/auth (Cloudflare Worker).
- * Session lasts 8 hours, stored in localStorage under 'nash-auth'.
+ * Session lasts 8 hours in localStorage under 'nash-auth'.
  * @param {Element} block
  */
 
 const SESSION_KEY = 'nash-auth';
 const SESSION_HOURS = 8;
+
+const DEFAULT_SENTENCES = [
+  'Qualify faster. Win smarter.',
+  'Know your AEM fit score before the meeting.',
+  'Turn RFPs into structured intelligence.',
+  'Stop guessing on competitive positioning.',
+  'Your team\'s AEM expertise, one click away.',
+  'Better assessments. Fewer surprises.',
+  'From RFP to recommendation, in minutes.',
+];
+
+const LOADING_SENTENCES = [
+  'Checking your credentials…',
+  'Asking the server very politely…',
+  'Almost there…',
+  'Verifying with the mothership…',
+  'This usually takes less time than a café order…',
+];
+
+const PERSONS = [
+  {
+    match: (email) => email.includes('vgabriel') || email.startsWith('vitor.gabriel'),
+    name: 'Vitor',
+    greeting: 'Olá, Vitor.',
+    sentences: [
+      'Still thinking about that pastel de nata?',
+      'Lisbon called. It wants its best sales engineer back.',
+      'You literally built this thing. Sign in already.',
+      'Bacalhau for lunch, AEM deals for dessert.',
+      'A Portuguesa plays softly in the background.',
+      'The saudade hits different when you\'re qualifying deals.',
+    ],
+  },
+];
 
 export function isAuthenticated() {
   try {
@@ -66,13 +101,11 @@ async function callAuthApi(payload) {
 
 async function doLogin(email, password) {
   const hash = await sha256(password);
-  // Try API worker first
   try {
     const result = await callAuthApi({ action: 'login', email, hash });
-    const workerUnavailable = result.reason === 'http_404' || result.reason === 'http_500';
-    if (!workerUnavailable) return result;
-  } catch { /* worker not available, fall through to direct sheet read */ }
-  // Fallback: read published DA sheet directly
+    const workerDown = result.reason === 'http_404' || result.reason === 'http_500';
+    if (!workerDown) return result;
+  } catch { /* fall through to sheet */ }
   const rows = await readAuthSheet();
   const row = rows.find((r) => r.email && r.email.toLowerCase() === email.toLowerCase());
   if (!row) return { ok: false, reason: 'not_found' };
@@ -91,8 +124,13 @@ async function doRegister(email, password, name) {
   });
 }
 
+function getPerson(email) {
+  const lc = email.toLowerCase().trim();
+  return PERSONS.find((p) => p.match(lc)) || null;
+}
+
 function logoSvg() {
-  const attrs = 'width="28" height="28" viewBox="0 0 20 20" '
+  const attrs = 'width="26" height="26" viewBox="0 0 20 20" '
     + 'xmlns="http://www.w3.org/2000/svg" aria-hidden="true"';
   return `<svg ${attrs}>`
     + '<rect width="20" height="20" rx="3" fill="#eb1000"/>'
@@ -100,8 +138,47 @@ function logoSvg() {
     + '</svg>';
 }
 
+function makeRotator(el, initialSentences) {
+  let pool = initialSentences.slice();
+  let idx = 0;
+  let timer = null;
+
+  function show(text) {
+    el.classList.add('nash-login-quote--out');
+    setTimeout(() => {
+      el.textContent = text;
+      el.classList.remove('nash-login-quote--out');
+    }, 380);
+  }
+
+  function tick() {
+    idx = (idx + 1) % pool.length;
+    show(pool[idx]);
+  }
+
+  function start() {
+    timer = setInterval(tick, 5000);
+  }
+
+  function stop() {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  function swap(newPool) {
+    stop();
+    pool = newPool.slice();
+    idx = 0;
+    show(pool[0]);
+    start();
+  }
+
+  start();
+  return { stop, swap };
+}
+
 const LOGIN_ERRORS = {
-  not_found: 'No account found with that email. Need to create one?',
+  not_found: 'No account found with that email address.',
   wrong_password: 'Incorrect password. Please try again.',
   sheet_unavailable: 'Could not reach the auth service. Try again shortly.',
   default: 'Something went wrong. Please try again.',
@@ -109,7 +186,7 @@ const LOGIN_ERRORS = {
 
 const REGISTER_ERRORS = {
   email_taken: 'An account with that email already exists.',
-  http_404: 'Registration is not available yet. Ask your team admin to add you.',
+  http_404: 'Registration is not available yet. Ask your team admin.',
   default: 'Could not create your account. Please try again.',
 };
 
@@ -117,24 +194,26 @@ function getMsg(map, reason) {
   return map[reason] || map.default;
 }
 
-function setError(errorEl, btn, defaultLabel, msg) {
+function showError(errorEl, btn, label, msg) {
   errorEl.textContent = msg;
   errorEl.hidden = false;
   btn.disabled = false;
-  btn.textContent = defaultLabel;
+  btn.textContent = label;
 }
 
 function renderSignIn(block, switchFn) {
   const logo = logoSvg();
+  const firstSentence = DEFAULT_SENTENCES[0];
+
   block.innerHTML = `
-    <div class="nash-login-shell">
-      <div class="nash-login-card" data-mode="signin">
-        <div class="nash-login-brand">
-          ${logo}
-          <span class="nash-login-wordmark">Nash</span>
-        </div>
-        <h1 class="nash-login-title">Welcome back</h1>
-        <p class="nash-login-sub">Sign in to access the AEM Qualifier.</p>
+    <div class="nash-login-left">
+      <div class="nash-login-logo-row">
+        ${logo}
+        <span class="nash-login-wordmark">Nash</span>
+      </div>
+      <div class="nash-login-form-wrap">
+        <p class="nash-login-personal" aria-live="polite"></p>
+        <h1 class="nash-login-heading">Sign in to Nash</h1>
         <form class="nash-login-form" novalidate>
           <div class="nash-login-field">
             <label class="nash-login-label" for="nl-email">Email</label>
@@ -149,7 +228,7 @@ function renderSignIn(block, switchFn) {
               autocomplete="current-password" required/>
           </div>
           <div class="nash-login-error" hidden></div>
-          <button class="nash-login-btn" type="submit">Sign in</button>
+          <button class="nash-login-btn" type="submit">Continue</button>
         </form>
         <p class="nash-login-footer">
           First time here?
@@ -157,21 +236,48 @@ function renderSignIn(block, switchFn) {
         </p>
       </div>
     </div>
+    <div class="nash-login-right" aria-hidden="true">
+      <div class="nash-login-stage">
+        <div class="nash-login-quote-mark">&ldquo;</div>
+        <p class="nash-login-quote">${firstSentence}</p>
+        <p class="nash-login-quote-label">Nash &middot; AEM Qualifier</p>
+      </div>
+    </div>
   `;
 
   const form = block.querySelector('.nash-login-form');
   const errorEl = block.querySelector('.nash-login-error');
   const btn = block.querySelector('.nash-login-btn');
+  const emailEl = block.querySelector('#nl-email');
+  const personalEl = block.querySelector('.nash-login-personal');
+  const quoteEl = block.querySelector('.nash-login-quote');
 
-  block.querySelector('.nash-login-switch').addEventListener('click', () => switchFn('create'));
+  const rotator = makeRotator(quoteEl, DEFAULT_SENTENCES);
+
+  emailEl.addEventListener('input', () => {
+    const person = getPerson(emailEl.value);
+    if (person) {
+      personalEl.textContent = person.greeting;
+      rotator.swap(person.sentences);
+    } else {
+      personalEl.textContent = '';
+      rotator.swap(DEFAULT_SENTENCES);
+    }
+  });
+
+  block.querySelector('.nash-login-switch').addEventListener('click', () => {
+    rotator.stop();
+    switchFn('create');
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.hidden = true;
     btn.disabled = true;
     btn.textContent = 'Signing in…';
+    rotator.swap(LOADING_SENTENCES);
 
-    const email = block.querySelector('#nl-email').value.trim();
+    const email = emailEl.value.trim();
     const password = block.querySelector('#nl-pass').value;
 
     try {
@@ -180,25 +286,32 @@ function renderSignIn(block, switchFn) {
         storeSession(email, result.name);
         window.location.href = '/';
       } else {
-        setError(errorEl, btn, 'Sign in', getMsg(LOGIN_ERRORS, result.reason));
+        const person = getPerson(email);
+        rotator.swap(person ? person.sentences : DEFAULT_SENTENCES);
+        showError(errorEl, btn, 'Continue', getMsg(LOGIN_ERRORS, result.reason));
       }
     } catch {
-      setError(errorEl, btn, 'Sign in', LOGIN_ERRORS.default);
+      rotator.swap(DEFAULT_SENTENCES);
+      showError(errorEl, btn, 'Continue', LOGIN_ERRORS.default);
     }
   });
+
+  return rotator;
 }
 
 function renderCreateAccount(block, switchFn) {
   const logo = logoSvg();
+  const firstSentence = DEFAULT_SENTENCES[0];
+
   block.innerHTML = `
-    <div class="nash-login-shell">
-      <div class="nash-login-card" data-mode="create">
-        <div class="nash-login-brand">
-          ${logo}
-          <span class="nash-login-wordmark">Nash</span>
-        </div>
-        <h1 class="nash-login-title">Create your account</h1>
-        <p class="nash-login-sub">Join your team on Nash.</p>
+    <div class="nash-login-left">
+      <div class="nash-login-logo-row">
+        ${logo}
+        <span class="nash-login-wordmark">Nash</span>
+      </div>
+      <div class="nash-login-form-wrap">
+        <p class="nash-login-personal" aria-live="polite"></p>
+        <h1 class="nash-login-heading">Create your account</h1>
         <form class="nash-login-form" novalidate>
           <div class="nash-login-field">
             <label class="nash-login-label" for="nl-name">Full name</label>
@@ -215,9 +328,8 @@ function renderCreateAccount(block, switchFn) {
           <div class="nash-login-field">
             <label class="nash-login-label" for="nl-pass">Password</label>
             <input class="nash-login-input" id="nl-pass" name="password"
-              type="password" placeholder="Create a password"
+              type="password" placeholder="Create a password (min. 8 chars)"
               autocomplete="new-password" required/>
-            <span class="nash-login-hint">At least 8 characters</span>
           </div>
           <div class="nash-login-field">
             <label class="nash-login-label" for="nl-pass2">Confirm password</label>
@@ -234,13 +346,26 @@ function renderCreateAccount(block, switchFn) {
         </p>
       </div>
     </div>
+    <div class="nash-login-right" aria-hidden="true">
+      <div class="nash-login-stage">
+        <div class="nash-login-quote-mark">&ldquo;</div>
+        <p class="nash-login-quote">${firstSentence}</p>
+        <p class="nash-login-quote-label">Nash &middot; AEM Qualifier</p>
+      </div>
+    </div>
   `;
 
   const form = block.querySelector('.nash-login-form');
   const errorEl = block.querySelector('.nash-login-error');
   const btn = block.querySelector('.nash-login-btn');
+  const quoteEl = block.querySelector('.nash-login-quote');
 
-  block.querySelector('.nash-login-switch').addEventListener('click', () => switchFn('signin'));
+  const rotator = makeRotator(quoteEl, DEFAULT_SENTENCES);
+
+  block.querySelector('.nash-login-switch').addEventListener('click', () => {
+    rotator.stop();
+    switchFn('signin');
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -252,16 +377,17 @@ function renderCreateAccount(block, switchFn) {
     const confirm = block.querySelector('#nl-pass2').value;
 
     if (password.length < 8) {
-      setError(errorEl, btn, 'Create account', 'Password must be at least 8 characters.');
+      showError(errorEl, btn, 'Create account', 'Password must be at least 8 characters.');
       return;
     }
     if (password !== confirm) {
-      setError(errorEl, btn, 'Create account', 'Passwords do not match.');
+      showError(errorEl, btn, 'Create account', 'Passwords do not match.');
       return;
     }
 
     btn.disabled = true;
     btn.textContent = 'Creating account…';
+    rotator.swap(LOADING_SENTENCES);
 
     try {
       const result = await doRegister(email, password, name);
@@ -269,22 +395,29 @@ function renderCreateAccount(block, switchFn) {
         storeSession(email, name);
         window.location.href = '/';
       } else {
-        setError(errorEl, btn, 'Create account', getMsg(REGISTER_ERRORS, result.reason));
+        rotator.swap(DEFAULT_SENTENCES);
+        showError(errorEl, btn, 'Create account', getMsg(REGISTER_ERRORS, result.reason));
       }
     } catch {
-      setError(errorEl, btn, 'Create account', REGISTER_ERRORS.default);
+      rotator.swap(DEFAULT_SENTENCES);
+      showError(errorEl, btn, 'Create account', REGISTER_ERRORS.default);
     }
   });
+
+  return rotator;
 }
 
 export default async function decorate(block) {
+  let rotator = null;
+
   function switchMode(mode) {
+    if (rotator) rotator.stop();
     if (mode === 'create') {
-      renderCreateAccount(block, switchMode);
+      rotator = renderCreateAccount(block, switchMode);
     } else {
-      renderSignIn(block, switchMode);
+      rotator = renderSignIn(block, switchMode);
     }
   }
 
-  renderSignIn(block, switchMode);
+  rotator = renderSignIn(block, switchMode);
 }
