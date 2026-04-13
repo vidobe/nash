@@ -65,10 +65,23 @@ const PERSONS = [
     sentences: [
       'The best ideas in this tool probably came from you.',
       'Padel can wait. The pipeline won\'t.',
-      'New timezone, same login. Where are you today?',
       'Already know what everyone else should be doing? Same.',
-      'Wherever you\'re joining from, it\'s more interesting than here.',
-      'Strong opinions. Well-travelled. Correct, usually.',
+      'Are those new shoes? Bold choice for a Monday login.',
+      'The playlist is ready. The deals are not. Let\'s fix that.',
+      'Strong opinions. Great taste. Correct, usually.',
+    ],
+  },
+  {
+    match: (email) => email.includes('biederma'),
+    name: 'Max',
+    greeting: 'Guten Tag, Max.',
+    sentences: [
+      'You co-built this. The least it can do is let you in.',
+      'Precision in the kitchen. Precision in the code.',
+      'A Michelin star for the architecture, please.',
+      'Even your error messages are perfectly seasoned.',
+      'The Germans invented the car. You\'re just perfecting the pipeline.',
+      'Reduce, reuse, refactor — and always deglaze the pan.',
     ],
   },
   {
