@@ -23,8 +23,12 @@ const NAV = [
   {
     label: 'Reference',
     items: [
-      { view: 'about', text: 'About Nash', icon: 'info' },
-      { view: 'guide', text: 'Insights Guide', icon: 'book' },
+      {
+        view: 'about', text: 'About Nash', icon: 'info', href: '/about-nash',
+      },
+      {
+        view: 'guide', text: 'Insights Guide', icon: 'book', href: '/insights-guide',
+      },
     ],
   },
 ];
@@ -108,7 +112,17 @@ export default async function decorate(block) {
   }
 
   renderNav(block, reportCount);
-  setActive(block, 'overview');
+
+  // Detect active item from current URL
+  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const allItems = NAV.flatMap((s) => s.items);
+  const matched = allItems.find((item) => {
+    if (!item.href) return false;
+    const itemPath = item.href.replace(/\/$/, '') || '/';
+    if (itemPath === '/') return path === '/' || path === '';
+    return path === itemPath || path.startsWith(`${itemPath}/`);
+  });
+  setActive(block, matched?.view || '');
 
   block.addEventListener('click', (e) => {
     const btn = e.target.closest('.nash-sidebar-item');
