@@ -48,9 +48,8 @@ export default async function decorate(block) {
     </div>
   `;
 
-  // Broadcast new-analysis intent so sidebar/chat can respond
   block.querySelector('.nash-topbar-new-btn').addEventListener('click', () => {
-    document.dispatchEvent(new CustomEvent('nash:new-analysis', { bubbles: true }));
+    window.location.href = '/new-analysis';
   });
 
   // Allow other blocks to update the page title via custom event

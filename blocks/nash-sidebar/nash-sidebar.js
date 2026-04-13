@@ -7,7 +7,6 @@ const NAV = [
       {
         view: 'overview', text: 'Overview', badge: 'count', icon: 'grid', href: '/',
       },
-      { view: 'new-insight', text: 'New Insight', icon: 'plus' },
     ],
   },
   {
