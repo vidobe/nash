@@ -227,7 +227,7 @@ function makeRotator(el, initialSentences) {
   }
 
   function start() {
-    timer = setInterval(tick, 5000);
+    timer = setInterval(tick, 4000);
   }
 
   function stop() {
