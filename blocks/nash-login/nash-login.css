@@ -1,0 +1,183 @@
+.nash-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--surface, #f8f8fa);
+  padding: 24px;
+}
+
+.nash-login .nash-login-shell {
+  width: 100%;
+  max-width: 400px;
+}
+
+.nash-login .nash-login-card {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 14px;
+  padding: 40px 36px 32px;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 6%),
+    0 8px 24px rgb(0 0 0 / 5%);
+}
+
+/* Brand */
+.nash-login .nash-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.nash-login .nash-login-wordmark {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.02em;
+}
+
+/* Headings */
+.nash-login .nash-login-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.nash-login .nash-login-sub {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+/* Form */
+.nash-login .nash-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nash-login .nash-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nash-login .nash-login-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.nash-login .nash-login-hint {
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+  margin-top: 2px;
+}
+
+.nash-login .nash-login-input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink, #111318);
+  background: var(--white, #fff);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nash-login .nash-login-input::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-login .nash-login-input:focus {
+  border-color: var(--red, #eb1000);
+  box-shadow: 0 0 0 3px rgb(235 16 0 / 10%);
+}
+
+/* Error message */
+.nash-login .nash-login-error {
+  font-size: 13px;
+  color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  border: 1px solid rgb(235 16 0 / 18%);
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.45;
+}
+
+/* Button */
+.nash-login .nash-login-btn {
+  height: 40px;
+  padding: 0 20px;
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  margin-top: 6px;
+  width: 100%;
+}
+
+.nash-login .nash-login-btn:hover {
+  opacity: 0.88;
+}
+
+.nash-login .nash-login-btn:active {
+  transform: scale(0.99);
+}
+
+.nash-login .nash-login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Footer toggle */
+.nash-login .nash-login-footer {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  text-align: center;
+  margin: 20px 0 0;
+  line-height: 1.5;
+}
+
+.nash-login .nash-login-switch {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--red, #eb1000);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nash-login .nash-login-switch:hover {
+  opacity: 0.75;
+}
+
+/* Taller card for create-account mode */
+.nash-login .nash-login-card[data-mode="create"] {
+  max-width: 400px;
+}
+
+@media (width >= 480px) {
+  .nash-login .nash-login-card {
+    padding: 44px 40px 36px;
+  }
+}

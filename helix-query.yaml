@@ -58,3 +58,11 @@ indices:
         select: head > meta[name="productcount"]
         value: attribute(el, "content")
     target: /solutions/query.json
+  config:
+    include:
+      - /config/**
+    properties:
+      passcode:
+        select: head > meta[name="passcode"]
+        value: attribute(el, "content")
+    target: /config/query.json

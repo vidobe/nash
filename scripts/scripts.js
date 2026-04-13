@@ -150,6 +150,29 @@ async function loadEager(doc) {
   }
 }
 
+/** Returns true if the user has a valid Nash auth session in localStorage. */
+function isAuthenticated() {
+  try {
+    const SESSION_KEY = 'nash-auth';
+    const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return auth && Date.now() < auth.expires;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Redirects unauthenticated users to /login.
+ * No-ops when already on /login or when authenticated.
+ */
+function enforceAuth() {
+  const path = window.location.pathname;
+  const onLogin = path === '/login' || path.startsWith('/login/');
+  if (!onLogin && !isAuthenticated()) {
+    window.location.href = '/login';
+  }
+}
+
 /**
  * Loads the Nash topbar into the <header> element.
  * @param {Element} header The header element
@@ -183,9 +206,13 @@ async function loadNashSidebar(main) {
 async function loadLazy(doc) {
   const header = doc.querySelector('header');
   const main = doc.querySelector('main');
+  const path = window.location.pathname;
+  const onLogin = path === '/login' || path.startsWith('/login/');
 
-  loadNashTopbar(header);
-  loadNashSidebar(main);
+  if (!onLogin) {
+    loadNashTopbar(header);
+    loadNashSidebar(main);
+  }
 
   await loadSections(main);
 
@@ -208,6 +235,7 @@ function loadDelayed() {
 }
 
 async function loadPage() {
+  enforceAuth();
   await loadEager(document);
   await loadLazy(document);
   loadDelayed();
