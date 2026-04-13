@@ -1,7 +1,8 @@
 /**
  * loads and decorates the nash-overview block
  * Fetches /qualifications/query.json for live data; falls back to mock data in dev.
- * Document metadata fields used: title, description (domain), status, score, cms, user, lastModified
+ * Document metadata fields: title, description (domain), status, score, cms, user, lastModified
+ *
  * @param {Element} block The block element
  */
 

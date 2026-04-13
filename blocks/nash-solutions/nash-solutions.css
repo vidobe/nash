@@ -48,7 +48,7 @@
 
 .nash-solutions .nash-solutions-card:hover {
   border-color: var(--red, #eb1000);
-  box-shadow: 0 2px 12px rgba(0 0 0 / 0.07);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 7%);
 }
 
 .nash-solutions .nash-solutions-card-header {

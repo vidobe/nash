@@ -48,14 +48,14 @@ const STEPS = [
   },
 ];
 
-function statusIcon(status) {
-  if (status === 'done') {
-    return `<svg class="nash-detail-step-icon done" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
-  }
-  if (status === 'running') {
-    return `<svg class="nash-detail-step-icon running" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>`;
-  }
-  return `<svg class="nash-detail-step-icon waiting" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const STEP_ICONS = {
+  done: '<svg class="nash-detail-step-icon done" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>',
+  running: '<svg class="nash-detail-step-icon running" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>',
+  waiting: '<svg class="nash-detail-step-icon waiting" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+};
+
+function statusIcon(s) {
+  return STEP_ICONS[s] || STEP_ICONS.waiting;
 }
 
 function buildStepRow(step, stepStatus, expanded) {
@@ -63,7 +63,8 @@ function buildStepRow(step, stepStatus, expanded) {
   row.className = `nash-detail-step${stepStatus === 'running' ? ' running' : ''}${expanded ? ' expanded' : ''}`;
   row.dataset.stepId = step.id;
 
-  const statusLabel = stepStatus === 'done' ? 'Complete' : stepStatus === 'running' ? 'Running' : 'Waiting';
+  const STATUS_LABELS = { done: 'Complete', running: 'Running', waiting: 'Waiting' };
+  const statusLabel = STATUS_LABELS[stepStatus] || 'Waiting';
   const labelClass = `nash-detail-step-status ${stepStatus}`;
 
   row.innerHTML = `
@@ -109,9 +110,6 @@ export default async function decorate(block) {
 
   const company = ogTitle.replace(' | Nash', '').trim();
   const status = meta('status') || 'done';
-  const score = parseInt(meta('score'), 10) || null;
-  const cms = meta('cms') || 'Unknown';
-  const user = meta('user') || '';
   const version = meta('version') || '1';
 
   const statusLabel = status === 'generating' ? 'GENERATING' : 'COMPLETE';
