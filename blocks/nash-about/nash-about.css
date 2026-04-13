@@ -1,0 +1,341 @@
+.nash-about {
+  --about-max: 860px;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+
+.nash-about .nash-about-hero {
+  background: var(--ink, #111318);
+  color: var(--white, #fff);
+  padding: 72px 40px 0;
+}
+
+.nash-about .nash-about-hero-inner {
+  max-width: var(--about-max);
+  margin: 0 auto;
+  padding-bottom: 56px;
+}
+
+.nash-about .nash-about-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--red, #eb1000);
+  margin: 0 0 20px;
+}
+
+.nash-about .nash-about-hero-name {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--white, #fff);
+  margin: 0 0 14px;
+  letter-spacing: -0.02em;
+}
+
+.nash-about .nash-about-hero-dates {
+  font-size: 13px;
+  color: rgb(255 255 255 / 40%);
+  margin: 0 0 24px;
+  letter-spacing: 0.05em;
+}
+
+.nash-about .nash-about-hero-sub {
+  font-size: 16px;
+  color: rgb(255 255 255 / 70%);
+  line-height: 1.7;
+  margin: 0;
+  max-width: 580px;
+}
+
+/* Hero stats */
+.nash-about .nash-about-hero-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: var(--about-max);
+  margin: 0 auto;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.nash-about .nash-about-hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 28px 0;
+  border-right: 1px solid rgb(255 255 255 / 10%);
+  padding-right: 24px;
+  padding-left: 0;
+}
+
+.nash-about .nash-about-hero-stat:first-child {
+  padding-left: 0;
+}
+
+.nash-about .nash-about-hero-stat:last-child {
+  border-right: none;
+  padding-left: 24px;
+}
+
+.nash-about .nash-about-hero-stat + .nash-about-hero-stat {
+  padding-left: 24px;
+}
+
+.nash-about .nash-about-hero-stat-num {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 42px;
+  line-height: 1;
+  color: var(--white, #fff);
+}
+
+.nash-about .nash-about-hero-stat-label {
+  font-size: 12px;
+  color: rgb(255 255 255 / 50%);
+  line-height: 1.4;
+}
+
+/* ── Body ─────────────────────────────────────────────── */
+
+.nash-about .nash-about-body {
+  max-width: var(--about-max);
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+/* Sections */
+.nash-about .nash-about-section {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0 48px;
+  padding: 52px 0;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-about .nash-about-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+  padding-top: 4px;
+}
+
+.nash-about .nash-about-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.nash-about .nash-about-section-content p {
+  font-size: 15px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Lead text */
+.nash-about .nash-about-lead {
+  font-size: 17px !important;
+  color: var(--ink, #111318) !important;
+  line-height: 1.65 !important;
+}
+
+/* Builders */
+.nash-about .nash-about-builders {
+  display: flex;
+  gap: 20px;
+}
+
+.nash-about .nash-about-builder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nash-about .nash-about-builder-av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white, #fff);
+  flex-shrink: 0;
+}
+
+.nash-about .nash-about-builder-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-about .nash-about-builder-role {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-about .nash-about-origin {
+  font-size: 13px !important;
+  font-style: italic;
+  color: var(--ink-40, #9a9da6) !important;
+  padding-left: 14px;
+  border-left: 2px solid var(--border, #e5e6ea);
+}
+
+/* Quote */
+.nash-about .nash-about-quote {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 22px;
+  color: var(--ink, #111318);
+  line-height: 1.45;
+  margin: 0;
+  padding: 20px 24px;
+  background: var(--surface, #f8f8fa);
+  border-left: 3px solid var(--red, #eb1000);
+  border-radius: 0 8px 8px 0;
+}
+
+.nash-about .nash-about-quote cite {
+  display: block;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-style: normal;
+  color: var(--ink-40, #9a9da6);
+  margin-top: 10px;
+}
+
+/* Facts */
+.nash-about .nash-about-facts {
+  gap: 0 !important;
+}
+
+.nash-about .nash-about-fact {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0 20px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-about .nash-about-fact:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.nash-about .nash-about-fact:first-child {
+  padding-top: 0;
+}
+
+.nash-about .nash-about-fact-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-40, #9a9da6);
+  letter-spacing: 0.05em;
+  padding-top: 3px;
+}
+
+.nash-about .nash-about-fact h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 0 0 6px;
+}
+
+.nash-about .nash-about-fact p {
+  font-size: 13px !important;
+  color: var(--ink-70, #4a4d55) !important;
+  margin: 0 !important;
+}
+
+/* Steps */
+.nash-about .nash-about-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.nash-about .nash-about-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-about .nash-about-step:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.nash-about .nash-about-step:first-child {
+  padding-top: 0;
+}
+
+.nash-about .nash-about-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nash-about .nash-about-step h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 4px 0 5px;
+}
+
+.nash-about .nash-about-step p {
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Stack */
+.nash-about .nash-about-stack {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 40px;
+}
+
+.nash-about .nash-about-stack-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-about .nash-about-stack-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nash-about .nash-about-chip {
+  padding: 5px 12px;
+  background: var(--ink-08, #f4f4f6);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--ink-70, #4a4d55);
+}
+
+@media (width >= 600px) {
+  .nash-about .nash-about-hero-stat-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
