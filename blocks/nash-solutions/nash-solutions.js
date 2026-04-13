@@ -54,15 +54,17 @@ export default async function decorate(block) {
     const resp = await fetch('/solutions/query.json');
     if (resp.ok) {
       const json = await resp.json();
-      solutions = (json.data || []).map((row) => ({
-        path: row.path,
-        title: (row.title || '').replace(/\s*\|.*$/, '').trim() || row.path.split('/').pop(),
-        description: row.description || '',
-        status: row.status || 'active',
-        signalcount: row.signalcount || '0',
-        productcount: row.productcount || '0',
-        logo: row.logo || '',
-      }));
+      solutions = (json.data || [])
+        .filter((row) => row.path && !row.path.endsWith('/') && row.path !== '/solutions/index')
+        .map((row) => ({
+          path: row.path,
+          title: (row.title || '').replace(/\s*\|.*$/, '').trim() || row.path.split('/').pop(),
+          description: row.description || '',
+          status: row.status || 'active',
+          signalcount: row.signalcount || '0',
+          productcount: row.productcount || '0',
+          logo: row.logo || '',
+        }));
     }
   } catch {
     // no fallback — show empty state

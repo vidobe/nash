@@ -3,10 +3,13 @@ indices:
   qualifications:
     include:
       - /qualifications/**
+    exclude:
+      - /qualifications/
+      - /qualifications/index
     properties:
       title:
-        select: head > title
-        value: text(el)
+        select: head > meta[property="og:title"]
+        value: attribute(el, "content")
       description:
         select: head > meta[name="description"]
         value: attribute(el, "content")
@@ -35,10 +38,13 @@ indices:
   solutions:
     include:
       - /solutions/**
+    exclude:
+      - /solutions/
+      - /solutions/index
     properties:
       title:
-        select: head > title
-        value: text(el)
+        select: head > meta[property="og:title"]
+        value: attribute(el, "content")
       description:
         select: head > meta[name="description"]
         value: attribute(el, "content")
