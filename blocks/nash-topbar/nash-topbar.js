@@ -31,7 +31,7 @@ export default async function decorate(block) {
           </svg>
         </span>
         <span class="nash-topbar-wordmark">Nash</span>
-        <span class="nash-topbar-subtitle">/ AEM Qualifier</span>
+        <span class="nash-topbar-subtitle">/ Solution Qualifier</span>
       </a>
     </div>
     <div class="nash-topbar-center">

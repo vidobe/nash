@@ -240,7 +240,7 @@ function renderSignIn(block, switchFn) {
       <div class="nash-login-stage">
         <div class="nash-login-quote-mark">&ldquo;</div>
         <p class="nash-login-quote">${firstSentence}</p>
-        <p class="nash-login-quote-label">Nash &middot; AEM Qualifier</p>
+        <p class="nash-login-quote-label">Nash &middot; Solution Qualifier</p>
       </div>
     </div>
   `;
@@ -350,7 +350,7 @@ function renderCreateAccount(block, switchFn) {
       <div class="nash-login-stage">
         <div class="nash-login-quote-mark">&ldquo;</div>
         <p class="nash-login-quote">${firstSentence}</p>
-        <p class="nash-login-quote-label">Nash &middot; AEM Qualifier</p>
+        <p class="nash-login-quote-label">Nash &middot; Solution Qualifier</p>
       </div>
     </div>
   `;
