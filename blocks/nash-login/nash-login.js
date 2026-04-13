@@ -388,9 +388,15 @@ function renderCreateAccount(block, switchFn) {
   const form = block.querySelector('.nash-login-form');
   const errorEl = block.querySelector('.nash-login-error');
   const btn = block.querySelector('.nash-login-btn');
+  const emailEl = block.querySelector('#nl-email');
   const quoteEl = block.querySelector('.nash-login-quote');
 
   const rotator = makeRotator(quoteEl, DEFAULT_SENTENCES);
+
+  emailEl.addEventListener('input', () => {
+    const person = getPerson(emailEl.value);
+    rotator.swap(person ? person.sentences : DEFAULT_SENTENCES);
+  });
 
   block.querySelector('.nash-login-switch').addEventListener('click', () => {
     rotator.stop();
@@ -402,7 +408,7 @@ function renderCreateAccount(block, switchFn) {
     errorEl.hidden = true;
 
     const name = block.querySelector('#nl-name').value.trim();
-    const email = block.querySelector('#nl-email').value.trim();
+    const email = emailEl.value.trim();
     const password = block.querySelector('#nl-pass').value;
     const confirm = block.querySelector('#nl-pass2').value;
 
