@@ -1,49 +1,58 @@
-/* ─── Layout ─────────────────────────────────────────────────── */
+/* ─── Page shell ─────────────────────────────────────────────── */
 .nash-login {
   display: grid;
-  grid-template-columns: 460px 1fr;
+  grid-template-columns: 1fr 1fr;
   min-height: 100vh;
+  background-color: #f0f0f2;
+  background-image: radial-gradient(circle, rgb(0 0 0 / 9%) 1px, transparent 1px);
+  background-size: 22px 22px;
+  align-items: center;
 }
 
-/* ─── Left panel (dark form side) ───────────────────────────── */
+/* ─── Left panel — holds the card ───────────────────────────── */
 .nash-login .nash-login-left {
-  background: #0d0e12;
   display: flex;
-  flex-direction: column;
-  padding: 40px 48px 48px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 48px 40px 48px 60px;
 }
 
+/* ─── Card ───────────────────────────────────────────────────── */
+.nash-login .nash-login-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 36px 32px;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 5%),
+    0 4px 16px rgb(0 0 0 / 7%),
+    0 16px 40px rgb(0 0 0 / 6%);
+  width: 100%;
+  max-width: 360px;
+}
+
+/* Brand */
 .nash-login .nash-login-logo-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 9px;
+  margin-bottom: 28px;
 }
 
 .nash-login .nash-login-wordmark {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: var(--ink, #111318);
   letter-spacing: -0.02em;
 }
 
-.nash-login .nash-login-form-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 340px;
-  padding: 40px 0;
-}
-
-/* Personalised greeting (appears when known email detected) */
+/* Personalised greeting */
 .nash-login .nash-login-personal {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--red, #eb1000);
-  margin: 0 0 6px;
-  min-height: 20px;
-  letter-spacing: 0.01em;
+  margin: 0 0 4px;
+  min-height: 18px;
   transition: opacity 0.3s;
 }
 
@@ -52,11 +61,11 @@
 }
 
 .nash-login .nash-login-heading {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
-  color: #fff;
+  color: var(--ink, #111318);
   letter-spacing: -0.025em;
-  margin: 0 0 28px;
+  margin: 0 0 24px;
   line-height: 1.15;
 }
 
@@ -64,60 +73,59 @@
 .nash-login .nash-login-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 13px;
 }
 
 .nash-login .nash-login-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .nash-login .nash-login-label {
   font-size: 13px;
   font-weight: 500;
-  color: rgb(255 255 255 / 65%);
+  color: var(--ink, #111318);
 }
 
 .nash-login .nash-login-input {
-  height: 42px;
-  padding: 0 14px;
-  background: rgb(255 255 255 / 7%);
-  border: 1px solid rgb(255 255 255 / 14%);
+  height: 40px;
+  padding: 0 12px;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
   border-radius: 8px;
   font-size: 14px;
-  color: #fff;
+  color: var(--ink, #111318);
   outline: none;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   width: 100%;
   box-sizing: border-box;
 }
 
 .nash-login .nash-login-input::placeholder {
-  color: rgb(255 255 255 / 28%);
+  color: var(--ink-40, #9a9da6);
 }
 
 .nash-login .nash-login-input:focus {
   border-color: var(--red, #eb1000);
-  background: rgb(255 255 255 / 9%);
-  box-shadow: 0 0 0 3px rgb(235 16 0 / 25%);
+  box-shadow: 0 0 0 3px rgb(235 16 0 / 10%);
 }
 
 /* ─── Error ──────────────────────────────────────────────────── */
 .nash-login .nash-login-error {
   font-size: 13px;
-  color: #ff6b5b;
-  background: rgb(235 16 0 / 12%);
-  border: 1px solid rgb(235 16 0 / 25%);
+  color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  border: 1px solid rgb(235 16 0 / 18%);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   line-height: 1.45;
 }
 
 /* ─── Button ─────────────────────────────────────────────────── */
 .nash-login .nash-login-btn {
-  height: 42px;
+  height: 40px;
   padding: 0 20px;
   background: var(--red, #eb1000);
   color: #fff;
@@ -128,12 +136,12 @@
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  margin-top: 8px;
+  margin-top: 6px;
   width: 100%;
 }
 
 .nash-login .nash-login-btn:hover {
-  opacity: 0.88;
+  opacity: 0.87;
 }
 
 .nash-login .nash-login-btn:active {
@@ -149,8 +157,9 @@
 /* ─── Footer toggle ──────────────────────────────────────────── */
 .nash-login .nash-login-footer {
   font-size: 13px;
-  color: rgb(255 255 255 / 40%);
-  margin: 20px 0 0;
+  color: var(--ink-40, #9a9da6);
+  margin: 18px 0 0;
+  text-align: center;
   line-height: 1.5;
 }
 
@@ -160,7 +169,7 @@
   padding: 0;
   font-size: 13px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  color: rgb(255 255 255 / 75%);
+  color: var(--ink-70, #4a4d55);
   font-weight: 500;
   cursor: pointer;
   text-decoration: underline;
@@ -168,29 +177,25 @@
 }
 
 .nash-login .nash-login-switch:hover {
-  color: #fff;
+  color: var(--ink, #111318);
 }
 
-/* ─── Right panel (rotating quote) ──────────────────────────── */
+/* ─── Right panel — rotating quote ──────────────────────────── */
 .nash-login .nash-login-right {
-  background-color: #f4f4f6;
-  background-image: radial-gradient(circle, rgb(0 0 0 / 9%) 1px, transparent 1px);
-  background-size: 22px 22px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 60px;
+  justify-content: flex-start;
+  padding: 48px 60px 48px 48px;
 }
 
 .nash-login .nash-login-stage {
-  max-width: 520px;
-  text-align: center;
+  max-width: 460px;
 }
 
 .nash-login .nash-login-quote-mark {
-  font-size: 80px;
+  font-size: 64px;
   line-height: 0.6;
-  color: rgb(0 0 0 / 10%);
+  color: rgb(0 0 0 / 12%);
   font-family: var(--serif, 'DM Serif Display', Georgia, serif);
   display: block;
   margin-bottom: 20px;
@@ -199,12 +204,12 @@
 
 .nash-login .nash-login-quote {
   font-family: var(--serif, 'DM Serif Display', Georgia, serif);
-  font-size: clamp(26px, 3.5vw, 44px);
+  font-size: clamp(28px, 3.2vw, 46px);
   font-weight: 400;
   color: var(--ink, #111318);
   line-height: 1.2;
   letter-spacing: -0.02em;
-  margin: 0 0 28px;
+  margin: 0 0 24px;
   transition: opacity 0.38s ease, transform 0.38s ease;
   opacity: 1;
   transform: translateY(0);
@@ -220,7 +225,7 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgb(0 0 0 / 30%);
+  color: rgb(0 0 0 / 28%);
   margin: 0;
 }
 
@@ -228,18 +233,16 @@
 @media (width < 860px) {
   .nash-login {
     grid-template-columns: 1fr;
+    align-items: flex-start;
+    padding: 40px 20px;
+  }
+
+  .nash-login .nash-login-left {
+    justify-content: center;
+    padding: 0;
   }
 
   .nash-login .nash-login-right {
     display: none;
-  }
-
-  .nash-login .nash-login-left {
-    padding: 32px 28px 40px;
-  }
-
-  .nash-login .nash-login-form-wrap {
-    max-width: 100%;
-    padding: 32px 0;
   }
 }

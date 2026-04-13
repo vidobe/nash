@@ -207,11 +207,11 @@ function renderSignIn(block, switchFn) {
 
   block.innerHTML = `
     <div class="nash-login-left">
-      <div class="nash-login-logo-row">
-        ${logo}
-        <span class="nash-login-wordmark">Nash</span>
-      </div>
-      <div class="nash-login-form-wrap">
+      <div class="nash-login-card">
+        <div class="nash-login-logo-row">
+          ${logo}
+          <span class="nash-login-wordmark">Nash</span>
+        </div>
         <p class="nash-login-personal" aria-live="polite"></p>
         <h1 class="nash-login-heading">Sign in to Nash</h1>
         <form class="nash-login-form" novalidate>
@@ -305,11 +305,11 @@ function renderCreateAccount(block, switchFn) {
 
   block.innerHTML = `
     <div class="nash-login-left">
-      <div class="nash-login-logo-row">
-        ${logo}
-        <span class="nash-login-wordmark">Nash</span>
-      </div>
-      <div class="nash-login-form-wrap">
+      <div class="nash-login-card">
+        <div class="nash-login-logo-row">
+          ${logo}
+          <span class="nash-login-wordmark">Nash</span>
+        </div>
         <p class="nash-login-personal" aria-live="polite"></p>
         <h1 class="nash-login-heading">Create your account</h1>
         <form class="nash-login-form" novalidate>
