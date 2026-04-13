@@ -116,11 +116,7 @@ function storeSession(email, name) {
 }
 
 async function readAuthSheet() {
-  // Always read from the published (live) URL — preview URLs may require Sidekick auth
-  const { hostname } = window.location;
-  const liveHost = hostname.replace('.aem.page', '.aem.live');
-  const base = liveHost !== hostname ? `https://${liveHost}` : '';
-  const resp = await fetch(`${base}/config/auth.json`);
+  const resp = await fetch('/config/auth.json');
   if (!resp.ok) throw new Error('sheet_unavailable');
   const json = await resp.json();
   return json.data || [];
