@@ -85,6 +85,19 @@ const PERSONS = [
     ],
   },
   {
+    match: (email) => email.includes('wsmeets'),
+    name: 'Wouter',
+    greeting: 'Goedemiddag, baas.',
+    sentences: [
+      'The boss has arrived. Typos are now being corrected.',
+      '15 years at Adobe. Still no one reads the brief.',
+      'Carnival is over. Time to qualify some deals.',
+      'All spelling mistakes have been quietly removed. Welcome.',
+      'Marketing strategy loading… please hold.',
+      'The most experienced person in the room just signed in.',
+    ],
+  },
+  {
     match: (email) => email.includes('pvanoosterho'),
     name: 'Paul',
     greeting: 'Hey Paul.',
