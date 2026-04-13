@@ -1,0 +1,276 @@
+.nash-feedback {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+
+/* Shell */
+.nash-feedback .nash-fb-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Banner */
+.nash-feedback .nash-fb-banner {
+  text-align: center;
+  padding: 22px 16px 16px;
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+
+.nash-feedback .nash-fb-banner strong {
+  color: var(--ink, #111318);
+}
+
+/* Chat log */
+.nash-feedback .nash-fb-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+.nash-feedback .nash-fb-chat::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nash-feedback .nash-fb-chat::-webkit-scrollbar-thumb {
+  background: var(--ink-15, #e8e9ec);
+  border-radius: 2px;
+}
+
+/* Messages */
+.nash-feedback .nash-fb-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.nash-feedback .nash-fb-msg-nash {
+  align-self: flex-start;
+}
+
+.nash-feedback .nash-fb-msg-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+@keyframes nash-fb-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nash-feedback .nash-fb-msg-in {
+  animation: nash-fb-in 0.22s ease both;
+}
+
+/* Avatars */
+.nash-feedback .nash-fb-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.nash-feedback .nash-fb-avatar.nash {
+  background: var(--ink, #111318);
+}
+
+.nash-feedback .nash-fb-avatar.user {
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+}
+
+/* Bubbles */
+.nash-feedback .nash-fb-bubble {
+  padding: 11px 15px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 560px;
+}
+
+.nash-feedback .nash-fb-bubble.nash {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  color: var(--ink, #111318);
+  border-bottom-left-radius: 4px;
+}
+
+.nash-feedback .nash-fb-bubble.user {
+  background: var(--ink, #111318);
+  color: var(--white, #fff);
+  border-bottom-right-radius: 4px;
+}
+
+/* Typing indicator */
+.nash-feedback .nash-fb-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 13px 16px;
+}
+
+.nash-feedback .nash-fb-typing span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-40, #9a9da6);
+  animation: nash-fb-bounce 1.2s ease infinite;
+}
+
+.nash-feedback .nash-fb-typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.nash-feedback .nash-fb-typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes nash-fb-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Quick action buttons */
+.nash-feedback .nash-fb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 40px;
+  animation: nash-fb-in 0.22s ease both;
+}
+
+.nash-feedback .nash-fb-action-btn {
+  padding: 7px 14px;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+  cursor: pointer;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.nash-feedback .nash-fb-action-btn:hover {
+  border-color: var(--ink-40, #9a9da6);
+  background: var(--surface, #f8f8fa);
+}
+
+/* Composer */
+.nash-feedback .nash-fb-composer {
+  flex-shrink: 0;
+  padding: 12px 0 20px;
+}
+
+.nash-feedback .nash-fb-composer-inner {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nash-feedback .nash-fb-composer-inner:focus-within {
+  border-color: var(--ink-40, #9a9da6);
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 5%);
+}
+
+.nash-feedback .nash-fb-input {
+  width: 100%;
+  min-height: 48px;
+  max-height: 140px;
+  padding: 14px 16px 4px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--ink, #111318);
+  background: transparent;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.nash-feedback .nash-fb-input::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-feedback .nash-fb-composer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 10px 16px;
+}
+
+.nash-feedback .nash-fb-hint {
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-feedback .nash-fb-hint kbd {
+  font-family: inherit;
+  background: var(--ink-08, #f4f4f6);
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+
+/* Send button */
+.nash-feedback .nash-fb-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.nash-feedback .nash-fb-send:disabled {
+  background: var(--ink-15, #e8e9ec);
+  color: var(--ink-40, #9a9da6);
+  cursor: not-allowed;
+}
+
+.nash-feedback .nash-fb-send:not(:disabled):hover {
+  background: #c90d00;
+}
