@@ -45,6 +45,45 @@ const PERSONS = [
       'The saudade hits different when you\'re qualifying deals.',
     ],
   },
+  {
+    match: (email) => email.includes('kvaneeghem'),
+    name: 'Koen',
+    greeting: 'Hey Koen.',
+    sentences: [
+      'Did your cat approve this login attempt?',
+      'Hakuna Matata. Your access awaits.',
+      'The real AEM expert has entered the building.',
+      'Somewhere, a cat is judging your password choice.',
+      'You can fix this component. You always can.',
+      'Under the sea there are no deadlines. But up here there are.',
+    ],
+  },
+  {
+    match: (email) => email.includes('erven'),
+    name: 'Sanne',
+    greeting: 'Hey Sanne.',
+    sentences: [
+      'The best ideas in this tool probably came from you.',
+      'Padel can wait. The pipeline won\'t.',
+      'New timezone, same login. Where are you today?',
+      'Already know what everyone else should be doing? Same.',
+      'Wherever you\'re joining from, it\'s more interesting than here.',
+      'Strong opinions. Well-travelled. Correct, usually.',
+    ],
+  },
+  {
+    match: (email) => email.includes('pvanoosterho'),
+    name: 'Paul',
+    greeting: 'Hey Paul.',
+    sentences: [
+      'Why did the data pipeline break down? It ran out of schema. Hi Paul.',
+      'Scooter: fixed. Garden: tended. Deals: unqualified. Let\'s fix that.',
+      'What do you call a solutions architect who gardens? A root cause analyst.',
+      'The only person who debugs engines AND data models. Respect.',
+      'I asked my garden for insights. It said it prefers the cloud.',
+      'Dad joke loading… Why did the architect sit outside? For the edge delivery.',
+    ],
+  },
 ];
 
 export function isAuthenticated() {
