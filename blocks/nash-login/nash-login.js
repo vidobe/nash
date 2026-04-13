@@ -116,7 +116,11 @@ function storeSession(email, name) {
 }
 
 async function readAuthSheet() {
-  const resp = await fetch('/config/auth.json');
+  // Always read from the published (live) URL — preview URLs may require Sidekick auth
+  const { hostname } = window.location;
+  const liveHost = hostname.replace('.aem.page', '.aem.live');
+  const base = liveHost !== hostname ? `https://${liveHost}` : '';
+  const resp = await fetch(`${base}/config/auth.json`);
   if (!resp.ok) throw new Error('sheet_unavailable');
   const json = await resp.json();
   return json.data || [];
@@ -142,8 +146,9 @@ async function doLogin(email, password) {
   const hash = await sha256(password);
   try {
     const result = await callAuthApi({ action: 'login', email, hash });
-    const workerDown = result.reason === 'http_404' || result.reason === 'http_500';
-    if (!workerDown) return result;
+    // Only trust the worker result if it's a proper auth response (no HTTP error code)
+    const isHttpError = result.reason && result.reason.startsWith('http_');
+    if (!isHttpError) return result;
   } catch { /* worker unavailable, fall through to sheet */ }
   try {
     const rows = await readAuthSheet();
