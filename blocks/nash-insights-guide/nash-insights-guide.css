@@ -1,0 +1,64 @@
+.nash-insights-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 40px;
+}
+
+.nash-insights-guide .nash-guide-shell {
+  text-align: center;
+  max-width: 540px;
+}
+
+.nash-insights-guide .nash-guide-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber, #b45309);
+  background: var(--amber-lt, #fef3c7);
+  border: 1px solid #fcd34d;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 28px;
+}
+
+.nash-insights-guide .nash-guide-title {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 400;
+  color: var(--ink, #111318);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+}
+
+.nash-insights-guide .nash-guide-sub {
+  font-size: 15px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+.nash-insights-guide .nash-guide-sub2 {
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+  line-height: 1.6;
+  margin: 0 0 32px;
+  font-style: italic;
+}
+
+.nash-insights-guide .nash-guide-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+  background: var(--surface, #f8f8fa);
+  border: 1px solid var(--border, #e5e6ea);
+  padding: 7px 16px;
+  border-radius: 20px;
+}

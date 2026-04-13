@@ -13,7 +13,7 @@ const NAV = [
     label: 'Tools',
     items: [
       {
-        view: 'solutions', text: 'Solutions Files', icon: 'layers', href: '/solutions/',
+        view: 'solutions', text: 'Solutions Skills', icon: 'layers', href: '/solutions/',
       },
       {
         view: 'feedback', text: 'Feedback Hub', icon: 'signal', href: '/feedback',

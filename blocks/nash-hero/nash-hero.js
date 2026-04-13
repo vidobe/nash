@@ -16,8 +16,9 @@ export default async function decorate(block) {
     || 'AI-powered opportunity qualification — AEM fit scoring, competitive analysis, and solution recommendations. Ready in minutes.';
 
   const hour = new Date().getHours();
-  // eslint-disable-next-line no-nested-ternary
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  let greeting = 'Good evening';
+  if (hour < 12) greeting = 'Good morning';
+  else if (hour < 18) greeting = 'Good afternoon';
 
   let total = 12;
   let generating = 4;
@@ -47,9 +48,9 @@ export default async function decorate(block) {
         </button>
         <button class="nash-hero-btn-secondary" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
           </svg>
-          Skills File Reference
+          Solutions Skills
         </button>
       </div>
       <div class="nash-hero-stats">
@@ -74,6 +75,10 @@ export default async function decorate(block) {
   `;
 
   block.querySelector('.nash-hero-btn-primary').addEventListener('click', () => {
-    document.dispatchEvent(new CustomEvent('nash:navigate', { detail: { view: 'new-insight' }, bubbles: true }));
+    window.location.href = '/new-analysis';
+  });
+
+  block.querySelector('.nash-hero-btn-secondary').addEventListener('click', () => {
+    window.location.href = '/solutions/';
   });
 }
