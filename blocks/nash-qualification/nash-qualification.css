@@ -1,0 +1,455 @@
+/* ── nash-qualification block ────────────────────────────────────────────── */
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.nash-qualification {
+  background: var(--white, #fff);
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-qual-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 36px 40px 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.nash-qual-breadcrumb {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+  text-decoration: none;
+  margin-bottom: 14px;
+  transition: color 0.12s;
+}
+
+.nash-qual-breadcrumb:hover {
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-qual-account {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.025em;
+  margin: 0 0 4px;
+  line-height: 1.15;
+}
+
+.nash-qual-solution {
+  font-size: 14px;
+  color: var(--ink-40, #9a9da6);
+  margin: 0 0 16px;
+}
+
+.nash-qual-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nash-qual-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ink-70, #4a4d55);
+  background: var(--ink-08, #f4f4f6);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 20px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.nash-qual-meta-item svg {
+  flex-shrink: 0;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* ── Score ring ──────────────────────────────────────────────────────────── */
+
+.nash-qual-header-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.nash-qual-score-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 4px solid;
+  gap: 0;
+}
+
+.nash-qual-score-ring.nash-qual-score--green {
+  border-color: var(--green, #0d7a45);
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-qual-score-ring.nash-qual-score--amber {
+  border-color: var(--amber, #b45309);
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+}
+
+.nash-qual-score-ring.nash-qual-score--red {
+  border-color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-qual-score-num {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.nash-qual-score-denom {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.65;
+}
+
+/* ── Verdict badge ───────────────────────────────────────────────────────── */
+
+.nash-qual-verdict {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 20px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.nash-qual-verdict--green {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+  border: 1px solid rgb(13 122 69 / 18%);
+}
+
+.nash-qual-verdict--amber {
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+  border: 1px solid rgb(180 83 9 / 18%);
+}
+
+.nash-qual-verdict--red {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+  border: 1px solid rgb(235 16 0 / 18%);
+}
+
+/* ── Scorecard ───────────────────────────────────────────────────────────── */
+
+.nash-qual-scorecard {
+  padding: 0 40px 36px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.nash-qual-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+  margin: 0 0 14px;
+}
+
+.nash-qual-scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.nash-qual-dim-card {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 3px solid var(--border, #e5e6ea);
+}
+
+.nash-qual-dim--green {
+  border-top-color: var(--green, #0d7a45);
+}
+
+.nash-qual-dim--amber {
+  border-top-color: var(--amber, #b45309);
+}
+
+.nash-qual-dim--red {
+  border-top-color: var(--red, #eb1000);
+}
+
+.nash-qual-dim-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nash-qual-dim-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  line-height: 1.3;
+}
+
+.nash-qual-dim-weight {
+  font-size: 11px;
+  color: var(--ink-40, #9a9da6);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nash-qual-dim-score {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.nash-qual-dim-scored {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink, #111318);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.nash-qual-dim-max {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-qual-dim-bar-wrap {
+  height: 4px;
+  background: var(--ink-15, #e8e9ec);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nash-qual-dim--green .nash-qual-dim-bar {
+  height: 100%;
+  background: var(--green, #0d7a45);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.nash-qual-dim--amber .nash-qual-dim-bar {
+  height: 100%;
+  background: var(--amber, #b45309);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.nash-qual-dim--red .nash-qual-dim-bar {
+  height: 100%;
+  background: var(--red, #eb1000);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.nash-qual-dim-notes {
+  font-size: 12px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Page body content styling (.nash-qual-page) ─────────────────────────── */
+
+.nash-qual-page .section:not(:has(.nash-qualification)) {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  box-sizing: border-box;
+}
+
+.nash-qual-page .default-content-wrapper h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.02em;
+  margin: 36px 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-qual-page .default-content-wrapper h2:first-child {
+  margin-top: 0;
+}
+
+.nash-qual-page .default-content-wrapper h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 24px 0 8px;
+}
+
+.nash-qual-page .default-content-wrapper p {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+.nash-qual-page .default-content-wrapper ul,
+.nash-qual-page .default-content-wrapper ol {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+
+.nash-qual-page .default-content-wrapper li {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.65;
+  margin-bottom: 6px;
+}
+
+.nash-qual-page .default-content-wrapper strong {
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.nash-qual-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 16px 0 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-qual-page th {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-qual-page td {
+  padding: 10px 14px;
+  color: var(--ink-70, #4a4d55);
+  border-bottom: 1px solid var(--border, #e5e6ea);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.nash-qual-page tr:last-child td {
+  border-bottom: none;
+}
+
+.nash-qual-page tr:nth-child(even) td {
+  background: var(--ink-08, #f4f4f6);
+}
+
+/* ── Status cells ────────────────────────────────────────────────────────── */
+
+.nash-qual-status--pass {
+  color: var(--green, #0d7a45) !important;
+  font-weight: 500;
+}
+
+.nash-qual-status--warn {
+  color: var(--amber, #b45309) !important;
+  font-weight: 500;
+}
+
+.nash-qual-status--fail {
+  color: var(--red, #eb1000) !important;
+  font-weight: 600;
+}
+
+.nash-qual-risk--high {
+  color: var(--red, #eb1000) !important;
+  font-weight: 600;
+}
+
+.nash-qual-risk--medium {
+  color: var(--amber, #b45309) !important;
+  font-weight: 500;
+}
+
+/* ── Gap callout boxes ───────────────────────────────────────────────────── */
+
+.nash-qual-gap-callout {
+  background: var(--red-lt, #fff0ef);
+  border: 1px solid rgb(235 16 0 / 18%);
+  border-left: 3px solid var(--red, #eb1000);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+
+.nash-qual-gap-callout h3 {
+  color: var(--red, #eb1000) !important;
+  margin-top: 0 !important;
+}
+
+.nash-qual-gap-callout p {
+  color: var(--ink-70, #4a4d55) !important;
+  margin-bottom: 8px !important;
+}
+
+.nash-qual-gap-callout p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (width < 900px) {
+  .nash-qual-header {
+    flex-direction: column-reverse;
+    padding: 24px 20px 20px;
+    gap: 20px;
+  }
+
+  .nash-qual-header-score {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nash-qual-scorecard {
+    padding: 0 20px 24px;
+  }
+
+  .nash-qual-scorecard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nash-qual-page .section:not(:has(.nash-qualification)) {
+    padding: 24px 20px;
+  }
+}
+
+@media (width < 600px) {
+  .nash-qual-scorecard-grid {
+    grid-template-columns: 1fr;
+  }
+}
