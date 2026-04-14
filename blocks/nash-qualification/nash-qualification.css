@@ -92,19 +92,19 @@
   gap: 0;
 }
 
-.nash-qual-score-ring.nash-qual-score--green {
+.nash-qual-score-ring.nash-qual-score-green {
   border-color: var(--green, #0d7a45);
   background: var(--green-lt, #edf7f2);
   color: var(--green, #0d7a45);
 }
 
-.nash-qual-score-ring.nash-qual-score--amber {
+.nash-qual-score-ring.nash-qual-score-amber {
   border-color: var(--amber, #b45309);
   background: var(--amber-lt, #fef3c7);
   color: var(--amber, #b45309);
 }
 
-.nash-qual-score-ring.nash-qual-score--red {
+.nash-qual-score-ring.nash-qual-score-red {
   border-color: var(--red, #eb1000);
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
@@ -134,19 +134,19 @@
   white-space: nowrap;
 }
 
-.nash-qual-verdict--green {
+.nash-qual-verdict-green {
   background: var(--green-lt, #edf7f2);
   color: var(--green, #0d7a45);
   border: 1px solid rgb(13 122 69 / 18%);
 }
 
-.nash-qual-verdict--amber {
+.nash-qual-verdict-amber {
   background: var(--amber-lt, #fef3c7);
   color: var(--amber, #b45309);
   border: 1px solid rgb(180 83 9 / 18%);
 }
 
-.nash-qual-verdict--red {
+.nash-qual-verdict-red {
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
   border: 1px solid rgb(235 16 0 / 18%);
@@ -187,15 +187,15 @@
   border-top: 3px solid var(--border, #e5e6ea);
 }
 
-.nash-qual-dim--green {
+.nash-qual-dim-green {
   border-top-color: var(--green, #0d7a45);
 }
 
-.nash-qual-dim--amber {
+.nash-qual-dim-amber {
   border-top-color: var(--amber, #b45309);
 }
 
-.nash-qual-dim--red {
+.nash-qual-dim-red {
   border-top-color: var(--red, #eb1000);
 }
 
@@ -246,21 +246,21 @@
   overflow: hidden;
 }
 
-.nash-qual-dim--green .nash-qual-dim-bar {
+.nash-qual-dim-green .nash-qual-dim-bar {
   height: 100%;
   background: var(--green, #0d7a45);
   border-radius: 4px;
   transition: width 0.6s ease;
 }
 
-.nash-qual-dim--amber .nash-qual-dim-bar {
+.nash-qual-dim-amber .nash-qual-dim-bar {
   height: 100%;
   background: var(--amber, #b45309);
   border-radius: 4px;
   transition: width 0.6s ease;
 }
 
-.nash-qual-dim--red .nash-qual-dim-bar {
+.nash-qual-dim-red .nash-qual-dim-bar {
   height: 100%;
   background: var(--red, #eb1000);
   border-radius: 4px;
@@ -272,6 +272,31 @@
   color: var(--ink-70, #4a4d55);
   line-height: 1.5;
   margin: 0;
+}
+
+/* ── Gap callout boxes ───────────────────────────────────────────────────── */
+
+.nash-qual-gap-callout {
+  background: var(--red-lt, #fff0ef);
+  border: 1px solid rgb(235 16 0 / 18%);
+  border-left: 3px solid var(--red, #eb1000);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+
+.nash-qual-gap-callout h3 {
+  color: var(--red, #eb1000);
+  margin-top: 0;
+}
+
+.nash-qual-gap-callout p {
+  color: var(--ink-70, #4a4d55);
+  margin-bottom: 8px;
+}
+
+.nash-qual-gap-callout p:last-child {
+  margin-bottom: 0;
 }
 
 /* ── Page body content styling (.nash-qual-page) ─────────────────────────── */
@@ -370,54 +395,29 @@
 
 /* ── Status cells ────────────────────────────────────────────────────────── */
 
-.nash-qual-status--pass {
+.nash-qual-status-pass {
   color: var(--green, #0d7a45) !important;
   font-weight: 500;
 }
 
-.nash-qual-status--warn {
+.nash-qual-status-warn {
   color: var(--amber, #b45309) !important;
   font-weight: 500;
 }
 
-.nash-qual-status--fail {
+.nash-qual-status-fail {
   color: var(--red, #eb1000) !important;
   font-weight: 600;
 }
 
-.nash-qual-risk--high {
+.nash-qual-risk-high {
   color: var(--red, #eb1000) !important;
   font-weight: 600;
 }
 
-.nash-qual-risk--medium {
+.nash-qual-risk-medium {
   color: var(--amber, #b45309) !important;
   font-weight: 500;
-}
-
-/* ── Gap callout boxes ───────────────────────────────────────────────────── */
-
-.nash-qual-gap-callout {
-  background: var(--red-lt, #fff0ef);
-  border: 1px solid rgb(235 16 0 / 18%);
-  border-left: 3px solid var(--red, #eb1000);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin: 16px 0;
-}
-
-.nash-qual-gap-callout h3 {
-  color: var(--red, #eb1000) !important;
-  margin-top: 0 !important;
-}
-
-.nash-qual-gap-callout p {
-  color: var(--ink-70, #4a4d55) !important;
-  margin-bottom: 8px !important;
-}
-
-.nash-qual-gap-callout p:last-child {
-  margin-bottom: 0 !important;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
