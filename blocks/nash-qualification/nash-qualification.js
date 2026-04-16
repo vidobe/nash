@@ -14,22 +14,35 @@
  * @param {Element} block
  */
 
+function statusClass(text) {
+  if (text === 'Does not meet') return 'nash-qual-status-fail';
+  if (text === 'Meets') return 'nash-qual-status-pass';
+  if (text.startsWith('Meets with')) return 'nash-qual-status-warn';
+  if (text === 'High') return 'nash-qual-risk-high';
+  if (text === 'Medium-High' || text === 'Medium') return 'nash-qual-risk-medium';
+  return '';
+}
+
 function enhanceBodyContent(main) {
   if (!main) return;
 
+  // Colour <td> cells in HTML tables
   main.querySelectorAll('td').forEach((td) => {
-    const text = td.textContent.trim();
-    if (text === 'Does not meet') {
-      td.classList.add('nash-qual-status-fail');
-    } else if (text === 'Meets') {
-      td.classList.add('nash-qual-status-pass');
-    } else if (text.startsWith('Meets with')) {
-      td.classList.add('nash-qual-status-warn');
-    } else if (text === 'High') {
-      td.classList.add('nash-qual-risk-high');
-    } else if (text === 'Medium-High' || text === 'Medium') {
-      td.classList.add('nash-qual-risk-medium');
-    }
+    const cls = statusClass(td.textContent.trim());
+    if (cls) td.classList.add(cls);
+  });
+
+  // Colour status cells in div-based requirement/competitor blocks
+  // Structure: .block > div(row) > div(cell)[1] contains status text
+  main.querySelectorAll('.requirement, .competitor').forEach((blk) => {
+    blk.classList.add('nash-qual-data-table');
+    [...blk.querySelectorAll(':scope > div')].forEach((row) => {
+      const cells = [...row.querySelectorAll(':scope > div')];
+      if (cells.length >= 2) {
+        const cls = statusClass(cells[1].textContent.trim());
+        if (cls) cells[1].classList.add(cls);
+      }
+    });
   });
 
   main.querySelectorAll('h3').forEach((h3) => {
@@ -116,12 +129,12 @@ export default async function decorate(block) {
 
   // ── Scorecard section ─────────────────────────────────────────────────────
   const scorecardHTML = dimensions.length ? `
-    <section class="nash-qual-scorecard">
-      <h2 class="nash-qual-section-title">Score Breakdown</h2>
+    <div class="nash-qual-scorecard">
+      <p class="nash-qual-section-title">Score Breakdown</p>
       <div class="nash-qual-scorecard-grid">
         ${dimensions.map(dimCardHTML).join('')}
       </div>
-    </section>` : '';
+    </div>` : '';
 
   // ── Meta tags ─────────────────────────────────────────────────────────────
   const calendarIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -149,10 +162,10 @@ export default async function decorate(block) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   block.innerHTML = `
-    <header class="nash-qual-header">
+    <div class="nash-qual-header">
       <div class="nash-qual-header-body">
         <a class="nash-qual-breadcrumb" href="/">← All Qualifications</a>
-        <h1 class="nash-qual-account">${accountName}</h1>
+        <p class="nash-qual-account">${accountName}</p>
         <p class="nash-qual-solution">${solution}</p>
         <div class="nash-qual-meta">
           ${dateMeta}${typeMeta}${solutionMeta}
@@ -165,7 +178,7 @@ export default async function decorate(block) {
         </div>
         <div class="nash-qual-verdict nash-qual-verdict--${verdictColour}">${verdict}</div>
       </div>
-    </header>
+    </div>
     ${scorecardHTML}
   `;
 

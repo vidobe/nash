@@ -34,6 +34,7 @@
 .nash-qual-account {
   font-size: 28px;
   font-weight: 600;
+  font-family: var(--sans, system-ui, sans-serif);
   color: var(--ink, #111318);
   letter-spacing: -0.025em;
   margin: 0 0 4px;
@@ -164,6 +165,7 @@
 .nash-qual-section-title {
   font-size: 11px;
   font-weight: 600;
+  font-family: var(--sans, system-ui, sans-serif);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-40, #9a9da6);
@@ -391,6 +393,67 @@
 
 .nash-qual-page tr:nth-child(even) td {
   background: var(--ink-08, #f4f4f6);
+}
+
+/* ── Div-based tables (DA requirement / competitor blocks) ───────────────── */
+
+.nash-qual-page .nash-qual-data-table {
+  width: 100%;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0 24px;
+  font-size: 13px;
+}
+
+.nash-qual-page .nash-qual-data-table > div {
+  display: grid;
+  grid-template-columns: 2fr 140px 2fr;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+/* cells — must precede .competitor override (lower specificity first) */
+.nash-qual-page .nash-qual-data-table > div > div {
+  padding: 10px 14px;
+  color: var(--ink-70, #4a4d55);
+  border-right: 1px solid var(--border, #e5e6ea);
+  line-height: 1.5;
+}
+
+.nash-qual-page .nash-qual-data-table > div > div p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.nash-qual-page .nash-qual-data-table.competitor > div {
+  grid-template-columns: 160px 1fr 1fr;
+}
+
+.nash-qual-page .nash-qual-data-table > div:first-child {
+  background: var(--ink-08, #f4f4f6);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.nash-qual-page .nash-qual-data-table > div:last-child {
+  border-bottom: none;
+}
+
+.nash-qual-page .nash-qual-data-table > div:nth-child(even) {
+  background: var(--ink-08, #f4f4f6);
+}
+
+/* last-cell border — must precede :first-child > div p (lower specificity) */
+.nash-qual-page .nash-qual-data-table > div > div:last-child {
+  border-right: none;
+}
+
+.nash-qual-page .nash-qual-data-table > div:first-child > div p {
+  font-weight: 600;
+  color: var(--ink, #111318);
 }
 
 /* ── Status cells ────────────────────────────────────────────────────────── */
