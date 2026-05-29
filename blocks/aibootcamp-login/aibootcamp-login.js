@@ -91,9 +91,7 @@ async function doLogin(email, password) {
 }
 
 function adobeLogoSvg() {
-  return `<svg width="80" height="28" viewBox="0 0 240 84" xmlns="http://www.w3.org/2000/svg" aria-label="Adobe">
-    <path fill="#eb1000" d="M97.87 0H0v84L97.87 0zM142.13 0H240v84L142.13 0zM120 31.08L157.5 84h-24.7l-10.4-26.54H97.7L120 31.08z"/>
-  </svg>`;
+  return '<span class="aibootcamp-login-adobe-wordmark" aria-label="Adobe">Adobe</span>';
 }
 
 function makeRotator(el, pool) {

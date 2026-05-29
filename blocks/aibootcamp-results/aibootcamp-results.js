@@ -71,9 +71,7 @@ function renderHeader(meta) {
   return `
     <header class="ab-report-header">
       <div class="ab-report-header-left">
-        <svg class="ab-report-header-logo" width="72" height="25" viewBox="0 0 240 84" xmlns="http://www.w3.org/2000/svg" aria-label="Adobe">
-          <path fill="#eb1000" d="M97.87 0H0v84L97.87 0zM142.13 0H240v84L142.13 0zM120 31.08L157.5 84h-24.7l-10.4-26.54H97.7L120 31.08z"/>
-        </svg>
+        <span class="ab-report-header-logo" aria-label="Adobe">Adobe</span>
         <div class="ab-report-header-title-group">
           <p class="ab-report-header-eyebrow">Digital Insights Report</p>
           <h1 class="ab-report-header-company">${meta.company || 'Your Company'}</h1>
