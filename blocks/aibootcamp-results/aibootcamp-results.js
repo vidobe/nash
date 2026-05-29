@@ -5,19 +5,24 @@
  * block sections, and renders a brand visibility dashboard.
  */
 
-import { getSession } from '../aibootcamp-login/aibootcamp-login.js';
-
 const LOGIN_PAGE = '/aibootcamp/';
 const REPORTS_BASE = '/aibootcamp/reports/';
+const SESSION_KEY = 'aibootcamp-auth';
 
 // ─── Auth guard ───────────────────────────────────────────────
 function requireAuth() {
-  const session = getSession();
-  if (!session) {
+  try {
+    const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    const session = auth && Date.now() < auth.expires ? auth : null;
+    if (!session) {
+      window.location.href = LOGIN_PAGE;
+      return null;
+    }
+    return session;
+  } catch {
     window.location.href = LOGIN_PAGE;
     return null;
   }
-  return session;
 }
 
 // ─── Fetch & parse report doc ─────────────────────────────────
@@ -259,6 +264,15 @@ function renderLoading() {
 
 // ─── Main ─────────────────────────────────────────────────────
 export default async function decorate(block) {
+  const section = block.closest('.section');
+  const main = block.closest('main');
+  [section, main].forEach((el) => {
+    if (!el) return;
+    el.style.maxWidth = 'none';
+    el.style.padding = '0';
+    el.style.margin = '0';
+  });
+
   const session = requireAuth();
   if (!session) return;
 
