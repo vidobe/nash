@@ -125,38 +125,45 @@
 .ab-tabnav-wrap {
   background: #fff;
   border-bottom: 1px solid var(--border, #e5e6ea);
+  padding: 12px 0;
 }
 
 .ab-tabnav-inner {
   display: flex;
-  gap: 0;
+  gap: 4px;
   margin: 0 20%;
   overflow-x: auto;
+  background: var(--ink-08, #f4f4f6);
+  border-radius: 10px;
+  padding: 4px;
 }
 
 .ab-tabnav-btn {
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 18px;
+  border-radius: 7px;
+  padding: 8px 18px;
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-70, #4a4d55);
   cursor: pointer;
   white-space: nowrap;
   font-family: var(--sans, system-ui, sans-serif);
-  transition: color 0.15s;
-  margin-bottom: -1px;
+  transition: color 0.15s, background 0.15s;
+  flex: 1;
+  text-align: center;
 }
 
 .ab-tabnav-btn:hover {
   color: var(--ink, #111318);
+  background: rgb(255 255 255 / 60%);
 }
 
 .ab-tabnav-btn-active {
+  background: #fff;
   color: var(--ink, #111318);
-  border-bottom-color: var(--ink, #111318);
   font-weight: 600;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
 }
 
 /* ─── Page body ──────────────────────────────────────────────── */
@@ -186,7 +193,7 @@
 /* ─── Sidebar ────────────────────────────────────────────────── */
 .ab-sidebar {
   position: sticky;
-  top: 108px;
+  top: 130px;
   background: #fff;
   border-radius: 12px;
   border: 1px solid var(--border, #e5e6ea);
