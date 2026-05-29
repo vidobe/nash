@@ -168,7 +168,8 @@ function isAuthenticated() {
 function enforceAuth() {
   const path = window.location.pathname;
   const onLogin = path === '/login' || path.startsWith('/login/');
-  if (!onLogin && !isAuthenticated()) {
+  const isPublic = path.startsWith('/aibootcamp/');
+  if (!onLogin && !isPublic && !isAuthenticated()) {
     window.location.href = '/login';
   }
 }
@@ -208,8 +209,9 @@ async function loadLazy(doc) {
   const main = doc.querySelector('main');
   const path = window.location.pathname;
   const onLogin = path === '/login' || path.startsWith('/login/');
+  const isPublic = path.startsWith('/aibootcamp/');
 
-  if (!onLogin) {
+  if (!onLogin && !isPublic) {
     loadNashTopbar(header);
     loadNashSidebar(main);
   }
