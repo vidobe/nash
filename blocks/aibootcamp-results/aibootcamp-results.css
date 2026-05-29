@@ -77,12 +77,9 @@
 
 .ab-report-header-logo {
   flex-shrink: 0;
-  font-size: 28px;
-  font-weight: 900;
-  color: #eb1000;
-  font-family: 'Adobe Clean', 'DM Sans', system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  height: 20px;
+  width: auto;
+  display: block;
 }
 
 .ab-report-header-eyebrow {

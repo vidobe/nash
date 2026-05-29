@@ -36,13 +36,9 @@
 }
 
 .aibootcamp-login-adobe-wordmark {
-  font-size: 34px;
-  font-weight: 900;
-  color: #eb1000;
-  font-family: 'Adobe Clean', 'DM Sans', system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  font-style: normal;
+  display: block;
+  height: 24px;
+  width: auto;
 }
 
 .aibootcamp-login-heading {
