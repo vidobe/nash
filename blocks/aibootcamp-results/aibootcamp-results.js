@@ -1,8 +1,6 @@
 /**
  * aibootcamp-results block
- * Auth-gated brand visibility dashboard.
- * Fetches /aibootcamp/reports/{company}.plain.html, parses structured
- * sections, and renders a tabbed report with sidebar navigation.
+ * Auth-gated brand visibility dashboard — full 19-page report renderer.
  */
 
 const LOGIN_PAGE = '/aibootcamp/';
@@ -12,13 +10,10 @@ const SESSION_KEY = 'aibootcamp-auth';
 function requireAuth() {
   try {
     const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    const session = auth && Date.now() < auth.expires ? auth : null;
-    if (!session) { window.location.href = LOGIN_PAGE; return null; }
-    return session;
-  } catch {
-    window.location.href = LOGIN_PAGE;
-    return null;
-  }
+    const s = auth && Date.now() < auth.expires ? auth : null;
+    if (!s) { window.location.href = LOGIN_PAGE; return null; }
+    return s;
+  } catch { window.location.href = LOGIN_PAGE; return null; }
 }
 
 async function fetchReport(slug) {
@@ -30,7 +25,9 @@ async function fetchReport(slug) {
 function parseBlock(doc, name) {
   const el = doc.querySelector(`.${name}`);
   if (!el) return [];
-  return [...el.querySelectorAll(':scope > div')].map((row) => [...row.querySelectorAll(':scope > div')].map((c) => c.textContent.trim()));
+  return [...el.querySelectorAll(':scope > div')].map(
+    (row) => [...row.querySelectorAll(':scope > div')].map((c) => c.textContent.trim()),
+  );
 }
 
 function parseKV(doc, name) {
@@ -45,17 +42,17 @@ function scoreColor(val) {
   return 'red';
 }
 
-function cwvColor(status) {
+function cwvStatus(status) {
   if (status === 'good') return 'green';
   if (status === 'needs-work') return 'amber';
-  return 'red';
+  if (status === 'poor') return 'red';
+  return 'neutral';
 }
 
 function badge(priority) {
   const map = { high: 'red', medium: 'amber', low: 'gray' };
-  const color = map[priority] || 'gray';
-  const label = priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : '';
-  return `<span class="ab-badge ab-badge-${color}">${label} Priority</span>`;
+  const c = map[priority] || 'gray';
+  return `<span class="ab-badge ab-badge-${c}">${priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : ''} Priority</span>`;
 }
 
 // ─── Topbar ────────────────────────────────────────────────────
@@ -76,11 +73,10 @@ function renderTopbar() {
           </svg>
         </button>
       </div>
-    </header>
-  `;
+    </header>`;
 }
 
-// ─── Tab definitions ───────────────────────────────────────────
+// ─── Tabs ──────────────────────────────────────────────────────
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'performance', label: 'Performance' },
@@ -89,386 +85,343 @@ const TABS = [
   { id: 'solutions', label: 'Solutions' },
 ];
 
-function renderTabNav(activeTab) {
-  return `
-    <nav class="ab-tabnav" aria-label="Report sections">
-      <div class="ab-tabnav-inner">
-        ${TABS.map((t) => `
-          <button class="ab-tabnav-btn${t.id === activeTab ? ' ab-tabnav-btn-active' : ''}"
-            data-tab="${t.id}" type="button">${t.label}</button>
-        `).join('')}
-      </div>
-    </nav>
-  `;
+function renderTabNav(active) {
+  return `<nav class="ab-tabnav" aria-label="Report sections"><div class="ab-tabnav-inner">${
+    TABS.map((t) => `<button class="ab-tabnav-btn${t.id === active ? ' ab-tabnav-btn-active' : ''}" data-tab="${t.id}" type="button">${t.label}</button>`).join('')
+  }</div></nav>`;
 }
 
-// ─── Tab content builders ──────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────
+function card(content, cls = '') {
+  return `<div class="ab-card${cls ? ` ${cls}` : ''}">${content}</div>`;
+}
 
-const buildOverview = (meta, scores, solutions) => {
-  const anchors = ['Executive Summary', 'Key Scores', 'Growth Opportunities'];
+function sectionHtml(id, title, body, sub = '') {
+  return `<section class="ab-section" id="${id}">
+    <h2 class="ab-section-title">${title}</h2>${sub ? `<p class="ab-section-sub">${sub}</p>` : ''}
+    ${body}
+  </section>`;
+}
 
-  const scoreCards = scores.map(([label, value, max, desc]) => {
-    const color = scoreColor(value);
+// ─── Overview tab ──────────────────────────────────────────────
+function buildOverview(meta, scores, exec) {
+  const scoreCards = scores.map(([label, value, max, desc]) => `
+    <div class="ab-score-card ab-score-card-${scoreColor(value)}">
+      <p class="ab-score-card-label">${label}</p>
+      <p class="ab-score-card-value">${value}${max ? `<span class="ab-score-card-max"> /${max}</span>` : ''}</p>
+      <p class="ab-score-card-desc">${desc}</p>
+    </div>`).join('');
+
+  const oppCards = [
+    [exec['opportunity-1-title'], exec['opportunity-1-desc']],
+    [exec['opportunity-2-title'], exec['opportunity-2-desc']],
+    [exec['opportunity-3-title'], exec['opportunity-3-desc']],
+  ].filter(([t]) => t).map(([title, desc]) => card(`
+    <h3 class="ab-card-title">${title}</h3>
+    <p class="ab-card-desc">${desc}</p>`)).join('');
+
+  return {
+    anchors: ['Executive Summary', 'Key Scores', 'Growth Opportunities'],
+    html: `
+      <section class="ab-section" id="executive-summary">
+        ${card(`
+          <div class="ab-exec-head">
+            <div>
+              <h1 class="ab-company-name">${meta.company || ''}</h1>
+              <span class="ab-domain-chip">${meta.domain || ''}</span>
+            </div>
+            <span class="ab-event-chip">${meta.event || ''}</span>
+          </div>
+          <p class="ab-headline">${meta.headline || ''}</p>
+          <div class="ab-exec-body">
+            <div class="ab-exec-col">
+              <p class="ab-exec-label">Situation</p>
+              <p class="ab-exec-text">${exec.situation || ''}</p>
+            </div>
+            <div class="ab-exec-col">
+              <p class="ab-exec-label">Complication</p>
+              <p class="ab-exec-text">${exec.complication || ''}</p>
+            </div>
+            <div class="ab-exec-col">
+              <p class="ab-exec-label">Resolution</p>
+              <p class="ab-exec-text">${exec.resolution || ''}</p>
+            </div>
+          </div>`)}
+      </section>
+      ${sectionHtml('key-scores', 'Key Scores', `<div class="ab-scores-grid">${scoreCards}</div>`)}
+      ${sectionHtml('growth-opportunities', 'Growth Opportunities', `<div class="ab-cards-grid">${oppCards}</div>`)}`,
+  };
+}
+
+// ─── Performance tab ───────────────────────────────────────────
+function buildPerformance(perfRows, impactRows) {
+  const metrics = perfRows.filter(([n]) => n !== 'note');
+  const note = perfRows.find(([n]) => n === 'note');
+
+  const cwvCards = metrics.map(([name, value, target, status, desc]) => `
+    <div class="ab-cwv-card ab-cwv-card-${cwvStatus(status)}">
+      <div class="ab-cwv-head">
+        <span class="ab-cwv-name">${name}</span>
+        <span class="ab-cwv-status ab-cwv-status-${cwvStatus(status)}">${status === 'needs-work' ? 'Needs Work' : status.charAt(0).toUpperCase() + status.slice(1)}</span>
+      </div>
+      <p class="ab-cwv-value">${value}</p>
+      <p class="ab-cwv-target">Target: ${target}</p>
+      ${desc ? `<p class="ab-cwv-desc">${desc}</p>` : ''}
+    </div>`).join('');
+
+  const impactCards = impactRows.map(([title, stat, desc]) => card(`
+    <div class="ab-impact-head">
+      <h3 class="ab-card-title">${title}</h3>
+      <span class="ab-impact-stat">${stat}</span>
+    </div>
+    <p class="ab-card-desc">${desc}</p>`)).join('');
+
+  const noteHtml = note ? `<div class="ab-note">${note[1]}</div>` : '';
+
+  return {
+    anchors: ['Core Web Vitals', 'Business Impact'],
+    html: `
+      ${sectionHtml('core-web-vitals', 'Core Web Vitals', `<div class="ab-cwv-grid">${cwvCards}</div>${noteHtml}`, 'Google PageSpeed Insights · Lighthouse · Mobile · Homepage only')}
+      ${sectionHtml('business-impact', 'Business Impact', `<div class="ab-cards-grid ab-cards-grid-2">${impactCards}</div>`)}`,
+  };
+}
+
+// ─── SEO tab ───────────────────────────────────────────────────
+function buildSeo(seo, keywords, insights) {
+  const stats = [
+    ['Monthly Traffic', seo['Monthly Traffic']],
+    ['YoY Growth', seo['YoY Growth']],
+    ['Traffic Value', seo['Traffic Value']],
+    ['SEO Health', seo['SEO Health Score']],
+  ].filter(([, v]) => v).map(([l, v]) => `
+    <div class="ab-stat-card">
+      <p class="ab-stat-card-value">${v}</p>
+      <p class="ab-stat-card-label">${l}</p>
+    </div>`).join('');
+
+  const branded = parseFloat(seo['Branded Traffic']) || 86;
+  const nonBranded = parseFloat(seo['Non-Branded Traffic']) || 14;
+
+  const kwRows = keywords.map(([kw, vol, pos, clicks, cpc, rationale]) => `
+    <tr>
+      <td class="ab-kw-term">${kw}</td>
+      <td>${Number(vol.replace(/,/g, '')).toLocaleString()}</td>
+      <td><span class="ab-pos-badge ab-pos-badge-${parseInt(pos, 10) <= 3 ? 'top' : 'mid'}">${pos}</span></td>
+      <td>${clicks}</td>
+      ${cpc && cpc !== '€' ? `<td><span class="ab-cpc">${cpc}</span></td>` : '<td>—</td>'}
+      <td class="ab-kw-rationale">${rationale}</td>
+    </tr>`).join('');
+
+  const insightItems = insights.map(([text]) => `<li>${text}</li>`).join('');
+
+  return {
+    anchors: ['Traffic Overview', 'Branded vs Non-Branded', 'Keyword Opportunities'],
+    html: `
+      ${sectionHtml('traffic-overview', 'Traffic Overview', `
+        <div class="ab-stat-row">${stats}</div>
+        ${card(`<p class="ab-traffic-note">${seo['Traffic Trend Note'] || ''}</p>
+          ${seo['March Anomaly'] ? `<p class="ab-traffic-alert">⚠ ${seo['March Anomaly']}</p>` : ''}`)}`)}
+      ${sectionHtml('branded-vs-nonbranded', 'Branded vs Non-Branded', card(`
+        <div class="ab-brand-split">
+          <div class="ab-brand-bar">
+            <div class="ab-brand-bar-branded" style="width:${branded}%">
+              <span>${branded}% Branded</span>
+            </div>
+            <div class="ab-brand-bar-nonbranded" style="width:${nonBranded}%">
+              <span>${nonBranded}% Non-Branded</span>
+            </div>
+          </div>
+          <p class="ab-brand-benchmark">Industry benchmark: ${seo['Industry Benchmark'] || '40-60% non-branded'}. At ${nonBranded}%, Wehkamp has significant untapped growth potential.</p>
+        </div>
+        <div class="ab-kw-row">
+          <div>
+            <p class="ab-kw-label">Branded Keywords</p>
+            <p class="ab-card-desc">${seo['Top Branded Keywords'] || ''}</p>
+          </div>
+          <div>
+            <p class="ab-kw-label">Non-Branded Opportunities</p>
+            <p class="ab-card-desc">${seo['Top Non-Branded Opportunities'] || ''}</p>
+          </div>
+        </div>
+        <p class="ab-card-desc" style="margin-top:14px">${seo['Non-Branded Analysis'] || ''}</p>`))}
+      ${sectionHtml(
+    'keyword-opportunities',
+    'Keyword Opportunities',
+    `
+        <div class="ab-table-wrap">${card(`
+          <table class="ab-kw-table">
+            <thead><tr>
+              <th>Keyword</th><th>Volume</th><th>Position</th><th>Est. Clicks</th><th>CPC</th><th>Rationale</th>
+            </tr></thead>
+            <tbody>${kwRows}</tbody>
+          </table>
+          ${insightItems ? `<ul class="ab-insights-list">${insightItems}</ul>` : ''}`)}</div>`,
+    'Top 5 strategic keywords delivering 10,200+ monthly visits',
+  )}`,
+  };
+}
+
+// ─── AI Visibility tab ─────────────────────────────────────────
+function buildAiVisibility(ai, competitive, whatAiSees) {
+  const engines = [
+    ['Google AI Overview', ai['AI Overview Score'], ai['AI Overview Score']],
+    ['Google AI Mode', ai['AI Mode Score'], ai['AI Mode Score']],
+    ['Gemini', ai['Gemini Score'], ai['Gemini Score']],
+    ['ChatGPT', ai['ChatGPT Score'], ai['ChatGPT Score']],
+  ].filter(([, v]) => v);
+
+  const engineRows = engines.map(([name, score]) => {
+    const n = parseInt(score, 10);
+    const color = scoreColor(score);
     return `
-      <div class="ab-score-card ab-score-card-${color}">
-        <p class="ab-score-card-label">${label}</p>
-        <p class="ab-score-card-value">${value}${max ? `<span class="ab-score-card-max"> /${max}</span>` : ''}</p>
-        <p class="ab-score-card-desc">${desc}</p>
+      <div class="ab-engine-row">
+        <span class="ab-engine-name">${name}</span>
+        <div class="ab-engine-bar-wrap">
+          <div class="ab-engine-bar ab-engine-bar-${color}" style="width:${n}%"></div>
+        </div>
+        <span class="ab-engine-score ab-engine-score-${color}">${score}<span class="ab-engine-max">/100</span></span>
       </div>`;
   }).join('');
 
-  const oppCards = solutions.map(([name, priority, desc]) => `
-    <div class="ab-card">
+  const competitorRows = competitive.map(([brand, mentions, citations, score]) => `
+    <tr class="${brand === 'Wehkamp' ? 'ab-row-highlight' : ''}">
+      <td><strong>${brand}</strong></td>
+      <td>${mentions}</td>
+      <td>${citations}</td>
+      <td>${score}</td>
+    </tr>`).join('');
+
+  const strengths = Object.entries(whatAiSees)
+    .filter(([k]) => k.startsWith('strength-'))
+    .map(([, v]) => `<li class="ab-strength">${v}</li>`).join('');
+
+  const gaps = Object.entries(whatAiSees)
+    .filter(([k]) => k.startsWith('gap-'))
+    .map(([, v]) => `<li class="ab-gap">${v}</li>`).join('');
+
+  const actions = Object.entries(whatAiSees)
+    .filter(([k]) => k.startsWith('action-'))
+    .map(([, v], i) => `<div class="ab-action"><span class="ab-action-num">${i + 1}</span><p>${v}</p></div>`).join('');
+
+  const assocChips = (whatAiSees.associations || '').split('·').map((a) => `<span class="ab-assoc-chip">${a.trim()}</span>`).join('');
+
+  return {
+    anchors: ['Visibility Score', 'By Engine', 'Competitive Position', 'What AI Sees', 'Recommended Actions'],
+    html: `
+      ${sectionHtml('visibility-score', 'AI Visibility Score', card(`
+        <div class="ab-ai-hero">
+          <div class="ab-ai-score-block">
+            <p class="ab-ai-score-label">Visibility Score</p>
+            <p class="ab-ai-score-value ab-ai-score-${scoreColor(ai['Visibility Score'] || '62')}">${ai['Visibility Score'] || '62'}<span class="ab-ai-score-max">/100</span></p>
+            <p class="ab-ai-score-trend">${ai['Visibility Score'] ? (ai['Visibility Score'][3] || '') : '-8 points over 3 months'}</p>
+          </div>
+          <div class="ab-ai-stats">
+            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai['Brand Mentions'] || ''}</p><p class="ab-ai-stat-label">Brand Mentions</p></div>
+            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai.Citations || ''}</p><p class="ab-ai-stat-label">Citations</p></div>
+            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai['Audience Reach'] || ''}</p><p class="ab-ai-stat-label">Audience Reach</p></div>
+          </div>
+        </div>`))}
+      ${sectionHtml('by-engine', 'Visibility by Engine', card(`<div class="ab-engines">${engineRows}</div>`))}
+      ${sectionHtml('competitive-position', 'Competitive Position', card(`
+        <div class="ab-competitive-head">
+          <div><p class="ab-competitive-label">Brand Rank</p><p class="ab-competitive-big">${ai['Competitive Rank'] || '#2 of 5'}</p></div>
+          <div><p class="ab-competitive-label">Wehkamp Share of Voice</p><p class="ab-competitive-big">${ai['Share of Voice'] || '19%'}</p></div>
+          <div><p class="ab-competitive-label">Top Brand</p><p class="ab-competitive-big">h&amp;m <span class="ab-competitive-note">80% SoV</span></p></div>
+        </div>
+        <table class="ab-comp-table">
+          <thead><tr><th>Brand</th><th>Mentions</th><th>Citations</th><th>Score</th></tr></thead>
+          <tbody>${competitorRows}</tbody>
+        </table>`))}
+      ${sectionHtml('what-ai-sees', 'What AI Sees About Wehkamp', card(`
+        <p class="ab-card-desc">${whatAiSees.summary || ''}</p>
+        <div class="ab-assoc-chips">${assocChips}</div>
+        <div class="ab-strengths-gaps">
+          <div>
+            <p class="ab-sg-label ab-sg-label-green">Strengths</p>
+            <ul class="ab-sg-list">${strengths}</ul>
+          </div>
+          <div>
+            <p class="ab-sg-label ab-sg-label-red">Growth Opportunities</p>
+            <ul class="ab-sg-list">${gaps}</ul>
+          </div>
+        </div>`))}
+      ${sectionHtml('recommended-actions', 'Recommended Actions', `<div class="ab-actions">${actions}</div>`)}`,
+  };
+}
+
+// ─── Solutions tab ─────────────────────────────────────────────
+function buildSolutions(solutions, roadmapResults, success, nextSteps) {
+  const solCards = solutions.map(([name, priority, desc, tags, quickWin]) => {
+    const tagChips = (tags || '').split('·').map((t) => `<span class="ab-tag">${t.trim()}</span>`).join('');
+    return card(`
       <div class="ab-card-head">
         <h3 class="ab-card-title">${name}</h3>
         ${badge(priority)}
       </div>
       <p class="ab-card-desc">${desc}</p>
-    </div>`).join('');
-
-  return {
-    anchors,
-    html: `
-      <section class="ab-section" id="executive-summary">
-        <div class="ab-section-intro">
-          <h1 class="ab-company-name">${meta.company || ''}</h1>
-          <span class="ab-domain-chip">${meta.domain || ''}</span>
-          <p class="ab-section-desc">${meta.summary || ''}</p>
-          <div class="ab-scores-grid ab-scores-grid-inline">${scoreCards}</div>
-        </div>
-      </section>
-      <section class="ab-section" id="key-scores">
-        <h2 class="ab-section-title">Key Scores</h2>
-        <div class="ab-scores-grid">${scoreCards}</div>
-      </section>
-      <section class="ab-section" id="growth-opportunities">
-        <h2 class="ab-section-title">Growth Opportunities</h2>
-        <div class="ab-cards-list">${oppCards}</div>
-      </section>
-    `,
-  };
-};
-
-const buildPerformance = (perfRows) => {
-  const anchors = ['Core Web Vitals', 'Business Impact'];
-
-  // Filter out "note" row for metrics display
-  const metrics = perfRows.filter(([name]) => name !== 'note');
-  const noteRow = perfRows.find(([name]) => name === 'note');
-
-  const metricCards = metrics.map(([name, value, target, status]) => {
-    const color = cwvColor(status);
-    const statusLabel = status === 'needs-work' ? 'Needs Work' : status.charAt(0).toUpperCase() + status.slice(1);
-    return `
-      <div class="ab-cwv-card ab-cwv-card-${color}">
-        <div class="ab-cwv-card-head">
-          <span class="ab-cwv-name">${name}</span>
-          <span class="ab-cwv-status ab-cwv-status-${color}">${statusLabel}</span>
-        </div>
-        <p class="ab-cwv-value">${value}</p>
-        <p class="ab-cwv-target">Target: ${target}</p>
-      </div>`;
+      ${quickWin ? `<div class="ab-quick-win"><span class="ab-quick-win-label">Quick Win</span><p>${quickWin}</p></div>` : ''}
+      <div class="ab-tags">${tagChips}</div>`);
   }).join('');
 
-  const impactCards = [
-    ['Bounce Rate', 'Slow cold-load pages increase bounce rate by up to 90%. At 12.4s LCP, first-time visitors abandon before content renders — losing high-intent shoppers who will not return.', 'red'],
-    ['Revenue Impact', 'Every 100ms improvement in load time correlates with a 1% increase in conversion rate. Closing the 9.9s gap to the 2.5s LCP target could unlock significant incremental revenue.', 'amber'],
-    ['Search Rankings', 'Google uses Core Web Vitals as a ranking signal. The 42/100 PageSpeed score and poor LCP actively suppress organic rankings, compounding the 20.4% traffic decline.', 'red'],
-    ['Mobile Experience', 'INP of 327ms (needs work) means interactive elements feel sluggish on mobile devices — critical in a market where 60%+ of e-commerce sessions are mobile.', 'amber'],
-  ].map(([title, desc, color]) => `
-    <div class="ab-card ab-impact-card-${color}">
-      <h3 class="ab-card-title">${title}</h3>
-      <p class="ab-card-desc">${desc}</p>
+  const resultItems = roadmapResults.map(([stat, company, product]) => `
+    <div class="ab-result-item">
+      <p class="ab-result-stat">${stat}</p>
+      <p class="ab-result-company">${company} · ${product}</p>
     </div>`).join('');
 
-  const noteHtml = noteRow ? `
-    <div class="ab-note-card">
-      <span class="ab-note-icon">ℹ</span>
-      <p>${noteRow[1]}</p>
-    </div>` : '';
+  const achievements = Object.entries(success)
+    .filter(([k]) => k.startsWith('achievement-'))
+    .map(([, v]) => `<li>${v}</li>`).join('');
+
+  const successStats = [
+    [success['stat1-value'], success['stat1-label']],
+    [success['stat2-value'], success['stat2-label']],
+    [success['stat3-value'], success['stat3-label']],
+    [success['stat4-value'], success['stat4-label']],
+  ].filter(([v]) => v).map(([v, l]) => `<div class="ab-success-stat"><p class="ab-success-stat-value">${v}</p><p class="ab-success-stat-label">${l}</p></div>`).join('');
+
+  const stepCards = nextSteps.map(([title, desc]) => card(`
+    <h3 class="ab-card-title">${title}</h3>
+    <p class="ab-card-desc">${desc}</p>`)).join('');
 
   return {
-    anchors,
+    anchors: ['Recommended Solutions', 'What Adobe Customers Achieve', 'Customer Success', 'Next Steps'],
     html: `
-      <section class="ab-section" id="core-web-vitals">
-        <h2 class="ab-section-title">Core Web Vitals</h2>
-        <div class="ab-cwv-grid">${metricCards}</div>
-        ${noteHtml}
-      </section>
-      <section class="ab-section" id="business-impact">
-        <h2 class="ab-section-title">Business Impact</h2>
-        <div class="ab-cards-grid">${impactCards}</div>
-      </section>
-    `,
+      ${sectionHtml('recommended-solutions', 'Recommended Solutions', `<div class="ab-cards-list">${solCards}</div>`)}
+      ${roadmapResults.length ? sectionHtml('customer-results', 'What Adobe Customers Are Achieving', card(`<div class="ab-results-row">${resultItems}</div>`)) : ''}
+      ${success.company ? sectionHtml('customer-success', `Customer Success: ${success.company}`, card(`
+        <div class="ab-success-meta">
+          <span class="ab-success-industry">${success.industry || ''}</span>
+          <span class="ab-success-solution">${success.solution || ''}</span>
+        </div>
+        <div class="ab-success-stats">${successStats}</div>
+        <p class="ab-card-desc">${success.description || ''}</p>
+        ${achievements ? `<ul class="ab-success-achievements">${achievements}</ul>` : ''}
+        ${success.relevance ? `<div class="ab-relevance"><p class="ab-relevance-label">Why this matters for ${success.company === 'Maisons du Monde' ? 'Wehkamp' : 'you'}</p><p>${success.relevance}</p></div>` : ''}`)) : ''}
+      ${nextSteps.length ? sectionHtml('next-steps', 'Next Steps', `<div class="ab-cards-grid">${stepCards}</div>`) : ''}`,
   };
-};
-
-const buildSeo = (seo, keywords) => {
-  const anchors = ['Traffic Overview', 'Branded vs Non-Branded', 'Keyword Opportunities'];
-
-  const trafficStats = [
-    ['Monthly Traffic', seo['Monthly Traffic']],
-    ['YoY Growth', seo['YoY Growth']],
-    ['Traffic Value', seo['Traffic Value']],
-    ['Non-Branded Traffic', seo['Non-Branded Traffic']],
-  ].filter(([, v]) => v);
-
-  const statCards = trafficStats.map(([label, value]) => {
-    const isNeg = value && value.startsWith('-');
-    return `
-      <div class="ab-stat-card${isNeg ? ' ab-stat-card-red' : ''}">
-        <p class="ab-stat-card-value">${value}</p>
-        <p class="ab-stat-card-label">${label}</p>
-      </div>`;
-  }).join('');
-
-  const branded = parseFloat(seo['Branded Traffic'] || '86');
-  const nonBranded = parseFloat(seo['Non-Branded Traffic'] || '14');
-
-  const kwRows = keywords.map(([kw, vol, pos, clicks, rationale]) => `
-    <tr>
-      <td class="ab-kw-term">${kw}</td>
-      <td>${vol}</td>
-      <td>${pos}</td>
-      <td>${clicks}</td>
-      <td class="ab-kw-rationale">${rationale}</td>
-    </tr>`).join('');
-
-  return {
-    anchors,
-    html: `
-      <section class="ab-section" id="traffic-overview">
-        <h2 class="ab-section-title">Traffic Overview</h2>
-        <div class="ab-stat-row">${statCards}</div>
-      </section>
-      <section class="ab-section" id="branded-vs-non-branded">
-        <h2 class="ab-section-title">Branded vs Non-Branded</h2>
-        <div class="ab-card">
-          <div class="ab-brand-bar-wrap">
-            <div class="ab-brand-bar">
-              <div class="ab-brand-bar-fill ab-brand-bar-fill-branded" style="width:${branded}%">
-                <span>${branded}% Branded</span>
-              </div>
-              <div class="ab-brand-bar-fill ab-brand-bar-fill-nonbranded" style="width:${nonBranded}%">
-                <span>${nonBranded}% Non-Branded</span>
-              </div>
-            </div>
-          </div>
-          <p class="ab-card-desc" style="margin-top:16px">
-            Industry benchmark for healthy e-commerce is <strong>40–60% non-branded traffic</strong>.
-            At 14% non-branded, Wehkamp is heavily dependent on existing brand awareness —
-            leaving significant organic discovery revenue on the table.
-          </p>
-          <div class="ab-kw-chips-row">
-            <div>
-              <p class="ab-kw-label">Top Branded</p>
-              <p class="ab-kw-value">${seo['Top Branded Keywords'] || ''}</p>
-            </div>
-            <div>
-              <p class="ab-kw-label">Non-Branded Opportunities</p>
-              <p class="ab-kw-value">${seo['Top Non-Branded Opportunities'] || ''}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="ab-section" id="keyword-opportunities">
-        <h2 class="ab-section-title">Keyword Opportunities</h2>
-        <div class="ab-table-wrap">
-          <table class="ab-table">
-            <thead>
-              <tr>
-                <th>Keyword</th>
-                <th>Volume</th>
-                <th>Position</th>
-                <th>Est. Clicks</th>
-                <th>Rationale</th>
-              </tr>
-            </thead>
-            <tbody>${kwRows}</tbody>
-          </table>
-        </div>
-      </section>
-    `,
-  };
-};
-
-const buildAiVisibility = (ai) => {
-  const anchors = ['Visibility Score', 'By Engine', 'Competitive Position', 'What AI Sees'];
-
-  // parse known rows
-  const kv = Object.fromEntries(ai.map(([k, v, , note]) => [k, { v, note }]));
-
-  const scoreVal = kv['Visibility Score'] ? kv['Visibility Score'].v : '62';
-  const scoreNote = kv['Visibility Score'] ? kv['Visibility Score'].note : '-8 points over 3 months';
-
-  const statItems = [
-    ['Brand Mentions', kv['Brand Mentions'] ? kv['Brand Mentions'].v : '', kv['Brand Mentions'] ? ai.find(([k]) => k === 'Brand Mentions')?.[3] : ''],
-    ['Citations', kv.Citations ? kv.Citations.v : '', ai.find(([k]) => k === 'Citations')?.[3] || ''],
-    ['Audience Reach', kv['Audience Reach'] ? kv['Audience Reach'].v : '', ai.find(([k]) => k === 'Audience Reach')?.[3] || ''],
-  ].map(([label, value, note]) => `
-    <div class="ab-ai-stat">
-      <p class="ab-ai-stat-value">${value}</p>
-      <p class="ab-ai-stat-label">${label}</p>
-      ${note ? `<p class="ab-ai-stat-note">${note}</p>` : ''}
-    </div>`).join('');
-
-  const engines = [
-    ['Google AI Overviews', kv['AI Overview Score'] ? kv['AI Overview Score'].v : '74', 'green'],
-    ['Google AI Mode', kv['AI Mode Score'] ? kv['AI Mode Score'].v : '72', 'green'],
-    ['Gemini', kv['Gemini Score'] ? kv['Gemini Score'].v : '61', 'amber'],
-    ['ChatGPT', kv['ChatGPT Score'] ? kv['ChatGPT Score'].v : '55', 'amber'],
-  ].map(([engine, score, color]) => `
-    <div class="ab-engine-row">
-      <span class="ab-engine-name">${engine}</span>
-      <div class="ab-engine-bar-track">
-        <div class="ab-engine-bar ab-engine-bar-${color}" style="width:${score}%"></div>
-      </div>
-      <span class="ab-engine-score ab-engine-score-${color}">${score}</span>
-    </div>`).join('');
-
-  const compRank = ai.find(([k]) => k === 'Competitive Rank');
-  const compNote = compRank ? compRank[3] : 'h&m leads with 80% share of voice';
-  const compVal = compRank ? compRank[1] : '#2 of 5';
-
-  const aiSummaryRow = ai.find(([k]) => k === 'AI Summary');
-  const aiSummary = aiSummaryRow ? aiSummaryRow[1] : '';
-
-  const assocRow = ai.find(([k]) => k === 'Top Associations');
-  const associations = assocRow ? assocRow[1].split(',').map((a) => `<span class="ab-tag">${a.trim()}</span>`).join('') : '';
-
-  const color62 = scoreColor(scoreVal);
-
-  return {
-    anchors,
-    html: `
-      <section class="ab-section" id="visibility-score">
-        <h2 class="ab-section-title">Visibility Score</h2>
-        <div class="ab-ai-score-row">
-          <div class="ab-score-card ab-score-card-hero ab-score-card-${color62}">
-            <p class="ab-score-card-label">Overall AI Visibility</p>
-            <p class="ab-score-card-value">${scoreVal}<span class="ab-score-card-max"> /100</span></p>
-            <p class="ab-score-card-desc">${scoreNote}</p>
-          </div>
-          <div class="ab-ai-stat-row">${statItems}</div>
-        </div>
-      </section>
-      <section class="ab-section" id="by-engine">
-        <h2 class="ab-section-title">By Engine</h2>
-        <div class="ab-card">
-          <div class="ab-engines-list">${engines}</div>
-        </div>
-      </section>
-      <section class="ab-section" id="competitive-position">
-        <h2 class="ab-section-title">Competitive Position</h2>
-        <div class="ab-card">
-          <div class="ab-comp-row">
-            <div class="ab-comp-rank">
-              <p class="ab-comp-rank-value">${compVal}</p>
-              <p class="ab-comp-rank-label">Competitive Rank</p>
-            </div>
-            <p class="ab-card-desc">${compNote.charAt(0).toUpperCase() + compNote.slice(1)}.</p>
-          </div>
-        </div>
-      </section>
-      <section class="ab-section" id="what-ai-sees">
-        <h2 class="ab-section-title">What AI Sees</h2>
-        <div class="ab-card">
-          ${aiSummary ? `<p class="ab-card-desc">${aiSummary}</p>` : ''}
-          ${associations ? `<div class="ab-tags" style="margin-top:16px">${associations}</div>` : ''}
-        </div>
-      </section>
-    `,
-  };
-};
-
-const buildSolutions = (solutions, success) => {
-  const anchors = ['Recommended Solutions', 'Customer Success'];
-
-  const solCards = solutions.map(([name, priority, desc, tags]) => {
-    const tagChips = (tags || '').split('·').map((t) => `<span class="ab-tag">${t.trim()}</span>`).join('');
-    // Extract quick win from desc (after "Quick win:")
-    const qwIdx = desc.indexOf('Quick win:');
-    const mainDesc = qwIdx > -1 ? desc.slice(0, qwIdx).trim() : desc;
-    const quickWin = qwIdx > -1 ? desc.slice(qwIdx) : '';
-    return `
-      <div class="ab-card">
-        <div class="ab-card-head">
-          <h3 class="ab-card-title">${name}</h3>
-          ${badge(priority)}
-        </div>
-        <p class="ab-card-desc">${mainDesc}</p>
-        ${quickWin ? `<div class="ab-quick-win"><span class="ab-quick-win-label">Quick Win</span><p>${quickWin.replace('Quick win: ', '')}</p></div>` : ''}
-        <div class="ab-tags">${tagChips}</div>
-      </div>`;
-  }).join('');
-
-  const statNums = ['stat1', 'stat2', 'stat3', 'stat4'];
-  const statBoxes = statNums.map((prefix) => {
-    const val = success[`${prefix}-value`];
-    const lbl = success[`${prefix}-label`];
-    if (!val) return '';
-    return `
-      <div class="ab-success-stat">
-        <p class="ab-success-stat-value">${val}</p>
-        <p class="ab-success-stat-label">${lbl || ''}</p>
-      </div>`;
-  }).join('');
-
-  return {
-    anchors,
-    html: `
-      <section class="ab-section" id="recommended-solutions">
-        <h2 class="ab-section-title">Recommended Solutions</h2>
-        <div class="ab-cards-list">${solCards}</div>
-      </section>
-      <section class="ab-section" id="customer-success">
-        <h2 class="ab-section-title">Customer Success</h2>
-        <div class="ab-card ab-success-card">
-          <div class="ab-success-head">
-            <div>
-              <h3 class="ab-card-title">${success.company || ''}</h3>
-              <p class="ab-success-industry">${success.industry || ''} · ${success.solution || ''}</p>
-            </div>
-          </div>
-          <div class="ab-success-stats">${statBoxes}</div>
-          <p class="ab-card-desc">${success.description || ''}</p>
-          ${success.relevance ? `<div class="ab-relevance-card"><p class="ab-relevance-label">Why this matters for you</p><p>${success.relevance}</p></div>` : ''}
-        </div>
-      </section>
-    `,
-  };
-};
+}
 
 // ─── Layout ────────────────────────────────────────────────────
 function renderLayout(meta, tabContent, activeTab) {
   const { anchors, html } = tabContent;
-  const sidebarLinks = anchors.map((a) => `
-    <a class="ab-sidebar-link" href="#${a.toLowerCase().replace(/\s+/g, '-')}">${a}</a>`).join('');
-
+  const links = anchors.map((a) => `<a class="ab-sidebar-link" href="#${a.toLowerCase().replace(/\s+/g, '-')}">${a}</a>`).join('');
   return `
     ${renderTopbar()}
     <div class="ab-page-chrome">
-      <div class="ab-tabnav-wrap">
-        ${renderTabNav(activeTab)}
-      </div>
+      <div class="ab-tabnav-wrap">${renderTabNav(activeTab)}</div>
       <div class="ab-page-body">
-        <div class="ab-domain-bar">
-          <span class="ab-domain">${meta.domain || meta.website || ''}</span>
-          <span class="ab-industry">${meta.industry || ''}</span>
-        </div>
+        <p class="ab-domain">${meta.domain || ''}</p>
         <div class="ab-content-wrap">
           <aside class="ab-sidebar">
             <p class="ab-sidebar-heading">On this page</p>
-            <nav>${sidebarLinks}</nav>
+            <nav>${links}</nav>
           </aside>
           <div class="ab-content">${html}</div>
         </div>
       </div>
     </div>
-    <footer class="ab-report-footer">
-      <p>Confidential · Adobe Digital Insights · ${meta.date || ''}</p>
-    </footer>
-  `;
+    <footer class="ab-report-footer">Confidential · Adobe Digital Insights · ${meta.date || ''}</footer>`;
 }
 
 // ─── Main ──────────────────────────────────────────────────────
@@ -487,32 +440,38 @@ export default async function decorate(block) {
 
   block.innerHTML = '<div class="ab-loading"><div class="ab-loading-spinner"></div><p>Loading your report…</p></div>';
 
-  const slug = (session.company || 'test-report').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = (session.company || 'wehkamp').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
   try {
     const doc = await fetchReport(slug);
     const meta = parseKV(doc, 'aibootcamp-report-meta');
     const scores = parseBlock(doc, 'aibootcamp-report-scores');
-    const perfRows = parseBlock(doc, 'aibootcamp-report-performance');
+    const exec = parseKV(doc, 'aibootcamp-report-executive');
+    const perf = parseBlock(doc, 'aibootcamp-report-performance');
+    const perfImpact = parseBlock(doc, 'aibootcamp-report-performance-impact');
     const seo = parseKV(doc, 'aibootcamp-report-seo');
     const keywords = parseBlock(doc, 'aibootcamp-report-seo-keywords');
-    const aiRows = parseBlock(doc, 'aibootcamp-report-ai');
+    const seoInsights = parseBlock(doc, 'aibootcamp-report-seo-insights');
+    const ai = parseKV(doc, 'aibootcamp-report-ai');
+    const aiCompetitive = parseBlock(doc, 'aibootcamp-report-ai-competitive');
+    const aiWhatAiSees = parseKV(doc, 'aibootcamp-report-ai-what-ai-sees');
     const solutions = parseBlock(doc, 'aibootcamp-report-solutions');
-    const successKV = parseKV(doc, 'aibootcamp-report-success');
+    const roadmapResults = parseBlock(doc, 'aibootcamp-report-roadmap-results');
+    const success = parseKV(doc, 'aibootcamp-report-success');
+    const nextSteps = parseBlock(doc, 'aibootcamp-report-next-steps');
 
-    const tabBuilders = {
-      overview: () => buildOverview(meta, scores, solutions),
-      performance: () => buildPerformance(perfRows),
-      seo: () => buildSeo(seo, keywords),
-      'ai-visibility': () => buildAiVisibility(aiRows),
-      solutions: () => buildSolutions(solutions, successKV),
+    const builders = {
+      overview: () => buildOverview(meta, scores, exec),
+      performance: () => buildPerformance(perf, perfImpact),
+      seo: () => buildSeo(seo, keywords, seoInsights),
+      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
+      solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
 
     let activeTab = 'overview';
 
     const render = () => {
-      const content = tabBuilders[activeTab]();
-      block.innerHTML = renderLayout(meta, content, activeTab);
+      block.innerHTML = renderLayout(meta, builders[activeTab](), activeTab);
 
       block.querySelector('.ab-topbar-logout')?.addEventListener('click', () => {
         localStorage.removeItem(SESSION_KEY);
@@ -523,25 +482,21 @@ export default async function decorate(block) {
         btn.addEventListener('click', () => {
           activeTab = btn.dataset.tab;
           render();
-          block.querySelector('.ab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         });
       });
 
       block.querySelectorAll('.ab-sidebar-link').forEach((link) => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
-          const target = block.querySelector(link.getAttribute('href'));
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          block.querySelector(link.getAttribute('href'))
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
     };
 
     render();
   } catch (err) {
-    block.innerHTML = `
-      <div class="ab-error">
-        <p class="ab-error-title">Report unavailable</p>
-        <p class="ab-error-msg">${err.message}</p>
-      </div>`;
+    block.innerHTML = `<div class="ab-error"><p class="ab-error-title">Report unavailable</p><p class="ab-error-msg">${err.message}</p></div>`;
   }
 }
