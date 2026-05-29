@@ -116,22 +116,13 @@
   background: var(--red-lt, #fff0ef);
 }
 
-/* ─── Page chrome ────────────────────────────────────────────── */
-.ab-page-chrome {
-  display: flex;
-  flex-direction: column;
-}
-
-.ab-tabnav-wrap {
-  background: #fff;
-  border-bottom: 1px solid var(--border, #e5e6ea);
-  padding: 12px 0;
+.ab-tabnav {
+  margin-bottom: 24px;
 }
 
 .ab-tabnav-inner {
   display: flex;
   gap: 4px;
-  margin: 0 20%;
   overflow-x: auto;
   background: var(--ink-08, #f4f4f6);
   border-radius: 10px;

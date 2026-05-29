@@ -408,17 +408,15 @@ function renderLayout(meta, tabContent, activeTab) {
   const links = anchors.map((a) => `<a class="ab-sidebar-link" href="#${a.toLowerCase().replace(/\s+/g, '-')}">${a}</a>`).join('');
   return `
     ${renderTopbar()}
-    <div class="ab-page-chrome">
-      <div class="ab-tabnav-wrap">${renderTabNav(activeTab)}</div>
-      <div class="ab-page-body">
-        <p class="ab-domain">${meta.domain || ''}</p>
-        <div class="ab-content-wrap">
-          <aside class="ab-sidebar">
-            <p class="ab-sidebar-heading">On this page</p>
-            <nav>${links}</nav>
-          </aside>
-          <div class="ab-content">${html}</div>
-        </div>
+    <div class="ab-page-body">
+      <p class="ab-domain">${meta.domain || ''}</p>
+      ${renderTabNav(activeTab)}
+      <div class="ab-content-wrap">
+        <aside class="ab-sidebar">
+          <p class="ab-sidebar-heading">On this page</p>
+          <nav>${links}</nav>
+        </aside>
+        <div class="ab-content">${html}</div>
       </div>
     </div>
     <footer class="ab-report-footer">Confidential · Adobe Digital Insights · ${meta.date || ''}</footer>`;
