@@ -150,7 +150,7 @@ export default async function decorate(block) {
         <div class="aibootcamp-login-logo-row">
           ${adobeLogoSvg()}
         </div>
-        <h1 class="aibootcamp-login-heading">Sign in to<br>AI Bootcamp</h1>
+        <h1 class="aibootcamp-login-heading">Sign in to AI Bootcamp</h1>
         <p class="aibootcamp-login-subheading">Access your brand visibility report</p>
         <form class="aibootcamp-login-form" novalidate>
           <div class="aibootcamp-login-field">
