@@ -1,23 +1,19 @@
 /**
  * aibootcamp-results block
- * Checks auth session, fetches the company's report doc from
- * /aibootcamp/reports/{company-slug}.plain.html, parses structured
- * block sections, and renders a brand visibility dashboard.
+ * Auth-gated brand visibility dashboard.
+ * Fetches /aibootcamp/reports/{company}.plain.html, parses structured
+ * sections, and renders a tabbed report with sidebar navigation.
  */
 
 const LOGIN_PAGE = '/aibootcamp/';
 const REPORTS_BASE = '/aibootcamp/reports/';
 const SESSION_KEY = 'aibootcamp-auth';
 
-// ─── Auth guard ───────────────────────────────────────────────
 function requireAuth() {
   try {
     const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
     const session = auth && Date.now() < auth.expires ? auth : null;
-    if (!session) {
-      window.location.href = LOGIN_PAGE;
-      return null;
-    }
+    if (!session) { window.location.href = LOGIN_PAGE; return null; }
     return session;
   } catch {
     window.location.href = LOGIN_PAGE;
@@ -25,53 +21,44 @@ function requireAuth() {
   }
 }
 
-// ─── Fetch & parse report doc ─────────────────────────────────
 async function fetchReport(slug) {
-  const url = `${REPORTS_BASE}${slug}.plain.html`;
-  const resp = await fetch(url);
+  const resp = await fetch(`${REPORTS_BASE}${slug}.plain.html`);
   if (!resp.ok) throw new Error(`Report not found: ${slug}`);
-  const html = await resp.text();
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  return doc;
+  return new DOMParser().parseFromString(await resp.text(), 'text/html');
 }
 
 function parseBlock(doc, name) {
   const el = doc.querySelector(`.${name}`);
   if (!el) return [];
-  return [...el.querySelectorAll(':scope > div')].map((row) => {
-    const cells = [...row.querySelectorAll(':scope > div')];
-    return cells.map((c) => c.textContent.trim());
-  });
+  return [...el.querySelectorAll(':scope > div')].map((row) => [...row.querySelectorAll(':scope > div')].map((c) => c.textContent.trim()));
 }
 
 function parseKV(doc, name) {
-  const rows = parseBlock(doc, name);
-  return Object.fromEntries(rows.map(([k, v]) => [k, v]));
+  return Object.fromEntries(parseBlock(doc, name).map(([k, v]) => [k, v]));
 }
 
-// ─── Score helpers ────────────────────────────────────────────
 function scoreColor(val, max) {
-  if (!max) return '';
+  if (!max || !val) return 'neutral';
   const pct = (parseFloat(val) / parseFloat(max)) * 100;
   if (pct >= 70) return 'green';
   if (pct >= 50) return 'amber';
   return 'red';
 }
 
-function pageScoreColor(score) {
-  const n = parseInt(score, 10);
+function pageScoreColor(n) {
   if (n >= 90) return 'green';
   if (n >= 50) return 'amber';
   return 'red';
 }
 
-function priorityLabel(p) {
-  if (p === 'high') return '<span class="ab-badge ab-badge-red">High Priority</span>';
-  if (p === 'medium') return '<span class="ab-badge ab-badge-amber">Medium Priority</span>';
-  return '<span class="ab-badge ab-badge-gray">Low Priority</span>';
+function badge(priority) {
+  const map = { high: 'red', medium: 'amber', low: 'gray' };
+  const color = map[priority] || 'gray';
+  const label = priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : '';
+  return `<span class="ab-badge ab-badge-${color}">${label} Priority</span>`;
 }
 
-// ─── Render sections ──────────────────────────────────────────
+// ─── Topbar ────────────────────────────────────────────────────
 function renderTopbar() {
   return `
     <header class="ab-topbar">
@@ -93,176 +80,265 @@ function renderTopbar() {
   `;
 }
 
-function renderScores(scores) {
-  const cards = scores.map(([label, value, max, desc]) => {
+// ─── Tab definitions ───────────────────────────────────────────
+const TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'seo', label: 'SEO' },
+  { id: 'ai-visibility', label: 'AI Visibility' },
+  { id: 'solutions', label: 'Solutions' },
+];
+
+function renderTabNav(activeTab) {
+  return `
+    <nav class="ab-tabnav" aria-label="Report sections">
+      <div class="ab-tabnav-inner">
+        ${TABS.map((t) => `
+          <button class="ab-tabnav-btn${t.id === activeTab ? ' ab-tabnav-btn-active' : ''}"
+            data-tab="${t.id}" type="button">${t.label}</button>
+        `).join('')}
+      </div>
+    </nav>
+  `;
+}
+
+// ─── Tab content builders ──────────────────────────────────────
+function buildOverview(meta, scores, opps) {
+  const anchors = ['Summary', 'Key Scores', 'Opportunities'];
+  const scoreCards = scores.map(([label, value, max, desc]) => {
     const color = scoreColor(value, max);
     return `
-      <div class="ab-score-card ab-score-card--${color}">
+      <div class="ab-score-card ab-score-card-${color}">
         <p class="ab-score-card-label">${label}</p>
         <p class="ab-score-card-value">${value}${max ? `<span class="ab-score-card-max"> /${max}</span>` : ''}</p>
         <p class="ab-score-card-desc">${desc}</p>
-      </div>
-    `;
+      </div>`;
   }).join('');
-  return `<section class="ab-section ab-scores-grid">${cards}</section>`;
-}
 
-function renderSummary(meta) {
-  if (!meta.summary) return '';
-  return `
-    <section class="ab-section ab-summary">
-      <p class="ab-summary-text">${meta.summary}</p>
-    </section>
-  `;
-}
-
-function renderOpportunities(opps) {
-  if (!opps.length) return '';
-  const items = opps.map(([title, desc, priority]) => `
-    <div class="ab-opp-card">
-      <div class="ab-opp-card-head">
-        <h3 class="ab-opp-card-title">${title}</h3>
-        ${priorityLabel(priority)}
+  const oppCards = opps.map(([title, desc, priority]) => `
+    <div class="ab-card">
+      <div class="ab-card-head">
+        <h3 class="ab-card-title">${title}</h3>
+        ${badge(priority)}
       </div>
-      <p class="ab-opp-card-desc">${desc}</p>
-    </div>
-  `).join('');
-  return `
-    <section class="ab-section">
-      <h2 class="ab-section-heading">Platform Evolution Opportunities</h2>
-      <div class="ab-opp-grid">${items}</div>
-    </section>
-  `;
+      <p class="ab-card-desc">${desc}</p>
+    </div>`).join('');
+
+  return {
+    anchors,
+    html: `
+      <section class="ab-section" id="summary">
+        <div class="ab-section-intro">
+          <h2 class="ab-section-title">About ${meta.company || 'your company'}</h2>
+          <p class="ab-section-desc">${meta.summary || ''}</p>
+        </div>
+      </section>
+      <section class="ab-section" id="key-scores">
+        <h2 class="ab-section-title">Key Scores</h2>
+        <div class="ab-scores-grid">${scoreCards}</div>
+      </section>
+      <section class="ab-section" id="opportunities">
+        <h2 class="ab-section-title">Platform Opportunities</h2>
+        <div class="ab-cards-grid">${oppCards}</div>
+      </section>
+    `,
+  };
 }
 
-function renderPages(pages) {
-  if (!pages.length) return '';
-  const rows = pages.map(([name, score, load, interact, desc]) => {
-    const color = pageScoreColor(score);
-    const barW = Math.max(parseInt(score, 10), 2);
+function buildPerformance(pages) {
+  const anchors = pages.map(([name]) => name);
+  const cards = pages.map(([name, score, load, interact, desc]) => {
+    const n = parseInt(score, 10);
+    const color = pageScoreColor(n);
     return `
-      <div class="ab-page-card">
-        <div class="ab-page-card-head">
-          <span class="ab-page-card-name">${name}</span>
-          <span class="ab-page-card-score ab-page-card-score--${color}">${score}<span class="ab-page-card-score-max">/100</span></span>
+      <div class="ab-card" id="${name.toLowerCase().replace(/\s+/g, '-')}">
+        <div class="ab-perf-card-head">
+          <div>
+            <h3 class="ab-card-title">${name}</h3>
+            <div class="ab-perf-stats">
+              ${load ? `<span class="ab-stat-chip">${load} load</span>` : ''}
+              ${interact ? `<span class="ab-stat-chip">${interact} interact</span>` : ''}
+            </div>
+          </div>
+          <div class="ab-perf-score ab-perf-score-${color}">
+            ${score}<span class="ab-perf-score-max">/100</span>
+          </div>
         </div>
-        <div class="ab-page-card-bar-track">
-          <div class="ab-page-card-bar ab-page-card-bar--${color}" style="width:${barW}%"></div>
+        <div class="ab-bar-track">
+          <div class="ab-bar ab-bar-${color}" style="width:${Math.max(n, 2)}%"></div>
         </div>
-        <div class="ab-page-card-stats">
-          ${load ? `<span class="ab-stat"><strong>${load}</strong> load time</span>` : ''}
-          ${interact ? `<span class="ab-stat"><strong>${interact}</strong> interactivity</span>` : ''}
-        </div>
-        <p class="ab-page-card-desc">${desc}</p>
-      </div>
-    `;
+        <p class="ab-card-desc">${desc}</p>
+      </div>`;
   }).join('');
-  return `
-    <section class="ab-section">
-      <h2 class="ab-section-heading">Website Performance Analysis</h2>
-      <p class="ab-section-sub">Google PageSpeed Insights · Mobile · <a href="https://www.vodafone.nl" target="_blank" rel="noopener">vodafone.nl</a></p>
-      <div class="ab-pages-grid">${rows}</div>
-    </section>
-  `;
+
+  return {
+    anchors,
+    html: `
+      <section class="ab-section" id="performance-overview">
+        <div class="ab-section-intro">
+          <h2 class="ab-section-title">Website Performance</h2>
+          <p class="ab-section-desc">Google PageSpeed Insights scores in mobile mode. Each 0.1s delay reduces conversions by up to 8%.</p>
+        </div>
+        <div class="ab-cards-list">${cards}</div>
+      </section>
+    `,
+  };
 }
 
-function renderSeo(seo) {
-  if (!Object.keys(seo).length) return '';
+function buildSeo(seo) {
   const stats = [
-    { label: 'Domain Authority', value: seo['Domain Authority'] },
-    { label: 'Monthly Visitors', value: seo['Monthly Visitors'] },
-    { label: 'YoY Growth', value: seo['YoY Growth'] },
-    { label: 'Organic Value', value: seo['Organic Traffic Value'] },
-    { label: 'Branded Traffic', value: seo['Branded Traffic Share'] },
-  ].filter((s) => s.value);
+    ['Domain Authority', seo['Domain Authority']],
+    ['Monthly Visitors', seo['Monthly Visitors']],
+    ['YoY Growth', seo['YoY Growth']],
+    ['Organic Value', seo['Organic Traffic Value']],
+    ['Branded Traffic', seo['Branded Traffic Share']],
+  ].filter(([, v]) => v);
 
-  const statCards = stats.map((s) => `
+  const statCards = stats.map(([label, value]) => `
     <div class="ab-stat-card">
-      <p class="ab-stat-card-value">${s.value}</p>
-      <p class="ab-stat-card-label">${s.label}</p>
-    </div>
-  `).join('');
+      <p class="ab-stat-card-value">${value}</p>
+      <p class="ab-stat-card-label">${label}</p>
+    </div>`).join('');
 
   const branded = seo['Top Branded Keywords'] || '';
   const nonBranded = seo['Top Non-Branded Opportunities'] || '';
+  const anchors = ['SEO Health', 'Keywords'];
 
-  return `
-    <section class="ab-section">
-      <h2 class="ab-section-heading">SEO Health</h2>
-      <div class="ab-stat-row">${statCards}</div>
-      ${branded ? `
+  return {
+    anchors,
+    html: `
+      <section class="ab-section" id="seo-health">
+        <h2 class="ab-section-title">SEO Health</h2>
+        <div class="ab-stat-row">${statCards}</div>
+      </section>
+      <section class="ab-section" id="keywords">
+        <h2 class="ab-section-title">Keywords</h2>
         <div class="ab-kw-row">
-          <div class="ab-kw-group">
-            <p class="ab-kw-group-label">Branded Keywords</p>
-            <p class="ab-kw-group-values">${branded}</p>
+          <div class="ab-card">
+            <p class="ab-kw-label">Branded Keywords</p>
+            <p class="ab-card-desc">${branded}</p>
           </div>
-          <div class="ab-kw-group">
-            <p class="ab-kw-group-label">Non-Branded Opportunities</p>
-            <p class="ab-kw-group-values">${nonBranded}</p>
+          <div class="ab-card">
+            <p class="ab-kw-label">Non-Branded Opportunities</p>
+            <p class="ab-card-desc">${nonBranded}</p>
           </div>
         </div>
-      ` : ''}
-    </section>
-  `;
+      </section>
+    `,
+  };
 }
 
-function renderSolutions(solutions) {
-  if (!solutions.length) return '';
-  const cards = solutions.map(([name, priority, desc, tags]) => {
+function buildAiVisibility(solutions) {
+  const llm = solutions.find(([name]) => name.toLowerCase().includes('llm')) || [];
+  const anchors = ['AI Search Overview', 'Why It Matters'];
+  return {
+    anchors,
+    html: `
+      <section class="ab-section" id="ai-search-overview">
+        <div class="ab-section-intro ab-section-intro-tinted">
+          <p class="ab-section-eyebrow">AI Visibility</p>
+          <h2 class="ab-section-title">Your Brand in AI-Powered Search</h2>
+          <p class="ab-section-desc">Adobe LLM Optimizer tracks how often your brand appears in answers from ChatGPT, Gemini, Google AI Overview/Mode, Perplexity, and Copilot — and where competitors win answers your brand is missing from.</p>
+        </div>
+      </section>
+      <section class="ab-section" id="why-it-matters">
+        <h2 class="ab-section-title">Why It Matters</h2>
+        <div class="ab-card">
+          <div class="ab-ai-stat-row">
+            <div class="ab-ai-stat">
+              <p class="ab-ai-stat-value">800%</p>
+              <p class="ab-ai-stat-label">LLM referral traffic growth YoY</p>
+            </div>
+            <div class="ab-ai-stat">
+              <p class="ab-ai-stat-value">60%</p>
+              <p class="ab-ai-stat-label">of searches via AI platforms by 2027</p>
+            </div>
+            <div class="ab-ai-stat">
+              <p class="ab-ai-stat-value">93%</p>
+              <p class="ab-ai-stat-label">branded traffic — non-branded opportunity</p>
+            </div>
+          </div>
+          ${llm[2] ? `<p class="ab-card-desc" style="margin-top:16px">${llm[2]}</p>` : ''}
+        </div>
+      </section>
+    `,
+  };
+}
+
+function buildSolutions(solutions, nextSteps) {
+  const anchors = ['Recommended Solutions', 'Next Steps'];
+  const solCards = solutions.map(([name, priority, desc, tags]) => {
     const tagChips = (tags || '').split('·').map((t) => `<span class="ab-tag">${t.trim()}</span>`).join('');
     return `
-      <div class="ab-solution-card">
-        <div class="ab-solution-card-head">
-          ${priorityLabel(priority)}
+      <div class="ab-card">
+        <div class="ab-card-head">
+          <h3 class="ab-card-title">${name}</h3>
+          ${badge(priority)}
         </div>
-        <h3 class="ab-solution-card-name">${name}</h3>
-        <p class="ab-solution-card-desc">${desc}</p>
-        <div class="ab-solution-card-tags">${tagChips}</div>
-      </div>
-    `;
+        <p class="ab-card-desc">${desc}</p>
+        <div class="ab-tags">${tagChips}</div>
+      </div>`;
   }).join('');
-  return `
-    <section class="ab-section">
-      <h2 class="ab-section-heading">Recommended Adobe Solutions</h2>
-      <div class="ab-solutions-grid">${cards}</div>
-    </section>
-  `;
-}
 
-function renderNextSteps(steps) {
-  if (!steps.length) return '';
-  const items = steps.map(([title, desc], i) => `
+  const stepItems = nextSteps.map(([title, desc], i) => `
     <div class="ab-step">
       <div class="ab-step-num">${i + 1}</div>
-      <div class="ab-step-body">
+      <div>
         <h3 class="ab-step-title">${title}</h3>
         <p class="ab-step-desc">${desc}</p>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
+
+  return {
+    anchors,
+    html: `
+      <section class="ab-section" id="recommended-solutions">
+        <h2 class="ab-section-title">Recommended Solutions</h2>
+        <div class="ab-cards-list">${solCards}</div>
+      </section>
+      <section class="ab-section" id="next-steps">
+        <h2 class="ab-section-title">Next Steps</h2>
+        <div class="ab-card">
+          <div class="ab-steps-list">${stepItems}</div>
+          <p class="ab-steps-cta">Ready to explore these opportunities? Your Adobe team will be in touch to schedule a personalised workshop.</p>
+        </div>
+      </section>
+    `,
+  };
+}
+
+// ─── Layout ────────────────────────────────────────────────────
+function renderLayout(meta, tabContent, activeTab) {
+  const { anchors, html } = tabContent;
+  const sidebarLinks = anchors.map((a) => `
+    <a class="ab-sidebar-link" href="#${a.toLowerCase().replace(/\s+/g, '-')}">${a}</a>`).join('');
+
   return `
-    <section class="ab-section ab-nextsteps">
-      <h2 class="ab-section-heading">Recommended Next Steps</h2>
-      <div class="ab-steps-list">${items}</div>
-      <p class="ab-nextsteps-cta">Ready to explore these opportunities? Your Adobe team will be in touch to schedule a personalised workshop.</p>
-    </section>
+    ${renderTopbar()}
+    <div class="ab-page-chrome">
+      <div class="ab-tabnav-wrap">
+        ${renderTabNav(activeTab)}
+      </div>
+      <div class="ab-page-body">
+        <div class="ab-domain-bar">
+          <span class="ab-domain">${meta.website || ''}</span>
+        </div>
+        <div class="ab-content-wrap">
+          <aside class="ab-sidebar">
+            <p class="ab-sidebar-heading">On this page</p>
+            <nav>${sidebarLinks}</nav>
+          </aside>
+          <div class="ab-content">${html}</div>
+        </div>
+      </div>
+    </div>
+    <footer class="ab-report-footer">
+      <p>Confidential · Adobe Digital Insights · ${meta.date || ''}</p>
+    </footer>
   `;
 }
 
-function renderError(msg) {
-  return `
-    <div class="ab-error">
-      <p class="ab-error-title">Report unavailable</p>
-      <p class="ab-error-msg">${msg}</p>
-    </div>
-  `;
-}
-
-function renderLoading() {
-  return '<div class="ab-loading"><div class="ab-loading-spinner"></div><p>Loading your report…</p></div>';
-}
-
-// ─── Main ─────────────────────────────────────────────────────
+// ─── Main ──────────────────────────────────────────────────────
 export default async function decorate(block) {
   const section = block.closest('.section');
   const main = block.closest('main');
@@ -276,50 +352,62 @@ export default async function decorate(block) {
   const session = requireAuth();
   if (!session) return;
 
-  block.innerHTML = renderLoading();
+  block.innerHTML = '<div class="ab-loading"><div class="ab-loading-spinner"></div><p>Loading your report…</p></div>';
 
-  // Company slug: from session or block content fallback (for testing)
-  let slug = session.company || block.querySelector('p')?.textContent.trim() || 'test-report';
-  slug = slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = (session.company || 'test-report').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
   try {
     const doc = await fetchReport(slug);
-
     const meta = parseKV(doc, 'aibootcamp-report-meta');
     const scores = parseBlock(doc, 'aibootcamp-report-scores');
     const opps = parseBlock(doc, 'aibootcamp-report-opportunities');
     const pages = parseBlock(doc, 'aibootcamp-report-pages');
-    const seoRaw = parseKV(doc, 'aibootcamp-report-seo');
+    const seo = parseKV(doc, 'aibootcamp-report-seo');
     const solutions = parseBlock(doc, 'aibootcamp-report-solutions');
     const nextSteps = parseBlock(doc, 'aibootcamp-report-nextsteps');
 
-    block.innerHTML = `
-      <div class="ab-report">
-        ${renderTopbar()}
-        <div class="ab-report-body">
-          <div class="ab-report-company">
-            <h1 class="ab-report-company-name">${meta.company || 'Your Company'}</h1>
-            <p class="ab-report-company-meta">${[meta.industry, meta.market, meta.date].filter(Boolean).join(' · ')}</p>
-          </div>
-          ${renderScores(scores)}
-          ${renderSummary(meta)}
-          ${renderOpportunities(opps)}
-          ${renderPages(pages)}
-          ${renderSeo(seoRaw)}
-          ${renderSolutions(solutions)}
-          ${renderNextSteps(nextSteps)}
-        </div>
-        <footer class="ab-report-footer">
-          <p>Confidential · Adobe Digital Insights · ${meta.date || ''}</p>
-        </footer>
-      </div>
-    `;
+    const tabBuilders = {
+      overview: () => buildOverview(meta, scores, opps),
+      performance: () => buildPerformance(pages),
+      seo: () => buildSeo(seo),
+      'ai-visibility': () => buildAiVisibility(solutions),
+      solutions: () => buildSolutions(solutions, nextSteps),
+    };
 
-    block.querySelector('.ab-topbar-logout')?.addEventListener('click', () => {
-      localStorage.removeItem('aibootcamp-auth');
-      window.location.href = LOGIN_PAGE;
-    });
+    let activeTab = 'overview';
+
+    const render = () => {
+      const content = tabBuilders[activeTab]();
+      block.innerHTML = renderLayout(meta, content, activeTab);
+
+      block.querySelector('.ab-topbar-logout')?.addEventListener('click', () => {
+        localStorage.removeItem(SESSION_KEY);
+        window.location.href = LOGIN_PAGE;
+      });
+
+      block.querySelectorAll('.ab-tabnav-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeTab = btn.dataset.tab;
+          render();
+          block.querySelector('.ab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      block.querySelectorAll('.ab-sidebar-link').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = block.querySelector(link.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    };
+
+    render();
   } catch (err) {
-    block.innerHTML = renderError(err.message);
+    block.innerHTML = `
+      <div class="ab-error">
+        <p class="ab-error-title">Report unavailable</p>
+        <p class="ab-error-msg">${err.message}</p>
+      </div>`;
   }
 }
