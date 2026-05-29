@@ -168,7 +168,7 @@ export default async function decorate(block) {
           <div class="aibootcamp-login-error" hidden></div>
           <button class="aibootcamp-login-btn" type="submit">View my report</button>
         </form>
-        <p class="aibootcamp-login-footer">Adobe AI Bootcamp &middot; Netherlands 2025</p>
+        <p class="aibootcamp-login-footer">Adobe AI Bootcamp &middot; Netherlands 2026</p>
       </div>
     </div>
     <div class="aibootcamp-login-right" aria-hidden="true">
