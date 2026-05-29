@@ -1,0 +1,54 @@
+.aibootcamp-hero {
+  background: var(--ink, #111318);
+  padding: 0;
+}
+
+.aibootcamp-hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 24px 44px;
+}
+
+.aibootcamp-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.aibootcamp-hero-logo {
+  filter: brightness(0) invert(1);
+  display: block;
+}
+
+.aibootcamp-hero-divider {
+  width: 1px;
+  height: 18px;
+  background: rgb(255 255 255 / 25%);
+  display: block;
+}
+
+.aibootcamp-hero-event {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(255 255 255 / 55%);
+  letter-spacing: 0.02em;
+}
+
+.aibootcamp-hero-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 16px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  max-width: 600px;
+}
+
+.aibootcamp-hero-desc {
+  font-size: 15px;
+  color: rgb(255 255 255 / 60%);
+  margin: 0;
+  max-width: 620px;
+  line-height: 1.65;
+}
