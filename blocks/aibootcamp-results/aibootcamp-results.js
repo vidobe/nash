@@ -55,7 +55,7 @@ function badge(priority) {
   return `<span class="ab-badge ab-badge-${c}">${priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : ''} Priority</span>`;
 }
 
-// ─── Topbar ────────────────────────────────────────────────────
+// ─── Topbar (Adobe logo + logout — sticky) ─────────────────────
 function renderTopbar() {
   return `
     <header class="ab-topbar">
@@ -76,6 +76,20 @@ function renderTopbar() {
     </header>`;
 }
 
+// ─── Domain bar (AI-Generated badge + domain) ──────────────────
+function renderDomainBar(meta) {
+  return `
+    <div class="ab-domain-bar">
+      <div class="ab-domain-left">
+        <span class="ab-ai-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          AI-Generated
+        </span>
+        <span class="ab-domain-name">${meta.domain || ''}</span>
+      </div>
+    </div>`;
+}
+
 // ─── Tabs ──────────────────────────────────────────────────────
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -86,9 +100,12 @@ const TABS = [
 ];
 
 function renderTabNav(active) {
-  return `<nav class="ab-tabnav" aria-label="Report sections"><div class="ab-tabnav-inner">${
-    TABS.map((t) => `<button class="ab-tabnav-btn${t.id === active ? ' ab-tabnav-btn-active' : ''}" data-tab="${t.id}" type="button">${t.label}</button>`).join('')
-  }</div></nav>`;
+  return `
+    <nav class="ab-tabnav" aria-label="Report sections">
+      <div class="ab-tabnav-inner">
+        ${TABS.map((t) => `<button class="ab-tabnav-btn${t.id === active ? ' ab-tabnav-btn-active' : ''}" data-tab="${t.id}" type="button">${t.label}</button>`).join('')}
+      </div>
+    </nav>`;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -409,7 +426,7 @@ function renderLayout(meta, tabContent, activeTab) {
   return `
     ${renderTopbar()}
     <div class="ab-page-body">
-      <p class="ab-domain">${meta.domain || ''}</p>
+      ${renderDomainBar(meta)}
       ${renderTabNav(activeTab)}
       <div class="ab-content-wrap">
         <aside class="ab-sidebar">
