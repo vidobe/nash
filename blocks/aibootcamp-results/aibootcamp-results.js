@@ -72,22 +72,22 @@ function priorityLabel(p) {
 }
 
 // ─── Render sections ──────────────────────────────────────────
-function renderHeader(meta) {
+function renderTopbar() {
   return `
-    <header class="ab-report-header">
-      <div class="ab-report-header-left">
-        <img class="ab-report-header-logo" src="/icons/adobe-wordmark.svg" alt="Adobe" width="80" height="20"/>
-        <div class="ab-report-header-title-group">
-          <p class="ab-report-header-eyebrow">Digital Insights Report</p>
-          <h1 class="ab-report-header-company">${meta.company || 'Your Company'}</h1>
+    <header class="ab-topbar">
+      <div class="ab-topbar-inner">
+        <div class="ab-topbar-left">
+          <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo" width="80" height="20"/>
+          <span class="ab-topbar-divider"></span>
+          <span class="ab-topbar-title">Digital Insights Report</span>
         </div>
-      </div>
-      <div class="ab-report-header-right">
-        <span class="ab-report-header-meta">${meta.industry || ''}</span>
-        <span class="ab-report-header-sep">·</span>
-        <span class="ab-report-header-meta">${meta.market || ''}</span>
-        <span class="ab-report-header-sep">·</span>
-        <span class="ab-report-header-meta">${meta.date || ''}</span>
+        <button class="ab-topbar-logout" type="button" aria-label="Sign out" title="Sign out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
       </div>
     </header>
   `;
@@ -295,8 +295,12 @@ export default async function decorate(block) {
 
     block.innerHTML = `
       <div class="ab-report">
-        ${renderHeader(meta)}
+        ${renderTopbar()}
         <div class="ab-report-body">
+          <div class="ab-report-company">
+            <h1 class="ab-report-company-name">${meta.company || 'Your Company'}</h1>
+            <p class="ab-report-company-meta">${[meta.industry, meta.market, meta.date].filter(Boolean).join(' · ')}</p>
+          </div>
           ${renderScores(scores)}
           ${renderSummary(meta)}
           ${renderOpportunities(opps)}
@@ -307,12 +311,11 @@ export default async function decorate(block) {
         </div>
         <footer class="ab-report-footer">
           <p>Confidential · Adobe Digital Insights · ${meta.date || ''}</p>
-          <button class="ab-report-footer-logout" type="button">Sign out</button>
         </footer>
       </div>
     `;
 
-    block.querySelector('.ab-report-footer-logout')?.addEventListener('click', () => {
+    block.querySelector('.ab-topbar-logout')?.addEventListener('click', () => {
       localStorage.removeItem('aibootcamp-auth');
       window.location.href = LOGIN_PAGE;
     });

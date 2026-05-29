@@ -6,9 +6,13 @@
 }
 
 .ab-report {
+  min-height: 100vh;
+}
+
+.ab-report-body {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 40px 24px 80px;
 }
 
 /* ─── Loading / Error ────────────────────────────────────────── */
@@ -57,57 +61,88 @@
   margin: 0;
 }
 
-/* ─── Header ─────────────────────────────────────────────────── */
-.ab-report-header {
+/* ─── Topbar ─────────────────────────────────────────────────── */
+.ab-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.ab-topbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 0 24px;
-  border-bottom: 1px solid var(--border, #e5e6ea);
-  margin-bottom: 32px;
-  gap: 16px;
-  flex-wrap: wrap;
+  padding: 0;
+  margin: 0 20%;
+  height: 52px;
 }
 
-.ab-report-header-left {
+.ab-topbar-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
 }
 
-.ab-report-header-logo {
-  flex-shrink: 0;
-  height: 20px;
-  width: auto;
+.ab-topbar-logo {
   display: block;
+  height: 18px;
+  width: auto;
+  flex-shrink: 0;
 }
 
-.ab-report-header-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.ab-topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border, #e5e6ea);
+  display: block;
+  flex-shrink: 0;
+}
+
+.ab-topbar-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  white-space: nowrap;
+}
+
+.ab-topbar-logout {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
   color: var(--ink-40, #9a9da6);
-  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
 }
 
-.ab-report-header-company {
-  font-size: 22px;
+.ab-topbar-logout:hover {
+  color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+}
+
+/* ─── Company heading ────────────────────────────────────────── */
+.ab-report-company {
+  margin-bottom: 32px;
+}
+
+.ab-report-company-name {
+  font-size: clamp(22px, 3vw, 32px);
   font-weight: 600;
   color: var(--ink, #111318);
-  margin: 0;
-  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  letter-spacing: -0.025em;
 }
 
-.ab-report-header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.ab-report-company-meta {
   font-size: 13px;
   color: var(--ink-40, #9a9da6);
+  margin: 0;
 }
-
-.ab-report-header-sep { opacity: 0.4; }
 
 /* ─── Sections ───────────────────────────────────────────────── */
 .ab-section {
