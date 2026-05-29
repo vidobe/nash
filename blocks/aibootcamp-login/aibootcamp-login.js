@@ -101,10 +101,10 @@ function makeRotator(el, pool) {
   let timer = null;
 
   function show(text) {
-    el.classList.add('aibootcamp-login__quote--out');
+    el.classList.add('aibootcamp-login-quote-out');
     setTimeout(() => {
       el.textContent = text;
-      el.classList.remove('aibootcamp-login__quote--out');
+      el.classList.remove('aibootcamp-login-quote-out');
     }, 380);
   }
 
@@ -147,45 +147,45 @@ export default async function decorate(block) {
   });
 
   block.innerHTML = `
-    <div class="aibootcamp-login__left">
-      <div class="aibootcamp-login__card">
-        <div class="aibootcamp-login__logo-row">
+    <div class="aibootcamp-login-left">
+      <div class="aibootcamp-login-card">
+        <div class="aibootcamp-login-logo-row">
           ${adobeLogoSvg()}
         </div>
-        <h1 class="aibootcamp-login__heading">Sign in to<br>AI Bootcamp</h1>
-        <p class="aibootcamp-login__subheading">Access your brand visibility report</p>
-        <form class="aibootcamp-login__form" novalidate>
-          <div class="aibootcamp-login__field">
-            <label class="aibootcamp-login__label" for="ab-email">Email</label>
-            <input class="aibootcamp-login__input" id="ab-email" name="email"
+        <h1 class="aibootcamp-login-heading">Sign in to<br>AI Bootcamp</h1>
+        <p class="aibootcamp-login-subheading">Access your brand visibility report</p>
+        <form class="aibootcamp-login-form" novalidate>
+          <div class="aibootcamp-login-field">
+            <label class="aibootcamp-login-label" for="ab-email">Email</label>
+            <input class="aibootcamp-login-input" id="ab-email" name="email"
               type="email" placeholder="you@company.com"
               autocomplete="email" required/>
           </div>
-          <div class="aibootcamp-login__field">
-            <label class="aibootcamp-login__label" for="ab-pass">Password</label>
-            <input class="aibootcamp-login__input" id="ab-pass" name="password"
+          <div class="aibootcamp-login-field">
+            <label class="aibootcamp-login-label" for="ab-pass">Password</label>
+            <input class="aibootcamp-login-input" id="ab-pass" name="password"
               type="password" placeholder="Your password"
               autocomplete="current-password" required/>
           </div>
-          <div class="aibootcamp-login__error" hidden></div>
-          <button class="aibootcamp-login__btn" type="submit">View my report</button>
+          <div class="aibootcamp-login-error" hidden></div>
+          <button class="aibootcamp-login-btn" type="submit">View my report</button>
         </form>
-        <p class="aibootcamp-login__footer">Adobe AI Bootcamp &middot; Netherlands 2025</p>
+        <p class="aibootcamp-login-footer">Adobe AI Bootcamp &middot; Netherlands 2025</p>
       </div>
     </div>
-    <div class="aibootcamp-login__right" aria-hidden="true">
-      <div class="aibootcamp-login__stage">
-        <div class="aibootcamp-login__quote-mark">&ldquo;</div>
-        <p class="aibootcamp-login__quote">${QUOTES[0]}</p>
-        <p class="aibootcamp-login__quote-label">Adobe AI Bootcamp &middot; Brand Visibility</p>
+    <div class="aibootcamp-login-right" aria-hidden="true">
+      <div class="aibootcamp-login-stage">
+        <div class="aibootcamp-login-quote-mark">&ldquo;</div>
+        <p class="aibootcamp-login-quote">${QUOTES[0]}</p>
+        <p class="aibootcamp-login-quote-label">Adobe AI Bootcamp &middot; Brand Visibility</p>
       </div>
     </div>
   `;
 
-  const form = block.querySelector('.aibootcamp-login__form');
-  const errorEl = block.querySelector('.aibootcamp-login__error');
-  const btn = block.querySelector('.aibootcamp-login__btn');
-  const quoteEl = block.querySelector('.aibootcamp-login__quote');
+  const form = block.querySelector('.aibootcamp-login-form');
+  const errorEl = block.querySelector('.aibootcamp-login-error');
+  const btn = block.querySelector('.aibootcamp-login-btn');
+  const quoteEl = block.querySelector('.aibootcamp-login-quote');
 
   const rotator = makeRotator(quoteEl, QUOTES);
 

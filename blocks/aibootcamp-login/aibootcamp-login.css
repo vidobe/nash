@@ -11,7 +11,7 @@
 }
 
 /* ─── Left panel ─────────────────────────────────────────────── */
-.aibootcamp-login__left {
+.aibootcamp-login-left {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -19,7 +19,7 @@
 }
 
 /* ─── Card ───────────────────────────────────────────────────── */
-.aibootcamp-login__card {
+.aibootcamp-login-card {
   background: #fff;
   border-radius: 16px;
   padding: 36px 36px 32px;
@@ -31,11 +31,11 @@
   max-width: 360px;
 }
 
-.aibootcamp-login__logo-row {
+.aibootcamp-login-logo-row {
   margin-bottom: 28px;
 }
 
-.aibootcamp-login__heading {
+.aibootcamp-login-heading {
   font-size: 22px;
   font-weight: 600;
   color: var(--ink, #111318);
@@ -44,32 +44,32 @@
   line-height: 1.15;
 }
 
-.aibootcamp-login__subheading {
+.aibootcamp-login-subheading {
   font-size: 14px;
   color: var(--ink-70, #4a4d55);
   margin: 0 0 24px;
 }
 
 /* ─── Form ───────────────────────────────────────────────────── */
-.aibootcamp-login__form {
+.aibootcamp-login-form {
   display: flex;
   flex-direction: column;
   gap: 13px;
 }
 
-.aibootcamp-login__field {
+.aibootcamp-login-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.aibootcamp-login__label {
+.aibootcamp-login-label {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink, #111318);
 }
 
-.aibootcamp-login__input {
+.aibootcamp-login-input {
   height: 40px;
   padding: 0 12px;
   background: #fff;
@@ -84,17 +84,17 @@
   box-sizing: border-box;
 }
 
-.aibootcamp-login__input::placeholder {
+.aibootcamp-login-input::placeholder {
   color: var(--ink-40, #9a9da6);
 }
 
-.aibootcamp-login__input:focus {
+.aibootcamp-login-input:focus {
   border-color: var(--red, #eb1000);
   box-shadow: 0 0 0 3px rgb(235 16 0 / 10%);
 }
 
 /* ─── Error ──────────────────────────────────────────────────── */
-.aibootcamp-login__error {
+.aibootcamp-login-error {
   font-size: 13px;
   color: var(--red, #eb1000);
   background: var(--red-lt, #fff0ef);
@@ -105,7 +105,7 @@
 }
 
 /* ─── Button ─────────────────────────────────────────────────── */
-.aibootcamp-login__btn {
+.aibootcamp-login-btn {
   height: 40px;
   padding: 0 20px;
   background: var(--red, #eb1000);
@@ -121,12 +121,17 @@
   width: 100%;
 }
 
-.aibootcamp-login__btn:hover { opacity: 0.87; }
-.aibootcamp-login__btn:active { transform: scale(0.99); }
-.aibootcamp-login__btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.aibootcamp-login-btn:hover { opacity: 0.87; }
+.aibootcamp-login-btn:active { transform: scale(0.99); }
+
+.aibootcamp-login-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* ─── Footer ─────────────────────────────────────────────────── */
-.aibootcamp-login__footer {
+.aibootcamp-login-footer {
   font-size: 12px;
   color: var(--ink-40, #9a9da6);
   margin: 20px 0 0;
@@ -134,18 +139,18 @@
 }
 
 /* ─── Right panel ────────────────────────────────────────────── */
-.aibootcamp-login__right {
+.aibootcamp-login-right {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   padding: 48px 60px 48px 48px;
 }
 
-.aibootcamp-login__stage {
+.aibootcamp-login-stage {
   max-width: 460px;
 }
 
-.aibootcamp-login__quote-mark {
+.aibootcamp-login-quote-mark {
   font-size: 64px;
   line-height: 0.6;
   color: rgb(0 0 0 / 12%);
@@ -155,7 +160,7 @@
   user-select: none;
 }
 
-.aibootcamp-login__quote {
+.aibootcamp-login-quote {
   font-family: var(--serif, 'DM Serif Display', Georgia, serif);
   font-size: clamp(28px, 3.2vw, 46px);
   font-weight: 400;
@@ -168,12 +173,12 @@
   transform: translateY(0);
 }
 
-.aibootcamp-login__quote--out {
+.aibootcamp-login-quote-out {
   opacity: 0;
   transform: translateY(10px);
 }
 
-.aibootcamp-login__quote-label {
+.aibootcamp-login-quote-label {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -190,12 +195,12 @@
     padding: 40px 20px;
   }
 
-  .aibootcamp-login__left {
+  .aibootcamp-login-left {
     justify-content: center;
     padding: 0;
   }
 
-  .aibootcamp-login__right {
+  .aibootcamp-login-right {
     display: none;
   }
 }

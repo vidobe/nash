@@ -61,30 +61,30 @@ function pageScoreColor(score) {
 }
 
 function priorityLabel(p) {
-  if (p === 'high') return '<span class="ab-badge ab-badge--red">High Priority</span>';
-  if (p === 'medium') return '<span class="ab-badge ab-badge--amber">Medium Priority</span>';
-  return '<span class="ab-badge ab-badge--gray">Low Priority</span>';
+  if (p === 'high') return '<span class="ab-badge ab-badge-red">High Priority</span>';
+  if (p === 'medium') return '<span class="ab-badge ab-badge-amber">Medium Priority</span>';
+  return '<span class="ab-badge ab-badge-gray">Low Priority</span>';
 }
 
 // ─── Render sections ──────────────────────────────────────────
 function renderHeader(meta) {
   return `
     <header class="ab-report-header">
-      <div class="ab-report-header__left">
-        <svg class="ab-report-header__logo" width="72" height="25" viewBox="0 0 240 84" xmlns="http://www.w3.org/2000/svg" aria-label="Adobe">
+      <div class="ab-report-header-left">
+        <svg class="ab-report-header-logo" width="72" height="25" viewBox="0 0 240 84" xmlns="http://www.w3.org/2000/svg" aria-label="Adobe">
           <path fill="#eb1000" d="M97.87 0H0v84L97.87 0zM142.13 0H240v84L142.13 0zM120 31.08L157.5 84h-24.7l-10.4-26.54H97.7L120 31.08z"/>
         </svg>
-        <div class="ab-report-header__title-group">
-          <p class="ab-report-header__eyebrow">Digital Insights Report</p>
-          <h1 class="ab-report-header__company">${meta.company || 'Your Company'}</h1>
+        <div class="ab-report-header-title-group">
+          <p class="ab-report-header-eyebrow">Digital Insights Report</p>
+          <h1 class="ab-report-header-company">${meta.company || 'Your Company'}</h1>
         </div>
       </div>
-      <div class="ab-report-header__right">
-        <span class="ab-report-header__meta">${meta.industry || ''}</span>
-        <span class="ab-report-header__sep">·</span>
-        <span class="ab-report-header__meta">${meta.market || ''}</span>
-        <span class="ab-report-header__sep">·</span>
-        <span class="ab-report-header__meta">${meta.date || ''}</span>
+      <div class="ab-report-header-right">
+        <span class="ab-report-header-meta">${meta.industry || ''}</span>
+        <span class="ab-report-header-sep">·</span>
+        <span class="ab-report-header-meta">${meta.market || ''}</span>
+        <span class="ab-report-header-sep">·</span>
+        <span class="ab-report-header-meta">${meta.date || ''}</span>
       </div>
     </header>
   `;
@@ -95,9 +95,9 @@ function renderScores(scores) {
     const color = scoreColor(value, max);
     return `
       <div class="ab-score-card ab-score-card--${color}">
-        <p class="ab-score-card__label">${label}</p>
-        <p class="ab-score-card__value">${value}${max ? `<span class="ab-score-card__max"> /${max}</span>` : ''}</p>
-        <p class="ab-score-card__desc">${desc}</p>
+        <p class="ab-score-card-label">${label}</p>
+        <p class="ab-score-card-value">${value}${max ? `<span class="ab-score-card-max"> /${max}</span>` : ''}</p>
+        <p class="ab-score-card-desc">${desc}</p>
       </div>
     `;
   }).join('');
@@ -108,7 +108,7 @@ function renderSummary(meta) {
   if (!meta.summary) return '';
   return `
     <section class="ab-section ab-summary">
-      <p class="ab-summary__text">${meta.summary}</p>
+      <p class="ab-summary-text">${meta.summary}</p>
     </section>
   `;
 }
@@ -117,16 +117,16 @@ function renderOpportunities(opps) {
   if (!opps.length) return '';
   const items = opps.map(([title, desc, priority]) => `
     <div class="ab-opp-card">
-      <div class="ab-opp-card__head">
-        <h3 class="ab-opp-card__title">${title}</h3>
+      <div class="ab-opp-card-head">
+        <h3 class="ab-opp-card-title">${title}</h3>
         ${priorityLabel(priority)}
       </div>
-      <p class="ab-opp-card__desc">${desc}</p>
+      <p class="ab-opp-card-desc">${desc}</p>
     </div>
   `).join('');
   return `
     <section class="ab-section">
-      <h2 class="ab-section__heading">Platform Evolution Opportunities</h2>
+      <h2 class="ab-section-heading">Platform Evolution Opportunities</h2>
       <div class="ab-opp-grid">${items}</div>
     </section>
   `;
@@ -139,25 +139,25 @@ function renderPages(pages) {
     const barW = Math.max(parseInt(score, 10), 2);
     return `
       <div class="ab-page-card">
-        <div class="ab-page-card__head">
-          <span class="ab-page-card__name">${name}</span>
-          <span class="ab-page-card__score ab-page-card__score--${color}">${score}<span class="ab-page-card__score-max">/100</span></span>
+        <div class="ab-page-card-head">
+          <span class="ab-page-card-name">${name}</span>
+          <span class="ab-page-card-score ab-page-card-score--${color}">${score}<span class="ab-page-card-score-max">/100</span></span>
         </div>
-        <div class="ab-page-card__bar-track">
-          <div class="ab-page-card__bar ab-page-card__bar--${color}" style="width:${barW}%"></div>
+        <div class="ab-page-card-bar-track">
+          <div class="ab-page-card-bar ab-page-card-bar--${color}" style="width:${barW}%"></div>
         </div>
-        <div class="ab-page-card__stats">
+        <div class="ab-page-card-stats">
           ${load ? `<span class="ab-stat"><strong>${load}</strong> load time</span>` : ''}
           ${interact ? `<span class="ab-stat"><strong>${interact}</strong> interactivity</span>` : ''}
         </div>
-        <p class="ab-page-card__desc">${desc}</p>
+        <p class="ab-page-card-desc">${desc}</p>
       </div>
     `;
   }).join('');
   return `
     <section class="ab-section">
-      <h2 class="ab-section__heading">Website Performance Analysis</h2>
-      <p class="ab-section__sub">Google PageSpeed Insights · Mobile · <a href="https://www.vodafone.nl" target="_blank" rel="noopener">vodafone.nl</a></p>
+      <h2 class="ab-section-heading">Website Performance Analysis</h2>
+      <p class="ab-section-sub">Google PageSpeed Insights · Mobile · <a href="https://www.vodafone.nl" target="_blank" rel="noopener">vodafone.nl</a></p>
       <div class="ab-pages-grid">${rows}</div>
     </section>
   `;
@@ -175,8 +175,8 @@ function renderSeo(seo) {
 
   const statCards = stats.map((s) => `
     <div class="ab-stat-card">
-      <p class="ab-stat-card__value">${s.value}</p>
-      <p class="ab-stat-card__label">${s.label}</p>
+      <p class="ab-stat-card-value">${s.value}</p>
+      <p class="ab-stat-card-label">${s.label}</p>
     </div>
   `).join('');
 
@@ -185,17 +185,17 @@ function renderSeo(seo) {
 
   return `
     <section class="ab-section">
-      <h2 class="ab-section__heading">SEO Health</h2>
+      <h2 class="ab-section-heading">SEO Health</h2>
       <div class="ab-stat-row">${statCards}</div>
       ${branded ? `
         <div class="ab-kw-row">
           <div class="ab-kw-group">
-            <p class="ab-kw-group__label">Branded Keywords</p>
-            <p class="ab-kw-group__values">${branded}</p>
+            <p class="ab-kw-group-label">Branded Keywords</p>
+            <p class="ab-kw-group-values">${branded}</p>
           </div>
           <div class="ab-kw-group">
-            <p class="ab-kw-group__label">Non-Branded Opportunities</p>
-            <p class="ab-kw-group__values">${nonBranded}</p>
+            <p class="ab-kw-group-label">Non-Branded Opportunities</p>
+            <p class="ab-kw-group-values">${nonBranded}</p>
           </div>
         </div>
       ` : ''}
@@ -209,18 +209,18 @@ function renderSolutions(solutions) {
     const tagChips = (tags || '').split('·').map((t) => `<span class="ab-tag">${t.trim()}</span>`).join('');
     return `
       <div class="ab-solution-card">
-        <div class="ab-solution-card__head">
+        <div class="ab-solution-card-head">
           ${priorityLabel(priority)}
         </div>
-        <h3 class="ab-solution-card__name">${name}</h3>
-        <p class="ab-solution-card__desc">${desc}</p>
-        <div class="ab-solution-card__tags">${tagChips}</div>
+        <h3 class="ab-solution-card-name">${name}</h3>
+        <p class="ab-solution-card-desc">${desc}</p>
+        <div class="ab-solution-card-tags">${tagChips}</div>
       </div>
     `;
   }).join('');
   return `
     <section class="ab-section">
-      <h2 class="ab-section__heading">Recommended Adobe Solutions</h2>
+      <h2 class="ab-section-heading">Recommended Adobe Solutions</h2>
       <div class="ab-solutions-grid">${cards}</div>
     </section>
   `;
@@ -230,18 +230,18 @@ function renderNextSteps(steps) {
   if (!steps.length) return '';
   const items = steps.map(([title, desc], i) => `
     <div class="ab-step">
-      <div class="ab-step__num">${i + 1}</div>
-      <div class="ab-step__body">
-        <h3 class="ab-step__title">${title}</h3>
-        <p class="ab-step__desc">${desc}</p>
+      <div class="ab-step-num">${i + 1}</div>
+      <div class="ab-step-body">
+        <h3 class="ab-step-title">${title}</h3>
+        <p class="ab-step-desc">${desc}</p>
       </div>
     </div>
   `).join('');
   return `
     <section class="ab-section ab-nextsteps">
-      <h2 class="ab-section__heading">Recommended Next Steps</h2>
+      <h2 class="ab-section-heading">Recommended Next Steps</h2>
       <div class="ab-steps-list">${items}</div>
-      <p class="ab-nextsteps__cta">Ready to explore these opportunities? Your Adobe team will be in touch to schedule a personalised workshop.</p>
+      <p class="ab-nextsteps-cta">Ready to explore these opportunities? Your Adobe team will be in touch to schedule a personalised workshop.</p>
     </section>
   `;
 }
@@ -249,14 +249,14 @@ function renderNextSteps(steps) {
 function renderError(msg) {
   return `
     <div class="ab-error">
-      <p class="ab-error__title">Report unavailable</p>
-      <p class="ab-error__msg">${msg}</p>
+      <p class="ab-error-title">Report unavailable</p>
+      <p class="ab-error-msg">${msg}</p>
     </div>
   `;
 }
 
 function renderLoading() {
-  return `<div class="ab-loading"><div class="ab-loading__spinner"></div><p>Loading your report…</p></div>`;
+  return '<div class="ab-loading"><div class="ab-loading-spinner"></div><p>Loading your report…</p></div>';
 }
 
 // ─── Main ─────────────────────────────────────────────────────
@@ -284,7 +284,7 @@ export default async function decorate(block) {
     block.innerHTML = `
       <div class="ab-report">
         ${renderHeader(meta)}
-        <div class="ab-report__body">
+        <div class="ab-report-body">
           ${renderScores(scores)}
           ${renderSummary(meta)}
           ${renderOpportunities(opps)}
@@ -295,12 +295,12 @@ export default async function decorate(block) {
         </div>
         <footer class="ab-report-footer">
           <p>Confidential · Adobe Digital Insights · ${meta.date || ''}</p>
-          <button class="ab-report-footer__logout" type="button">Sign out</button>
+          <button class="ab-report-footer-logout" type="button">Sign out</button>
         </footer>
       </div>
     `;
 
-    block.querySelector('.ab-report-footer__logout')?.addEventListener('click', () => {
+    block.querySelector('.ab-report-footer-logout')?.addEventListener('click', () => {
       localStorage.removeItem('aibootcamp-auth');
       window.location.href = LOGIN_PAGE;
     });
