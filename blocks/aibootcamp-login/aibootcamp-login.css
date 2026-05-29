@@ -1,0 +1,201 @@
+.aibootcamp-login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100vw;
+  min-height: 100vh;
+  background-color: #f0f0f2;
+  background-image: radial-gradient(circle, rgb(0 0 0 / 9%) 1px, transparent 1px);
+  background-size: 22px 22px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* ─── Left panel ─────────────────────────────────────────────── */
+.aibootcamp-login__left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 48px 40px 48px 60px;
+}
+
+/* ─── Card ───────────────────────────────────────────────────── */
+.aibootcamp-login__card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 36px 32px;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 5%),
+    0 4px 16px rgb(0 0 0 / 7%),
+    0 16px 40px rgb(0 0 0 / 6%);
+  width: 100%;
+  max-width: 360px;
+}
+
+.aibootcamp-login__logo-row {
+  margin-bottom: 28px;
+}
+
+.aibootcamp-login__heading {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  letter-spacing: -0.025em;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+
+.aibootcamp-login__subheading {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  margin: 0 0 24px;
+}
+
+/* ─── Form ───────────────────────────────────────────────────── */
+.aibootcamp-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.aibootcamp-login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.aibootcamp-login__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.aibootcamp-login__input {
+  height: 40px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink, #111318);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.aibootcamp-login__input::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.aibootcamp-login__input:focus {
+  border-color: var(--red, #eb1000);
+  box-shadow: 0 0 0 3px rgb(235 16 0 / 10%);
+}
+
+/* ─── Error ──────────────────────────────────────────────────── */
+.aibootcamp-login__error {
+  font-size: 13px;
+  color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  border: 1px solid rgb(235 16 0 / 18%);
+  border-radius: 8px;
+  padding: 9px 12px;
+  line-height: 1.45;
+}
+
+/* ─── Button ─────────────────────────────────────────────────── */
+.aibootcamp-login__btn {
+  height: 40px;
+  padding: 0 20px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  margin-top: 6px;
+  width: 100%;
+}
+
+.aibootcamp-login__btn:hover { opacity: 0.87; }
+.aibootcamp-login__btn:active { transform: scale(0.99); }
+.aibootcamp-login__btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* ─── Footer ─────────────────────────────────────────────────── */
+.aibootcamp-login__footer {
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+/* ─── Right panel ────────────────────────────────────────────── */
+.aibootcamp-login__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 48px 60px 48px 48px;
+}
+
+.aibootcamp-login__stage {
+  max-width: 460px;
+}
+
+.aibootcamp-login__quote-mark {
+  font-size: 64px;
+  line-height: 0.6;
+  color: rgb(0 0 0 / 12%);
+  font-family: var(--serif, 'DM Serif Display', Georgia, serif);
+  display: block;
+  margin-bottom: 20px;
+  user-select: none;
+}
+
+.aibootcamp-login__quote {
+  font-family: var(--serif, 'DM Serif Display', Georgia, serif);
+  font-size: clamp(28px, 3.2vw, 46px);
+  font-weight: 400;
+  color: var(--ink, #111318);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+  transition: opacity 0.38s ease, transform 0.38s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aibootcamp-login__quote--out {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.aibootcamp-login__quote-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 28%);
+  margin: 0;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (width < 860px) {
+  .aibootcamp-login {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    padding: 40px 20px;
+  }
+
+  .aibootcamp-login__left {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .aibootcamp-login__right {
+    display: none;
+  }
+}
