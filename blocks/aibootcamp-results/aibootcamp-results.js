@@ -121,52 +121,89 @@ function sectionHtml(id, title, body, sub = '') {
 }
 
 // ─── Overview tab ──────────────────────────────────────────────
-function buildOverview(meta, scores, exec) {
-  const scoreCards = scores.map(([label, value, max, desc]) => `
-    <div class="ab-score-card ab-score-card-${scoreColor(value)}">
-      <p class="ab-score-card-label">${label}</p>
-      <p class="ab-score-card-value">${value}${max ? `<span class="ab-score-card-max"> /${max}</span>` : ''}</p>
-      <p class="ab-score-card-desc">${desc}</p>
+function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues) {
+  const worldCards = worldSeesYou.map(([label, value, unit, trend, desc, tabId]) => {
+    const isNeg = trend && trend.startsWith('-');
+    const isPoor = trend === 'Poor';
+    const tabLabel = { seo: 'View SEO details', 'ai-visibility': 'View AI visibility', performance: 'View performance' }[tabId] || '';
+    return `
+      <div class="ab-world-card">
+        <p class="ab-world-label">${label.toUpperCase()}</p>
+        <p class="ab-world-value">${value}<span class="ab-world-unit">${unit || ''}</span></p>
+        ${isPoor
+    ? '<span class="ab-world-poor">Poor</span>'
+    : `<p class="ab-world-trend${isNeg ? ' ab-world-trend-neg' : ''}">${isNeg ? '↘ ' : ''}${trend || ''}</p>`}
+        <p class="ab-world-desc">${desc || ''}</p>
+        ${tabLabel ? `<button class="ab-world-link" data-tab="${tabId}" type="button">${tabLabel} →</button>` : ''}
+      </div>`;
+  }).join('');
+
+  const whyCards = whyAdobe.map(([name, pct, desc]) => `
+    <div class="ab-why-item">
+      <div class="ab-why-pct">${pct}%</div>
+      <div>
+        <h3 class="ab-why-name">${name}</h3>
+        <p class="ab-why-desc">${desc}</p>
+      </div>
     </div>`).join('');
 
-  const oppCards = [
-    [exec['opportunity-1-title'], exec['opportunity-1-desc']],
-    [exec['opportunity-2-title'], exec['opportunity-2-desc']],
-    [exec['opportunity-3-title'], exec['opportunity-3-desc']],
-  ].filter(([t]) => t).map(([title, desc]) => card(`
-    <h3 class="ab-card-title">${title}</h3>
-    <p class="ab-card-desc">${desc}</p>`)).join('');
+  const issueItems = priorityIssues.map(([title, desc, severity]) => `
+    <div class="ab-issue ab-issue-${severity === 'high' ? 'red' : 'amber'}">
+      <svg class="ab-issue-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <p class="ab-issue-title">${title}</p>
+        <p class="ab-issue-desc">${desc}</p>
+      </div>
+    </div>`).join('');
 
   return {
-    anchors: ['Executive Summary', 'Key Scores', 'Growth Opportunities'],
+    anchors: ['Executive Summary', 'How World Sees You', 'Why Adobe', 'Priority Issues'],
     html: `
       <section class="ab-section" id="executive-summary">
         ${card(`
-          <div class="ab-exec-head">
-            <div>
-              <h1 class="ab-company-name">${meta.company || ''}</h1>
-              <span class="ab-domain-chip">${meta.domain || ''}</span>
-            </div>
-            <span class="ab-event-chip">${meta.event || ''}</span>
+          <div class="ab-your-request">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="ab-your-request-label">Your Request</span>
           </div>
-          <p class="ab-headline">${meta.headline || ''}</p>
-          <div class="ab-exec-body">
-            <div class="ab-exec-col">
-              <p class="ab-exec-label">Situation</p>
-              <p class="ab-exec-text">${exec.situation || ''}</p>
-            </div>
-            <div class="ab-exec-col">
-              <p class="ab-exec-label">Complication</p>
-              <p class="ab-exec-text">${exec.complication || ''}</p>
-            </div>
-            <div class="ab-exec-col">
-              <p class="ab-exec-label">Resolution</p>
-              <p class="ab-exec-text">${exec.resolution || ''}</p>
-            </div>
-          </div>`)}
+          <p class="ab-your-request-text">${yourRequest[0] ? yourRequest[0][0] : ''}</p>
+        `)}
+        ${card(`
+          <div class="ab-exec-overview-head">
+            <h2 class="ab-section-title">Executive Overview</h2>
+            <span class="ab-ai-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              AI-Generated
+            </span>
+          </div>
+          <p class="ab-exec-overview-text">${execOverview[0] ? execOverview[0][0] : ''}</p>
+        `)}
       </section>
-      ${sectionHtml('key-scores', 'Key Scores', `<div class="ab-scores-grid">${scoreCards}</div>`)}
-      ${sectionHtml('growth-opportunities', 'Growth Opportunities', `<div class="ab-cards-grid">${oppCards}</div>`)}`,
+      <section class="ab-section" id="how-world-sees-you">
+        <h2 class="ab-section-title">How The World Sees You</h2>
+        <div class="ab-world-grid">${worldCards}</div>
+      </section>
+      <section class="ab-section" id="why-adobe">
+        <div class="ab-why-adobe">
+          <div class="ab-why-adobe-head">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h2 class="ab-why-adobe-title">Why Adobe Can Help</h2>
+          </div>
+          <p class="ab-why-adobe-sub">Based on the analysis, here are key opportunities where Adobe solutions can drive impact:</p>
+          <div class="ab-why-items">${whyCards}</div>
+          <button class="ab-why-all-btn" data-tab="solutions" type="button">View All Solutions →</button>
+        </div>
+      </section>
+      <section class="ab-section" id="priority-issues">
+        <div class="ab-priority-head">
+          <h2 class="ab-section-title">Priority Issues</h2>
+          <span class="ab-priority-count">${priorityIssues.length} issues</span>
+        </div>
+        <div class="ab-issues-list">${issueItems}</div>
+      </section>`,
   };
 }
 
@@ -460,8 +497,11 @@ export default async function decorate(block) {
   try {
     const doc = await fetchReport(slug);
     const meta = parseKV(doc, 'aibootcamp-report-meta');
-    const scores = parseBlock(doc, 'aibootcamp-report-scores');
-    const exec = parseKV(doc, 'aibootcamp-report-executive');
+    const yourRequest = parseBlock(doc, 'aibootcamp-report-your-request');
+    const execOverview = parseBlock(doc, 'aibootcamp-report-executive-overview');
+    const worldSeesYou = parseBlock(doc, 'aibootcamp-report-world-sees-you');
+    const whyAdobe = parseBlock(doc, 'aibootcamp-report-why-adobe');
+    const priorityIssues = parseBlock(doc, 'aibootcamp-report-priority-issues');
     const perf = parseBlock(doc, 'aibootcamp-report-performance');
     const perfImpact = parseBlock(doc, 'aibootcamp-report-performance-impact');
     const seo = parseKV(doc, 'aibootcamp-report-seo');
@@ -476,7 +516,8 @@ export default async function decorate(block) {
     const nextSteps = parseBlock(doc, 'aibootcamp-report-next-steps');
 
     const builders = {
-      overview: () => buildOverview(meta, scores, exec),
+      // eslint-disable-next-line max-len
+      overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
       performance: () => buildPerformance(perf, perfImpact),
       seo: () => buildSeo(seo, keywords, seoInsights),
       'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
@@ -494,6 +535,15 @@ export default async function decorate(block) {
       });
 
       block.querySelectorAll('.ab-tabnav-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeTab = btn.dataset.tab;
+          render();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+
+      block.querySelectorAll('[data-tab]').forEach((btn) => {
+        if (btn.classList.contains('ab-tabnav-btn')) return;
         btn.addEventListener('click', () => {
           activeTab = btn.dataset.tab;
           render();
