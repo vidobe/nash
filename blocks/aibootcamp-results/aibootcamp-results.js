@@ -410,7 +410,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights) {
 }
 
 // ─── SEO tab ───────────────────────────────────────────────────
-function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
+function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData) {
   const traffic = seo['Monthly Traffic'] || '1.1M';
   const yoy = seo['YoY Growth'] || '-20.4%';
   const healthScore = parseInt(seo['SEO Health Score'] || '71', 10);
@@ -432,7 +432,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
   const narrative = seoNarrative[0] ? seoNarrative[0][0]
     : `You receive ${traffic} organic visitors monthly (down ${yoy} year over year), but ${branded}% come from branded searches. This means most visitors already know your brand — there's significant opportunity to capture new customers searching for your products and services.`;
 
-  // SVG line chart — matches reference design
+  // SVG line chart — data from DA block aibootcamp-report-traffic-data
   const svgW = 560;
   const svgH = 160;
   const padL = 48;
@@ -441,10 +441,26 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
   const padB = 36;
   const chartInnerW = svgW - padL - padR;
   const chartInnerH = svgH - padT - padB;
-  const maxVal = 1.5; // millions
-  // Monthly data: May'25 → Apr'26 (12 points)
-  const svgData = [1.43, 1.40, 1.37, 1.34, 1.30, 1.27, 1.24, 1.21, 1.18, 1.15, 0.83, 1.14];
-  const svgLabels = [['May 25', 0], ['Jul 25', 2], ['Sep 25', 4], ['Nov 25', 6], ['Jan 26', 8], ['Mar 26', 10]];
+
+  // Parse DA traffic data: rows are [month, value]
+  // Fall back to Wehkamp defaults if block not present
+  const FALLBACK_TRAFFIC = [
+    ["May '25", '1.43'], ["Jun '25", '1.40'], ["Jul '25", '1.37'], ["Aug '25", '1.34'],
+    ["Sep '25", '1.30'], ["Oct '25", '1.27'], ["Nov '25", '1.24'], ["Dec '25", '1.21'],
+    ["Jan '26", '1.18'], ["Feb '26", '1.15'], ["Mar '26", '0.83'], ["Apr '26", '1.14'],
+  ];
+  const rawTraffic = seoTrafficData.length ? seoTrafficData : FALLBACK_TRAFFIC;
+  const svgData = rawTraffic.map(([, v]) => parseFloat(v) || 0);
+  const svgMonths = rawTraffic.map(([m]) => m);
+  const maxVal = Math.ceil(Math.max(...svgData) * 10) / 10 + 0.2; // auto-scale + buffer
+
+  // Pick ~6 evenly spaced x-axis labels
+  const labelCount = Math.min(6, svgData.length);
+  const labelStep = Math.floor((svgData.length - 1) / (labelCount - 1));
+  const svgLabels = Array.from({ length: labelCount }, (_, i) => {
+    const idx = i === labelCount - 1 ? svgData.length - 1 : i * labelStep;
+    return [svgMonths[idx], idx];
+  });
 
   const toX = (i) => padL + (i / (svgData.length - 1)) * chartInnerW;
   const toY = (v) => padT + (1 - v / maxVal) * chartInnerH;
@@ -459,13 +475,16 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
 
   const dots = svgData.map((v, i) => `<circle cx="${toX(i).toFixed(1)}" cy="${toY(v).toFixed(1)}" r="3" fill="#7c3aed"/>`).join('');
 
-  const yGridVals = [1.5, 1.0, 0.5, 0];
+  // Dynamic y-axis: 4 grid lines from 0 to maxVal
+  const yStep = maxVal / 3;
+  const yGridVals = [maxVal, maxVal - yStep, maxVal - yStep * 2, 0];
   const yGrid = yGridVals.map((v) => {
     const y = toY(v).toFixed(1);
+    const vR = Math.round(v * 10) / 10;
     let label;
-    if (v === 0) label = '0';
-    else if (v === 0.5) label = '500K';
-    else label = `${v}M`;
+    if (vR === 0) label = '0';
+    else if (vR >= 1) label = `${vR}M`;
+    else label = `${Math.round(vR * 1000)}K`;
     return `<line x1="${padL}" y1="${y}" x2="${svgW - padR}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="${v === 0 ? '0' : '4,4'}"/>
       <text x="${padL - 6}" y="${(parseFloat(y) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#9ca3af" font-family="DM Sans,system-ui,sans-serif">${label}</text>`;
   }).join('');
@@ -1217,6 +1236,7 @@ export default async function decorate(block) {
     const seoCountries = parseBlock(doc, 'aibootcamp-report-seo-countries');
     const keywords = parseBlock(doc, 'aibootcamp-report-seo-keywords');
     const seoKeyInsights = parseBlock(doc, 'aibootcamp-report-seo-key-insights');
+    const seoTrafficData = parseBlock(doc, 'aibootcamp-report-traffic-data');
     const ai = parseKV(doc, 'aibootcamp-report-ai');
     const aiCompetitive = parseBlock(doc, 'aibootcamp-report-ai-competitive');
     const aiWhatAiSees = parseKV(doc, 'aibootcamp-report-ai-what-ai-sees');
@@ -1229,7 +1249,8 @@ export default async function decorate(block) {
       // eslint-disable-next-line max-len
       overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
       performance: () => buildPerformance(perf, perfNarrative, perfInsights),
-      seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights),
+      // eslint-disable-next-line max-len
+      seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData),
       'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
