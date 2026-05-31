@@ -112,8 +112,117 @@
 }
 
 .ab-topbar-logout:hover {
-  color: var(--red, #eb1000);
-  background: var(--red-lt, #fff0ef);
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* ─── User menu (topbar) ─────────────────────────────────────── */
+.ab-user-menu {
+  position: relative;
+}
+
+.ab-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  padding: 5px 12px 5px 6px;
+  cursor: pointer;
+  font-family: var(--sans, system-ui, sans-serif);
+  color: #374151;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ab-user-trigger:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.ab-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-user-avatar-lg {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.ab-user-name {
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ab-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.ab-user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ab-user-dropdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.ab-user-dropdown-email {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-user-signout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--sans, system-ui, sans-serif);
+  color: #374151;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ab-user-signout:hover {
+  background: #fef2f2;
+  color: #ef4444;
 }
 
 /* ─── Domain bar ─────────────────────────────────────────────── */

@@ -51,13 +51,26 @@ function renderTopbar() {
           <span class="ab-topbar-divider"></span>
           <span class="ab-topbar-title">Digital Insights Report</span>
         </div>
-        <button class="ab-topbar-logout" type="button" aria-label="Sign out" title="Sign out">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </button>
+        <div class="ab-user-menu">
+          <button class="ab-user-trigger" type="button" aria-label="Account menu">
+            <span class="ab-user-avatar" id="ab-topbar-avatar"></span>
+            <span class="ab-user-name" id="ab-topbar-name"></span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="ab-user-dropdown" hidden>
+            <div class="ab-user-dropdown-header">
+              <span class="ab-user-avatar ab-user-avatar-lg" id="ab-dropdown-avatar"></span>
+              <div>
+                <p class="ab-user-dropdown-name" id="ab-dropdown-name"></p>
+                <p class="ab-user-dropdown-email" id="ab-dropdown-email"></p>
+              </div>
+            </div>
+            <button class="ab-user-signout ab-topbar-logout" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign out
+            </button>
+          </div>
+        </div>
       </div>
     </header>`;
 }
@@ -1299,6 +1312,33 @@ export default async function decorate(block) {
 
     const render = () => {
       block.innerHTML = renderLayout(meta, builders[activeTab](), activeTab);
+
+      // Populate user avatar
+      const nameParts = session.name ? session.name.trim().split(/\s+/) : [];
+      const abbr = nameParts.length > 1
+        ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+        : (session.name || session.email || 'U').slice(0, 2).toUpperCase();
+      block.querySelectorAll('.ab-user-avatar').forEach((el) => { el.textContent = abbr; });
+      block.querySelectorAll('.ab-user-name').forEach((el) => {
+        el.textContent = session.name || session.email || '';
+      });
+      if (block.querySelector('#ab-dropdown-email')) {
+        block.querySelector('#ab-dropdown-email').textContent = session.email || '';
+        block.querySelector('#ab-dropdown-name').textContent = session.name || '';
+        block.querySelector('#ab-dropdown-avatar').textContent = abbr;
+      }
+
+      // User dropdown toggle
+      const trigger = block.querySelector('.ab-user-trigger');
+      const dropdown = block.querySelector('.ab-user-dropdown');
+      if (trigger && dropdown) {
+        trigger.addEventListener('click', () => {
+          dropdown.hidden = !dropdown.hidden;
+        });
+        document.addEventListener('click', (e) => {
+          if (!block.querySelector('.ab-user-menu')?.contains(e.target)) dropdown.hidden = true;
+        }, { once: false });
+      }
 
       block.querySelector('.ab-topbar-logout')?.addEventListener('click', () => {
         localStorage.removeItem(SESSION_KEY);

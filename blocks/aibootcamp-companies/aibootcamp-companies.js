@@ -25,6 +25,42 @@ function getSession() {
   } catch { return null; }
 }
 
+function initials(name, email) {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length > 1
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+  return (email || 'U').slice(0, 2).toUpperCase();
+}
+
+function renderUserMenu(session) {
+  const abbr = initials(session.name, session.email);
+  const display = session.name || session.email || '';
+  return `
+    <div class="ab-user-menu">
+      <button class="ab-user-trigger" type="button" aria-label="Account menu">
+        <span class="ab-user-avatar">${abbr}</span>
+        <span class="ab-user-name">${display}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="ab-user-dropdown" hidden>
+        <div class="ab-user-dropdown-header">
+          <span class="ab-user-avatar ab-user-avatar-lg">${abbr}</span>
+          <div>
+            <p class="ab-user-dropdown-name">${session.name || ''}</p>
+            <p class="ab-user-dropdown-email">${session.email || ''}</p>
+          </div>
+        </div>
+        <button class="ab-user-signout" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>`;
+}
+
 function renderCard(name, domain, slug, country, date) {
   const ago = timeAgo(date) || '14h ago';
   const session = getSession();
@@ -77,6 +113,10 @@ function renderCard(name, domain, slug, country, date) {
 }
 
 export default function decorate(block) {
+  // Auth guard
+  const session = getSession();
+  if (!session) { window.location.href = '/aibootcamp/'; return; }
+
   const rows = [...block.querySelectorAll(':scope > div')].map((row) => {
     const cells = [...row.querySelectorAll(':scope > div')];
     return cells.map((c) => c.textContent.trim());
@@ -102,14 +142,7 @@ export default function decorate(block) {
             <span class="ab-topbar-divider"></span>
             <span class="ab-topbar-title">AI Bootcamp NL 2026 — Reports</span>
           </div>
-          <button class="ab-topbar-logout" type="button" title="Sign out"
-            onclick="localStorage.removeItem('${SESSION_KEY}');window.location.href='/aibootcamp/'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
+          ${renderUserMenu(session)}
         </div>
       </header>
       <div class="ab-companies-body">
@@ -141,5 +174,26 @@ export default function decorate(block) {
       e.preventDefault();
       input.focus();
     }
+  });
+
+  // User dropdown toggle
+  const trigger = block.querySelector('.ab-user-trigger');
+  const dropdown = block.querySelector('.ab-user-dropdown');
+
+  trigger.addEventListener('click', () => {
+    const isHidden = dropdown.hidden;
+    dropdown.hidden = !isHidden;
+    trigger.setAttribute('aria-expanded', String(isHidden));
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!block.querySelector('.ab-user-menu').contains(e.target)) {
+      dropdown.hidden = true;
+    }
+  });
+
+  block.querySelector('.ab-user-signout').addEventListener('click', () => {
+    localStorage.removeItem(SESSION_KEY);
+    window.location.href = '/aibootcamp/';
   });
 }
