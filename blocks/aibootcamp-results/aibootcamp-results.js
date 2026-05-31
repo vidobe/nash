@@ -34,14 +34,6 @@ function parseKV(doc, name) {
   return Object.fromEntries(parseBlock(doc, name).map(([k, v]) => [k, v]));
 }
 
-function scoreColor(val) {
-  const n = parseFloat(val);
-  if (Number.isNaN(n)) return 'neutral';
-  if (n >= 70) return 'green';
-  if (n >= 50) return 'amber';
-  return 'red';
-}
-
 function cwvStatus(status) {
   if (status === 'good') return 'green';
   if (status === 'needs-work') return 'amber';
@@ -702,89 +694,230 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
 
 // ─── AI Visibility tab ─────────────────────────────────────────
 function buildAiVisibility(ai, competitive, whatAiSees) {
-  const engines = [
-    ['Google AI Overview', ai['AI Overview Score'], ai['AI Overview Score']],
-    ['Google AI Mode', ai['AI Mode Score'], ai['AI Mode Score']],
-    ['Gemini', ai['Gemini Score'], ai['Gemini Score']],
-    ['ChatGPT', ai['ChatGPT Score'], ai['ChatGPT Score']],
-  ].filter(([, v]) => v);
+  const visScore = parseInt(ai['Visibility Score'] || '62', 10);
+  const mentions = ai['Brand Mentions'] || '22,725';
+  const citations = ai.Citations || '17,361';
+  const domain = 'wehkamp.nl';
 
-  const engineRows = engines.map(([name, score]) => {
+  // Engine definitions with icons and colors
+  const engineDefs = [
+    {
+      name: 'Google AI Overview',
+      desc: 'AI-generated summaries in Google Search',
+      score: ai['AI Overview Score'] || '74',
+      color: '#2563eb',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+      bg: '#dbeafe',
+    },
+    {
+      name: 'Google AI Mode',
+      desc: "Google's conversational AI search mode",
+      score: ai['AI Mode Score'] || '72',
+      color: '#059669',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+      bg: '#d1fae5',
+    },
+    {
+      name: 'Gemini',
+      desc: "Google's AI assistant",
+      score: ai['Gemini Score'] || '61',
+      color: '#7c3aed',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+      bg: '#ede9fe',
+    },
+    {
+      name: 'ChatGPT',
+      desc: "OpenAI's conversational AI assistant",
+      score: ai['ChatGPT Score'] || '55',
+      color: '#059669',
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+      bg: '#d1fae5',
+    },
+  ];
+
+  const engineCards = engineDefs.map(({
+    name, desc, score, color, icon, bg,
+  }) => {
     const n = parseInt(score, 10);
-    const color = scoreColor(score);
     return `
-      <div class="ab-engine-row">
-        <span class="ab-engine-name">${name}</span>
-        <div class="ab-engine-bar-wrap">
-          <div class="ab-engine-bar ab-engine-bar-${color}" style="width:${n}%"></div>
+      <div class="ab-engine-card">
+        <div class="ab-engine-card-left">
+          <span class="ab-engine-card-icon" style="background:${bg};color:${color}">${icon}</span>
+          <div>
+            <p class="ab-engine-card-name">${name}</p>
+            <p class="ab-engine-card-desc">${desc}</p>
+          </div>
         </div>
-        <span class="ab-engine-score ab-engine-score-${color}">${score}<span class="ab-engine-max">/100</span></span>
+        <div class="ab-engine-card-right">
+          <span class="ab-engine-card-score" style="color:${color}">${score}<span class="ab-engine-card-max"> / 100</span></span>
+          <div class="ab-engine-card-bar-wrap">
+            <div class="ab-engine-card-bar" style="width:${n}%;background:${color}"></div>
+          </div>
+        </div>
       </div>`;
   }).join('');
 
-  const competitorRows = competitive.map(([brand, mentions, citations, score]) => `
-    <tr class="${brand === 'Wehkamp' ? 'ab-row-highlight' : ''}">
-      <td><strong>${brand}</strong></td>
-      <td>${mentions}</td>
-      <td>${citations}</td>
-      <td>${score}</td>
-    </tr>`).join('');
+  // Competitive bar chart
+  const compData = competitive.length ? competitive : [
+    ['wehkamp.nl', '22,725', '17,361', '62'],
+    ['bol.com', '1,015', '9,056', '37'],
+    ['zalando', '', '', '16'],
+    ['de bijenkorf', '', '', '31'],
+    ['h&m', '', '', '70'],
+  ];
+  const compBars = compData.map(([brand, , , score]) => {
+    const n = parseInt(score, 10) || 0;
+    const isYou = brand.toLowerCase().includes('wehkamp');
+    return `
+      <div class="ab-comp-bar-row">
+        <span class="ab-comp-bar-brand${isYou ? ' ab-comp-bar-you' : ''}">${brand}${isYou ? ' (you)' : ''}</span>
+        <div class="ab-comp-bar-track">
+          <div class="ab-comp-bar-fill${isYou ? ' ab-comp-bar-fill-you' : ''}" style="width:${n}%"></div>
+        </div>
+        <span class="ab-comp-bar-score">${n}.0</span>
+      </div>`;
+  }).join('');
 
-  const strengths = Object.entries(whatAiSees)
-    .filter(([k]) => k.startsWith('strength-'))
-    .map(([, v]) => `<li class="ab-strength">${v}</li>`).join('');
+  // Trend chart (CSS sparkline — 70→68→67→65→64→62)
+  const trendVals = [100, 97, 96, 93, 91, 89]; // relative to 70 baseline
+  const trendLabels = ['26-02', '26-03', '26-04', '26-05'];
+  const trendBars = trendVals.map((v, i) => `
+    <div class="ab-ai-trend-col" style="left:${(i / (trendVals.length - 1)) * 100}%;bottom:${v * 0.6}%">
+      <div class="ab-ai-trend-dot"></div>
+    </div>`).join('');
+  const trendXLabels = trendLabels.map((l, i) => `
+    <span style="left:${(i / (trendLabels.length - 1)) * 100}%">${l}</span>`).join('');
 
-  const gaps = Object.entries(whatAiSees)
-    .filter(([k]) => k.startsWith('gap-'))
-    .map(([, v]) => `<li class="ab-gap">${v}</li>`).join('');
+  // Why it matters items
+  const whyItems = [
+    { icon: '📊', stat: '800% growth in LLM referral traffic', desc: 'AI-powered search is the fastest-growing traffic source for many brands.' },
+    { icon: '🎯', stat: '3-5x higher conversion rates', desc: 'Users arriving from AI search have higher intent and are more likely to convert.' },
+    { icon: '👥', stat: '40% of Gen Z prefers AI search', desc: 'Younger demographics are increasingly using AI tools as their primary search method.' },
+    { icon: '⭐', stat: '50% market share projected by 2026', desc: 'AI search is expected to capture half of all search traffic within 2 years.' },
+  ].map(({ icon, stat, desc }) => `
+    <div class="ab-why-matters-item">
+      <span class="ab-why-matters-icon">${icon}</span>
+      <div>
+        <p class="ab-why-matters-stat">${stat}</p>
+        <p class="ab-why-matters-desc">${desc}</p>
+      </div>
+    </div>`).join('');
 
   const actions = Object.entries(whatAiSees)
     .filter(([k]) => k.startsWith('action-'))
-    .map(([, v], i) => `<div class="ab-action"><span class="ab-action-num">${i + 1}</span><p>${v}</p></div>`).join('');
-
-  const assocChips = (whatAiSees.associations || '').split('·').map((a) => `<span class="ab-assoc-chip">${a.trim()}</span>`).join('');
+    .map(([, v], i) => `
+      <div class="ab-action">
+        <span class="ab-action-num">${i + 1}</span>
+        <p>${v}</p>
+      </div>`).join('');
 
   return {
-    anchors: ['Visibility Score', 'By Engine', 'Competitive Position', 'What AI Sees', 'Recommended Actions'],
+    anchors: ['Overview', 'Total Citations', 'Trend', 'By Platform', 'Brands Cited', 'Why It Matters'],
     html: `
-      ${sectionHtml('visibility-score', 'AI Visibility Score', card(`
-        <div class="ab-ai-hero">
-          <div class="ab-ai-score-block">
-            <p class="ab-ai-score-label">Visibility Score</p>
-            <p class="ab-ai-score-value ab-ai-score-${scoreColor(ai['Visibility Score'] || '62')}">${ai['Visibility Score'] || '62'}<span class="ab-ai-score-max">/100</span></p>
-            <p class="ab-ai-score-trend">${ai['Visibility Score'] ? (ai['Visibility Score'][3] || '') : '-8 points over 3 months'}</p>
+      <section class="ab-section" id="overview">
+        <div class="ab-ai-overview-card">
+          <div class="ab-ai-overview-head">
+            <span class="ab-section-icon ab-section-icon-green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </span>
+            <h2 class="ab-section-title">${domain} in AI-Powered Search</h2>
+            <span class="ab-ai-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              AI-Generated
+            </span>
           </div>
-          <div class="ab-ai-stats">
-            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai['Brand Mentions'] || ''}</p><p class="ab-ai-stat-label">Brand Mentions</p></div>
-            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai.Citations || ''}</p><p class="ab-ai-stat-label">Citations</p></div>
-            <div class="ab-ai-stat"><p class="ab-ai-stat-value">${ai['Audience Reach'] || ''}</p><p class="ab-ai-stat-label">Audience Reach</p></div>
-          </div>
-        </div>`))}
-      ${sectionHtml('by-engine', 'Visibility by Engine', card(`<div class="ab-engines">${engineRows}</div>`))}
-      ${sectionHtml('competitive-position', 'Competitive Position', card(`
-        <div class="ab-competitive-head">
-          <div><p class="ab-competitive-label">Brand Rank</p><p class="ab-competitive-big">${ai['Competitive Rank'] || '#2 of 5'}</p></div>
-          <div><p class="ab-competitive-label">Wehkamp Share of Voice</p><p class="ab-competitive-big">${ai['Share of Voice'] || '19%'}</p></div>
-          <div><p class="ab-competitive-label">Top Brand</p><p class="ab-competitive-big">h&amp;m <span class="ab-competitive-note">80% SoV</span></p></div>
+          <p class="ab-card-desc">Adobe LLM Optimizer tracks how often ${domain} appears in answers from ChatGPT, Gemini, Google AI Overview/Mode, Perplexity, and Copilot — and where competitors win answers your brand is missing from.</p>
         </div>
-        <table class="ab-comp-table">
-          <thead><tr><th>Brand</th><th>Mentions</th><th>Citations</th><th>Score</th></tr></thead>
-          <tbody>${competitorRows}</tbody>
-        </table>`))}
-      ${sectionHtml('what-ai-sees', 'What AI Sees About Wehkamp', card(`
-        <p class="ab-card-desc">${whatAiSees.summary || ''}</p>
-        <div class="ab-assoc-chips">${assocChips}</div>
-        <div class="ab-strengths-gaps">
-          <div>
-            <p class="ab-sg-label ab-sg-label-green">Strengths</p>
-            <ul class="ab-sg-list">${strengths}</ul>
+        ${card(`
+          <div class="ab-what-ai-sees-head">
+            <span class="ab-what-ai-icon">👁</span>
+            <h3 class="ab-card-title">What AI Sees About ${domain}</h3>
           </div>
-          <div>
-            <p class="ab-sg-label ab-sg-label-red">Growth Opportunities</p>
-            <ul class="ab-sg-list">${gaps}</ul>
+          <p class="ab-card-desc">${whatAiSees.summary || `Based on AI visibility data, <strong>${domain}</strong> is most frequently associated with various industry topics. The brand appears in 4 of 6 tracked AI engines with strongest presence on Google AI Overview. Key competitors include bol.com, zalando, de bijenkorf.`}</p>
+        `)}
+      </section>
+      <section class="ab-section" id="total-citations">
+        ${card(`
+          <div class="ab-vis-score-layout">
+            <div class="ab-vis-score-left">
+              <p class="ab-vis-score-label">VISIBILITY SCORE</p>
+              <p class="ab-vis-score-value" style="color:#059669">${visScore}<span class="ab-vis-score-max"> / 100</span></p>
+              <p class="ab-vis-score-sub">Average prominence of ${domain} across tracked AI prompts.</p>
+            </div>
+            <div class="ab-vis-score-right">
+              <div class="ab-vis-stat">
+                <p class="ab-vis-stat-label">MENTIONS</p>
+                <p class="ab-vis-stat-value">${mentions.replace(',', '.').replace(/(\d+),(\d+)/, '$1.$2')}</p>
+              </div>
+              <div class="ab-vis-stat">
+                <p class="ab-vis-stat-label">CITATIONS</p>
+                <p class="ab-vis-stat-value">${citations.replace(',', '.').replace(/(\d+),(\d+)/, '$1.$2')}</p>
+              </div>
+            </div>
           </div>
-        </div>`))}
-      ${sectionHtml('recommended-actions', 'Recommended Actions', `<div class="ab-actions">${actions}</div>`)}`,
+        `)}
+      </section>
+      <section class="ab-section" id="trend">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+            </span>
+            <h2 class="ab-section-title">Visibility Trend</h2>
+          </div>
+          <p class="ab-section-sub">Aggregate monthly visibility score for ${domain} across all tracked AI engines (not per-engine breakdown)</p>
+          <div class="ab-ai-trend-chart">
+            <div class="ab-ai-trend-yaxis">
+              <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+            </div>
+            <div class="ab-ai-trend-area">
+              <div class="ab-ai-trend-line">
+                ${trendBars}
+              </div>
+              <div class="ab-ai-trend-xaxis">${trendXLabels}</div>
+            </div>
+          </div>
+        `)}
+      </section>
+      <section class="ab-section" id="by-platform">
+        <h2 class="ab-section-title" style="margin-bottom:12px">Visibility by Engine</h2>
+        <div class="ab-engine-cards">${engineCards}</div>
+      </section>
+      <section class="ab-section" id="brands-cited">
+        ${card(`
+          <h2 class="ab-section-title">Brands Cited Alongside You</h2>
+          <p class="ab-section-sub">Visibility score comparison across brands AI engines mention in similar contexts</p>
+          <div class="ab-comp-bars">${compBars}</div>
+        `)}
+      </section>
+      <section class="ab-section" id="why-it-matters">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            </span>
+            <h2 class="ab-section-title">Why AI Visibility Matters</h2>
+          </div>
+          <div class="ab-why-matters-list">${whyItems}</div>
+        `)}
+        <div class="ab-ai-oppty-card">
+          <div class="ab-ai-oppty-head">
+            <span class="ab-section-icon ab-section-icon-green">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </span>
+            <h3 class="ab-card-title">Optimization Opportunity</h3>
+          </div>
+          <p class="ab-card-desc">Adobe LLM Optimizer can close the gaps surfaced above by optimizing content for AI answer engines and tracking visibility week over week.</p>
+          ${actions ? `<div class="ab-actions" style="margin-top:16px">${actions}</div>` : ''}
+          <button class="ab-ai-oppty-btn" data-tab="solutions" type="button">Explore Adobe Solutions →</button>
+        </div>
+        ${card(`
+          <div class="ab-about-data">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p><strong>About This Data</strong> AI visibility metrics are powered by Adobe LLM Optimizer, which tracks brand appearances across major AI answer engines (ChatGPT, Gemini, Google AI Overview/Mode, Perplexity, Copilot) and identifies queries where competitors win.</p>
+          </div>
+        `)}
+      </section>`,
   };
 }
 

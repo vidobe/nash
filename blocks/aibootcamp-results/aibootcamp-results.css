@@ -2090,6 +2090,380 @@
   background: var(--green, #0d7a45);
 }
 
+/* ─── AI Visibility tab ──────────────────────────────────────── */
+.ab-ai-overview-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+}
+
+.ab-ai-overview-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.ab-what-ai-sees-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ab-what-ai-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Visibility Score layout */
+.ab-vis-score-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.ab-vis-score-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin: 0 0 6px;
+}
+
+.ab-vis-score-value {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0 0 6px;
+}
+
+.ab-vis-score-max {
+  font-size: 18px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.ab-vis-score-sub {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-vis-score-right {
+  display: flex;
+  gap: 32px;
+}
+
+.ab-vis-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  margin: 0 0 4px;
+}
+
+.ab-vis-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Trend chart */
+.ab-ai-trend-chart {
+  display: flex;
+  gap: 8px;
+  height: 160px;
+  margin-top: 16px;
+}
+
+.ab-ai-trend-yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: right;
+  padding-bottom: 20px;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.ab-ai-trend-area {
+  flex: 1;
+  position: relative;
+}
+
+.ab-ai-trend-line {
+  position: absolute;
+  inset: 0 0 20px;
+  background: linear-gradient(to bottom, rgb(16 185 129 / 15%), rgb(16 185 129 / 5%));
+  border-top: 2px solid #10b981;
+  border-radius: 4px 4px 0 0;
+}
+
+.ab-ai-trend-col {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.ab-ai-trend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #10b981;
+  transform: translate(-50%, -50%);
+}
+
+.ab-ai-trend-xaxis {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ab-ai-trend-xaxis span {
+  font-size: 11px;
+  color: #9ca3af;
+  transform: translateX(-50%);
+}
+
+/* Engine cards */
+.ab-engine-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ab-engine-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ab-engine-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.ab-engine-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-engine-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.ab-engine-card-desc {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-engine-card-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 2;
+}
+
+.ab-engine-card-score {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+}
+
+.ab-engine-card-max {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.ab-engine-card-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ab-engine-card-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Competitive bars */
+.ab-comp-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ab-comp-bar-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 50px;
+  align-items: center;
+  gap: 12px;
+}
+
+.ab-comp-bar-brand {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.ab-comp-bar-you {
+  color: #059669;
+  font-weight: 700;
+}
+
+.ab-comp-bar-track {
+  height: 10px;
+  background: #f3f4f6;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ab-comp-bar-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+.ab-comp-bar-fill-you {
+  background: #10b981;
+}
+
+.ab-comp-bar-score {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-align: right;
+}
+
+/* Why it matters */
+.ab-why-matters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ab-why-matters-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.ab-why-matters-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ab-why-matters-stat {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 3px;
+}
+
+.ab-why-matters-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Optimization opportunity */
+.ab-ai-oppty-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 12px;
+}
+
+.ab-ai-oppty-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ab-ai-oppty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  background: none;
+  border: 1px solid #059669;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+  cursor: pointer;
+  font-family: var(--sans, system-ui, sans-serif);
+  transition: background 0.15s;
+}
+
+.ab-ai-oppty-btn:hover {
+  background: #d1fae5;
+}
+
+/* About data */
+.ab-about-data {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ab-about-data p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* ─── AI Visibility ──────────────────────────────────────────── */
 .ab-ai-hero {
   display: flex;
