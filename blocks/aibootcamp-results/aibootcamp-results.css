@@ -853,39 +853,11 @@
   color: #ef4444;
 }
 
-.ab-seo-chart {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-  height: 80px;
-  margin-bottom: 8px;
-}
-
-.ab-chart-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-}
-
-.ab-chart-bar-spacer {
-  flex-shrink: 0;
-}
-
-.ab-chart-bar {
+.ab-traffic-svg {
   width: 100%;
-  background: #ede9fe;
-  border-radius: 3px 3px 0 0;
-  flex-shrink: 0;
-  min-height: 4px;
-}
-
-.ab-chart-label {
-  font-size: 9px;
-  color: #9ca3af;
-  white-space: nowrap;
-  margin-top: 4px;
-  flex-shrink: 0;
+  height: auto;
+  display: block;
+  margin-bottom: 8px;
 }
 
 .ab-chart-market {

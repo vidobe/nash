@@ -432,20 +432,60 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
   const narrative = seoNarrative[0] ? seoNarrative[0][0]
     : `You receive ${traffic} organic visitors monthly (down ${yoy} year over year), but ${branded}% come from branded searches. This means most visitors already know your brand — there's significant opportunity to capture new customers searching for your products and services.`;
 
-  // Traffic chart — pixel heights from relative values (max=60px chart area)
-  const chartMonths = ['May\'25', 'Jul', 'Sep', 'Nov', 'Jan\'26', 'Mar', 'Apr'];
-  const chartVals = [100, 97, 92, 87, 80, 58, 77];
-  const chartMax = Math.max(...chartVals);
-  const chartH = 60; // px available for bars
-  const chartBars = chartMonths.map((m, i) => {
-    const px = Math.round((chartVals[i] / chartMax) * chartH);
-    return `
-      <div class="ab-chart-col">
-        <div class="ab-chart-bar-spacer" style="height:${chartH - px}px"></div>
-        <div class="ab-chart-bar" style="height:${px}px"></div>
-        <span class="ab-chart-label">${m}</span>
-      </div>`;
+  // SVG line chart — matches reference design
+  const svgW = 560;
+  const svgH = 160;
+  const padL = 48;
+  const padR = 16;
+  const padT = 12;
+  const padB = 36;
+  const chartInnerW = svgW - padL - padR;
+  const chartInnerH = svgH - padT - padB;
+  const maxVal = 1.5; // millions
+  // Monthly data: May'25 → Apr'26 (12 points)
+  const svgData = [1.43, 1.40, 1.37, 1.34, 1.30, 1.27, 1.24, 1.21, 1.18, 1.15, 0.83, 1.14];
+  const svgLabels = [['May 25', 0], ['Jul 25', 2], ['Sep 25', 4], ['Nov 25', 6], ['Jan 26', 8], ['Mar 26', 10]];
+
+  const toX = (i) => padL + (i / (svgData.length - 1)) * chartInnerW;
+  const toY = (v) => padT + (1 - v / maxVal) * chartInnerH;
+
+  const pts = svgData.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+  const firstX = toX(0).toFixed(1);
+  const lastX = toX(svgData.length - 1).toFixed(1);
+  const baseY = (padT + chartInnerH).toFixed(1);
+
+  const linePts = svgData.slice(1).map((v, i) => `L ${toX(i + 1).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+  const areaPath = `M ${firstX},${toY(svgData[0]).toFixed(1)} ${linePts} L ${lastX},${baseY} L ${firstX},${baseY} Z`;
+
+  const dots = svgData.map((v, i) => `<circle cx="${toX(i).toFixed(1)}" cy="${toY(v).toFixed(1)}" r="3" fill="#7c3aed"/>`).join('');
+
+  const yGridVals = [1.5, 1.0, 0.5, 0];
+  const yGrid = yGridVals.map((v) => {
+    const y = toY(v).toFixed(1);
+    let label;
+    if (v === 0) label = '0';
+    else if (v === 0.5) label = '500K';
+    else label = `${v}M`;
+    return `<line x1="${padL}" y1="${y}" x2="${svgW - padR}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="${v === 0 ? '0' : '4,4'}"/>
+      <text x="${padL - 6}" y="${(parseFloat(y) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#9ca3af" font-family="DM Sans,system-ui,sans-serif">${label}</text>`;
   }).join('');
+
+  const xLabels = svgLabels.map(([label, idx]) => `<text x="${toX(idx).toFixed(1)}" y="${(padT + chartInnerH + 20).toFixed(1)}" text-anchor="middle" font-size="10" fill="#9ca3af" font-family="DM Sans,system-ui,sans-serif">${label}</text>`).join('');
+
+  const trafficChart = `
+    <svg class="ab-traffic-svg" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${yGrid}
+      <path d="${areaPath}" fill="url(#tg)"/>
+      <polyline points="${pts}" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${xLabels}
+    </svg>`;
 
   // Countries
   const countryRows = seoCountries.length ? seoCountries : [
@@ -545,7 +585,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
               <span class="ab-traffic-unit">visitors/month</span>
               <span class="ab-traffic-yoy${isYoyNeg ? ' ab-traffic-yoy-neg' : ''}">${yoy} YoY</span>
             </div>
-            <div class="ab-seo-chart">${chartBars}</div>
+            ${trafficChart}
             <p class="ab-chart-market">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               Primary market: ${primaryMarket}
