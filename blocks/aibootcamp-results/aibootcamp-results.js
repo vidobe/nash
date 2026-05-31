@@ -954,7 +954,6 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData) {
           <p class="ab-section-sub">Aggregate monthly visibility score for ${domain} across all tracked AI engines (not per-engine breakdown)</p>
           <div class="ab-ai-trend-chart">
             ${trendChart}
-            </div>
           </div>
         `)}
       </section>
