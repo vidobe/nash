@@ -143,7 +143,7 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
     const tabLabel = { seo: 'View SEO details', 'ai-visibility': 'View AI visibility', performance: 'View performance' }[tabId] || '';
     const icon = WORLD_ICONS[tabId] || { color: 'neutral', svg: '' };
     return `
-      <div class="ab-world-card ab-world-card-${icon.color}">
+      <button class="ab-world-card ab-world-card-${icon.color}" data-tab="${tabId}" type="button">
         <div class="ab-world-label-row">
           <span class="ab-world-icon ab-world-icon-${icon.color}">${icon.svg}</span>
           <p class="ab-world-label ab-world-label-${icon.color}">${label.toUpperCase()}</p>
@@ -153,8 +153,8 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
     ? '<span class="ab-world-poor">Poor</span>'
     : `<p class="ab-world-trend${isNeg ? ' ab-world-trend-neg' : ''}">${isNeg ? '↘ ' : ''}${trend || ''}</p>`}
         <p class="ab-world-desc">${desc || ''}</p>
-        ${tabLabel ? `<button class="ab-world-link ab-world-link-${icon.color}" data-tab="${tabId}" type="button">${tabLabel} →</button>` : ''}
-      </div>`;
+        ${tabLabel ? `<span class="ab-world-link ab-world-link-${icon.color}">${tabLabel} →</span>` : ''}
+      </button>`;
   }).join('');
 
   const whyCards = whyAdobe.map(([name, pct, desc]) => `
