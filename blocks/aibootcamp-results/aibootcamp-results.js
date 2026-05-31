@@ -432,14 +432,20 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
   const narrative = seoNarrative[0] ? seoNarrative[0][0]
     : `You receive ${traffic} organic visitors monthly (down ${yoy} year over year), but ${branded}% come from branded searches. This means most visitors already know your brand — there's significant opportunity to capture new customers searching for your products and services.`;
 
-  // Traffic chart (CSS-only sparkline approximation using bars)
+  // Traffic chart — pixel heights from relative values (max=60px chart area)
   const chartMonths = ['May\'25', 'Jul', 'Sep', 'Nov', 'Jan\'26', 'Mar', 'Apr'];
-  const chartVals = [100, 97, 92, 87, 80, 58, 77]; // relative heights
-  const chartBars = chartMonths.map((m, i) => `
-    <div class="ab-chart-col">
-      <div class="ab-chart-bar" style="height:${chartVals[i]}%"></div>
-      <span class="ab-chart-label">${m}</span>
-    </div>`).join('');
+  const chartVals = [100, 97, 92, 87, 80, 58, 77];
+  const chartMax = Math.max(...chartVals);
+  const chartH = 60; // px available for bars
+  const chartBars = chartMonths.map((m, i) => {
+    const px = Math.round((chartVals[i] / chartMax) * chartH);
+    return `
+      <div class="ab-chart-col">
+        <div class="ab-chart-bar-spacer" style="height:${chartH - px}px"></div>
+        <div class="ab-chart-bar" style="height:${px}px"></div>
+        <span class="ab-chart-label">${m}</span>
+      </div>`;
+  }).join('');
 
   // Countries
   const countryRows = seoCountries.length ? seoCountries : [
@@ -547,19 +553,17 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
           `, 'ab-seo-chart-card')}
           ${card(`
             <p class="ab-perf-gauge-label">SEO HEALTH SCORE</p>
-            <div class="ab-gauge-wrap">
-              <svg class="ab-gauge" width="130" height="130" viewBox="0 0 130 130" aria-hidden="true">
+            <div class="ab-seo-gauge-wrap">
+              <svg width="130" height="130" viewBox="0 0 130 130" aria-label="SEO health score ${healthScore}">
                 <circle cx="65" cy="65" r="${hR}" fill="none" stroke="#e5e7eb" stroke-width="10"/>
                 <circle cx="65" cy="65" r="${hR}" fill="none" stroke="${healthColor}" stroke-width="10"
                   stroke-dasharray="${hFilled.toFixed(1)} ${hCirc.toFixed(1)}"
                   stroke-dashoffset="${(hCirc * 0.25).toFixed(1)}"
                   stroke-linecap="round"
                   transform="rotate(-90 65 65)"/>
+                <text x="65" y="59" text-anchor="middle" font-size="28" font-weight="800" fill="${healthColor}" font-family="DM Sans,system-ui,sans-serif">${healthScore}</text>
+                <text x="65" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="${healthColor}" font-family="DM Sans,system-ui,sans-serif">${healthGrade}</text>
               </svg>
-              <div class="ab-gauge-label">
-                <span class="ab-gauge-score" style="color:${healthColor}">${healthScore}</span>
-                <span class="ab-gauge-grade" style="color:${healthColor}">${healthGrade}</span>
-              </div>
             </div>
             <span class="ab-seo-health-label" style="color:${healthColor};background:${healthScore >= 70 ? '#dbeafe' : '#fef3c7'}">${healthLabel}</span>
             <p class="ab-seo-health-note"><strong>What this score measures:</strong> A composite score based on organic traffic volume, traffic trend (growth/decline), brand vs non-branded traffic mix, and keyword ranking positions. Higher scores indicate stronger organic search presence and growth potential.</p>
@@ -649,11 +653,11 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
             ${kwRows}
           </div>
           <div class="ab-kw-legend">
-            Position:
-            <span class="ab-kw-rank ab-kw-rank-green">1-3 Excellent</span>
-            <span class="ab-kw-rank ab-kw-rank-blue">4-10 Page 1</span>
-            <span class="ab-kw-rank ab-kw-rank-amber">11-20 Page 2</span>
-            <span class="ab-kw-rank ab-kw-rank-gray">20+ Opportunity</span>
+            <span class="ab-kw-legend-label">Position:</span>
+            <span class="ab-kw-legend-item ab-kw-legend-green">1-3 Excellent</span>
+            <span class="ab-kw-legend-item ab-kw-legend-blue">4-10 Page 1</span>
+            <span class="ab-kw-legend-item ab-kw-legend-amber">11-20 Page 2</span>
+            <span class="ab-kw-legend-item ab-kw-legend-gray">20+ Opportunity</span>
           </div>
         `)}
       </section>
