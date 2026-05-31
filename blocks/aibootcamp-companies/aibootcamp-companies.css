@@ -2,13 +2,16 @@
   min-height: 100vh;
   background: #f8f9fb;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow: visible;
 }
 
 /* ─── Topbar ─────────────────────────────────────────────────── */
 .ab-companies-page .ab-topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 50;
+  left: 0;
+  right: 0;
+  z-index: 100;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -129,6 +132,11 @@
   min-width: 220px;
   z-index: 200;
   overflow: hidden;
+  display: none;
+}
+
+.ab-user-dropdown-open {
+  display: block;
 }
 
 .ab-user-dropdown-header {
@@ -177,7 +185,7 @@
 .ab-companies-body {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 32px 80px;
+  padding: 92px 32px 80px;
 }
 
 /* ─── Search ─────────────────────────────────────────────────── */
@@ -362,6 +370,18 @@
   border-radius: 9px;
   font-family: var(--sans, system-ui, sans-serif);
   transition: background 0.15s;
+}
+
+.ab-co-open-btn,
+.ab-co-open-btn:visited,
+.ab-co-open-btn:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.ab-co-open-btn svg {
+  stroke: #fff;
+  flex-shrink: 0;
 }
 
 .ab-co-open-btn:hover {

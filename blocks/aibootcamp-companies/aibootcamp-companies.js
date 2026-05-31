@@ -7,17 +7,6 @@
 const RESULTS_PAGE = '/aibootcamp/brand-visibility-report';
 const SESSION_KEY = 'aibootcamp-auth';
 
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const ms = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(ms / 60000);
-  if (mins < 2) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
 function getSession() {
   try {
     const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
@@ -45,7 +34,7 @@ function renderUserMenu(session) {
         <span class="ab-user-name">${display}</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="ab-user-dropdown" hidden>
+      <div class="ab-user-dropdown">
         <div class="ab-user-dropdown-header">
           <span class="ab-user-avatar ab-user-avatar-lg">${abbr}</span>
           <div>
@@ -61,9 +50,7 @@ function renderUserMenu(session) {
     </div>`;
 }
 
-function renderCard(name, domain, slug, country, date) {
-  const ago = timeAgo(date) || '14h ago';
-
+function renderCard(name, domain, slug, country) {
   return `
     <div class="ab-co-card" data-name="${name.toLowerCase()}">
       <div class="ab-co-card-top">
@@ -74,7 +61,6 @@ function renderCard(name, domain, slug, country, date) {
             Ready
           </span>
         </div>
-        <span class="ab-co-time">${ago}</span>
       </div>
       <div class="ab-co-domain">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -116,9 +102,10 @@ export default function decorate(block) {
     el.style.maxWidth = 'none';
     el.style.padding = '0';
     el.style.margin = '0';
+    el.style.overflow = 'visible';
   });
 
-  const cardsHtml = rows.map(([name, domain, slug, country, date]) => renderCard(name, domain, slug, country, date)).join('');
+  const cardsHtml = rows.map(([name, domain, slug, country]) => renderCard(name, domain, slug, country)).join('');
 
   block.innerHTML = `
     <div class="ab-companies-page">
@@ -167,16 +154,13 @@ export default function decorate(block) {
   const trigger = block.querySelector('.ab-user-trigger');
   const dropdown = block.querySelector('.ab-user-dropdown');
 
-  trigger.addEventListener('click', () => {
-    const isHidden = dropdown.hidden;
-    dropdown.hidden = !isHidden;
-    trigger.setAttribute('aria-expanded', String(isHidden));
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('ab-user-dropdown-open');
   });
 
-  document.addEventListener('click', (e) => {
-    if (!block.querySelector('.ab-user-menu').contains(e.target)) {
-      dropdown.hidden = true;
-    }
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('ab-user-dropdown-open');
   });
 
   block.querySelector('.ab-user-signout').addEventListener('click', () => {
