@@ -434,10 +434,10 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
 
   // SVG line chart — data from DA block aibootcamp-report-traffic-data
   const svgW = 560;
-  const svgH = 160;
-  const padL = 48;
+  const svgH = 240;
+  const padL = 52;
   const padR = 16;
-  const padT = 12;
+  const padT = 16;
   const padB = 36;
   const chartInnerW = svgW - padL - padR;
   const chartInnerH = svgH - padT - padB;
