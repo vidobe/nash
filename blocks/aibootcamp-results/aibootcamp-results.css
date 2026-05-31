@@ -2180,66 +2180,13 @@
 
 /* Trend chart */
 .ab-ai-trend-chart {
-  display: flex;
-  gap: 8px;
-  height: 160px;
   margin-top: 16px;
 }
 
-.ab-ai-trend-yaxis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #9ca3af;
-  text-align: right;
-  padding-bottom: 20px;
-  width: 28px;
-  flex-shrink: 0;
-}
-
-.ab-ai-trend-area {
-  flex: 1;
-  position: relative;
-}
-
-.ab-ai-trend-line {
-  position: absolute;
-  inset: 0 0 20px;
-  background: linear-gradient(to bottom, rgb(16 185 129 / 15%), rgb(16 185 129 / 5%));
-  border-top: 2px solid #10b981;
-  border-radius: 4px 4px 0 0;
-}
-
-.ab-ai-trend-col {
-  position: absolute;
-  transform: translateX(-50%);
-}
-
-.ab-ai-trend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px #10b981;
-  transform: translate(-50%, -50%);
-}
-
-.ab-ai-trend-xaxis {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.ab-ai-trend-xaxis span {
-  font-size: 11px;
-  color: #9ca3af;
-  transform: translateX(-50%);
+.ab-ai-trend-svg {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* Engine cards */

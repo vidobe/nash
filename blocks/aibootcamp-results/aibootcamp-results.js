@@ -735,7 +735,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
 }
 
 // ─── AI Visibility tab ─────────────────────────────────────────
-function buildAiVisibility(ai, competitive, whatAiSees) {
+function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData) {
   const visScore = parseInt(ai['Visibility Score'] || '62', 10);
   const mentions = ai['Brand Mentions'] || '22,725';
   const citations = ai.Citations || '17,361';
@@ -820,15 +820,59 @@ function buildAiVisibility(ai, competitive, whatAiSees) {
       </div>`;
   }).join('');
 
-  // Trend chart (CSS sparkline — 70→68→67→65→64→62)
-  const trendVals = [100, 97, 96, 93, 91, 89]; // relative to 70 baseline
-  const trendLabels = ['26-02', '26-03', '26-04', '26-05'];
-  const trendBars = trendVals.map((v, i) => `
-    <div class="ab-ai-trend-col" style="left:${(i / (trendVals.length - 1)) * 100}%;bottom:${v * 0.6}%">
-      <div class="ab-ai-trend-dot"></div>
-    </div>`).join('');
-  const trendXLabels = trendLabels.map((l, i) => `
-    <span style="left:${(i / (trendLabels.length - 1)) * 100}%">${l}</span>`).join('');
+  // SVG trend chart — reads from DA block aibootcamp-report-ai-trend-data
+  // Fallback: Wehkamp 70→62 decline Feb-May 2026
+  const FALLBACK_AI_TREND = [
+    ['26-02', '70'], ['26-03', '68'], ['26-04', '65'], ['26-05', '62'],
+  ];
+  const rawAiTrend = aiTrendData.length ? aiTrendData : FALLBACK_AI_TREND;
+  const aiTrendPoints = rawAiTrend.map(([label, v]) => ({ label, val: parseFloat(v) || 0 }));
+
+  const tsvgW = 560; const tsvgH = 180;
+  const tpadL = 40; const tpadR = 16; const tpadT = 12; const tpadB = 36;
+  const tInnerW = tsvgW - tpadL - tpadR;
+  const tInnerH = tsvgH - tpadT - tpadB;
+  const tMax = 100;
+  const ttoX = (i) => tpadL + (i / (aiTrendPoints.length - 1)) * tInnerW;
+  const ttoY = (v) => tpadT + (1 - v / tMax) * tInnerH;
+
+  const tPts = aiTrendPoints.map((p, i) => `${ttoX(i).toFixed(1)},${ttoY(p.val).toFixed(1)}`).join(' ');
+  const tfX = ttoX(0).toFixed(1);
+  const tlX = ttoX(aiTrendPoints.length - 1).toFixed(1);
+  const tbY = (tpadT + tInnerH).toFixed(1);
+  const tLinePts = aiTrendPoints.slice(1).map((p, i) => `L ${ttoX(i + 1).toFixed(1)},${ttoY(p.val).toFixed(1)}`).join(' ');
+  const tAreaPath = `M ${tfX},${ttoY(aiTrendPoints[0].val).toFixed(1)} ${tLinePts} L ${tlX},${tbY} L ${tfX},${tbY} Z`;
+  const tDots = aiTrendPoints.map((p, i) => `<circle cx="${ttoX(i).toFixed(1)}" cy="${ttoY(p.val).toFixed(1)}" r="4" fill="#10b981" stroke="#fff" stroke-width="2"/>`).join('');
+
+  const tYGrid = [100, 75, 50, 25, 0].map((v) => {
+    const y = ttoY(v).toFixed(1);
+    return `<line x1="${tpadL}" y1="${y}" x2="${tsvgW - tpadR}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="${v === 0 ? '0' : '4,4'}"/>
+      <text x="${tpadL - 6}" y="${(parseFloat(y) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#9ca3af" font-family="DM Sans,system-ui,sans-serif">${v}</text>`;
+  }).join('');
+
+  // Pick labels evenly — show at most 6
+  const tLabelStep = Math.max(1, Math.floor((aiTrendPoints.length - 1) / 5));
+  const tXLabels = aiTrendPoints
+    .filter((_, i) => i % tLabelStep === 0 || i === aiTrendPoints.length - 1)
+    .map((p) => {
+      const origIdx = aiTrendPoints.indexOf(p);
+      return `<text x="${ttoX(origIdx).toFixed(1)}" y="${(tpadT + tInnerH + 20).toFixed(1)}" text-anchor="middle" font-size="10" fill="#9ca3af" font-family="DM Sans,system-ui,sans-serif">${p.label}</text>`;
+    }).join('');
+
+  const trendChart = `
+    <svg class="ab-ai-trend-svg" viewBox="0 0 ${tsvgW} ${tsvgH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <linearGradient id="aitg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${tYGrid}
+      <path d="${tAreaPath}" fill="url(#aitg)"/>
+      <polyline points="${tPts}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${tDots}
+      ${tXLabels}
+    </svg>`;
 
   // Why it matters items
   const whyItems = [
@@ -909,14 +953,7 @@ function buildAiVisibility(ai, competitive, whatAiSees) {
           </div>
           <p class="ab-section-sub">Aggregate monthly visibility score for ${domain} across all tracked AI engines (not per-engine breakdown)</p>
           <div class="ab-ai-trend-chart">
-            <div class="ab-ai-trend-yaxis">
-              <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-            </div>
-            <div class="ab-ai-trend-area">
-              <div class="ab-ai-trend-line">
-                ${trendBars}
-              </div>
-              <div class="ab-ai-trend-xaxis">${trendXLabels}</div>
+            ${trendChart}
             </div>
           </div>
         `)}
@@ -1243,6 +1280,7 @@ export default async function decorate(block) {
     const ai = parseKV(doc, 'aibootcamp-report-ai');
     const aiCompetitive = parseBlock(doc, 'aibootcamp-report-ai-competitive');
     const aiWhatAiSees = parseKV(doc, 'aibootcamp-report-ai-what-ai-sees');
+    const aiTrendData = parseBlock(doc, 'aibootcamp-report-ai-trend-data');
     const solutions = parseBlock(doc, 'aibootcamp-report-solutions');
     const roadmapResults = parseBlock(doc, 'aibootcamp-report-roadmap-results');
     const success = parseKV(doc, 'aibootcamp-report-success');
@@ -1254,7 +1292,7 @@ export default async function decorate(block) {
       performance: () => buildPerformance(perf, perfNarrative, perfInsights),
       // eslint-disable-next-line max-len
       seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData),
-      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
+      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
 
