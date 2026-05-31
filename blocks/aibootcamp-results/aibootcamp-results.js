@@ -122,19 +122,38 @@ function sectionHtml(id, title, body, sub = '') {
 
 // ─── Overview tab ──────────────────────────────────────────────
 function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues) {
+  const WORLD_ICONS = {
+    seo: {
+      color: 'purple',
+      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    },
+    'ai-visibility': {
+      color: 'green',
+      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+    },
+    performance: {
+      color: 'blue',
+      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    },
+  };
+
   const worldCards = worldSeesYou.map(([label, value, unit, trend, desc, tabId]) => {
     const isNeg = trend && trend.startsWith('-');
     const isPoor = trend === 'Poor';
     const tabLabel = { seo: 'View SEO details', 'ai-visibility': 'View AI visibility', performance: 'View performance' }[tabId] || '';
+    const icon = WORLD_ICONS[tabId] || { color: 'neutral', svg: '' };
     return `
-      <div class="ab-world-card">
-        <p class="ab-world-label">${label.toUpperCase()}</p>
+      <div class="ab-world-card ab-world-card-${icon.color}">
+        <div class="ab-world-label-row">
+          <span class="ab-world-icon ab-world-icon-${icon.color}">${icon.svg}</span>
+          <p class="ab-world-label ab-world-label-${icon.color}">${label.toUpperCase()}</p>
+        </div>
         <p class="ab-world-value">${value}<span class="ab-world-unit">${unit || ''}</span></p>
         ${isPoor
     ? '<span class="ab-world-poor">Poor</span>'
     : `<p class="ab-world-trend${isNeg ? ' ab-world-trend-neg' : ''}">${isNeg ? '↘ ' : ''}${trend || ''}</p>`}
         <p class="ab-world-desc">${desc || ''}</p>
-        ${tabLabel ? `<button class="ab-world-link" data-tab="${tabId}" type="button">${tabLabel} →</button>` : ''}
+        ${tabLabel ? `<button class="ab-world-link ab-world-link-${icon.color}" data-tab="${tabId}" type="button">${tabLabel} →</button>` : ''}
       </div>`;
   }).join('');
 
@@ -173,7 +192,12 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
         `)}
         ${card(`
           <div class="ab-exec-overview-head">
-            <h2 class="ab-section-title">Executive Overview</h2>
+            <div class="ab-exec-overview-title-wrap">
+              <span class="ab-section-icon ab-section-icon-purple">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>
+              </span>
+              <h2 class="ab-section-title">Executive Overview</h2>
+            </div>
             <span class="ab-ai-badge">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               AI-Generated
@@ -183,7 +207,12 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
         `)}
       </section>
       <section class="ab-section" id="how-world-sees-you">
-        <h2 class="ab-section-title">How The World Sees You</h2>
+        <div class="ab-section-heading-row">
+          <span class="ab-section-icon ab-section-icon-blue">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </span>
+          <h2 class="ab-section-title">How The World Sees You</h2>
+        </div>
         <div class="ab-world-grid">${worldCards}</div>
       </section>
       <section class="ab-section" id="why-adobe">

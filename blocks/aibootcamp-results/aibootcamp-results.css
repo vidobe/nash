@@ -266,6 +266,28 @@
   line-height: 1.65;
 }
 
+/* ─── Section icons & heading rows ──────────────────────────── */
+.ab-section-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ab-section-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-section-icon-purple { background: #ede9fe; color: #7c3aed; } /* stylelint-disable-line */
+.ab-section-icon-blue { background: #dbeafe; color: #2563eb; } /* stylelint-disable-line */
+.ab-section-icon-green { background: #d1fae5; color: #059669; } /* stylelint-disable-line */
+
 /* ─── Executive Overview ─────────────────────────────────────── */
 .ab-exec-overview-head {
   display: flex;
@@ -273,6 +295,13 @@
   gap: 10px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.ab-exec-overview-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
 }
 
 .ab-exec-overview-text {
@@ -296,16 +325,38 @@
   padding: 20px 22px;
 }
 
+.ab-world-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ab-world-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-world-icon-purple { background: #ede9fe; color: #7c3aed; } /* stylelint-disable-line */
+.ab-world-icon-green { background: #d1fae5; color: #059669; } /* stylelint-disable-line */
+.ab-world-icon-blue { background: #dbeafe; color: #2563eb; } /* stylelint-disable-line */
+
 .ab-world-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: #6b7280;
-  margin: 0 0 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin: 0;
 }
+
+.ab-world-label-purple { color: #7c3aed; }
+.ab-world-label-green { color: #059669; }
+.ab-world-label-blue { color: #2563eb; }
 
 .ab-world-value {
   font-size: 32px;
@@ -364,9 +415,13 @@
 
 .ab-world-link:hover { opacity: 0.7; }
 
-.ab-world-card:nth-child(1) .ab-world-link { color: #7c3aed; }
-.ab-world-card:nth-child(2) .ab-world-link { color: #059669; }
-.ab-world-card:nth-child(3) .ab-world-link { color: #2563eb; }
+.ab-world-link-purple { color: #7c3aed; }
+.ab-world-link-green { color: #059669; }
+.ab-world-link-blue { color: #2563eb; }
+
+.ab-world-card-purple { border-color: #ede9fe; }
+.ab-world-card-green { border-color: #d1fae5; }
+.ab-world-card-blue { border-color: #dbeafe; }
 
 /* ─── Why Adobe Can Help ─────────────────────────────────────── */
 .ab-why-adobe {
