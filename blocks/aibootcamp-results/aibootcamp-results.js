@@ -1218,7 +1218,10 @@ export default async function decorate(block) {
 
   block.innerHTML = '<div class="ab-loading"><div class="ab-loading-spinner"></div><p>Loading your report…</p></div>';
 
-  const slug = (session.company || 'wehkamp').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  // URL param ?company=slug takes priority (used from companies overview page)
+  const urlParam = new URLSearchParams(window.location.search).get('company');
+  const rawSlug = urlParam || session.company || 'wehkamp';
+  const slug = rawSlug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
   try {
     const doc = await fetchReport(slug);
