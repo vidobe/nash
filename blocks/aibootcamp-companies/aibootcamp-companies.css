@@ -4,6 +4,52 @@
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
 }
 
+/* ─── Topbar ─────────────────────────────────────────────────── */
+.ab-companies-page .ab-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ab-companies-page .ab-topbar-inner {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ab-companies-page .ab-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ab-companies-page .ab-topbar-logo {
+  display: block;
+  height: 18px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.ab-companies-page .ab-topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: #e5e7eb;
+  display: block;
+  flex-shrink: 0;
+}
+
+.ab-companies-page .ab-topbar-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a4d55;
+  white-space: nowrap;
+}
+
 /* ─── Body ───────────────────────────────────────────────────── */
 .ab-companies-body {
   max-width: 1200px;
