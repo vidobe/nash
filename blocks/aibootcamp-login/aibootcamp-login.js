@@ -11,7 +11,7 @@
 const SESSION_KEY = 'aibootcamp-auth';
 const SESSION_HOURS = 12;
 const AUTH_SHEET = '/aibootcamp/config/auth.json';
-const RESULTS_PAGE = '/aibootcamp/brand-visibility-report';
+const RESULTS_PAGE = '/aibootcamp/listcompanies';
 
 const QUOTES = [
   'See how AI sees your brand.',
