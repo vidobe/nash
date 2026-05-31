@@ -41,12 +41,6 @@ function cwvStatus(status) {
   return 'neutral';
 }
 
-function badge(priority) {
-  const map = { high: 'red', medium: 'amber', low: 'gray' };
-  const c = map[priority] || 'gray';
-  return `<span class="ab-badge ab-badge-${c}">${priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : ''} Priority</span>`;
-}
-
 // ─── Topbar (Adobe logo + logout — sticky) ─────────────────────
 function renderTopbar() {
   return `
@@ -105,28 +99,13 @@ function card(content, cls = '') {
   return `<div class="ab-card${cls ? ` ${cls}` : ''}">${content}</div>`;
 }
 
-function sectionHtml(id, title, body, sub = '') {
-  return `<section class="ab-section" id="${id}">
-    <h2 class="ab-section-title">${title}</h2>${sub ? `<p class="ab-section-sub">${sub}</p>` : ''}
-    ${body}
-  </section>`;
-}
-
 // ─── Overview tab ──────────────────────────────────────────────
+// eslint-disable-next-line max-params
 function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues) {
   const WORLD_ICONS = {
-    seo: {
-      color: 'purple',
-      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-    },
-    'ai-visibility': {
-      color: 'green',
-      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
-    },
-    performance: {
-      color: 'blue',
-      svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    },
+    seo: { color: 'purple', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' },
+    'ai-visibility': { color: 'green', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' },
+    performance: { color: 'blue', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' },
   };
 
   const worldCards = worldSeesYou.map(([label, value, unit, trend, desc, tabId]) => {
@@ -922,55 +901,221 @@ function buildAiVisibility(ai, competitive, whatAiSees) {
 }
 
 // ─── Solutions tab ─────────────────────────────────────────────
-function buildSolutions(solutions, roadmapResults, success, nextSteps) {
-  const solCards = solutions.map(([name, priority, desc, tags, quickWin]) => {
-    const tagChips = (tags || '').split('·').map((t) => `<span class="ab-tag">${t.trim()}</span>`).join('');
-    return card(`
-      <div class="ab-card-head">
-        <h3 class="ab-card-title">${name}</h3>
-        ${badge(priority)}
-      </div>
-      <p class="ab-card-desc">${desc}</p>
-      ${quickWin ? `<div class="ab-quick-win"><span class="ab-quick-win-label">Quick Win</span><p>${quickWin}</p></div>` : ''}
-      <div class="ab-tags">${tagChips}</div>`);
+function miniGauge(score, color) {
+  const n = parseInt(score, 10);
+  const r = 22;
+  const circ = 2 * Math.PI * r;
+  const filled = (n / 100) * circ;
+  return `
+    <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
+      <circle cx="26" cy="26" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="5"/>
+      <circle cx="26" cy="26" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+        stroke-dasharray="${filled.toFixed(1)} ${circ.toFixed(1)}"
+        stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
+        stroke-linecap="round"
+        transform="rotate(-90 26 26)"/>
+      <text x="26" y="30" text-anchor="middle" font-size="12" font-weight="800" fill="${color}">${n}</text>
+    </svg>`;
+}
+
+function buildSolutions(solutions, roadmapResults, success) {
+  // All solutions — DA data takes priority, fallbacks for missing ones
+  const defaultSolutions = [
+    ['Adobe Commerce Optimizer', '90', 'Transform Wehkamp\'s 12.4s cold-load LCP into a 100 Lighthouse storefront and unlock 30-45% conversion uplift for new visitors. Deloitte research correlates 5x cold-load LCP improvement with 30-45% conversion lift. Delivers 100 Lighthouse storefront powered by Edge Delivery without requiring platform migration.'],
+    ['AEM Sites with Edge Delivery Services', '90', 'Deliver 100 Lighthouse scores and eliminate the 12.4s cold-load LCP gap that\'s silently suppressing new-customer conversion. Performance-first architecture productizes speed with built-in phased content rendering, automated performance testing on every change, and pro-active monitoring to maintain green Core Web Vitals at scale.'],
+    ['Adobe Sites Optimizer', '80', 'Reverse Wehkamp\'s 20.4% organic traffic decline through automated AI-driven optimization across performance, SEO, and engagement. Sites Optimizer\'s identify-suggest-fix framework enables one-click implementation of fixes. For Wehkamp\'s 1.1M monthly visits, reversing 50% of decline equals 145K recovered visits/month.'],
+    ['Adobe LLM Optimizer', '80', 'Reverse Wehkamp\'s 8-point AI visibility decline (70→62) and capture AI-driven discovery before bol.com and Zalando dominate the channel. Wehkamp has a strong AI foundation (8.1M audience, 17K citations) but is bleeding visibility. LLM Optimizer provides prescriptive automated recommendations to reverse the decline.'],
+    ['Adobe Journey Optimizer', '80', 'Orchestrate cart abandonment and lifecycle journeys to recapture revenue from declining traffic and convert acquisition into retention. With 20% traffic decline and 86% branded dependency, every visitor interaction must deliver maximum value. Journey Optimizer enables real-time decisioning and cross-channel orchestration.'],
+    ['Adobe GenStudio', '80', 'Scale campaign content velocity to capture the 14% non-branded growth opportunity and address 20.4% organic decline. Wehkamp ranks well for competitor brand terms but struggles to capture generic product demand — a content production capacity issue. GenStudio enables content generation in hours instead of weeks.'],
+    ['Adobe Workfront', '80', 'Orchestrate execution of performance, SEO, and content initiatives to ship optimization at the pace required to reverse 20.4% decline. Wehkamp\'s optimization opportunities require coordinated execution across marketing, development, and content teams. Workfront provides operational backbone for faster execution velocity.'],
+    ['Adobe Customer Journey Analytics', '70', 'Expose attribution blind spots behind Wehkamp\'s 86% branded dependency and 20.4% traffic decline through unified journey measurement. Wehkamp\'s strong rankings for competitor brand terms signal cross-shopping behavior, but channel-by-channel reporting prevents prioritizing which channels convert.'],
+    ['Adobe Real-Time CDP', '70', 'Unify customer data across 1.1M monthly visitors to activate retention and reduce 86% branded dependency. With 20% traffic decline and €323K monthly traffic value at stake, Real-Time CDP enables precision audience activation: win-back campaigns, category affinity targeting, lookalike modeling.'],
+    ['Adobe Mix Modeler', '70', 'Guide budget allocation decisions to address 20.4% traffic decline and €323K monthly traffic value at stake. With declining traffic and high-value organic at stake, marketing investment decisions need stronger confidence. Mix Modeler combines tactical attribution with strategic MMM.'],
+  ];
+
+  // Merge DA solutions with defaults
+  const solData = defaultSolutions.map(([defName, defScore, defDesc]) => {
+    const found = solutions.find(([n]) => n.toLowerCase().includes(defName.toLowerCase().split(' ')[1] || defName));
+    return found
+      ? [defName, defScore, found[2] || defDesc]
+      : [defName, defScore, defDesc];
+  });
+
+  const scoreToColor = (s) => {
+    const n = parseInt(s, 10);
+    if (n >= 85) return '#d97706';
+    if (n >= 70) return '#2563eb';
+    return '#6b7280';
+  };
+
+  const solGrid = solData.map(([name, score]) => {
+    const color = scoreToColor(score);
+    const isTop = parseInt(score, 10) >= 85;
+    return `
+      <div class="ab-sol-card${isTop ? ' ab-sol-card-top' : ''}">
+        <div class="ab-sol-gauge">${miniGauge(score, color)}</div>
+        <h3 class="ab-sol-name">${name}</h3>
+        <p class="ab-sol-desc">${solData.find(([n]) => n === name)?.[2] || ''}</p>
+      </div>`;
   }).join('');
 
-  const resultItems = roadmapResults.map(([stat, company, product]) => `
-    <div class="ab-result-item">
-      <p class="ab-result-stat">${stat}</p>
-      <p class="ab-result-company">${company} · ${product}</p>
-    </div>`).join('');
-
+  // Success story
+  const company = success.company || 'Maisons du Monde';
+  const relevance = 87;
+  const relevColor = '#2563eb';
   const achievements = Object.entries(success)
     .filter(([k]) => k.startsWith('achievement-'))
-    .map(([, v]) => `<li>${v}</li>`).join('');
+    .map(([, v]) => `<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${v}</li>`).join('');
 
-  const successStats = [
-    [success['stat1-value'], success['stat1-label']],
-    [success['stat2-value'], success['stat2-label']],
-    [success['stat3-value'], success['stat3-label']],
-    [success['stat4-value'], success['stat4-label']],
-  ].filter(([v]) => v).map(([v, l]) => `<div class="ab-success-stat"><p class="ab-success-stat-value">${v}</p><p class="ab-success-stat-label">${l}</p></div>`).join('');
+  // Executive summary challenge/solution
+  const challengePoints = [
+    'Catastrophic cold-load performance (42/100 score, 12.4s lab LCP) destroys conversion for first-time visitors and paid acquisition traffic',
+    '20.4% organic traffic decline over 12 months erodes 290K monthly visits (~€65K/month traffic value)',
+    'AI visibility declining 8 points in 3 months (70→62) while bol.com and Zalando optimize their AI presence',
+  ];
+  const solutionPoints = [
+    {
+      text: 'Adobe Commerce Optimizer + Edge Delivery Services deliver 100 Lighthouse storefront to unlock 30-45% conversion uplift for new visitors (Deloitte research)', chip: 'Adobe Commerce Optimizer', score: '90', color: '#d97706',
+    },
+    {
+      text: 'Adobe Sites Optimizer reverses organic decline through automated AI-driven SEO and performance optimization (comparable deployments: PGA Tour +19% CWV, BambooHR +4% traffic in <1 hour)', chip: 'Adobe Sites Optimizer', score: '80', color: '#2563eb',
+    },
+    {
+      text: 'Adobe LLM Optimizer defends and grows AI visibility across ChatGPT, Gemini, Google AI platforms to capture 4,700% AI-driven shopping traffic growth', chip: 'Adobe LLM Optimizer', score: '80', color: '#2563eb',
+    },
+  ];
+  const topSolChips = [
+    { label: 'Commerce Optimizer', score: '90', color: '#d97706' },
+    { label: 'Edge Delivery', score: '90', color: '#d97706' },
+    { label: 'Sites Optimizer', score: '80', color: '#2563eb' },
+  ].map(({ label, score, color }) => `<span class="ab-exec-chip" style="border-color:${color};color:${color}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${label} (${score})</span>`).join('');
 
-  const stepCards = nextSteps.map(([title, desc]) => card(`
-    <h3 class="ab-card-title">${title}</h3>
-    <p class="ab-card-desc">${desc}</p>`)).join('');
+  const fitDots = Array.from({ length: 7 }, (_, i) => `<span class="ab-fit-dot${i < 4 ? ' ab-fit-dot-on' : ''}"></span>`).join('');
+  const impactDots = Array.from({ length: 7 }, (_, i) => `<span class="ab-impact-dot${i < 6 ? ' ab-impact-dot-on' : ''}"></span>`).join('');
 
   return {
-    anchors: ['Recommended Solutions', 'What Adobe Customers Achieve', 'Customer Success', 'Next Steps'],
+    anchors: ['Success Story', 'Recommended Solutions', 'Executive Summary'],
     html: `
-      ${sectionHtml('recommended-solutions', 'Recommended Solutions', `<div class="ab-cards-list">${solCards}</div>`)}
-      ${roadmapResults.length ? sectionHtml('customer-results', 'What Adobe Customers Are Achieving', card(`<div class="ab-results-row">${resultItems}</div>`)) : ''}
-      ${success.company ? sectionHtml('customer-success', `Customer Success: ${success.company}`, card(`
-        <div class="ab-success-meta">
-          <span class="ab-success-industry">${success.industry || ''}</span>
-          <span class="ab-success-solution">${success.solution || ''}</span>
+      <section class="ab-section" id="success-story">
+        ${card(`
+          <div class="ab-story-head">
+            <div class="ab-section-heading-row" style="margin-bottom:0">
+              <span class="ab-section-icon ab-section-icon-blue">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </span>
+              <h2 class="ab-section-title">Recommended Success Story</h2>
+            </div>
+            <span class="ab-ai-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              AI-Generated
+            </span>
+          </div>
+          <div class="ab-story-layout">
+            <div class="ab-story-body">
+              <h3 class="ab-story-company">${company}</h3>
+              <div class="ab-story-relevance-text">
+                <p class="ab-story-relevance-label">Why This Story Is Relevant</p>
+                <p class="ab-story-relevance-desc">${success.relevance || 'As a European e-commerce retailer facing performance challenges (42/100 score, 12.4s LCP) and 20% traffic decline, Maisons du Monde demonstrates what\'s achievable with Adobe Commerce.'}</p>
+              </div>
+              <p class="ab-story-results-label"><strong>Key Results:</strong></p>
+              <ul class="ab-story-results">${achievements || '<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>29% of sales are made online and 52% include a digital component</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Expanded product catalog by 200,000 products through the Marketplace</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Handled close to 300 million website visits in 2022, with 73% on mobile devices</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>32% of online purchases are delivered to stores, improving cross-channel engagement</li>'}</ul>
+              <a class="ab-story-link" href="#" target="_blank" rel="noopener">View Full Story ↗</a>
+            </div>
+            <div class="ab-story-gauge">
+              <svg width="100" height="100" viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="${relevColor}" stroke-width="8"
+                  stroke-dasharray="${((relevance / 100) * 2 * Math.PI * 40).toFixed(1)} ${(2 * Math.PI * 40).toFixed(1)}"
+                  stroke-dashoffset="${(2 * Math.PI * 40 * 0.25).toFixed(1)}"
+                  stroke-linecap="round"
+                  transform="rotate(-90 50 50)"/>
+                <text x="50" y="54" text-anchor="middle" font-size="22" font-weight="800" fill="${relevColor}">${relevance}</text>
+              </svg>
+              <p class="ab-story-gauge-label">Relevance</p>
+            </div>
+          </div>
+        `)}
+      </section>
+      <section class="ab-section" id="recommended-solutions">
+        <div class="ab-sol-head">
+          <div class="ab-section-heading-row" style="margin-bottom:0">
+            <span class="ab-section-icon ab-section-icon-amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </span>
+            <h2 class="ab-section-title">Recommended Adobe Solutions</h2>
+          </div>
+          <p class="ab-sol-sub">Products assessed based on the customer's specific needs</p>
         </div>
-        <div class="ab-success-stats">${successStats}</div>
-        <p class="ab-card-desc">${success.description || ''}</p>
-        ${achievements ? `<ul class="ab-success-achievements">${achievements}</ul>` : ''}
-        ${success.relevance ? `<div class="ab-relevance"><p class="ab-relevance-label">Why this matters for ${success.company === 'Maisons du Monde' ? 'Wehkamp' : 'you'}</p><p>${success.relevance}</p></div>` : ''}`)) : ''}
-      ${nextSteps.length ? sectionHtml('next-steps', 'Next Steps', `<div class="ab-cards-grid">${stepCards}</div>`) : ''}`,
+        <div class="ab-sol-grid">${solGrid}</div>
+      </section>
+      <section class="ab-section" id="executive-summary">
+        <div class="ab-section-heading-row">
+          <span class="ab-section-icon ab-section-icon-amber">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </span>
+          <h2 class="ab-section-title">Executive Summary</h2>
+        </div>
+        <p class="ab-section-sub" style="margin-bottom:12px">Key challenges identified and recommended approach</p>
+        <div class="ab-exec-two-col">
+          <div class="ab-exec-challenge">
+            <div class="ab-exec-col-head">
+              <span class="ab-exec-col-icon ab-exec-col-icon-red">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </span>
+              <span class="ab-exec-col-title">The Challenge</span>
+              <span class="ab-exec-impact-badge">High Impact</span>
+            </div>
+            <div class="ab-exec-badges">
+              <span class="ab-exec-data-badge ab-exec-data-badge-red">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Performance: 42/100
+              </span>
+              <span class="ab-exec-data-badge ab-exec-data-badge-amber">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+                4 Critical Issues
+              </span>
+              <span class="ab-exec-data-badge ab-exec-data-badge-amber">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                22,725 AI Mentions (Adobe LLM Optimizer)
+              </span>
+            </div>
+            <div class="ab-exec-points">
+              ${challengePoints.map((p) => `<div class="ab-exec-point ab-exec-point-red"><span class="ab-exec-point-dot"></span><p>${p}</p></div>`).join('')}
+            </div>
+            <div class="ab-exec-bar-row">
+              <span class="ab-exec-bar-label">Business Impact</span>
+              <span class="ab-exec-dots">${impactDots}</span>
+            </div>
+          </div>
+          <div class="ab-exec-solution">
+            <div class="ab-exec-col-head">
+              <span class="ab-exec-col-icon ab-exec-col-icon-green">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </span>
+              <span class="ab-exec-col-title">The Solution</span>
+              <span class="ab-exec-products-badge">10 Products</span>
+            </div>
+            <div class="ab-exec-chips">${topSolChips}</div>
+            <div class="ab-exec-points">
+              ${solutionPoints.map(({
+    text, chip, score, color,
+  }) => `
+                <div class="ab-exec-sol-point">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <div>
+                    <p>${text}</p>
+                    <span class="ab-exec-sol-chip" style="border-color:${color};color:${color}">${chip} Score: ${score}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+            <div class="ab-exec-bar-row">
+              <span class="ab-exec-bar-label">Solution Fit</span>
+              <span class="ab-exec-dots">${fitDots}</span>
+              <span class="ab-exec-fit-label">Strong Fit</span>
+            </div>
+          </div>
+        </div>
+      </section>`,
   };
 }
 
