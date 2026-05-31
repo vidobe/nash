@@ -75,7 +75,7 @@ function renderCard(name, domain, slug, country) {
       </div>
       <div class="ab-co-actions">
         <a class="ab-co-open-btn" href="${RESULTS_PAGE}?company=${slug}">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Open Analysis
         </a>
         <button class="ab-co-icon-btn" type="button" title="Refresh" onclick="location.reload()">
