@@ -1045,6 +1045,328 @@
   line-height: 1.6;
 }
 
+/* ─── Performance tab ───────────────────────────────────────── */
+.ab-perf-narrative-card {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(to right, #fff5f5, #fff);
+}
+
+.ab-perf-narrative-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.ab-section-icon-red {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.ab-perf-overview-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ab-perf-gauge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: #f8faff;
+  border-color: #dbeafe;
+}
+
+.ab-perf-gauge-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+.ab-gauge-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.ab-gauge { display: block; }
+
+.ab-gauge-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ab-gauge-score {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.ab-gauge-grade {
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.ab-perf-pages-card { justify-content: flex-start; }
+
+.ab-pages-analyzed-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ab-pages-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px;
+  letter-spacing: -0.03em;
+}
+
+.ab-page-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ab-page-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.ab-page-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.ab-page-domain {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-pages-see-more {
+  font-size: 13px;
+  color: #2563eb;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ─── Performance Per Page ───────────────────────────────────── */
+.ab-perf-per-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px 12px 0 0;
+  padding: 14px 20px;
+}
+
+.ab-per-page-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  padding: 20px 24px;
+}
+
+.ab-per-page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ab-per-page-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.ab-per-page-url {
+  font-size: 14px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ab-per-page-scores {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ab-per-page-score-box {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  min-width: 100px;
+}
+
+.ab-per-page-score-box-red {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.ab-per-page-score-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+
+.ab-per-page-score-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ef4444;
+  margin: 0 0 2px;
+  letter-spacing: -0.02em;
+}
+
+.ab-per-page-score-status {
+  font-size: 11px;
+  color: #ef4444;
+  margin: 0;
+  font-weight: 600;
+}
+
+.ab-note-red {
+  background: #fff5f5;
+  border-color: #fecaca;
+  border-left-color: #ef4444;
+}
+
+.ab-per-page-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0 0 12px 12px;
+  padding: 12px 20px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ab-per-page-footer strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* ─── CWV rows (new style) ───────────────────────────────────── */
+.ab-cwv-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ab-cwv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 16px 20px;
+  border: 1px solid transparent;
+  gap: 16px;
+}
+
+.ab-cwv-row-green {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.ab-cwv-row-amber {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.ab-cwv-row-red {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.ab-cwv-row-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.ab-cwv-row-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-cwv-row-icon-green { background: #d1fae5; color: #059669; } /* stylelint-disable-line */
+
+.ab-cwv-row-icon-amber {
+  background: #fde68a;
+  color: #d97706;
+}
+
+.ab-cwv-row-icon-red {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.ab-cwv-row-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 3px;
+}
+
+.ab-cwv-row-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 6px;
+}
+
+.ab-cwv-row-target {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-cwv-row-value {
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.ab-cwv-row-value-red { color: #ef4444; }
+.ab-cwv-row-value-amber { color: #d97706; }
+
 /* ─── CWV cards ──────────────────────────────────────────────── */
 .ab-cwv-grid {
   display: grid;

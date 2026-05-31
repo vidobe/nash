@@ -237,35 +237,204 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
 }
 
 // ─── Performance tab ───────────────────────────────────────────
-function buildPerformance(perfRows, impactRows) {
-  const metrics = perfRows.filter(([n]) => n !== 'note');
+function buildPerformance(perfRows, perfNarrative, perfInsights) {
   const note = perfRows.find(([n]) => n === 'note');
+  const ps = perfRows.find(([n]) => n === 'PageSpeed Score') || [];
+  const lcpCold = perfRows.find(([n]) => n.includes('cold')) || [];
+  const lcpField = perfRows.find(([n]) => n.includes('field')) || [];
+  const inp = perfRows.find(([n]) => n === 'INP') || [];
+  const cls = perfRows.find(([n]) => n === 'CLS') || [];
+  const fcp = perfRows.find(([n]) => n === 'FCP') || [];
+  const tbt = perfRows.find(([n]) => n === 'TBT') || [];
 
-  const cwvCards = metrics.map(([name, value, target, status, desc]) => `
-    <div class="ab-cwv-card ab-cwv-card-${cwvStatus(status)}">
-      <div class="ab-cwv-head">
-        <span class="ab-cwv-name">${name}</span>
-        <span class="ab-cwv-status ab-cwv-status-${cwvStatus(status)}">${status === 'needs-work' ? 'Needs Work' : status.charAt(0).toUpperCase() + status.slice(1)}</span>
-      </div>
-      <p class="ab-cwv-value">${value}</p>
-      <p class="ab-cwv-target">Target: ${target}</p>
-      ${desc ? `<p class="ab-cwv-desc">${desc}</p>` : ''}
-    </div>`).join('');
+  const score = parseInt(ps[1] || '42', 10);
+  // eslint-disable-next-line no-nested-ternary
+  const gaugeColor = score >= 70 ? '#059669' : score >= 50 ? '#f59e0b' : '#ef4444';
+  const gradeMap = {
+    90: 'A', 75: 'B', 50: 'C', 25: 'D',
+  };
+  const grade = Object.entries(gradeMap).find(([t]) => score >= Number(t))?.[1] || 'F';
+  const r = 52;
+  const circ = 2 * Math.PI * r;
+  const filled = (score / 100) * circ;
 
-  const impactCards = impactRows.map(([title, stat, desc]) => card(`
-    <div class="ab-impact-head">
-      <h3 class="ab-card-title">${title}</h3>
-      <span class="ab-impact-stat">${stat}</span>
-    </div>
-    <p class="ab-card-desc">${desc}</p>`)).join('');
+  const narrative = perfNarrative[0] ? perfNarrative[0][0]
+    : 'Your website\'s 12.4s load time is significantly slower than the 2.5s industry standard. Research shows that 53% of mobile users abandon sites that take longer than 3 seconds to load. This is likely costing you conversions and revenue.';
+
+  const cwvItems = [
+    {
+      label: 'Time to See Content',
+      metric: 'LCP',
+      value: lcpCold[1] || '12.4s',
+      target: `under ${lcpCold[2] || '2.5s'}`,
+      status: lcpCold[3] || 'poor',
+      desc: lcpCold[4] || 'Users likely leaving before content loads',
+    },
+    {
+      label: 'Time to Interact',
+      metric: 'INP',
+      value: inp[1] || '327ms',
+      target: `under ${inp[2] || '200ms'}`,
+      status: inp[3] || 'needs-work',
+      desc: inp[4] || 'Some delay in button and form responsiveness',
+    },
+    {
+      label: 'Visual Stability',
+      metric: 'CLS',
+      value: cls[1] || '0.00',
+      target: `under ${cls[2] || '0.1'}`,
+      status: cls[3] || 'good',
+      desc: cls[4] || 'Page layout is stable',
+    },
+  ];
+
+  const cwvIcons = {
+    poor: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    'needs-work': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A2 2 0 0 1 10 17V7a2 2 0 0 1 1.19-1.84"/></svg>',
+    good: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  };
+
+  const cwvRows = cwvItems.map(({
+    label, value, target, status, desc,
+  }) => {
+    const c = cwvStatus(status);
+    const isGood = status === 'good';
+    const targetIcon = isGood
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    return `
+      <div class="ab-cwv-row ab-cwv-row-${c}">
+        <div class="ab-cwv-row-left">
+          <span class="ab-cwv-row-icon ab-cwv-row-icon-${c}">${cwvIcons[status] || cwvIcons.good}</span>
+          <div>
+            <p class="ab-cwv-row-label">${label}</p>
+            <p class="ab-cwv-row-desc">${desc}</p>
+            <p class="ab-cwv-row-target">${targetIcon} Target: ${target}</p>
+          </div>
+        </div>
+        ${status === 'poor' || status === 'needs-work'
+    ? `<span class="ab-cwv-row-value ab-cwv-row-value-${c}">${value}</span>`
+    : ''}
+      </div>`;
+  }).join('');
+
+  const insightItems = perfInsights.length
+    ? perfInsights.map(([text]) => `<li>${text}</li>`).join('')
+    : [
+      `Lab LCP of ${lcpCold[1] || '12.4s'} significantly exceeds the 2.5s threshold for 'Good' performance`,
+      `Lab FCP of ${fcp[1] || '7.4s'} indicates extremely slow initial paint in synthetic cold-load conditions`,
+      `TBT of ${tbt[1] || '617ms'} suggests significant main thread blocking during page load`,
+      `Critical gap between lab metrics (LCP ${lcpCold[1] || '12.4s'}) and field metrics (LCP ${lcpField[1] || '1.37s'}) indicates inconsistent user experience or heavy resource loading`,
+    ].map((t) => `<li>${t}</li>`).join('');
 
   const noteHtml = note ? `<div class="ab-note">${note[1]}</div>` : '';
+  const domain = lcpCold[4] ? '' : 'wehkamp.nl';
 
   return {
-    anchors: ['Core Web Vitals', 'Business Impact'],
+    anchors: ['Overview', 'Pages Tested', 'Core Web Vitals', 'Issues'],
     html: `
-      ${sectionHtml('core-web-vitals', 'Core Web Vitals', `<div class="ab-cwv-grid">${cwvCards}</div>${noteHtml}`, 'Google PageSpeed Insights · Lighthouse · Mobile · Homepage only')}
-      ${sectionHtml('business-impact', 'Business Impact', `<div class="ab-cards-grid ab-cards-grid-2">${impactCards}</div>`)}`,
+      <section class="ab-section" id="overview">
+        ${card(`
+          <div class="ab-perf-narrative-head">
+            <span class="ab-section-icon ab-section-icon-red">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </span>
+            <h2 class="ab-section-title">The Business Impact of Performance</h2>
+            <span class="ab-ai-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              AI-Generated
+            </span>
+          </div>
+          <p class="ab-card-desc">${narrative}</p>
+        `, 'ab-perf-narrative-card')}
+        <div class="ab-perf-overview-row">
+          ${card(`
+            <p class="ab-perf-gauge-label">OVERALL PERFORMANCE</p>
+            <div class="ab-gauge-wrap">
+              <svg class="ab-gauge" width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+                <circle cx="70" cy="70" r="${r}" fill="none" stroke="#f3f4f6" stroke-width="10"/>
+                <circle cx="70" cy="70" r="${r}" fill="none" stroke="${gaugeColor}" stroke-width="10"
+                  stroke-dasharray="${filled.toFixed(1)} ${circ.toFixed(1)}"
+                  stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
+                  stroke-linecap="round"
+                  transform="rotate(-90 70 70)"/>
+              </svg>
+              <div class="ab-gauge-label">
+                <span class="ab-gauge-score" style="color:${gaugeColor}">${score}</span>
+                <span class="ab-gauge-grade" style="color:${gaugeColor}">${grade}</span>
+              </div>
+            </div>
+            <span class="ab-world-poor" style="display:inline-block;margin-top:8px">Poor</span>
+          `, 'ab-perf-gauge-card')}
+          ${card(`
+            <div class="ab-pages-analyzed-head">
+              <span class="ab-section-icon ab-section-icon-blue">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </span>
+              <h3 class="ab-card-title">Pages Analyzed</h3>
+            </div>
+            <p class="ab-pages-count">1 page</p>
+            <div class="ab-page-bullet">
+              <span class="ab-page-dot"></span>
+              <div>
+                <p class="ab-page-name">Homepage</p>
+                <p class="ab-page-domain">${domain || 'wehkamp.nl'}</p>
+              </div>
+            </div>
+            <p class="ab-pages-see-more">See detailed breakdown below</p>
+          `, 'ab-perf-pages-card')}
+        </div>
+      </section>
+      <section class="ab-section" id="pages-tested">
+        <div class="ab-perf-per-page-head">
+          <div class="ab-section-heading-row" style="margin-bottom:0">
+            <span class="ab-section-icon ab-section-icon-blue">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </span>
+            <h2 class="ab-section-title">Performance Per Page</h2>
+          </div>
+          <span class="ab-priority-count">1 page analyzed</span>
+        </div>
+        <div class="ab-per-page-item">
+          <div class="ab-per-page-info">
+            <h3 class="ab-per-page-name">Homepage</h3>
+            <a class="ab-per-page-url" href="https://www.wehkamp.nl" target="_blank" rel="noopener">wehkamp.nl ↗</a>
+            <div class="ab-per-page-scores">
+              <div class="ab-per-page-score-box ab-per-page-score-box-red">
+                <p class="ab-per-page-score-label">Performance</p>
+                <p class="ab-per-page-score-value">${score}/100</p>
+                <p class="ab-per-page-score-status">Poor</p>
+              </div>
+              <div class="ab-per-page-score-box">
+                <p class="ab-per-page-score-label">Grade</p>
+                <p class="ab-per-page-score-value" style="color:#ef4444">${grade}</p>
+                <p class="ab-per-page-score-status">Poor</p>
+              </div>
+            </div>
+            <div class="ab-note ab-note-red">Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.</div>
+            ${noteHtml}
+          </div>
+        </div>
+        <div class="ab-per-page-footer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Average performance score: <strong>${score}</strong>
+        </div>
+      </section>
+      <section class="ab-section" id="core-web-vitals">
+        <div class="ab-section-heading-row">
+          <span class="ab-section-icon ab-section-icon-blue">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
+          <h2 class="ab-section-title">What This Means For Your Business</h2>
+        </div>
+        <div class="ab-cwv-rows">${cwvRows}</div>
+      </section>
+      <section class="ab-section" id="issues">
+        ${card(`
+          <h3 class="ab-card-title" style="margin-bottom:12px">Additional Insights</h3>
+          <ul class="ab-insights-list">${insightItems}</ul>
+        `)}
+      </section>`,
   };
 }
 
@@ -532,7 +701,8 @@ export default async function decorate(block) {
     const whyAdobe = parseBlock(doc, 'aibootcamp-report-why-adobe');
     const priorityIssues = parseBlock(doc, 'aibootcamp-report-priority-issues');
     const perf = parseBlock(doc, 'aibootcamp-report-performance');
-    const perfImpact = parseBlock(doc, 'aibootcamp-report-performance-impact');
+    const perfNarrative = parseBlock(doc, 'aibootcamp-report-performance-narrative');
+    const perfInsights = parseBlock(doc, 'aibootcamp-report-performance-insights');
     const seo = parseKV(doc, 'aibootcamp-report-seo');
     const keywords = parseBlock(doc, 'aibootcamp-report-seo-keywords');
     const seoInsights = parseBlock(doc, 'aibootcamp-report-seo-insights');
@@ -547,7 +717,7 @@ export default async function decorate(block) {
     const builders = {
       // eslint-disable-next-line max-len
       overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
-      performance: () => buildPerformance(perf, perfImpact),
+      performance: () => buildPerformance(perf, perfNarrative, perfInsights),
       seo: () => buildSeo(seo, keywords, seoInsights),
       'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
