@@ -221,7 +221,7 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
 }
 
 // ─── Performance tab ───────────────────────────────────────────
-function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain) {
+function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, perfPages) {
   const note = perfRows.find(([n]) => n === 'note');
   const ps = perfRows.find(([n]) => n === 'PageSpeed Score') || [];
   const lcpCold = perfRows.find(([n]) => n.includes('cold')) || [];
@@ -357,14 +357,15 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain) {
               </span>
               <h3 class="ab-card-title">Pages Analyzed</h3>
             </div>
-            <p class="ab-pages-count">1 page</p>
+            <p class="ab-pages-count">${perfPages.length > 1 ? `${perfPages.length} pages` : '1 page'}</p>
+            ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', grade, '']]).map(([pName, , pUrl]) => `
             <div class="ab-page-bullet">
               <span class="ab-page-dot"></span>
               <div>
-                <p class="ab-page-name">Homepage</p>
-                <p class="ab-page-domain">${domain}</p>
+                <p class="ab-page-name">${pName}</p>
+                <p class="ab-page-domain">${pUrl || domain}</p>
               </div>
-            </div>
+            </div>`).join('')}
             <p class="ab-pages-see-more">See detailed breakdown below</p>
           `, 'ab-perf-pages-card')}
         </div>
@@ -377,28 +378,38 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain) {
             </span>
             <h2 class="ab-section-title">Performance Per Page</h2>
           </div>
-          <span class="ab-priority-count">1 page analyzed</span>
+          <span class="ab-priority-count">${perfPages.length > 1 ? `${perfPages.length} pages` : '1 page'} analyzed</span>
         </div>
-        <div class="ab-per-page-item">
-          <div class="ab-per-page-info">
-            <h3 class="ab-per-page-name">Homepage</h3>
-            <a class="ab-per-page-url" href="https://${domain}" target="_blank" rel="noopener">${domain} ↗</a>
-            <div class="ab-per-page-scores">
-              <div class="ab-per-page-score-box ab-per-page-score-box-red">
-                <p class="ab-per-page-score-label">Performance</p>
-                <p class="ab-per-page-score-value">${score}/100</p>
-                <p class="ab-per-page-score-status">Poor</p>
+        ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', grade, 'Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.']]).map(([pName, pScore, pUrl, pStatus, pGrade, pDesc]) => {
+    const pN = parseInt(pScore, 10);
+    let pColor = '#ef4444';
+    if (pN >= 90) pColor = '#059669';
+    else if (pN >= 50) pColor = '#f59e0b';
+    let pStatusLabel = 'Poor';
+    if (pStatus === 'good') pStatusLabel = 'Good';
+    else if (pStatus === 'needs-work') pStatusLabel = 'Needs Work';
+    return `
+          <div class="ab-per-page-item">
+            <div class="ab-per-page-info">
+              <h3 class="ab-per-page-name">${pName}</h3>
+              <a class="ab-per-page-url" href="https://${pUrl || domain}" target="_blank" rel="noopener">${pUrl || domain} ↗</a>
+              <div class="ab-per-page-scores">
+                <div class="ab-per-page-score-box${pStatus === 'poor' ? ' ab-per-page-score-box-red' : ''}">
+                  <p class="ab-per-page-score-label">Performance</p>
+                  <p class="ab-per-page-score-value" style="color:${pColor}">${pScore}/100</p>
+                  <p class="ab-per-page-score-status" style="color:${pColor}">${pStatusLabel}</p>
+                </div>
+                <div class="ab-per-page-score-box">
+                  <p class="ab-per-page-score-label">Grade</p>
+                  <p class="ab-per-page-score-value" style="color:${pColor}">${pGrade}</p>
+                  <p class="ab-per-page-score-status" style="color:${pColor}">${pStatusLabel}</p>
+                </div>
               </div>
-              <div class="ab-per-page-score-box">
-                <p class="ab-per-page-score-label">Grade</p>
-                <p class="ab-per-page-score-value" style="color:#ef4444">${grade}</p>
-                <p class="ab-per-page-score-status">Poor</p>
-              </div>
+              ${pDesc ? `<div class="ab-note${pStatus === 'poor' ? ' ab-note-red' : ''}">${pDesc}</div>` : ''}
             </div>
-            <div class="ab-note ab-note-red">Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.</div>
-            ${noteHtml}
-          </div>
-        </div>
+          </div>`;
+  }).join('')}
+        ${noteHtml ? `<div class="ab-per-page-item" style="padding:0">${noteHtml}</div>` : ''}
         <div class="ab-per-page-footer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           Average performance score: <strong>${score}</strong>
@@ -1275,6 +1286,7 @@ export default async function decorate(block) {
     const whyAdobe = parseBlock(doc, 'aibootcamp-report-why-adobe');
     const priorityIssues = parseBlock(doc, 'aibootcamp-report-priority-issues');
     const perf = parseBlock(doc, 'aibootcamp-report-performance');
+    const perfPages = parseBlock(doc, 'aibootcamp-report-performance-pages');
     const perfNarrative = parseBlock(doc, 'aibootcamp-report-performance-narrative');
     const perfInsights = parseBlock(doc, 'aibootcamp-report-performance-insights');
     const seo = parseKV(doc, 'aibootcamp-report-seo');
@@ -1295,7 +1307,8 @@ export default async function decorate(block) {
     const builders = {
       // eslint-disable-next-line max-len
       overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
-      performance: () => buildPerformance(perf, perfNarrative, perfInsights, meta.domain),
+      // eslint-disable-next-line max-len
+      performance: () => buildPerformance(perf, perfNarrative, perfInsights, meta.domain, perfPages),
       // eslint-disable-next-line max-len
       seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData),
       'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData, meta.domain),
