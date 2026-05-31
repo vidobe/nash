@@ -221,7 +221,7 @@ function buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, 
 }
 
 // ─── Performance tab ───────────────────────────────────────────
-function buildPerformance(perfRows, perfNarrative, perfInsights) {
+function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain) {
   const note = perfRows.find(([n]) => n === 'note');
   const ps = perfRows.find(([n]) => n === 'PageSpeed Score') || [];
   const lcpCold = perfRows.find(([n]) => n.includes('cold')) || [];
@@ -312,7 +312,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights) {
     ].map((t) => `<li>${t}</li>`).join('');
 
   const noteHtml = note ? `<div class="ab-note">${note[1]}</div>` : '';
-  const domain = lcpCold[4] ? '' : 'wehkamp.nl';
+  const domain = metaDomain || '';
 
   return {
     anchors: ['Overview', 'Pages Tested', 'Core Web Vitals', 'Issues'],
@@ -362,7 +362,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights) {
               <span class="ab-page-dot"></span>
               <div>
                 <p class="ab-page-name">Homepage</p>
-                <p class="ab-page-domain">${domain || 'wehkamp.nl'}</p>
+                <p class="ab-page-domain">${domain}</p>
               </div>
             </div>
             <p class="ab-pages-see-more">See detailed breakdown below</p>
@@ -382,7 +382,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights) {
         <div class="ab-per-page-item">
           <div class="ab-per-page-info">
             <h3 class="ab-per-page-name">Homepage</h3>
-            <a class="ab-per-page-url" href="https://www.wehkamp.nl" target="_blank" rel="noopener">wehkamp.nl ↗</a>
+            <a class="ab-per-page-url" href="https://${domain}" target="_blank" rel="noopener">${domain} ↗</a>
             <div class="ab-per-page-scores">
               <div class="ab-per-page-score-box ab-per-page-score-box-red">
                 <p class="ab-per-page-score-label">Performance</p>
@@ -686,7 +686,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
                 <p>Searches containing your brand name, product names, or trademarks</p>
-                <p class="ab-brand-info-example">Examples: "www.wehkamp.nl", your product names, branded terms</p>
+                <p class="ab-brand-info-example">Examples: your brand name, product names, branded terms</p>
               </div>
               <div class="ab-brand-info-card ab-brand-info-nonbranded">
                 <div class="ab-brand-info-head">
@@ -748,11 +748,11 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
 }
 
 // ─── AI Visibility tab ─────────────────────────────────────────
-function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData) {
+function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain) {
   const visScore = parseInt(ai['Visibility Score'] || '62', 10);
   const mentions = ai['Brand Mentions'] || '22,725';
   const citations = ai.Citations || '17,361';
-  const domain = 'wehkamp.nl';
+  const domain = metaDomain || 'your domain';
 
   // Engine definitions with icons and colors
   const engineDefs = [
@@ -813,16 +813,10 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData) {
   }).join('');
 
   // Competitive bar chart
-  const compData = competitive.length ? competitive : [
-    ['wehkamp.nl', '22,725', '17,361', '62'],
-    ['bol.com', '1,015', '9,056', '37'],
-    ['zalando', '', '', '16'],
-    ['de bijenkorf', '', '', '31'],
-    ['h&m', '', '', '70'],
-  ];
+  const compData = competitive.length ? competitive : [];
   const compBars = compData.map(([brand, , , score]) => {
     const n = parseInt(score, 10) || 0;
-    const isYou = brand.toLowerCase().includes('wehkamp');
+    const isYou = metaDomain && brand.toLowerCase().includes(metaDomain.replace('www.', '').split('.')[0]);
     return `
       <div class="ab-comp-bar-row">
         <span class="ab-comp-bar-brand${isYou ? ' ab-comp-bar-you' : ''}">${brand}${isYou ? ' (you)' : ''}</span>
@@ -1301,10 +1295,10 @@ export default async function decorate(block) {
     const builders = {
       // eslint-disable-next-line max-len
       overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
-      performance: () => buildPerformance(perf, perfNarrative, perfInsights),
+      performance: () => buildPerformance(perf, perfNarrative, perfInsights, meta.domain),
       // eslint-disable-next-line max-len
       seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData),
-      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData),
+      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData, meta.domain),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
 
