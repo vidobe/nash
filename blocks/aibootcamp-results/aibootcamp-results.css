@@ -810,6 +810,465 @@
 .ab-bar-amber { background: var(--amber, #b45309); }
 .ab-bar-red { background: var(--red, #eb1000); }
 
+/* ─── SEO tab ────────────────────────────────────────────────── */
+.ab-seo-traffic-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ab-seo-chart-card { padding: 20px 24px; }
+
+.ab-traffic-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ab-traffic-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.04em;
+}
+
+.ab-traffic-unit {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.ab-traffic-yoy {
+  font-size: 13px;
+  font-weight: 600;
+  background: #f3f4f6;
+  padding: 3px 10px;
+  border-radius: 100px;
+  color: #6b7280;
+}
+
+.ab-traffic-yoy-neg {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.ab-seo-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 80px;
+  margin-bottom: 8px;
+}
+
+.ab-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.ab-chart-bar {
+  width: 100%;
+  background: #ede9fe;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+}
+
+.ab-chart-label {
+  font-size: 9px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.ab-chart-market {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-seo-health-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: #f8faff;
+  border-color: #dbeafe;
+}
+
+.ab-seo-health-label {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+.ab-seo-health-note {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+  text-align: left;
+}
+
+/* ─── Country cards ──────────────────────────────────────────── */
+.ab-country-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ab-country-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fff;
+}
+
+.ab-country-card-primary {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.ab-country-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ab-country-flag { font-size: 18px; }
+
+.ab-country-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.ab-country-primary-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.ab-country-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ab-country-visits {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ab-country-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.ab-country-bar-track {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ab-country-bar {
+  height: 100%;
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.ab-country-bar-primary {
+  background: #7c3aed;
+}
+
+/* ─── Brand mix donut ────────────────────────────────────────── */
+.ab-brand-mix-layout {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ab-brand-donut-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.ab-brand-donut-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ab-brand-donut-pct {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.03em;
+}
+
+.ab-brand-donut-sub {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.ab-brand-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ab-brand-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.ab-brand-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ab-brand-info-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ab-brand-info-card {
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid transparent;
+}
+
+.ab-brand-info-branded {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.ab-brand-info-nonbranded {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.ab-brand-info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ab-brand-info-head h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.ab-brand-info-card p {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0 0 4px;
+  line-height: 1.5;
+}
+
+.ab-brand-info-example {
+  font-size: 12px;
+  color: #7c3aed;
+}
+
+.ab-brand-info-nonbranded .ab-brand-info-example {
+  color: #059669;
+}
+
+.ab-brand-risk {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 4px;
+}
+
+.ab-brand-risk-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 4px;
+}
+
+.ab-brand-risk-text {
+  font-size: 13px;
+  color: #78350f;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── New keyword table ──────────────────────────────────────── */
+.ab-kw-opportunities-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ab-kw-table-new {
+  display: flex;
+  flex-direction: column;
+}
+
+.ab-kw-table-header {
+  display: grid;
+  grid-template-columns: 2fr 60px 100px 80px 70px 60px;
+  gap: 8px;
+  padding: 0 12px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ab-kw-row-item {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 12px;
+}
+
+.ab-kw-main-row {
+  display: grid;
+  grid-template-columns: 2fr 60px 100px 80px 70px 60px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ab-kw-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ab-kw-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ab-kw-rank-green { background: #d1fae5; color: #059669; } /* stylelint-disable-line */
+.ab-kw-rank-blue { background: #dbeafe; color: #2563eb; } /* stylelint-disable-line */
+.ab-kw-rank-amber { background: #fef3c7; color: #d97706; } /* stylelint-disable-line */
+.ab-kw-rank-gray { background: #f3f4f6; color: #6b7280; } /* stylelint-disable-line */
+
+.ab-kw-vol,
+.ab-kw-traffic,
+.ab-kw-cpc,
+.ab-kw-trend {
+  font-size: 13px;
+  color: #374151;
+}
+
+.ab-kw-rationale-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+  padding-left: 4px;
+  border-left: 2px solid #e9d5ff;
+}
+
+.ab-kw-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ─── Key insights ───────────────────────────────────────────── */
+.ab-key-insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ab-key-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.ab-key-insight-red {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.ab-key-insight-amber {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.ab-key-insight-green {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.ab-key-insight-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ab-key-insight-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 3px;
+}
+
+.ab-key-insight-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ─── SEO stats ──────────────────────────────────────────────── */
 .ab-stat-row {
   display: grid;

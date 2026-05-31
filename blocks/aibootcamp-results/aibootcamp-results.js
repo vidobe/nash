@@ -439,77 +439,264 @@ function buildPerformance(perfRows, perfNarrative, perfInsights) {
 }
 
 // ─── SEO tab ───────────────────────────────────────────────────
-function buildSeo(seo, keywords, insights) {
-  const stats = [
-    ['Monthly Traffic', seo['Monthly Traffic']],
-    ['YoY Growth', seo['YoY Growth']],
-    ['Traffic Value', seo['Traffic Value']],
-    ['SEO Health', seo['SEO Health Score']],
-  ].filter(([, v]) => v).map(([l, v]) => `
-    <div class="ab-stat-card">
-      <p class="ab-stat-card-value">${v}</p>
-      <p class="ab-stat-card-label">${l}</p>
-    </div>`).join('');
-
+function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights) {
+  const traffic = seo['Monthly Traffic'] || '1.1M';
+  const yoy = seo['YoY Growth'] || '-20.4%';
+  const healthScore = parseInt(seo['SEO Health Score'] || '71', 10);
   const branded = parseFloat(seo['Branded Traffic']) || 86;
   const nonBranded = parseFloat(seo['Non-Branded Traffic']) || 14;
+  const primaryMarket = seo['Primary Market'] || 'Netherlands';
+  const isYoyNeg = yoy.startsWith('-');
 
-  const kwRows = keywords.map(([kw, vol, pos, clicks, cpc, rationale]) => `
-    <tr>
-      <td class="ab-kw-term">${kw}</td>
-      <td>${Number(vol.replace(/,/g, '')).toLocaleString()}</td>
-      <td><span class="ab-pos-badge ab-pos-badge-${parseInt(pos, 10) <= 3 ? 'top' : 'mid'}">${pos}</span></td>
-      <td>${clicks}</td>
-      ${cpc && cpc !== '€' ? `<td><span class="ab-cpc">${cpc}</span></td>` : '<td>—</td>'}
-      <td class="ab-kw-rationale">${rationale}</td>
-    </tr>`).join('');
+  // eslint-disable-next-line no-nested-ternary
+  const healthColor = healthScore >= 70 ? '#2563eb' : healthScore >= 50 ? '#f59e0b' : '#ef4444';
+  // eslint-disable-next-line no-nested-ternary
+  const healthLabel = healthScore >= 70 ? 'Good' : healthScore >= 50 ? 'Moderate' : 'Poor';
+  // eslint-disable-next-line no-nested-ternary
+  const healthGrade = healthScore >= 90 ? 'A' : healthScore >= 75 ? 'B' : healthScore >= 50 ? 'C' : 'D';
+  const hR = 48;
+  const hCirc = 2 * Math.PI * hR;
+  const hFilled = (healthScore / 100) * hCirc;
 
-  const insightItems = insights.map(([text]) => `<li>${text}</li>`).join('');
+  const narrative = seoNarrative[0] ? seoNarrative[0][0]
+    : `You receive ${traffic} organic visitors monthly (down ${yoy} year over year), but ${branded}% come from branded searches. This means most visitors already know your brand — there's significant opportunity to capture new customers searching for your products and services.`;
+
+  // Traffic chart (CSS-only sparkline approximation using bars)
+  const chartMonths = ['May\'25', 'Jul', 'Sep', 'Nov', 'Jan\'26', 'Mar', 'Apr'];
+  const chartVals = [100, 97, 92, 87, 80, 58, 77]; // relative heights
+  const chartBars = chartMonths.map((m, i) => `
+    <div class="ab-chart-col">
+      <div class="ab-chart-bar" style="height:${chartVals[i]}%"></div>
+      <span class="ab-chart-label">${m}</span>
+    </div>`).join('');
+
+  // Countries
+  const countryRows = seoCountries.length ? seoCountries : [
+    ['Netherlands', '🇳🇱', '1.1M', '98.7', 'primary'],
+    ['Belgium', '🇧🇪', '13.1K', '1.2', ''],
+    ['United States', '🇺🇸', '2.9K', '0.3', ''],
+  ];
+  const countryCards = countryRows.map(([name, flag, visits, pct, isPrimary]) => `
+    <div class="ab-country-card${isPrimary === 'primary' ? ' ab-country-card-primary' : ''}">
+      <div class="ab-country-head">
+        <span class="ab-country-flag">${flag}</span>
+        <span class="ab-country-name">${name}</span>
+        ${isPrimary === 'primary' ? '<span class="ab-country-primary-badge">Primary</span>' : ''}
+      </div>
+      <div class="ab-country-stats">
+        <span class="ab-country-visits">${visits} visits</span>
+        <span class="ab-country-pct">${pct}%</span>
+      </div>
+      <div class="ab-country-bar-track">
+        <div class="ab-country-bar${isPrimary === 'primary' ? ' ab-country-bar-primary' : ''}" style="width:${Math.min(parseFloat(pct) * 0.7, 100)}%"></div>
+      </div>
+    </div>`).join('');
+
+  // Donut chart SVG for branded/non-branded
+  const dR = 70;
+  const dCirc = 2 * Math.PI * dR;
+
+  // Keywords
+  const posColor = (pos) => {
+    const n = parseInt(pos, 10);
+    if (n <= 3) return 'green';
+    if (n <= 10) return 'blue';
+    if (n <= 20) return 'amber';
+    return 'gray';
+  };
+
+  const kwRows = keywords.map(([kw, pos, vol, traffic2, cpc, rationale]) => `
+    <div class="ab-kw-row-item">
+      <div class="ab-kw-main-row">
+        <span class="ab-kw-name">${kw}</span>
+        <span class="ab-kw-rank ab-kw-rank-${posColor(pos)}">${pos}</span>
+        <span class="ab-kw-vol">${Number((vol || '0').replace(/,/g, '')).toLocaleString()}/mo</span>
+        <span class="ab-kw-traffic">${traffic2}</span>
+        <span class="ab-kw-cpc">${cpc || '—'}</span>
+        <span class="ab-kw-trend">—</span>
+      </div>
+      ${rationale ? `<p class="ab-kw-rationale-text">${rationale}</p>` : ''}
+    </div>`).join('');
+
+  // Key insights
+  const insightIcons = {
+    red: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    amber: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    green: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+  };
+  const insightRows = (seoKeyInsights.length ? seoKeyInsights : [
+    ['Traffic declining (-20.4% YoY)', 'Declining traffic may indicate competitive pressure or algorithm changes.', 'red'],
+    ['High brand dependency (86% branded)', 'Focus on ranking for product-related keywords to reduce reliance on brand awareness.', 'amber'],
+  ]).map(([title, desc, color]) => `
+    <div class="ab-key-insight ab-key-insight-${color || 'amber'}">
+      <span class="ab-key-insight-icon">${insightIcons[color] || insightIcons.amber}</span>
+      <div>
+        <p class="ab-key-insight-title">${title}</p>
+        <p class="ab-key-insight-desc">${desc}</p>
+      </div>
+    </div>`).join('');
 
   return {
-    anchors: ['Traffic Overview', 'Branded vs Non-Branded', 'Keyword Opportunities'],
+    anchors: ['Overview', 'Traffic &amp; Score', 'Top Countries', 'Traffic Mix', 'Keywords', 'Key Insights'],
     html: `
-      ${sectionHtml('traffic-overview', 'Traffic Overview', `
-        <div class="ab-stat-row">${stats}</div>
-        ${card(`<p class="ab-traffic-note">${seo['Traffic Trend Note'] || ''}</p>
-          ${seo['March Anomaly'] ? `<p class="ab-traffic-alert">⚠ ${seo['March Anomaly']}</p>` : ''}`)}`)}
-      ${sectionHtml('branded-vs-nonbranded', 'Branded vs Non-Branded', card(`
-        <div class="ab-brand-split">
-          <div class="ab-brand-bar">
-            <div class="ab-brand-bar-branded" style="width:${branded}%">
-              <span>${branded}% Branded</span>
+      <section class="ab-section" id="overview">
+        ${card(`
+          <div class="ab-exec-overview-head">
+            <div class="ab-exec-overview-title-wrap">
+              <span class="ab-section-icon ab-section-icon-purple">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+              <h2 class="ab-section-title">Your Organic Search Presence</h2>
             </div>
-            <div class="ab-brand-bar-nonbranded" style="width:${nonBranded}%">
-              <span>${nonBranded}% Non-Branded</span>
+            <span class="ab-ai-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              AI-Generated
+            </span>
+          </div>
+          <p class="ab-exec-overview-text">${narrative}</p>
+        `)}
+      </section>
+      <section class="ab-section" id="traffic-score">
+        <div class="ab-seo-traffic-row">
+          ${card(`
+            <div class="ab-section-heading-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+              <h2 class="ab-section-title">Monthly Organic Traffic</h2>
+            </div>
+            <div class="ab-traffic-hero">
+              <span class="ab-traffic-value">${traffic}</span>
+              <span class="ab-traffic-unit">visitors/month</span>
+              <span class="ab-traffic-yoy${isYoyNeg ? ' ab-traffic-yoy-neg' : ''}">${yoy} YoY</span>
+            </div>
+            <div class="ab-seo-chart">${chartBars}</div>
+            <p class="ab-chart-market">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Primary market: ${primaryMarket}
+            </p>
+          `, 'ab-seo-chart-card')}
+          ${card(`
+            <p class="ab-perf-gauge-label">SEO HEALTH SCORE</p>
+            <div class="ab-gauge-wrap">
+              <svg class="ab-gauge" width="130" height="130" viewBox="0 0 130 130" aria-hidden="true">
+                <circle cx="65" cy="65" r="${hR}" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                <circle cx="65" cy="65" r="${hR}" fill="none" stroke="${healthColor}" stroke-width="10"
+                  stroke-dasharray="${hFilled.toFixed(1)} ${hCirc.toFixed(1)}"
+                  stroke-dashoffset="${(hCirc * 0.25).toFixed(1)}"
+                  stroke-linecap="round"
+                  transform="rotate(-90 65 65)"/>
+              </svg>
+              <div class="ab-gauge-label">
+                <span class="ab-gauge-score" style="color:${healthColor}">${healthScore}</span>
+                <span class="ab-gauge-grade" style="color:${healthColor}">${healthGrade}</span>
+              </div>
+            </div>
+            <span class="ab-seo-health-label" style="color:${healthColor};background:${healthScore >= 70 ? '#dbeafe' : '#fef3c7'}">${healthLabel}</span>
+            <p class="ab-seo-health-note"><strong>What this score measures:</strong> A composite score based on organic traffic volume, traffic trend (growth/decline), brand vs non-branded traffic mix, and keyword ranking positions. Higher scores indicate stronger organic search presence and growth potential.</p>
+          `, 'ab-seo-health-card')}
+        </div>
+      </section>
+      <section class="ab-section" id="top-countries">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <h2 class="ab-section-title">Traffic by Country</h2>
+          </div>
+          <div class="ab-country-grid">${countryCards}</div>
+        `)}
+      </section>
+      <section class="ab-section" id="traffic-mix">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </span>
+            <h2 class="ab-section-title">Traffic Mix: The Brand Dependency Factor</h2>
+          </div>
+          <div class="ab-brand-mix-layout">
+            <div class="ab-brand-donut-wrap">
+              <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
+                <circle cx="90" cy="90" r="${dR}" fill="none" stroke="#7c3aed" stroke-width="22"/>
+                <circle cx="90" cy="90" r="${dR}" fill="none" stroke="#10b981" stroke-width="22"
+                  stroke-dasharray="${((nonBranded / 100) * dCirc).toFixed(1)} ${dCirc.toFixed(1)}"
+                  stroke-dashoffset="${(dCirc * 0.25).toFixed(1)}"
+                  transform="rotate(-90 90 90)"/>
+              </svg>
+              <div class="ab-brand-donut-label">
+                <span class="ab-brand-donut-pct">${branded}%</span>
+                <span class="ab-brand-donut-sub">Branded</span>
+              </div>
+            </div>
+            <div class="ab-brand-legend">
+              <span class="ab-brand-legend-item"><span class="ab-brand-legend-dot" style="background:#7c3aed"></span>Branded</span>
+              <span class="ab-brand-legend-item"><span class="ab-brand-legend-dot" style="background:#10b981"></span>Non-Branded</span>
+            </div>
+            <div class="ab-brand-info-cards">
+              <div class="ab-brand-info-card ab-brand-info-branded">
+                <div class="ab-brand-info-head">
+                  <h3>${branded}% Branded</h3>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <p>Searches containing your brand name, product names, or trademarks</p>
+                <p class="ab-brand-info-example">Examples: "www.wehkamp.nl", your product names, branded terms</p>
+              </div>
+              <div class="ab-brand-info-card ab-brand-info-nonbranded">
+                <div class="ab-brand-info-head">
+                  <h3>${nonBranded}% Non-Branded</h3>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <p>Generic searches for products, services, or topics you cover</p>
+                <p class="ab-brand-info-example">These searchers may not know your brand yet — acquisition opportunity</p>
+              </div>
             </div>
           </div>
-          <p class="ab-brand-benchmark">Industry benchmark: ${seo['Industry Benchmark'] || '40-60% non-branded'}. At ${nonBranded}%, Wehkamp has significant untapped growth potential.</p>
-        </div>
-        <div class="ab-kw-row">
-          <div>
-            <p class="ab-kw-label">Branded Keywords</p>
-            <p class="ab-card-desc">${seo['Top Branded Keywords'] || ''}</p>
+          <div class="ab-brand-risk">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <p class="ab-brand-risk-title">High Brand Dependency Risk</p>
+              <p class="ab-brand-risk-text">${seo['Non-Branded Analysis'] || `With ${branded}% of traffic coming from branded searches, your organic presence heavily depends on existing brand awareness. If brand recognition drops, so does your traffic.`}</p>
+            </div>
           </div>
-          <div>
-            <p class="ab-kw-label">Non-Branded Opportunities</p>
-            <p class="ab-card-desc">${seo['Top Non-Branded Opportunities'] || ''}</p>
+        `)}
+      </section>
+      <section class="ab-section" id="keywords">
+        ${card(`
+          <div class="ab-kw-opportunities-head">
+            <div class="ab-section-heading-row" style="margin-bottom:0">
+              <span class="ab-section-icon ab-section-icon-purple">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+              <h2 class="ab-section-title">Keyword Opportunities</h2>
+            </div>
+            <span class="ab-priority-count">${keywords.length} keywords</span>
           </div>
-        </div>
-        <p class="ab-card-desc" style="margin-top:14px">${seo['Non-Branded Analysis'] || ''}</p>`))}
-      ${sectionHtml(
-    'keyword-opportunities',
-    'Keyword Opportunities',
-    `
-        <div class="ab-table-wrap">${card(`
-          <table class="ab-kw-table">
-            <thead><tr>
-              <th>Keyword</th><th>Volume</th><th>Position</th><th>Est. Clicks</th><th>CPC</th><th>Rationale</th>
-            </tr></thead>
-            <tbody>${kwRows}</tbody>
-          </table>
-          ${insightItems ? `<ul class="ab-insights-list">${insightItems}</ul>` : ''}`)}</div>`,
-    'Top 5 strategic keywords delivering 10,200+ monthly visits',
-  )}`,
+          <div class="ab-kw-table-new">
+            <div class="ab-kw-table-header">
+              <span>KEYWORD</span><span>RANK</span><span>VOLUME</span><span>TRAFFIC</span><span>CPC</span><span>TREND</span>
+            </div>
+            ${kwRows}
+          </div>
+          <div class="ab-kw-legend">
+            Position:
+            <span class="ab-kw-rank ab-kw-rank-green">1-3 Excellent</span>
+            <span class="ab-kw-rank ab-kw-rank-blue">4-10 Page 1</span>
+            <span class="ab-kw-rank ab-kw-rank-amber">11-20 Page 2</span>
+            <span class="ab-kw-rank ab-kw-rank-gray">20+ Opportunity</span>
+          </div>
+        `)}
+      </section>
+      <section class="ab-section" id="key-insights">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>
+            </span>
+            <h2 class="ab-section-title">Key Insights</h2>
+          </div>
+          <div class="ab-key-insights-list">${insightRows}</div>
+        `)}
+      </section>`,
   };
 }
 
@@ -704,8 +891,10 @@ export default async function decorate(block) {
     const perfNarrative = parseBlock(doc, 'aibootcamp-report-performance-narrative');
     const perfInsights = parseBlock(doc, 'aibootcamp-report-performance-insights');
     const seo = parseKV(doc, 'aibootcamp-report-seo');
+    const seoNarrative = parseBlock(doc, 'aibootcamp-report-seo-narrative');
+    const seoCountries = parseBlock(doc, 'aibootcamp-report-seo-countries');
     const keywords = parseBlock(doc, 'aibootcamp-report-seo-keywords');
-    const seoInsights = parseBlock(doc, 'aibootcamp-report-seo-insights');
+    const seoKeyInsights = parseBlock(doc, 'aibootcamp-report-seo-key-insights');
     const ai = parseKV(doc, 'aibootcamp-report-ai');
     const aiCompetitive = parseBlock(doc, 'aibootcamp-report-ai-competitive');
     const aiWhatAiSees = parseKV(doc, 'aibootcamp-report-ai-what-ai-sees');
@@ -718,7 +907,7 @@ export default async function decorate(block) {
       // eslint-disable-next-line max-len
       overview: () => buildOverview(meta, yourRequest, execOverview, worldSeesYou, whyAdobe, priorityIssues),
       performance: () => buildPerformance(perf, perfNarrative, perfInsights),
-      seo: () => buildSeo(seo, keywords, seoInsights),
+      seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights),
       'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
