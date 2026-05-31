@@ -1734,15 +1734,21 @@
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (width < 1100px) {
   .ab-topbar-inner,
-  .ab-tabnav-inner,
   .ab-page-body,
   .ab-report-footer {
-    margin-left: 5%;
-    margin-right: 5%;
+    margin-left: 4%;
+    margin-right: 4%;
   }
 }
 
 @media (width < 860px) {
+  .ab-topbar-inner,
+  .ab-page-body,
+  .ab-report-footer {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
   .ab-content-wrap {
     grid-template-columns: 1fr;
   }
@@ -1750,14 +1756,35 @@
   .ab-sidebar {
     position: static;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 12px;
+    flex-flow: row nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 12px 0;
+    scrollbar-width: none;
+  }
+
+  .ab-sidebar::-webkit-scrollbar {
+    display: none;
   }
 
   .ab-sidebar-heading {
-    width: 100%;
-    margin-bottom: 6px;
+    display: none;
+  }
+
+  .ab-sidebar-link {
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+    border-left: 2px solid transparent;
+  }
+
+  .ab-sidebar-link:hover {
+    background: #f3f4f6;
+    border-color: #6366f1;
   }
 
   .ab-scores-grid {
@@ -1769,6 +1796,14 @@
   }
 
   .ab-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-world-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-exec-body {
     grid-template-columns: 1fr;
   }
 
