@@ -1505,7 +1505,10 @@
   line-height: 1.5;
 }
 
-.ab-kw-key-insight svg { flex-shrink: 0; margin-top: 2px; }
+.ab-kw-key-insight svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
 .ab-kw-key-insight p { margin: 0; }
 
 /* Keyword chips in branded/non-branded */
@@ -2769,16 +2772,6 @@
   margin-bottom: 12px;
 }
 
-.ab-section-icon-amber {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.ab-section-icon-purple {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-
 /* Gap callout in optimization opportunity */
 .ab-ai-gap-callout {
   font-size: 13px;
@@ -3407,7 +3400,7 @@
   text-align: center;
 }
 
-/* Solution grid */
+
 /* ─── Key Findings ───────────────────────────────────────────── */
 .ab-findings-label {
   font-size: 11px;
@@ -3650,12 +3643,6 @@
   margin: 0;
   line-height: 1.55;
   flex: 1;
-}
-
-/* Section icon amber */
-.ab-section-icon-amber {
-  background: #fef3c7;
-  color: #d97706;
 }
 
 /* Executive summary */
