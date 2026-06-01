@@ -47,9 +47,9 @@ function renderTopbar() {
     <header class="ab-topbar">
       <div class="ab-topbar-inner">
         <div class="ab-topbar-left">
-          <a href="/aibootcamp/listcompanies" class="ab-topbar-logo-link" aria-label="Back to reports">
+          <button class="ab-topbar-logo-link" type="button" aria-label="Back to reports">
             <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo" width="80" height="20"/>
-          </a>
+          </button>
           <span class="ab-topbar-divider"></span>
           <span class="ab-topbar-title">Digital Insights Report</span>
         </div>
@@ -1330,6 +1330,10 @@ export default async function decorate(block) {
       const abbr = nameParts.length > 1
         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
         : (session.name || session.email || 'U').slice(0, 2).toUpperCase();
+      block.querySelector('.ab-topbar-logo-link')?.addEventListener('click', () => {
+        window.location.href = '/aibootcamp/listcompanies';
+      });
+
       block.querySelectorAll('.ab-user-avatar').forEach((el) => { el.textContent = abbr; });
       block.querySelectorAll('.ab-user-name').forEach((el) => {
         el.textContent = session.name || session.email || '';
