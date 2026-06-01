@@ -2465,6 +2465,54 @@
   line-height: 1.5;
 }
 
+/* Gap prompts list */
+.ab-gap-prompt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ab-gap-prompt-item {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3px solid #d97706;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.ab-gap-prompt-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 3px;
+}
+
+.ab-gap-prompt-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Recommended actions standalone block */
+.ab-ai-recommended-actions {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.ab-section-icon-amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.ab-section-icon-purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
 /* Gap callout in optimization opportunity */
 .ab-ai-gap-callout {
   font-size: 13px;

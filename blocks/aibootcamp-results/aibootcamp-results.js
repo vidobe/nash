@@ -776,7 +776,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
 }
 
 // ─── AI Visibility tab ─────────────────────────────────────────
-function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain) {
+function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain, gapPrompts) {
   const visScore = parseInt(ai['Visibility Score'] || '62', 10);
   const mentions = ai['Brand Mentions'] || '22,725';
   const citations = ai.Citations || '17,361';
@@ -1034,6 +1034,25 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
           <div class="ab-comp-bars">${compBars}</div>
         `)}
       </section>
+      ${gapPrompts && gapPrompts.length ? `
+      <section class="ab-section" id="gap-prompts">
+        ${card(`
+          <div class="ab-section-heading-row">
+            <span class="ab-section-icon ab-section-icon-amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </span>
+            <h2 class="ab-section-title">Prompts They Win, You Lose</h2>
+          </div>
+          <p class="ab-section-sub">Queries where competitors are cited but ${domain} is not</p>
+          <div class="ab-gap-prompt-list">
+            ${gapPrompts.map(([prompt, volume, competitors]) => `
+              <div class="ab-gap-prompt-item">
+                <p class="ab-gap-prompt-text">${prompt}</p>
+                <p class="ab-gap-prompt-meta">${competitors ? `${competitors} · ` : ''}${volume || ''}</p>
+              </div>`).join('')}
+          </div>
+        `)}
+      </section>` : ''}
       <section class="ab-section" id="why-it-matters">
         ${card(`
           <div class="ab-section-heading-row">
@@ -1044,6 +1063,16 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
           </div>
           <div class="ab-why-matters-list">${whyItems}</div>
         `)}
+        ${actions ? `
+        <div class="ab-ai-recommended-actions">
+          <div class="ab-section-heading-row" style="margin-bottom:12px">
+            <span class="ab-section-icon ab-section-icon-purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <h3 class="ab-section-title">Recommended Actions</h3>
+          </div>
+          <div class="ab-actions">${actions}</div>
+        </div>` : ''}
         <div class="ab-ai-oppty-card">
           <div class="ab-ai-oppty-head">
             <span class="ab-section-icon ab-section-icon-green">
@@ -1052,8 +1081,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
             <h3 class="ab-card-title">Optimization Opportunity</h3>
           </div>
           <p class="ab-card-desc">Adobe LLM Optimizer can close the gaps surfaced above by optimizing content for AI answer engines and tracking visibility week over week.</p>
-          ${gapTopics ? `<p class="ab-ai-gap-callout">⚠️ <strong>${gapTopics} gap prompts</strong> identified where competitors are mentioned but ${domain} is not — including SEPA instant payments, mobile banking, and high-intent queries with significant search volume.</p>` : ''}
-          ${actions ? `<div class="ab-actions" style="margin-top:16px">${actions}</div>` : ''}
+          ${gapTopics ? `<p class="ab-ai-gap-callout">⚠️ <strong>${gapTopics} gap prompts</strong> identified where competitors are mentioned but ${domain} is not.</p>` : ''}
           <button class="ab-ai-oppty-btn" data-tab="solutions" type="button">Explore Adobe Solutions →</button>
         </div>
         ${card(`
@@ -1348,6 +1376,7 @@ export default async function decorate(block) {
     const aiCompetitive = parseBlock(doc, 'aibootcamp-report-ai-competitive');
     const aiWhatAiSees = parseKV(doc, 'aibootcamp-report-ai-what-ai-sees');
     const aiTrendData = parseBlock(doc, 'aibootcamp-report-ai-trend-data');
+    const aiGapPrompts = parseBlock(doc, 'aibootcamp-report-ai-gap-prompts');
     const solutions = parseBlock(doc, 'aibootcamp-report-solutions');
     const roadmapResults = parseBlock(doc, 'aibootcamp-report-roadmap-results');
     const success = parseKV(doc, 'aibootcamp-report-success');
@@ -1360,7 +1389,7 @@ export default async function decorate(block) {
       performance: () => buildPerformance(perf, perfNarrative, perfInsights, meta.domain, perfPages),
       // eslint-disable-next-line max-len
       seo: () => buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seoTrafficData),
-      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData, meta.domain),
+      'ai-visibility': () => buildAiVisibility(ai, aiCompetitive, aiWhatAiSees, aiTrendData, meta.domain, aiGapPrompts),
       solutions: () => buildSolutions(solutions, roadmapResults, success, nextSteps),
     };
 
