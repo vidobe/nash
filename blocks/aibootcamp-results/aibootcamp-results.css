@@ -1,7 +1,12 @@
-/* Zero out the global fixed header so it doesn't block clicks */
+/* Zero out the global fixed header and sidebar margin for aibootcamp pages */
 header:has(+ main .aibootcamp-results) {
   height: 0;
   pointer-events: none;
+}
+
+main:has(.aibootcamp-results) {
+  margin-left: 0;
+  margin-top: 0;
 }
 
 /* ─── Shell ──────────────────────────────────────────────────── */
