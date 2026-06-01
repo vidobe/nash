@@ -1241,8 +1241,8 @@ main:has(.aibootcamp-results) {
 
 /* ─── Brand mix donut ────────────────────────────────────────── */
 .ab-brand-mix-layout {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   align-items: center;
   margin-bottom: 16px;
@@ -1593,8 +1593,8 @@ main:has(.aibootcamp-results) {
   }
 
   .ab-brand-mix-layout {
-    grid-template-columns: 1fr;
-    justify-items: center;
+    flex-direction: column;
+    align-items: center;
   }
 
   .ab-brand-donut-wrap {
@@ -1602,13 +1602,17 @@ main:has(.aibootcamp-results) {
     height: 140px;
   }
 
+  .ab-brand-info-cards {
+    width: 100%;
+  }
+
   /* Keyword table: simplified columns on mobile */
   .ab-kw-table-header {
-    grid-template-columns: 1fr 50px 80px;
+    grid-template-columns: minmax(0, 1fr) 50px 80px;
   }
 
   .ab-kw-main-row {
-    grid-template-columns: 1fr 50px 80px;
+    grid-template-columns: minmax(0, 1fr) 50px 80px;
   }
 
   .ab-kw-vol,

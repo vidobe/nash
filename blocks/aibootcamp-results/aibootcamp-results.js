@@ -728,7 +728,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
           </div>
           <div class="ab-brand-mix-layout">
             <div class="ab-brand-donut-wrap">
-              <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
+              <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true" style="width:100%;height:100%;display:block;">
                 <circle cx="90" cy="90" r="${dR}" fill="none" stroke="#7c3aed" stroke-width="22"/>
                 <circle cx="90" cy="90" r="${dR}" fill="none" stroke="#10b981" stroke-width="22"
                   stroke-dasharray="${((nonBranded / 100) * dCirc).toFixed(1)} ${dCirc.toFixed(1)}"
