@@ -7,6 +7,8 @@ header:has(+ main .aibootcamp-companies) {
 main:has(.aibootcamp-companies) {
   margin-left: 0;
   margin-top: 0;
+  height: 100dvh;
+  overflow-y: auto;
 }
 
 .aibootcamp-companies {
