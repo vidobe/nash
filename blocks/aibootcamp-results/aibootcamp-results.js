@@ -378,7 +378,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
               <h3 class="ab-card-title">Pages Analyzed</h3>
             </div>
             <p class="ab-pages-count">${perfPages.length > 1 ? `${perfPages.length} pages` : '1 page'}</p>
-            ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', grade, '']]).map(([pName, , pUrl]) => `
+            ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', 'F', '']]).map(([pName, , pUrl]) => `
             <div class="ab-page-bullet">
               <span class="ab-page-dot"></span>
               <div>
@@ -400,7 +400,7 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
           </div>
           <span class="ab-priority-count">${perfPages.length > 1 ? `${perfPages.length} pages` : '1 page'} analyzed</span>
         </div>
-        ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', grade, 'Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.']]).map(([pName, pScore, pUrl, pStatus, pGrade, pDesc]) => {
+        ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', 'F', 'Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.']]).map(([pName, pScore, pUrl, pStatus, pGrade, pDesc]) => {
     const pN = parseInt(pScore, 10);
     let pColor = '#ef4444';
     if (pN >= 90) pColor = '#059669';
