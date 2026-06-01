@@ -436,6 +436,21 @@ header:has(+ main .aibootcamp-companies) {
   .ab-companies-body {
     padding: 68px 16px 60px;
   }
+
+  .ab-companies-page .ab-topbar-title,
+  .ab-companies-page .ab-topbar-divider {
+    display: none;
+  }
+
+  .ab-user-name,
+  .ab-user-trigger > svg {
+    display: none;
+  }
+
+  .ab-user-trigger {
+    padding: 4px;
+    border-radius: 50%;
+  }
 }
 
 @media (width < 560px) {
