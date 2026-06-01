@@ -1315,6 +1315,205 @@
   margin-bottom: 16px;
 }
 
+/* ─── Keyword section layout ─────────────────────────────────── */
+.ab-kw-section-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.ab-kw-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ab-kw-value-explain {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ab-kw-value-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.ab-kw-value-head h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #059669;
+  margin: 0;
+}
+
+.ab-kw-value-explain p {
+  font-size: 12px;
+  color: #374151;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.ab-kw-value-formula {
+  background: #fff;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #059669;
+  text-align: center;
+}
+
+.ab-kw-opportunity-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ab-kw-opp-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.ab-kw-opp-head h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.ab-kw-opportunity-panel p {
+  font-size: 12px;
+  color: #374151;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.ab-kw-opp-bullets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ab-kw-opp-bullets li {
+  font-size: 12px;
+  color: #374151;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.ab-kw-opp-bullets li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #eb1000;
+  font-weight: 700;
+}
+
+.ab-kw-traffic-value {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.ab-kw-tv-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #3b82f6;
+  margin: 0 0 4px;
+}
+
+.ab-kw-tv-amount {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1d4ed8;
+  margin: 0;
+}
+
+/* Value column */
+.ab-kw-value {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.ab-kw-value-filled {
+  font-size: 13px;
+  font-weight: 700;
+  color: #059669;
+}
+
+/* Key insight bar below keyword table */
+.ab-kw-key-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.ab-kw-key-insight svg { flex-shrink: 0; margin-top: 2px; }
+.ab-kw-key-insight p { margin: 0; }
+
+/* Keyword chips in branded/non-branded */
+.ab-kw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.ab-kw-chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.ab-kw-chip-branded {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #c4b5fd;
+}
+
+.ab-kw-chip-nonbranded {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+/* Keyword subtitle */
+.ab-kw-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+@media (width < 900px) {
+  .ab-kw-section-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ab-kw-table-new {
   display: flex;
   flex-direction: column;
@@ -1322,7 +1521,7 @@
 
 .ab-kw-table-header {
   display: grid;
-  grid-template-columns: 2fr 60px 100px 80px 70px 60px;
+  grid-template-columns: 2fr 60px 100px 80px 70px 80px;
   gap: 8px;
   padding: 0 12px 8px;
   font-size: 10px;
@@ -1339,7 +1538,7 @@
 
 .ab-kw-main-row {
   display: grid;
-  grid-template-columns: 2fr 60px 100px 80px 70px 60px;
+  grid-template-columns: 2fr 60px 100px 80px 70px 80px;
   gap: 8px;
   align-items: center;
   margin-bottom: 6px;

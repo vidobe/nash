@@ -460,6 +460,26 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
   const primaryMarket = seo['Primary Market'] || 'Netherlands';
   const isYoyNeg = yoy.startsWith('-');
 
+  // Enrichment fields
+  const brandedKws = seo['Branded Keywords'] || '';
+  const nonBrandedKws = seo['Non-Branded Keywords'] || '';
+  const seoOpportunity = seo['SEO Opportunity'] || '';
+  const trafficValue = seo['Traffic Value'] || '';
+
+  // Value = Volume × CPC
+  const calcValue = (vol, cpc) => {
+    const raw = (vol || '').toString().replace(/,/g, '').trim();
+    const v = raw.endsWith('K') ? parseFloat(raw) * 1000
+      : raw.endsWith('M') ? parseFloat(raw) * 1000000
+      : parseFloat(raw) || 0;
+    const c = parseFloat((cpc || '').replace(/[^0-9.]/g, '')) || 0;
+    if (!v || !c) return null;
+    const val = v * c;
+    if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
+    if (val >= 1000) return `$${Math.round(val / 1000).toLocaleString()}K`;
+    return `$${Math.round(val)}`;
+  };
+
   // eslint-disable-next-line no-nested-ternary
   const healthColor = healthScore >= 70 ? '#2563eb' : healthScore >= 50 ? '#f59e0b' : '#ef4444';
   // eslint-disable-next-line no-nested-ternary
@@ -582,7 +602,9 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
     return 'gray';
   };
 
-  const kwRows = keywords.map(([kw, pos, vol, traffic2, cpc, rationale]) => `
+  const kwRows = keywords.map(([kw, pos, vol, traffic2, cpc, rationale]) => {
+    const value = calcValue(vol, cpc);
+    return `
     <div class="ab-kw-row-item">
       <div class="ab-kw-main-row">
         <span class="ab-kw-name">${kw}</span>
@@ -590,10 +612,19 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
         <span class="ab-kw-vol">${Number((vol || '0').replace(/,/g, '')).toLocaleString()}/mo</span>
         <span class="ab-kw-traffic">${traffic2}</span>
         <span class="ab-kw-cpc">${cpc || '—'}</span>
-        <span class="ab-kw-trend">—</span>
+        <span class="ab-kw-value${value ? ' ab-kw-value-filled' : ''}">${value || '—'}</span>
       </div>
       ${rationale ? `<p class="ab-kw-rationale-text">${rationale}</p>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
+
+  // Split key insights into insights and SEO actions
+  const insightRows2 = (seoKeyInsights.length ? seoKeyInsights : [
+    ['Traffic declining (-20.4% YoY)', 'Declining traffic may indicate competitive pressure or algorithm changes.', 'red'],
+    ['High brand dependency (86% branded)', 'Focus on ranking for product-related keywords to reduce reliance on brand awareness.', 'amber'],
+  ]).filter(([, , color]) => color !== 'action');
+
+  const seoActions = seoKeyInsights.filter(([, , color]) => color === 'action');
 
   // Key insights
   const insightIcons = {
@@ -601,10 +632,7 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
     amber: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     green: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
   };
-  const insightRows = (seoKeyInsights.length ? seoKeyInsights : [
-    ['Traffic declining (-20.4% YoY)', 'Declining traffic may indicate competitive pressure or algorithm changes.', 'red'],
-    ['High brand dependency (86% branded)', 'Focus on ranking for product-related keywords to reduce reliance on brand awareness.', 'amber'],
-  ]).map(([title, desc, color]) => `
+  const insightRows = insightRows2.map(([title, desc, color]) => `
     <div class="ab-key-insight ab-key-insight-${color || 'amber'}">
       <span class="ab-key-insight-icon">${insightIcons[color] || insightIcons.amber}</span>
       <div>
@@ -713,16 +741,16 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
                   <h3>${branded}% Branded</h3>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <p>Searches containing your brand name, product names, or trademarks</p>
-                <p class="ab-brand-info-example">Examples: your brand name, product names, branded terms</p>
+                <p>Searches that include your brand name — these users already know you.</p>
+                ${brandedKws ? `<div class="ab-kw-chips">${brandedKws.split('·').map((k) => `<span class="ab-kw-chip ab-kw-chip-branded">${k.trim()}</span>`).join('')}</div>` : ''}
               </div>
               <div class="ab-brand-info-card ab-brand-info-nonbranded">
                 <div class="ab-brand-info-head">
                   <h3>${nonBranded}% Non-Branded</h3>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <p>Generic searches for products, services, or topics you cover</p>
-                <p class="ab-brand-info-example">These searchers may not know your brand yet — acquisition opportunity</p>
+                <p>Industry searches without your brand — these are potential new customers.</p>
+                ${nonBrandedKws ? `<div class="ab-kw-chips">${nonBrandedKws.split('·').map((k) => `<span class="ab-kw-chip ab-kw-chip-nonbranded">${k.trim()}</span>`).join('')}</div>` : ''}
               </div>
             </div>
           </div>
@@ -736,30 +764,60 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
         `)}
       </section>
       <section class="ab-section" id="keywords">
-        ${card(`
-          <div class="ab-kw-opportunities-head">
-            <div class="ab-section-heading-row" style="margin-bottom:0">
-              <span class="ab-section-icon ab-section-icon-purple">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </span>
-              <h2 class="ab-section-title">Keyword Opportunities</h2>
+        <div class="ab-kw-section-layout">
+          ${card(`
+            <div class="ab-kw-opportunities-head">
+              <div class="ab-section-heading-row" style="margin-bottom:0">
+                <span class="ab-section-icon ab-section-icon-purple">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <h2 class="ab-section-title">Keyword Opportunities</h2>
+              </div>
+              <span class="ab-kw-subtitle">Non-Branded · Position 3+ · Last Month</span>
             </div>
-            <span class="ab-priority-count">${keywords.length} keywords</span>
-          </div>
-          <div class="ab-kw-table-new">
-            <div class="ab-kw-table-header">
-              <span>KEYWORD</span><span>RANK</span><span>VOLUME</span><span>TRAFFIC</span><span>CPC</span><span>TREND</span>
+            <div class="ab-kw-table-new">
+              <div class="ab-kw-table-header">
+                <span>KEYWORD</span><span>RANK</span><span>VOLUME</span><span>TRAFFIC</span><span>CPC</span><span>VALUE</span>
+              </div>
+              ${kwRows}
             </div>
-            ${kwRows}
+            <div class="ab-kw-legend">
+              <span class="ab-kw-legend-label">Position:</span>
+              <span class="ab-kw-legend-item ab-kw-legend-green">Top 10</span>
+              <span class="ab-kw-legend-item ab-kw-legend-amber">11-20</span>
+              <span class="ab-kw-legend-item ab-kw-legend-gray">21+</span>
+            </div>
+          `)}
+          <div class="ab-kw-side">
+            <div class="ab-kw-value-explain">
+              <div class="ab-kw-value-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <h3>Understanding "Value"</h3>
+              </div>
+              <p><strong>Value = money saved</strong> by ranking organically instead of paying Google Ads. If you rank higher for these keywords, you capture this traffic for free.</p>
+              <div class="ab-kw-value-formula">Value = Search Volume × CPC</div>
+            </div>
+            ${seoOpportunity ? `
+            <div class="ab-kw-opportunity-panel">
+              <div class="ab-kw-opp-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eb1000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <h3>The Opportunity</h3>
+              </div>
+              <p>${seoOpportunity}</p>
+              ${seoActions.length ? `<ul class="ab-kw-opp-bullets">${seoActions.map(([t]) => `<li>${t}</li>`).join('')}</ul>` : ''}
+            </div>` : ''}
+            ${trafficValue ? `
+            <div class="ab-kw-traffic-value">
+              <p class="ab-kw-tv-label">MONTHLY TRAFFIC VALUE</p>
+              <p class="ab-kw-tv-amount">${trafficValue}</p>
+            </div>` : ''}
           </div>
-          <div class="ab-kw-legend">
-            <span class="ab-kw-legend-label">Position:</span>
-            <span class="ab-kw-legend-item ab-kw-legend-green">1-3 Excellent</span>
-            <span class="ab-kw-legend-item ab-kw-legend-blue">4-10 Page 1</span>
-            <span class="ab-kw-legend-item ab-kw-legend-amber">11-20 Page 2</span>
-            <span class="ab-kw-legend-item ab-kw-legend-gray">20+ Opportunity</span>
-          </div>
-        `)}
+        </div>
+        ${keywords.length ? `
+        <div class="ab-kw-key-insight">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eb1000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p><strong>Key Insight:</strong> ${seo['Traffic Trend Note'] || 'Optimizing keyword positions could significantly increase organic traffic value.'}</p>
+        </div>` : ''}
       </section>
       <section class="ab-section" id="key-insights">
         ${card(`
@@ -771,7 +829,19 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
           </div>
           <div class="ab-key-insights-list">${insightRows}</div>
         `)}
-      </section>`,
+      </section>
+      ${seoActions.length && !seoOpportunity ? `
+      <section class="ab-section" id="seo-actions">
+        <div class="ab-ai-recommended-actions">
+          <div class="ab-section-heading-row" style="margin-bottom:12px">
+            <span class="ab-section-icon ab-section-icon-purple">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <h3 class="ab-section-title">Recommended SEO Actions</h3>
+          </div>
+          <div class="ab-actions">${seoActions.map(([t, d], i) => `<div class="ab-action"><span class="ab-action-num">${i + 1}</span><p><strong>${t}</strong>${d ? ` — ${d}` : ''}</p></div>`).join('')}</div>
+        </div>
+      </section>` : ''}`,
   };
 }
 
