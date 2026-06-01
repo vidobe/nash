@@ -414,9 +414,8 @@
 
 /* ─── Executive Overview ─────────────────────────────────────── */
 .ab-exec-overview-card {
-  background: #f5f3ff !important;
+  background: linear-gradient(135deg, #f5f3ff 0%, #eff6ff 100%) !important;
   border: 1px solid #e0d9ff !important;
-  border-left: 3px solid #6366f1 !important;
 }
 
 .ab-exec-overview-head {
