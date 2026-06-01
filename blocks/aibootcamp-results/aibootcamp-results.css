@@ -2773,20 +2773,20 @@
   align-items: center;
   gap: 6px;
   margin-top: 16px;
-  background: none;
-  border: 1px solid #059669;
+  background: #eb1000;
+  border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #059669;
+  color: #fff;
   cursor: pointer;
   font-family: var(--sans, system-ui, sans-serif);
   transition: background 0.15s;
 }
 
 .ab-ai-oppty-btn:hover {
-  background: #d1fae5;
+  background: #c50d00;
 }
 
 /* About data */
