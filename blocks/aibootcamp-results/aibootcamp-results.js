@@ -429,14 +429,16 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
             </div>
           </div>`;
   }).join('')}
-        ${noteHtml ? `<div class="ab-per-page-item" style="padding:0">${noteHtml}</div>` : ''}
-        <div class="ab-perf-info-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span><strong>How to read:</strong> Each page is rated <strong>FAST</strong>, <strong>AVG</strong>, or <strong>SLOW</strong> from real-user data (Chrome UX Report, 28-day p75). Lighthouse scores are Google's synthetic lab diagnostic — useful for finding fixes, not for grading user experience. Scores from Google PageSpeed Insights API. Tests run in mobile mode to reflect smartphone performance.</span>
-        </div>
-        <div class="ab-per-page-footer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          Average performance score: <strong>${score}</strong>
+        <div class="ab-per-page-bottom">
+          ${noteHtml ? `<p class="ab-per-page-note-pill">${noteText}</p>` : ''}
+          <div class="ab-perf-info-note ab-perf-info-note-inline">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span><strong>How to read:</strong> Each page is rated <strong>FAST</strong>, <strong>AVG</strong>, or <strong>SLOW</strong> from real-user data (Chrome UX Report, 28-day p75). Lighthouse scores are Google's synthetic lab diagnostic — useful for finding fixes, not for grading user experience. Scores from Google PageSpeed Insights API. Tests run in mobile mode to reflect smartphone performance.</span>
+          </div>
+          <div class="ab-per-page-footer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Average performance score: <strong>${score}</strong>
+          </div>
         </div>
       </section>
       <section class="ab-section" id="core-web-vitals">

@@ -2145,6 +2145,29 @@ header:has(+ main .aibootcamp-results) {
   border-left-color: #ef4444;
 }
 
+.ab-per-page-bottom {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ab-per-page-note-pill {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 100px;
+  padding: 4px 12px;
+  margin: 0;
+  line-height: 1.5;
+  display: inline-block;
+  align-self: flex-start;
+}
+
 .ab-perf-info-note {
   display: flex;
   align-items: flex-start;
@@ -2159,22 +2182,22 @@ header:has(+ main .aibootcamp-results) {
   margin: 8px 0;
 }
 
+.ab-perf-info-note-inline {
+  margin: 0;
+}
 
 .ab-per-page-footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-top: 1px solid #e5e7eb;
-  border-radius: 0 0 12px 12px;
-  padding: 12px 20px;
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 11px;
+  color: #9ca3af;
+  padding-top: 4px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .ab-per-page-footer strong {
-  color: #111827;
+  color: #374151;
   font-weight: 700;
 }
 
