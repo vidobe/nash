@@ -1,3 +1,9 @@
+/* Zero out the global fixed header so it doesn't block clicks */
+header:has(+ main .aibootcamp-login) {
+  height: 0;
+  pointer-events: none;
+}
+
 .aibootcamp-login {
   display: grid;
   grid-template-columns: 1fr 1fr;
