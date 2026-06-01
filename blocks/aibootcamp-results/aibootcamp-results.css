@@ -1557,6 +1557,49 @@ header:has(+ main .aibootcamp-results) {
   .ab-kw-section-layout {
     grid-template-columns: 1fr;
   }
+
+  /* SEO tab mobile */
+  .ab-seo-traffic-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-country-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ab-brand-mix-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .ab-brand-donut-wrap {
+    width: 140px;
+    height: 140px;
+  }
+
+  /* Keyword table: simplified columns on mobile */
+  .ab-kw-table-header {
+    grid-template-columns: 1fr 50px 80px;
+  }
+
+  .ab-kw-main-row {
+    grid-template-columns: 1fr 50px 80px;
+  }
+
+  .ab-kw-vol,
+  .ab-kw-cpc,
+  .ab-kw-value {
+    display: none;
+  }
+
+  .ab-kw-table-header > *:nth-child(n+4),
+  .ab-kw-main-row > *:nth-child(n+4) {
+    display: none;
+  }
+
+  .ab-kw-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ab-kw-table-new {
