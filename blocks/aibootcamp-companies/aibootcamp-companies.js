@@ -111,7 +111,7 @@ export default function decorate(block) {
           <div class="ab-topbar-left">
             <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo" width="80" height="20"/>
             <span class="ab-topbar-divider"></span>
-            <span class="ab-topbar-title">AI Bootcamp NL 2026 — Reports</span>
+            <span class="ab-topbar-title">AI Bootcamp NL 2026</span>
           </div>
           ${renderUserMenu(session)}
         </div>
