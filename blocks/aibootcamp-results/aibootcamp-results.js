@@ -1211,9 +1211,9 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
       const def = findingDefs.find((d) => d.key === (type || '').toLowerCase()) || findingDefs[i] || findingDefs[0];
       return `
           <div class="ab-finding-card">
-            <div class="ab-finding-head" style="color:${def.color};background:${def.bg}">
-              ${def.icon}
-              <span>${def.label}</span>
+            <div class="ab-finding-label" style="color:${def.color};background:${def.bg}">
+              <span class="ab-finding-icon">${def.icon}</span>
+              <span class="ab-finding-label-text">${def.label}</span>
             </div>
             <p class="ab-finding-text">${text}</p>
           </div>`;

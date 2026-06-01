@@ -3413,9 +3413,9 @@ header:has(+ main .aibootcamp-results) {
 }
 
 .ab-findings-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .ab-finding-card {
@@ -3423,25 +3423,46 @@ header:has(+ main .aibootcamp-results) {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: stretch;
 }
 
-.ab-finding-head {
+.ab-finding-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.ab-finding-icon {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  font-size: 10px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 8%);
+}
+
+.ab-finding-label-text {
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  line-height: 1.3;
 }
 
 .ab-finding-text {
   font-size: 13px;
   color: #374151;
   line-height: 1.6;
-  padding: 12px 14px 16px;
+  padding: 16px 20px;
   margin: 0;
+  border-left: 1px solid #e5e7eb;
+  align-self: center;
 }
 
 /* ─── Strategic Priority Areas ───────────────────────────────── */
@@ -3590,9 +3611,17 @@ header:has(+ main .aibootcamp-results) {
 }
 
 @media (width < 900px) {
-  .ab-findings-grid,
   .ab-priority-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ab-finding-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-finding-text {
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
   }
 }
 
