@@ -1589,7 +1589,7 @@ main:has(.aibootcamp-results) {
   }
 
   .ab-country-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .ab-brand-mix-layout {
@@ -1698,6 +1698,8 @@ main:has(.aibootcamp-results) {
   line-height: 1.5;
   padding-left: 4px;
   border-left: 2px solid #e9d5ff;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .ab-kw-legend {

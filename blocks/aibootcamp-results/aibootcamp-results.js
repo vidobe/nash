@@ -627,13 +627,21 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
     </div>`;
   }).join('');
 
+  // Normalize insight rows — empty description cells collapse so [title,'','action'] → [title,'action']
+  const KNOWN_COLORS = new Set(['red', 'amber', 'green', 'action']);
+  const normalizeInsight = (row) => {
+    if (row.length === 2 && KNOWN_COLORS.has(row[1])) return [row[0], '', row[1]];
+    return row;
+  };
+
   // Split key insights into insights and SEO actions
-  const insightRows2 = (seoKeyInsights.length ? seoKeyInsights : [
+  const normalizedInsights = seoKeyInsights.map(normalizeInsight);
+  const insightRows2 = (normalizedInsights.length ? normalizedInsights : [
     ['Traffic declining (-20.4% YoY)', 'Declining traffic may indicate competitive pressure or algorithm changes.', 'red'],
     ['High brand dependency (86% branded)', 'Focus on ranking for product-related keywords to reduce reliance on brand awareness.', 'amber'],
   ]).filter(([, , color]) => color !== 'action');
 
-  const seoActions = seoKeyInsights.filter(([, , color]) => color === 'action');
+  const seoActions = normalizedInsights.filter(([, , color]) => color === 'action');
 
   // Key insights
   const insightIcons = {
