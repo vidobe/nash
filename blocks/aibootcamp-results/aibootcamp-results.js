@@ -1232,41 +1232,43 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
     : '';
 
   // ── Strategic Priority Areas ──────────────────────────────────
+  // solutions row: [name, priority, desc, tags, quickWin, strategicTitle]
   const priorityIcons = [
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
   ];
 
-  const priorityCards = solutions.slice(0, 3).map(([name, , desc, tags, quickWin], i) => {
+  const priorityCards = solutions.slice(0, 3).map(([name, , desc, tags, quickWin, strategicTitle], i) => {
     const bullets = tags ? tags.split('·').map((t) => t.trim()).filter(Boolean) : [];
+    const cardTitle = strategicTitle || name;
+    const showProduct = strategicTitle && strategicTitle !== name;
     return `
       <div class="ab-priority-card">
         <div class="ab-priority-card-head">
           <span class="ab-priority-num">0${i + 1}</span>
           <span class="ab-priority-icon">${priorityIcons[i] || priorityIcons[0]}</span>
-          <h3 class="ab-priority-title">${name}</h3>
+          <h3 class="ab-priority-title">${cardTitle}</h3>
         </div>
         <p class="ab-priority-desc">${desc || ''}</p>
         ${bullets.length ? `<ul class="ab-priority-bullets">${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>` : ''}
-        ${quickWin ? `<div class="ab-priority-result"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>${quickWin}</div>` : ''}
+        <div class="ab-priority-footer">
+          ${quickWin ? `<div class="ab-priority-result"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>${quickWin}</div>` : ''}
+          ${showProduct ? `<span class="ab-priority-product-badge">${name}</span>` : ''}
+        </div>
       </div>`;
   }).join('');
 
-  // ── Growth platform footer ────────────────────────────────────
-  const growthText = nextSteps[0] ? nextSteps[0][1] || '' : '';
-
   // ── Success story ─────────────────────────────────────────────
   const company = success.company || '';
+  const relevanceScore = parseInt(success['relevance-score'] || '88', 10);
+  const relevColor = '#2563eb';
+  const rR = 40;
+  const rCirc = 2 * Math.PI * rR;
+  const rFilled = (relevanceScore / 100) * rCirc;
   const achievements = Object.entries(success)
     .filter(([k]) => k.startsWith('achievement-'))
-    .map(([, v]) => `<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${v}</li>`).join('');
-
-  const statKeys = ['stat1', 'stat2', 'stat3', 'stat4'];
-  const statBadges = statKeys
-    .filter((k) => success[`${k}-value`])
-    .map((k) => `<div class="ab-story-stat"><p class="ab-story-stat-value">${success[`${k}-value`]}</p><p class="ab-story-stat-label">${success[`${k}-label`] || ''}</p></div>`)
-    .join('');
+    .map(([, v]) => `<li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${v}</li>`).join('');
 
   return {
     anchors: ['Key Findings', 'Strategic Priorities', 'Success Story'],
@@ -1279,11 +1281,6 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
       <section class="ab-section" id="strategic-priorities">
         <p class="ab-findings-label">STRATEGIC PRIORITY AREAS</p>
         <div class="ab-priority-grid">${priorityCards}</div>
-        ${growthText ? `
-        <div class="ab-growth-platform">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eb1000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <p><strong>Your Growth Platform:</strong> ${growthText}</p>
-        </div>` : ''}
       </section>
       <section class="ab-section" id="success-story">
         ${card(`
@@ -1299,15 +1296,32 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
               AI-Generated
             </span>
           </div>
-          <h3 class="ab-story-company">${company}</h3>
-          ${statBadges ? `<div class="ab-story-stats">${statBadges}</div>` : ''}
-          <p class="ab-story-desc">${success.description || ''}</p>
-          ${success.relevance ? `
-          <div class="ab-story-relevance-text" style="margin-top:14px">
-            <p class="ab-story-relevance-label">Why This Story Is Relevant</p>
-            <p class="ab-story-relevance-desc">${success.relevance}</p>
-          </div>` : ''}
-          ${achievements ? `<p class="ab-story-results-label" style="margin-top:14px"><strong>Key Achievements:</strong></p><ul class="ab-story-results">${achievements}</ul>` : ''}
+          <div class="ab-story-layout">
+            <div class="ab-story-body">
+              <h3 class="ab-story-company">${company}</h3>
+              ${success.relevance ? `
+              <div class="ab-story-relevance-box">
+                <p class="ab-story-relevance-label">Why This Story Is Relevant</p>
+                <p class="ab-story-relevance-desc">${success.relevance}</p>
+              </div>` : ''}
+              ${achievements ? `
+              <p class="ab-story-results-label"><strong>Key Results:</strong></p>
+              <ul class="ab-story-results">${achievements}</ul>` : ''}
+              <a class="ab-story-link" href="#" target="_blank" rel="noopener">View Full Story ↗</a>
+            </div>
+            <div class="ab-story-gauge">
+              <svg width="100" height="100" viewBox="0 0 100 100" aria-label="Relevance score ${relevanceScore}">
+                <circle cx="50" cy="50" r="${rR}" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                <circle cx="50" cy="50" r="${rR}" fill="none" stroke="${relevColor}" stroke-width="8"
+                  stroke-dasharray="${rFilled.toFixed(1)} ${rCirc.toFixed(1)}"
+                  stroke-dashoffset="${(rCirc * 0.25).toFixed(1)}"
+                  stroke-linecap="round"
+                  transform="rotate(-90 50 50)"/>
+                <text x="50" y="55" text-anchor="middle" font-size="22" font-weight="800" fill="${relevColor}">${relevanceScore}</text>
+              </svg>
+              <p class="ab-story-gauge-label">Relevance</p>
+            </div>
+          </div>
         `)}
       </section>`,
   };

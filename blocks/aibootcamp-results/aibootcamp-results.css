@@ -3303,7 +3303,8 @@
   margin: 0 0 12px;
 }
 
-.ab-story-relevance-text {
+.ab-story-relevance-text,
+.ab-story-relevance-box {
   background: #eff6ff;
   border-radius: 8px;
   padding: 12px 14px;
@@ -3500,6 +3501,13 @@
   font-weight: 700;
 }
 
+.ab-priority-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
 .ab-priority-result {
   display: flex;
   align-items: center;
@@ -3511,12 +3519,23 @@
   font-size: 12px;
   font-weight: 600;
   color: #059669;
-  margin-top: auto;
 }
 
 .ab-priority-result svg {
   flex-shrink: 0;
   stroke: #059669;
+}
+
+.ab-priority-product-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 3px 10px;
+  border-radius: 100px;
+  align-self: flex-start;
 }
 
 /* Growth platform footer */
