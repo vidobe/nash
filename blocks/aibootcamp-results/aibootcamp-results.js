@@ -1098,7 +1098,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <p><strong>About This Data</strong> AI visibility metrics are powered by Adobe LLM Optimizer, which tracks brand appearances across major AI answer engines (ChatGPT, Gemini, Google AI Overview/Mode, Perplexity, Copilot) and identifies queries where competitors win.</p>
           </div>
-        `)}
+        `, 'ab-about-data-card')}
       </section>`,
   };
 }
