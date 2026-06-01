@@ -48,8 +48,7 @@ function renderTopbar() {
       <div class="ab-topbar-inner">
         <div class="ab-topbar-left">
           <button class="ab-topbar-logo-link" type="button" aria-label="Back to reports">
-            <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo ab-topbar-logo-full" width="80" height="20"/>
-            <svg class="ab-topbar-logo-icon" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="8" fill="#eb1000"/><polygon points="50,18 82,82 18,82" fill="#fff"/></svg>
+            <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo" width="80" height="20"/>
           </button>
           <span class="ab-topbar-divider"></span>
           <span class="ab-topbar-title">Digital Insights Report</span>

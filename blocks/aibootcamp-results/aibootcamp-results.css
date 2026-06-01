@@ -134,10 +134,6 @@ header:has(+ main .aibootcamp-results) {
   width: auto;
 }
 
-.ab-topbar-logo-icon {
-  display: none;
-  flex-shrink: 0;
-}
 
 .ab-topbar-divider {
   width: 1px;
@@ -4555,16 +4551,7 @@ header:has(+ main .aibootcamp-results) {
     border-radius: 12px;
   }
 
-  /* Topbar: show only Adobe "A" icon, hide wordmark */
-  .ab-topbar-logo-full {
-    display: none;
-  }
-
-  .ab-topbar-logo-icon {
-    display: block;
-  }
-
-  /* Topbar: hide title text and divider */
+  /* Topbar: hide title text and divider on mobile */
   .ab-topbar-title,
   .ab-topbar-divider {
     display: none;
