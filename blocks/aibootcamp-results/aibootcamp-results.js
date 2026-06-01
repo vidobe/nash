@@ -780,6 +780,9 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
   const visScore = parseInt(ai['Visibility Score'] || '62', 10);
   const mentions = ai['Brand Mentions'] || '22,725';
   const citations = ai.Citations || '17,361';
+  const audienceReach = ai['Audience Reach'] || '';
+  const gapTopics = ai['Gap Topics'] || '';
+  const brandRank = ai['Brand Rank'] || '';
   const domain = metaDomain || 'your domain';
 
   // Engine definitions with icons and colors
@@ -954,8 +957,33 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
             <span class="ab-what-ai-icon">👁</span>
             <h3 class="ab-card-title">What AI Sees About ${domain}</h3>
           </div>
-          <p class="ab-card-desc">${whatAiSees.summary || `Based on AI visibility data, <strong>${domain}</strong> is most frequently associated with various industry topics. The brand appears in 4 of 6 tracked AI engines with strongest presence on Google AI Overview. Key competitors include bol.com, zalando, de bijenkorf.`}</p>
+          <p class="ab-card-desc">${whatAiSees.summary || `Based on AI visibility data, <strong>${domain}</strong> is most frequently associated with various industry topics.`}</p>
+          ${whatAiSees.associations ? `<div class="ab-ai-associations">${whatAiSees.associations.split('·').map((a) => `<span class="ab-ai-assoc-chip">${a.trim()}</span>`).join('')}</div>` : ''}
         `)}
+        ${(() => {
+          const strengths = Object.entries(whatAiSees).filter(([k]) => k.startsWith('strength-')).map(([, v]) => v);
+          const gaps = Object.entries(whatAiSees).filter(([k]) => k.startsWith('gap-')).map(([, v]) => v);
+          if (!strengths.length && !gaps.length) return '';
+          return `
+          <div class="ab-ai-sw-grid">
+            ${strengths.length ? `
+            <div class="ab-ai-sw-col ab-ai-sw-strengths">
+              <div class="ab-ai-sw-head">
+                <span class="ab-ai-sw-dot ab-ai-sw-dot-green"></span>
+                <h3 class="ab-ai-sw-title">Strengths</h3>
+              </div>
+              <ul class="ab-ai-sw-list">${strengths.map((s) => `<li>${s}</li>`).join('')}</ul>
+            </div>` : ''}
+            ${gaps.length ? `
+            <div class="ab-ai-sw-col ab-ai-sw-gaps">
+              <div class="ab-ai-sw-head">
+                <span class="ab-ai-sw-dot ab-ai-sw-dot-amber"></span>
+                <h3 class="ab-ai-sw-title">Growth Opportunities</h3>
+              </div>
+              <ul class="ab-ai-sw-list">${gaps.map((g) => `<li>${g}</li>`).join('')}</ul>
+            </div>` : ''}
+          </div>`;
+        })()}
       </section>
       <section class="ab-section" id="total-citations">
         ${card(`
@@ -964,6 +992,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
               <p class="ab-vis-score-label">VISIBILITY SCORE</p>
               <p class="ab-vis-score-value" style="color:#059669">${visScore}<span class="ab-vis-score-max"> / 100</span></p>
               <p class="ab-vis-score-sub">Average prominence of ${domain} across tracked AI prompts.</p>
+              ${brandRank ? `<p class="ab-vis-rank-badge">🏆 Ranked ${brandRank}</p>` : ''}
             </div>
             <div class="ab-vis-score-right">
               <div class="ab-vis-stat">
@@ -974,6 +1003,8 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
                 <p class="ab-vis-stat-label">CITATIONS</p>
                 <p class="ab-vis-stat-value">${citations.replace(',', '.').replace(/(\d+),(\d+)/, '$1.$2')}</p>
               </div>
+              ${audienceReach ? `<div class="ab-vis-stat"><p class="ab-vis-stat-label">AUDIENCE REACH</p><p class="ab-vis-stat-value">${audienceReach}</p></div>` : ''}
+              ${gapTopics ? `<div class="ab-vis-stat ab-vis-stat-gap"><p class="ab-vis-stat-label">GAP PROMPTS</p><p class="ab-vis-stat-value ab-vis-stat-gap-value">${gapTopics}</p></div>` : ''}
             </div>
           </div>
         `)}
@@ -1021,6 +1052,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain)
             <h3 class="ab-card-title">Optimization Opportunity</h3>
           </div>
           <p class="ab-card-desc">Adobe LLM Optimizer can close the gaps surfaced above by optimizing content for AI answer engines and tracking visibility week over week.</p>
+          ${gapTopics ? `<p class="ab-ai-gap-callout">⚠️ <strong>${gapTopics} gap prompts</strong> identified where competitors are mentioned but ${domain} is not — including SEPA instant payments, mobile banking, and high-intent queries with significant search volume.</p>` : ''}
           ${actions ? `<div class="ab-actions" style="margin-top:16px">${actions}</div>` : ''}
           <button class="ab-ai-oppty-btn" data-tab="solutions" type="button">Explore Adobe Solutions →</button>
         </div>
