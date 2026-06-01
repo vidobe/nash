@@ -54,10 +54,10 @@ function renderTopbar() {
           <span class="ab-topbar-title">Digital Insights Report</span>
         </div>
         <div class="ab-topbar-right">
-          <a class="ab-back-btn" href="/aibootcamp/listcompanies">
+          <button class="ab-back-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
             All Reports
-          </a>
+          </button>
           <div class="ab-user-menu">
           <button class="ab-user-trigger" type="button" aria-label="Account menu">
             <span class="ab-user-avatar" id="ab-topbar-avatar"></span>
@@ -1409,6 +1409,10 @@ export default async function decorate(block) {
         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
         : (session.name || session.email || 'U').slice(0, 2).toUpperCase();
       block.querySelector('.ab-topbar-logo-link')?.addEventListener('click', () => {
+        window.location.href = '/aibootcamp/listcompanies';
+      });
+
+      block.querySelector('.ab-back-btn')?.addEventListener('click', () => {
         window.location.href = '/aibootcamp/listcompanies';
       });
 

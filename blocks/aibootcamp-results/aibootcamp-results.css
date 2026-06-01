@@ -95,19 +95,14 @@
   color: #374151;
   cursor: pointer;
   font-family: var(--sans, system-ui, sans-serif);
-  text-decoration: none;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
   white-space: nowrap;
-  position: relative;
-  z-index: 10;
-  pointer-events: all;
 }
 
 .ab-back-btn:hover {
   border-color: #eb1000;
   color: #eb1000;
   background: #fff0ef;
-  text-decoration: none;
 }
 
 .ab-topbar-logo-link {
