@@ -1610,25 +1610,25 @@ export default async function decorate(block) {
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
+
+      // Help modal — re-attach on every render since DOM is replaced
+      const helpBtn = block.querySelector('#ab-help-btn');
+      const helpModal = block.querySelector('#ab-help-modal');
+      if (helpBtn && helpModal) {
+        helpBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          helpModal.classList.toggle('ab-help-modal-open');
+        });
+        helpModal.addEventListener('click', () => {
+          helpModal.classList.remove('ab-help-modal-open');
+        });
+        helpModal.querySelector('.ab-help-panel')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+      }
     };
 
     render();
-
-    // Help modal
-    const helpBtn = block.querySelector('#ab-help-btn');
-    const helpModal = block.querySelector('#ab-help-modal');
-    if (helpBtn && helpModal) {
-      helpBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        helpModal.classList.toggle('ab-help-modal-open');
-      });
-      helpModal.addEventListener('click', () => {
-        helpModal.classList.remove('ab-help-modal-open');
-      });
-      helpModal.querySelector('.ab-help-panel')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    }
   } catch (err) {
     block.innerHTML = `<div class="ab-error"><p class="ab-error-title">Report unavailable</p><p class="ab-error-msg">${err.message}</p></div>`;
   }
