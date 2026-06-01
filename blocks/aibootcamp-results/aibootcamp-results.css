@@ -76,6 +76,35 @@
   gap: 14px;
 }
 
+.ab-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ab-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  font-family: var(--sans, system-ui, sans-serif);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.ab-back-btn:hover {
+  border-color: #eb1000;
+  color: #eb1000;
+  background: #fff0ef;
+}
+
 .ab-topbar-logo-link {
   display: flex;
   align-items: center;

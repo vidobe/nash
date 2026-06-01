@@ -53,7 +53,12 @@ function renderTopbar() {
           <span class="ab-topbar-divider"></span>
           <span class="ab-topbar-title">Digital Insights Report</span>
         </div>
-        <div class="ab-user-menu">
+        <div class="ab-topbar-right">
+          <button class="ab-back-btn" type="button" aria-label="Back to reports">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            All Reports
+          </button>
+          <div class="ab-user-menu">
           <button class="ab-user-trigger" type="button" aria-label="Account menu">
             <span class="ab-user-avatar" id="ab-topbar-avatar"></span>
             <span class="ab-user-name" id="ab-topbar-name"></span>
@@ -71,6 +76,7 @@ function renderTopbar() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Sign out
             </button>
+          </div>
           </div>
         </div>
       </div>
@@ -1419,6 +1425,10 @@ export default async function decorate(block) {
         ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
         : (session.name || session.email || 'U').slice(0, 2).toUpperCase();
       block.querySelector('.ab-topbar-logo-link')?.addEventListener('click', () => {
+        window.location.href = '/aibootcamp/listcompanies';
+      });
+
+      block.querySelector('.ab-back-btn')?.addEventListener('click', () => {
         window.location.href = '/aibootcamp/listcompanies';
       });
 
