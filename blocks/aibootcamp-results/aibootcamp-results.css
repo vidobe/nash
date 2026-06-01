@@ -4582,37 +4582,7 @@ header:has(+ main .aibootcamp-results) {
   }
 
   .ab-sidebar {
-    position: static;
-    display: flex;
-    flex-flow: row nowrap;
-    overflow-x: auto;
-    gap: 6px;
-    padding: 12px 0;
-    scrollbar-width: none;
-  }
-
-  .ab-sidebar::-webkit-scrollbar {
     display: none;
-  }
-
-  .ab-sidebar-heading {
-    display: none;
-  }
-
-  .ab-sidebar-link {
-    white-space: nowrap;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 13px;
-    flex-shrink: 0;
-    border-left: 2px solid transparent;
-  }
-
-  .ab-sidebar-link:hover {
-    background: #f3f4f6;
-    border-color: #6366f1;
   }
 
   .ab-scores-grid {
