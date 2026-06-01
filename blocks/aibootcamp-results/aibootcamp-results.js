@@ -1412,7 +1412,6 @@ export default async function decorate(block) {
         window.location.href = '/aibootcamp/listcompanies';
       });
 
-
       block.querySelectorAll('.ab-user-avatar').forEach((el) => { el.textContent = abbr; });
       block.querySelectorAll('.ab-user-name').forEach((el) => {
         el.textContent = session.name || session.email || '';
