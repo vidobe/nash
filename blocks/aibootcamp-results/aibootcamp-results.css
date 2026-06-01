@@ -9,6 +9,14 @@ header:has(+ main .aibootcamp-results) {
   min-height: 100vh;
   background: #f8f9fb;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow-x: hidden;
+}
+
+.aibootcamp-results *,
+.aibootcamp-results *::before,
+.aibootcamp-results *::after {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 /* ─── Loading ────────────────────────────────────────────────── */
