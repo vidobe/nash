@@ -2321,12 +2321,56 @@
   flex-wrap: wrap;
 }
 
+.ab-vis-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
 .ab-vis-score-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: #6b7280;
-  margin: 0 0 6px;
+  margin: 0;
+}
+
+.ab-vis-top-challenger {
+  text-align: right;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+
+.ab-vis-tc-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+}
+
+.ab-vis-tc-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 1px;
+}
+
+.ab-vis-tc-score {
+  font-size: 20px;
+  font-weight: 800;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ab-vis-tc-max {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
 }
 
 .ab-vis-score-value {

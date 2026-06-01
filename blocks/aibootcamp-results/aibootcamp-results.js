@@ -986,10 +986,18 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
         })()}
       </section>
       <section class="ab-section" id="total-citations">
-        ${card(`
+        ${(() => {
+          // Derive top challenger from competitive table (first non-self row)
+          const topChallenger = competitive.find(([brand]) => !brand.toLowerCase().includes(metaDomain ? metaDomain.replace('www.', '').split('.')[0] : '___'));
+          const tcName = topChallenger ? topChallenger[0] : '';
+          const tcScore = topChallenger ? topChallenger[3] : '';
+          return card(`
+          <div class="ab-vis-card-header">
+            <p class="ab-vis-score-label">VISIBILITY SCORE</p>
+            ${tcName ? `<div class="ab-vis-top-challenger"><p class="ab-vis-tc-label">TOP CHALLENGER</p><p class="ab-vis-tc-name">${tcName}</p><p class="ab-vis-tc-score">${tcScore}<span class="ab-vis-tc-max">/100</span></p></div>` : ''}
+          </div>
           <div class="ab-vis-score-layout">
             <div class="ab-vis-score-left">
-              <p class="ab-vis-score-label">VISIBILITY SCORE</p>
               <p class="ab-vis-score-value" style="color:#059669">${visScore}<span class="ab-vis-score-max"> / 100</span></p>
               <p class="ab-vis-score-sub">Average prominence of ${domain} across tracked AI prompts.</p>
               ${brandRank ? `<p class="ab-vis-rank-badge">🏆 Ranked ${brandRank}</p>` : ''}
@@ -1007,7 +1015,8 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
               ${gapTopics ? `<div class="ab-vis-stat ab-vis-stat-gap"><p class="ab-vis-stat-label">GAP PROMPTS</p><p class="ab-vis-stat-value ab-vis-stat-gap-value">${gapTopics}</p></div>` : ''}
             </div>
           </div>
-        `)}
+        `);
+        })()}
       </section>
       <section class="ab-section" id="trend">
         ${card(`
