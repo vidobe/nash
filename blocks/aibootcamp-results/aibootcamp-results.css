@@ -134,6 +134,11 @@ header:has(+ main .aibootcamp-results) {
   width: auto;
 }
 
+.ab-topbar-logo-icon {
+  display: none;
+  flex-shrink: 0;
+}
+
 .ab-topbar-divider {
   width: 1px;
   height: 16px;
@@ -4548,6 +4553,41 @@ header:has(+ main .aibootcamp-results) {
     width: 92vw;
     max-height: 70vh;
     border-radius: 12px;
+  }
+
+  /* Topbar: show only Adobe "A" icon, hide wordmark */
+  .ab-topbar-logo-full {
+    display: none;
+  }
+
+  .ab-topbar-logo-icon {
+    display: block;
+  }
+
+  /* Topbar: hide title text and divider */
+  .ab-topbar-title,
+  .ab-topbar-divider {
+    display: none;
+  }
+
+  /* Back button: icon only */
+  .ab-back-btn-label {
+    display: none;
+  }
+
+  .ab-back-btn {
+    padding: 6px 8px;
+  }
+
+  /* User trigger: hide name and chevron, show avatar only */
+  .ab-user-name,
+  .ab-user-trigger > svg {
+    display: none;
+  }
+
+  .ab-user-trigger {
+    padding: 4px;
+    border-radius: 50%;
   }
 
   .ab-content-wrap {

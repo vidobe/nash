@@ -48,7 +48,8 @@ function renderTopbar() {
       <div class="ab-topbar-inner">
         <div class="ab-topbar-left">
           <button class="ab-topbar-logo-link" type="button" aria-label="Back to reports">
-            <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo" width="80" height="20"/>
+            <img src="/icons/adobe-wordmark.svg" alt="Adobe" class="ab-topbar-logo ab-topbar-logo-full" width="80" height="20"/>
+            <svg class="ab-topbar-logo-icon" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="8" fill="#eb1000"/><polygon points="50,18 82,82 18,82" fill="#fff"/></svg>
           </button>
           <span class="ab-topbar-divider"></span>
           <span class="ab-topbar-title">Digital Insights Report</span>
@@ -56,7 +57,7 @@ function renderTopbar() {
         <div class="ab-topbar-right">
           <button class="ab-back-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-            All Reports
+            <span class="ab-back-btn-label">All Reports</span>
           </button>
           <div class="ab-user-menu">
           <button class="ab-user-trigger" type="button" aria-label="Account menu">
