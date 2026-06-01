@@ -904,6 +904,8 @@ main:has(.aibootcamp-results) {
   border: 1px solid #e5e7eb;
   padding: 20px 24px;
   margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ab-card-head {
@@ -1124,6 +1126,13 @@ main:has(.aibootcamp-results) {
   margin: 8px 0;
 }
 
+.ab-seo-gauge-wrap svg {
+  width: 130px;
+  height: 130px;
+  max-width: 130px;
+  flex-shrink: 0;
+}
+
 .ab-seo-health-card {
   display: flex;
   flex-direction: column;
@@ -1147,6 +1156,8 @@ main:has(.aibootcamp-results) {
   line-height: 1.6;
   margin: 0;
   text-align: left;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ─── Country cards ──────────────────────────────────────────── */
