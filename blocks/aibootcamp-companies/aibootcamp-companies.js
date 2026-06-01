@@ -126,6 +126,7 @@ export default function decorate(block) {
         </div>
         <div class="ab-co-grid">${cardsHtml}</div>
       </div>
+      <footer class="ab-companies-footer">Confidential &middot; Adobe Digital Insights &middot; AI Bootcamp NL 2026</footer>
     </div>`;
 
   // Search
