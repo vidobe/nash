@@ -1251,6 +1251,7 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
 
   // ── Success story ─────────────────────────────────────────────
   const company = success.company || '';
+  const storyUrl = success['story-url'] || '#';
   const relevanceScore = parseInt(success['relevance-score'] || '88', 10);
   const relevColor = '#2563eb';
   const rR = 40;
@@ -1297,7 +1298,7 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
               ${achievements ? `
               <p class="ab-story-results-label"><strong>Key Results:</strong></p>
               <ul class="ab-story-results">${achievements}</ul>` : ''}
-              <a class="ab-story-link" href="#" target="_blank" rel="noopener">View Full Story ↗</a>
+              <a class="ab-story-link" href="${storyUrl}" target="_blank" rel="noopener">View Full Story ↗</a>
             </div>
             <div class="ab-story-gauge">
               <svg width="100" height="100" viewBox="0 0 100 100" aria-label="Relevance score ${relevanceScore}">
