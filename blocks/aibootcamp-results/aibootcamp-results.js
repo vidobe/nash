@@ -254,10 +254,8 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
   const score = parseInt(ps[1] || '42', 10);
   // eslint-disable-next-line no-nested-ternary
   const gaugeColor = score >= 70 ? '#059669' : score >= 50 ? '#f59e0b' : '#ef4444';
-  const gradeMap = {
-    90: 'A', 75: 'B', 50: 'C', 25: 'D',
-  };
-  const grade = Object.entries(gradeMap).find(([t]) => score >= Number(t))?.[1] || 'F';
+  // eslint-disable-next-line no-nested-ternary
+  const perfLabel = score >= 90 ? 'Excellent' : score >= 70 ? 'Good' : score >= 50 ? 'Needs Work' : score >= 25 ? 'Poor' : 'Critical';
   const r = 52;
   const circ = 2 * Math.PI * r;
   const filled = (score / 100) * circ;
@@ -368,10 +366,9 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
               </svg>
               <div class="ab-gauge-label">
                 <span class="ab-gauge-score" style="color:${gaugeColor}">${score}</span>
-                <span class="ab-gauge-grade" style="color:${gaugeColor}">${grade}</span>
               </div>
             </div>
-            <span class="ab-world-poor" style="display:inline-block;margin-top:8px">Poor</span>
+            <span class="ab-world-poor" style="display:inline-block;margin-top:8px;background:${gaugeColor}20;color:${gaugeColor};border-color:${gaugeColor}40">${perfLabel}</span>
           `, 'ab-perf-gauge-card')}
           ${card(`
             <div class="ab-pages-analyzed-head">
