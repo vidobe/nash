@@ -1157,7 +1157,6 @@ main:has(.aibootcamp-results) {
   margin: 0;
   text-align: left;
   overflow-wrap: break-word;
-  word-break: break-word;
 }
 
 /* ─── Country cards ──────────────────────────────────────────── */
