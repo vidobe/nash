@@ -2159,13 +2159,12 @@ header:has(+ main .aibootcamp-results) {
 .ab-per-page-note-pill {
   font-size: 11px;
   color: #6b7280;
-  background: #f3f4f6;
-  border-radius: 100px;
-  padding: 4px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
   margin: 0;
   line-height: 1.5;
-  display: inline-block;
-  align-self: flex-start;
 }
 
 .ab-perf-info-note {
