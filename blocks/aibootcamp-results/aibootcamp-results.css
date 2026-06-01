@@ -366,8 +366,10 @@ header:has(+ main .aibootcamp-results) {
 
 /* ─── Page body ──────────────────────────────────────────────── */
 .ab-page-body {
-  margin: 0 20%;
-  padding: 24px 0 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 10% 80px;
+  width: 100%;
 }
 
 /* ─── Two-column layout ──────────────────────────────────────── */
@@ -4576,7 +4578,11 @@ header:has(+ main .aibootcamp-results) {
     padding-right: 4%;
   }
 
-  .ab-page-body,
+  .ab-page-body {
+    padding-left: 4%;
+    padding-right: 4%;
+  }
+
   .ab-report-footer {
     margin-left: 4%;
     margin-right: 4%;
@@ -4589,7 +4595,11 @@ header:has(+ main .aibootcamp-results) {
     padding-right: 16px;
   }
 
-  .ab-page-body,
+  .ab-page-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
   .ab-report-footer {
     margin-left: 16px;
     margin-right: 16px;
