@@ -19,17 +19,15 @@ main:has(.aibootcamp-companies) {
 }
 
 /* ─── Topbar ─────────────────────────────────────────────────── */
-.ab-companies-page .ab-topbar {
-  position: fixed;
+.ab-topbar {
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
+  z-index: 50;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.ab-companies-page .ab-topbar-inner {
+.ab-topbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -39,45 +37,38 @@ main:has(.aibootcamp-companies) {
   margin: 0 auto;
 }
 
-.ab-companies-page .ab-topbar-left {
+.ab-topbar-left {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.ab-companies-page .ab-topbar-logo {
+.ab-topbar-logo-link {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
+.ab-topbar-logo {
   display: block;
   height: 18px;
   width: auto;
 }
 
-.ab-companies-page .ab-topbar-divider {
+.ab-topbar-divider {
   width: 1px;
   height: 16px;
   background: #e5e7eb;
 }
 
-.ab-companies-page .ab-topbar-title {
+.ab-topbar-title {
   font-size: 14px;
   font-weight: 500;
   color: #4b5563;
-}
-
-.ab-companies-page .ab-topbar-logout {
-  background: none;
-  border: none;
-  padding: 6px;
-  cursor: pointer;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
-}
-
-.ab-companies-page .ab-topbar-logout:hover {
-  color: #ef4444;
-  background: #fee2e2;
 }
 
 /* ─── User menu ──────────────────────────────────────────────── */
