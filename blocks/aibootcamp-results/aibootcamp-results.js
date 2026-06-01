@@ -1336,7 +1336,146 @@ function renderLayout(meta, tabContent, activeTab) {
         <div class="ab-content">${html}</div>
       </div>
     </div>
-    <footer class="ab-report-footer">Confidential · Adobe Digital Insights · ${meta.date || ''}</footer>`;
+    <footer class="ab-report-footer">Confidential · Adobe Digital Insights · ${meta.date || ''}</footer>
+    <button class="ab-help-btn" id="ab-help-btn" type="button" aria-label="Help">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+    <div class="ab-help-modal" id="ab-help-modal" aria-hidden="true">
+      <div class="ab-help-panel" role="dialog" aria-label="Understanding your report">
+        <div class="ab-help-header">
+          <h2 class="ab-help-title">Understanding Your Digital Report</h2>
+          <p class="ab-help-sub">A guide to reading and interpreting your results</p>
+        </div>
+        <div class="ab-help-body">
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">What This Report Is</h3>
+            <p class="ab-help-text">Your Digital Opportunity Report is an AI-powered analysis of your publicly available digital presence, evaluating three critical dimensions of online performance. Each finding is tied to specific, actionable recommendations.</p>
+            <div class="ab-help-pillars">
+              <div class="ab-help-pillar ab-help-pillar-red">
+                <p class="ab-help-pillar-label">PERFORMANCE</p>
+                <p class="ab-help-pillar-name">Website Performance</p>
+                <p class="ab-help-pillar-desc">How fast and responsive your site is for real-world mobile visitors, including load times, interactivity, and visual stability. Performance directly impacts user experience and conversion rates.</p>
+              </div>
+              <div class="ab-help-pillar ab-help-pillar-green">
+                <p class="ab-help-pillar-label">SEARCH</p>
+                <p class="ab-help-pillar-name">Search Engine Visibility</p>
+                <p class="ab-help-pillar-desc">Your organic search presence, keyword positioning, traffic trends, and competitive landscape. Strong search visibility means more qualified visitors finding your site without paid advertising.</p>
+              </div>
+              <div class="ab-help-pillar ab-help-pillar-purple">
+                <p class="ab-help-pillar-label">AI PRESENCE</p>
+                <p class="ab-help-pillar-name">AI Discoverability</p>
+                <p class="ab-help-pillar-desc">How visible your brand is when people ask AI assistants like ChatGPT, Gemini, and Perplexity for recommendations. Being cited in AI responses is becoming a critical new discovery channel.</p>
+              </div>
+            </div>
+            <div class="ab-help-scope-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span><strong>Report Scope:</strong> Only publicly accessible pages are included. Content behind logins or paywalls is not part of this analysis.</span>
+            </div>
+          </section>
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">Data Sources &amp; Methodology</h3>
+            <p class="ab-help-text">Every data point in your report comes from one of the sources below. We use industry-standard tools and automated validation to ensure objectivity and accuracy.</p>
+            <div class="ab-help-sources">
+              <div class="ab-help-source">
+                <p class="ab-help-source-label" style="color:#eb1000">PERFORMANCE</p>
+                <p class="ab-help-source-name">Google PageSpeed Insights</p>
+                <p class="ab-help-source-desc">Mobile performance scores and Core Web Vitals. Tests simulate real-world conditions on a mid-tier mobile device with a throttled connection.</p>
+              </div>
+              <div class="ab-help-source">
+                <p class="ab-help-source-label" style="color:#059669">SEARCH</p>
+                <p class="ab-help-source-name">SEO Intelligence Platform</p>
+                <p class="ab-help-source-desc">Organic traffic estimates, keyword rankings, domain authority, and backlink profile from one of the industry's largest web crawl databases.</p>
+              </div>
+              <div class="ab-help-source">
+                <p class="ab-help-source-label" style="color:#7c3aed">AI PRESENCE</p>
+                <p class="ab-help-source-name">AI Visibility Monitoring</p>
+                <p class="ab-help-source-desc">Brand mention rates across ChatGPT, Gemini, Perplexity, and Copilot. Measured through periodic large-scale prompt panel testing.</p>
+              </div>
+              <div class="ab-help-source">
+                <p class="ab-help-source-label" style="color:#d97706">VISUAL</p>
+                <p class="ab-help-source-name">Website Visual Analysis</p>
+                <p class="ab-help-source-desc">Screenshots and visual state of analyzed pages as seen by a standard mobile browser. Provides visual context alongside quantitative data.</p>
+              </div>
+              <div class="ab-help-source">
+                <p class="ab-help-source-label" style="color:#2563eb">SYNTHESIS</p>
+                <p class="ab-help-source-name">Adobe AI Analysis</p>
+                <p class="ab-help-source-desc">Narrative insights, opportunity identification, and solution mapping. Findings are validated through automated quality checks before inclusion.</p>
+              </div>
+            </div>
+            <div class="ab-help-scope-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span><strong>Testing Conditions:</strong> Scores reflect real-world mobile conditions — a mid-tier phone on a slower network. Your site will feel faster on desktop.</span>
+            </div>
+          </section>
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">Performance Metrics</h3>
+            <p class="ab-help-text">Performance is measured using Google Lighthouse under synthetic lab conditions: a simulated mid-tier mobile device with throttled CPU and a slower network. These scores are technical health indicators — like an X-ray for your website — not a representation of what real users experience.</p>
+            <div class="ab-help-score-ranges">
+              <div class="ab-help-range ab-help-range-green"><span class="ab-help-range-badge">90–100</span><div><strong>Good</strong><p>Performing at or above industry standards. Maintain and monitor for regressions.</p></div></div>
+              <div class="ab-help-range ab-help-range-amber"><span class="ab-help-range-badge ab-help-range-badge-amber">50–89</span><div><strong>Needs Improvement</strong><p>Targeted optimizations can drive measurable gains in user experience and conversions.</p></div></div>
+              <div class="ab-help-range ab-help-range-red"><span class="ab-help-range-badge ab-help-range-badge-red">0–49</span><div><strong>Poor</strong><p>Significant opportunities exist. Improvements here have the highest potential impact.</p></div></div>
+            </div>
+            <p class="ab-help-subtitle">Core Web Vitals</p>
+            <div class="ab-help-cwv">
+              <div class="ab-help-cwv-item"><strong>LCP — Largest Contentful Paint</strong><p>How long it takes for the largest visible element (hero image, heading block) to fully render. Directly impacts perceived load speed. <em>Good: under 2.5 seconds</em></p></div>
+              <div class="ab-help-cwv-item"><strong>TBT — Total Blocking Time</strong><p>Total time the main thread is blocked, preventing response to user input like taps and clicks. Measures real interactivity readiness. <em>Good: under 200 milliseconds</em></p></div>
+              <div class="ab-help-cwv-item"><strong>CLS — Cumulative Layout Shift</strong><p>Measures unexpected visual movement during page load — buttons shifting, text jumping, images pushing content down. Impacts usability and trust. <em>Good: under 0.1</em></p></div>
+            </div>
+          </section>
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">SEO Metrics</h3>
+            <p class="ab-help-text">Search engine optimization metrics measure your organic visibility — how easily potential customers find you through search engines without paid advertising.</p>
+            <div class="ab-help-cwv">
+              <div class="ab-help-cwv-item"><strong>Organic Traffic Trend</strong><p>Monthly estimated visitors from search engines over the past 12 months. The direction of the trend matters more than any single month — seasonal patterns and algorithm updates cause natural fluctuations.</p></div>
+              <div class="ab-help-cwv-item"><strong>Branded vs Non-Branded Traffic</strong><p>How much of your search traffic comes from people searching your brand name versus generic terms. A high branded share may indicate room to capture new audiences through broader keyword targeting. A healthy mix shows strong brand recognition and broad category reach.</p></div>
+              <div class="ab-help-cwv-item"><strong>Keyword Value</strong><p>The estimated cost to buy equivalent traffic through paid ads. Higher value means your organic rankings are saving more on advertising spend — a direct measure of SEO return on investment.</p></div>
+            </div>
+            <div class="ab-help-scope-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span><strong>Why estimates?</strong> SEO metrics are third-party estimates drawn from web crawl databases. They're designed for directional trend analysis and competitive benchmarking rather than exact traffic counts. Small differences from your internal analytics are expected.</span>
+            </div>
+          </section>
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">AI Visibility Metrics</h3>
+            <p class="ab-help-text">AI visibility measures how often your brand appears when people ask AI assistants for recommendations. As AI-powered search grows, being cited in AI responses is becoming a critical new channel for discovery.</p>
+            <p class="ab-help-subtitle">Platforms We Monitor</p>
+            <div class="ab-help-platforms">
+              <div class="ab-help-platform"><strong>ChatGPT</strong><p>OpenAI's conversational AI</p></div>
+              <div class="ab-help-platform"><strong>Gemini</strong><p>Google's AI assistant</p></div>
+              <div class="ab-help-platform"><strong>Perplexity</strong><p>AI-powered search engine</p></div>
+              <div class="ab-help-platform"><strong>Copilot</strong><p>Microsoft's AI companion</p></div>
+            </div>
+            <div class="ab-help-cwv">
+              <div class="ab-help-cwv-item"><strong>Visibility Score (0–100)</strong><p>Composite score of how frequently your brand appears across all tracked AI platforms when users ask questions relevant to your industry and products.</p></div>
+              <div class="ab-help-cwv-item"><strong>Share of Voice</strong><p>What percentage of AI-generated responses mention each brand when users ask about your industry. Compares your visibility against key competitors automatically identified by AI analysis.</p></div>
+              <div class="ab-help-cwv-item"><strong>Gap Prompts</strong><p>Specific queries where competitors are cited but your brand is not. These represent immediate opportunities to improve AI visibility through content optimization.</p></div>
+            </div>
+          </section>
+
+          <section class="ab-help-section">
+            <h3 class="ab-help-section-title">Frequently Asked Questions</h3>
+            <div class="ab-help-faqs">
+              <div class="ab-help-faq"><p class="ab-help-faq-q">Why does my performance score seem low?</p><p class="ab-help-faq-a">Tests run under throttled mobile conditions simulating a mid-tier phone on a slower network. On desktop or office Wi-Fi, your site feels much faster. The score highlights where mobile visitors may experience friction.</p></div>
+              <div class="ab-help-faq"><p class="ab-help-faq-q">Why might these numbers differ from my analytics?</p><p class="ab-help-faq-a">SEO metrics are third-party estimates based on web crawl data, not your server logs. They're designed for directional trend analysis and competitive benchmarking. Focus on whether overall trends align rather than exact figures.</p></div>
+              <div class="ab-help-faq"><p class="ab-help-faq-q">How is AI brand presence measured?</p><p class="ab-help-faq-a">Brand visibility is measured through periodic prompt panel testing — curated prompts are run across major AI assistants and brand appearances are systematically counted. Your report also includes Share of Voice, which compares your visibility against competitors automatically identified by AI analysis of your industry, geography, and business model.</p></div>
+              <div class="ab-help-faq"><p class="ab-help-faq-q">Why doesn't the report cover all my pages?</p><p class="ab-help-faq-a">The report focuses on key pages that drive business impact — typically your homepage and top conversion pages. Pages requiring login, blocking automated access, or behind paywalls are excluded. Additional pages can be analyzed on request.</p></div>
+              <div class="ab-help-faq"><p class="ab-help-faq-q">How are recommendations connected to my data?</p><p class="ab-help-faq-a">Every recommendation links directly to a specific finding from your data — a performance bottleneck, SEO gap, or AI opportunity. Solutions are matched to diagnosed constraints. Nothing is generic advice.</p></div>
+              <div class="ab-help-faq"><p class="ab-help-faq-q">Are all data points from the same time period?</p><p class="ab-help-faq-a">Data may come from slightly different collection windows — typically within the same week. Each source has its own refresh cycle. The report synthesizes these into a coherent picture. Ask your Adobe representative about specific data freshness.</p></div>
+            </div>
+          </section>
+
+          <div class="ab-help-footer">
+            <p>Your Adobe representative can walk you through any section, discuss the findings, or arrange a deeper analysis.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
 }
 
 // ─── Main ──────────────────────────────────────────────────────
@@ -1472,6 +1611,22 @@ export default async function decorate(block) {
     };
 
     render();
+
+    // Help modal
+    const helpBtn = block.querySelector('#ab-help-btn');
+    const helpModal = block.querySelector('#ab-help-modal');
+    if (helpBtn && helpModal) {
+      helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        helpModal.classList.toggle('ab-help-modal-open');
+      });
+      helpModal.addEventListener('click', () => {
+        helpModal.classList.remove('ab-help-modal-open');
+      });
+      helpModal.querySelector('.ab-help-panel')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
   } catch (err) {
     block.innerHTML = `<div class="ab-error"><p class="ab-error-title">Report unavailable</p><p class="ab-error-msg">${err.message}</p></div>`;
   }
