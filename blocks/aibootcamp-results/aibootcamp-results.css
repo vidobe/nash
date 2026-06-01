@@ -1943,7 +1943,6 @@ header:has(+ main .aibootcamp-results) {
 
 /* ─── Performance tab ───────────────────────────────────────── */
 .ab-perf-narrative-card {
-  border-left: 4px solid #ef4444;
   background: linear-gradient(to right, #fff5f5, #fff);
 }
 
