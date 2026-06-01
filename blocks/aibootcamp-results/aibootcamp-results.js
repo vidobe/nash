@@ -1225,26 +1225,30 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
 
   // ── Strategic Priority Areas ──────────────────────────────────
   // solutions row: [name, priority, desc, tags, quickWin, strategicTitle]
+  // Fallback titles derived from solution name when PDF title not set
+  const defaultTitles = ['Speed & Experience', 'Search & Conversion', 'AI Visibility'];
   const priorityIcons = [
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
   ];
 
-  const priorityCards = solutions.slice(0, 3).map((row, i) => {
+  const priorityRows = solutions.slice(0, 3).map((row, i) => {
     const [name, , desc, tags, quickWin, strategicTitle] = row;
     const bullets = tags ? tags.split('·').map((t) => t.trim()).filter(Boolean) : [];
-    const cardTitle = strategicTitle || name;
+    const cardTitle = strategicTitle || defaultTitles[i] || name;
     return `
-      <div class="ab-priority-card">
-        <div class="ab-priority-card-left">
-          <div class="ab-priority-icon-title">
-            <span class="ab-priority-icon">${priorityIcons[i] || priorityIcons[0]}</span>
-            <h3 class="ab-priority-title">${cardTitle}</h3>
+      <div class="ab-priority-row">
+        <div class="ab-priority-row-left">
+          <div class="ab-priority-row-num-icon">
+            <span class="ab-priority-row-icon">${priorityIcons[i] || priorityIcons[0]}</span>
           </div>
-          <span class="ab-priority-product-badge">${name}</span>
+          <div class="ab-priority-row-meta">
+            <h3 class="ab-priority-row-title">${cardTitle}</h3>
+            <span class="ab-priority-product-badge">${name}</span>
+          </div>
         </div>
-        <div class="ab-priority-card-right">
+        <div class="ab-priority-row-right">
           <p class="ab-priority-desc">${desc || ''}</p>
           ${bullets.length ? `<ul class="ab-priority-bullets">${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>` : ''}
           ${quickWin ? `<div class="ab-priority-result"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>${quickWin}</div>` : ''}
@@ -1273,8 +1277,18 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
         <div class="ab-findings-grid">${findingCards}</div>
       </section>` : ''}
       <section class="ab-section" id="strategic-priorities">
-        <p class="ab-findings-label">STRATEGIC PRIORITY AREAS</p>
-        <div class="ab-priority-grid">${priorityCards}</div>
+        <div class="ab-priority-card">
+          <div class="ab-priority-card-header">
+            <div class="ab-priority-card-header-left">
+              <span class="ab-priority-card-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </span>
+              <h2 class="ab-priority-card-title">Strategic Priority Areas</h2>
+            </div>
+            <span class="ab-priority-card-count">${solutions.slice(0, 3).length} solutions</span>
+          </div>
+          <div class="ab-priority-rows">${priorityRows}</div>
+        </div>
       </section>
       <section class="ab-section" id="success-story">
         ${card(`

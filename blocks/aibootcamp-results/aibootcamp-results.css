@@ -3503,44 +3503,123 @@ header:has(+ main .aibootcamp-results) {
 }
 
 /* ─── Strategic Priority Areas ───────────────────────────────── */
-.ab-priority-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
+/* ─── Strategic Priority Areas — single card ─────────────────── */
 .ab-priority-card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  align-items: stretch;
 }
 
-.ab-priority-card-left {
-  background: #fff5f5;
-  border-right: 1px solid #e5e7eb;
-  padding: 20px;
+.ab-priority-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ab-priority-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ab-priority-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #fff0ef;
+  border-radius: 8px;
+  color: #eb1000;
+  flex-shrink: 0;
+}
+
+.ab-priority-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.ab-priority-card-count {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.ab-priority-rows {
   display: flex;
   flex-direction: column;
+}
+
+.ab-priority-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: stretch;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ab-priority-row:last-child {
+  border-bottom: none;
+}
+
+.ab-priority-row-left {
+  display: flex;
+  align-items: flex-start;
   gap: 12px;
+  padding: 18px 16px 18px 20px;
+  border-right: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.ab-priority-row-icon {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #fff0ef;
+  border-radius: 8px;
+  color: #eb1000;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ab-priority-row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ab-priority-row-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.ab-priority-row-num-icon {
+  flex-shrink: 0;
+}
+
+.ab-priority-row-right {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .ab-priority-icon-title {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.ab-priority-card-right {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .ab-priority-num {
@@ -3656,14 +3735,14 @@ header:has(+ main .aibootcamp-results) {
 }
 
 @media (width < 900px) {
-  .ab-priority-card,
+  .ab-priority-row,
   .ab-finding-card {
     grid-template-columns: 1fr;
   }
 
-  .ab-priority-card-left {
+  .ab-priority-row-left {
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #f3f4f6;
   }
 
   .ab-finding-text {
