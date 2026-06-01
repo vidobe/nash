@@ -994,7 +994,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
           return card(`
           <div class="ab-vis-card-header">
             <p class="ab-vis-score-label">VISIBILITY SCORE</p>
-            ${tcName ? `<p class="ab-vis-top-challenger"><span class="ab-vis-tc-label">Visibility Score</span> <span class="ab-vis-tc-score">${visScore}<span class="ab-vis-tc-max">/100</span></span> &nbsp;&middot;&nbsp; <span class="ab-vis-tc-label">Top Challenger</span> <span class="ab-vis-tc-name">${tcName}</span> &middot; <span class="ab-vis-tc-score">${tcScore}<span class="ab-vis-tc-max">/100</span></span></p>` : ''}
+            ${tcName ? `<p class="ab-vis-top-challenger"><span class="ab-vis-tc-label">Top Challenger</span> &nbsp;<span class="ab-vis-tc-name">${tcName}</span> &middot; <span class="ab-vis-tc-score">${tcScore}<span class="ab-vis-tc-max">/100</span></span></p>` : ''}
           </div>
           <div class="ab-vis-score-layout">
             <div class="ab-vis-score-left">
