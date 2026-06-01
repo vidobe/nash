@@ -3489,8 +3489,14 @@ header:has(+ main .aibootcamp-results) {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
+}
+
+.ab-priority-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .ab-priority-card-right {

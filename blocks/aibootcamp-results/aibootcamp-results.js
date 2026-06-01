@@ -1236,8 +1236,10 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
       <div class="ab-priority-card">
         <div class="ab-priority-card-left">
           <span class="ab-priority-num">0${i + 1}</span>
-          <span class="ab-priority-icon">${priorityIcons[i] || priorityIcons[0]}</span>
-          <h3 class="ab-priority-title">${cardTitle}</h3>
+          <div class="ab-priority-icon-title">
+            <span class="ab-priority-icon">${priorityIcons[i] || priorityIcons[0]}</span>
+            <h3 class="ab-priority-title">${cardTitle}</h3>
+          </div>
           <span class="ab-priority-product-badge">${name}</span>
         </div>
         <div class="ab-priority-card-right">
