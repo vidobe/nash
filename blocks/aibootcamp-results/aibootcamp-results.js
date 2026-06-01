@@ -627,12 +627,13 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
     </div>`;
   }).join('');
 
-  // Normalize insight rows — empty description cells collapse so [title,'','action'] → [title,'action']
+  // Normalize insight rows: empty desc cells collapse [title,'','action'] → [title,'action']
   const KNOWN_COLORS = new Set(['red', 'amber', 'green', 'action']);
   const normalizeInsight = (row) => {
     if (row.length === 2 && KNOWN_COLORS.has(row[1])) return [row[0], '', row[1]];
     return row;
   };
+  // eslint-disable-next-line max-len -- normalizeInsight is defined above
 
   // Split key insights into insights and SEO actions
   const normalizedInsights = seoKeyInsights.map(normalizeInsight);
