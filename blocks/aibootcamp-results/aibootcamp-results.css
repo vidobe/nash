@@ -2159,9 +2159,6 @@ header:has(+ main .aibootcamp-results) {
   margin: 8px 0;
 }
 
-.ab-perf-info-note-top {
-  margin-bottom: 16px;
-}
 
 .ab-per-page-footer {
   display: flex;

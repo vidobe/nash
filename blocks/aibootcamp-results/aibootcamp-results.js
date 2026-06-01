@@ -400,10 +400,6 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
           </div>
           <span class="ab-priority-count">${perfPages.length > 1 ? `${perfPages.length} pages` : '1 page'} analyzed</span>
         </div>
-        <div class="ab-perf-info-note ab-perf-info-note-top">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span><strong>How to read:</strong> Each page is rated <strong>FAST</strong>, <strong>AVG</strong>, or <strong>SLOW</strong> from real-user data (Chrome UX Report, 28-day p75). Lighthouse scores are Google's synthetic lab diagnostic — useful for finding fixes, not for grading user experience.</span>
-        </div>
         ${(perfPages.length ? perfPages : [['Homepage', score, domain, 'poor', 'F', 'Poor performance is likely causing high bounce rates. This page needs immediate optimisation to prevent revenue loss.']]).map(([pName, pScore, pUrl, pStatus, pGrade, pDesc]) => {
     const pN = parseInt(pScore, 10);
     let pColor = '#ef4444';
@@ -435,8 +431,8 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
   }).join('')}
         ${noteHtml ? `<div class="ab-per-page-item" style="padding:0">${noteHtml}</div>` : ''}
         <div class="ab-perf-info-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Scores from Google PageSpeed Insights API. Tests run in mobile mode to reflect smartphone performance.
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span><strong>How to read:</strong> Each page is rated <strong>FAST</strong>, <strong>AVG</strong>, or <strong>SLOW</strong> from real-user data (Chrome UX Report, 28-day p75). Lighthouse scores are Google's synthetic lab diagnostic — useful for finding fixes, not for grading user experience. Scores from Google PageSpeed Insights API. Tests run in mobile mode to reflect smartphone performance.</span>
         </div>
         <div class="ab-per-page-footer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
