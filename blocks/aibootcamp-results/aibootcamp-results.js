@@ -475,9 +475,9 @@ function buildSeo(seo, seoNarrative, seoCountries, keywords, seoKeyInsights, seo
   // Value = Volume × CPC
   const calcValue = (vol, cpc) => {
     const raw = (vol || '').toString().replace(/,/g, '').trim();
-    const v = raw.endsWith('K') ? parseFloat(raw) * 1000
-      : raw.endsWith('M') ? parseFloat(raw) * 1000000
-      : parseFloat(raw) || 0;
+    let v = parseFloat(raw) || 0;
+    if (raw.endsWith('K')) v = parseFloat(raw) * 1000;
+    else if (raw.endsWith('M')) v = parseFloat(raw) * 1000000;
     const c = parseFloat((cpc || '').replace(/[^0-9.]/g, '')) || 0;
     if (!v || !c) return null;
     const val = v * c;
@@ -1037,10 +1037,10 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
           ${whatAiSees.associations ? `<div class="ab-ai-associations">${whatAiSees.associations.split('·').map((a) => `<span class="ab-ai-assoc-chip">${a.trim()}</span>`).join('')}</div>` : ''}
         `)}
         ${(() => {
-          const strengths = Object.entries(whatAiSees).filter(([k]) => k.startsWith('strength-')).map(([, v]) => v);
-          const gaps = Object.entries(whatAiSees).filter(([k]) => k.startsWith('gap-')).map(([, v]) => v);
-          if (!strengths.length && !gaps.length) return '';
-          return `
+    const strengths = Object.entries(whatAiSees).filter(([k]) => k.startsWith('strength-')).map(([, v]) => v);
+    const gaps = Object.entries(whatAiSees).filter(([k]) => k.startsWith('gap-')).map(([, v]) => v);
+    if (!strengths.length && !gaps.length) return '';
+    return `
           <div class="ab-ai-sw-grid">
             ${strengths.length ? `
             <div class="ab-ai-sw-col ab-ai-sw-strengths">
@@ -1059,15 +1059,15 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
               <ul class="ab-ai-sw-list">${gaps.map((g) => `<li>${g}</li>`).join('')}</ul>
             </div>` : ''}
           </div>`;
-        })()}
+  })()}
       </section>
       <section class="ab-section" id="total-citations">
         ${(() => {
-          // Derive top challenger from competitive table (first non-self row)
-          const topChallenger = competitive.find(([brand]) => !brand.toLowerCase().includes(metaDomain ? metaDomain.replace('www.', '').split('.')[0] : '___'));
-          const tcName = topChallenger ? topChallenger[0] : '';
-          const tcScore = topChallenger ? topChallenger[3] : '';
-          return card(`
+    // Derive top challenger from competitive table (first non-self row)
+    const topChallenger = competitive.find(([brand]) => !brand.toLowerCase().includes(metaDomain ? metaDomain.replace('www.', '').split('.')[0] : '___'));
+    const tcName = topChallenger ? topChallenger[0] : '';
+    const tcScore = topChallenger ? topChallenger[3] : '';
+    return card(`
           <div class="ab-vis-card-header">
             <p class="ab-vis-score-label">VISIBILITY SCORE</p>
             ${tcName ? `<p class="ab-vis-top-challenger"><span class="ab-vis-tc-label">Top Challenger</span> &nbsp;<span class="ab-vis-tc-name">${tcName}</span> &middot; <span class="ab-vis-tc-score">${tcScore}<span class="ab-vis-tc-max">/100</span></span></p>` : ''}
@@ -1092,7 +1092,7 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
             </div>
           </div>
         `);
-        })()}
+  })()}
       </section>
       <section class="ab-section" id="trend">
         ${card(`
@@ -1180,23 +1180,6 @@ function buildAiVisibility(ai, competitive, whatAiSees, aiTrendData, metaDomain,
 }
 
 // ─── Solutions tab ─────────────────────────────────────────────
-function miniGauge(score, color) {
-  const n = parseInt(score, 10);
-  const r = 22;
-  const circ = 2 * Math.PI * r;
-  const filled = (n / 100) * circ;
-  return `
-    <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-      <circle cx="26" cy="26" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="5"/>
-      <circle cx="26" cy="26" r="${r}" fill="none" stroke="${color}" stroke-width="5"
-        stroke-dasharray="${filled.toFixed(1)} ${circ.toFixed(1)}"
-        stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
-        stroke-linecap="round"
-        transform="rotate(-90 26 26)"/>
-      <text x="26" y="30" text-anchor="middle" font-size="12" font-weight="800" fill="${color}">${n}</text>
-    </svg>`;
-}
-
 function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindings) {
   // ── Key Findings ─────────────────────────────────────────────
   const findingDefs = [
@@ -1225,8 +1208,8 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
 
   const findingCards = keyFindings.length
     ? keyFindings.map(([type, text], i) => {
-        const def = findingDefs.find((d) => d.key === (type || '').toLowerCase()) || findingDefs[i] || findingDefs[0];
-        return `
+      const def = findingDefs.find((d) => d.key === (type || '').toLowerCase()) || findingDefs[i] || findingDefs[0];
+      return `
           <div class="ab-finding-card">
             <div class="ab-finding-head" style="color:${def.color};background:${def.bg}">
               ${def.icon}
@@ -1234,7 +1217,7 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
             </div>
             <p class="ab-finding-text">${text}</p>
           </div>`;
-      }).join('')
+    }).join('')
     : '';
 
   // ── Strategic Priority Areas ──────────────────────────────────
@@ -1245,7 +1228,8 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
   ];
 
-  const priorityCards = solutions.slice(0, 3).map(([name, , desc, tags, quickWin, strategicTitle], i) => {
+  const priorityCards = solutions.slice(0, 3).map((row, i) => {
+    const [name, , desc, tags, quickWin, strategicTitle] = row;
     const bullets = tags ? tags.split('·').map((t) => t.trim()).filter(Boolean) : [];
     const cardTitle = strategicTitle || name;
     const showProduct = strategicTitle && strategicTitle !== name;
