@@ -4672,4 +4672,36 @@ header:has(+ main .aibootcamp-results) {
   .ab-kw-row {
     grid-template-columns: 1fr;
   }
+
+  /* Collapse all remaining multi-column grids with fixed widths */
+  .ab-perf-overview-row,
+  .ab-finding-card,
+  .ab-priority-row,
+  .ab-engine-row,
+  .ab-ai-sw-grid,
+  .ab-sol-body,
+  .ab-next-grid {
+    display: block !important;
+  }
+
+  .ab-finding-label,
+  .ab-priority-row-left {
+    border-right: none;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+
+  .ab-engine-card-left {
+    min-width: unset;
+  }
+
+  .ab-comp-bar-row {
+    grid-template-columns: 1fr 40px !important;
+  }
+
+  .ab-comp-bar-brand {
+    grid-column: 1 / -1;
+  }
 }
