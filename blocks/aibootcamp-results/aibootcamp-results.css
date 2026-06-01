@@ -311,6 +311,11 @@ header:has(+ main .aibootcamp-results) {
 /* ─── Tab nav ────────────────────────────────────────────────── */
 .ab-tabnav {
   margin-bottom: 20px;
+  position: sticky;
+  top: 52px;
+  z-index: 40;
+  background: var(--surface, #f8f8fa);
+  padding: 8px 0 4px;
 }
 
 .ab-tabnav-inner {
@@ -4537,6 +4542,12 @@ header:has(+ main .aibootcamp-results) {
   .ab-report-footer {
     margin-left: 16px;
     margin-right: 16px;
+  }
+
+  .ab-help-panel {
+    width: 92vw;
+    max-height: 70vh;
+    border-radius: 12px;
   }
 
   .ab-content-wrap {
