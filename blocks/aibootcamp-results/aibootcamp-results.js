@@ -311,7 +311,10 @@ function buildPerformance(perfRows, perfNarrative, perfInsights, metaDomain, per
       `Critical gap between lab metrics (LCP ${lcpCold[1] || '12.4s'}) and field metrics (LCP ${lcpField[1] || '1.37s'}) indicates inconsistent user experience or heavy resource loading`,
     ].map((t) => `<li>${t}</li>`).join('');
 
-  const noteHtml = note ? `<div class="ab-note">${note[1]}</div>` : '';
+  const noteText = note ? note[1]
+    .replace(/\bat Summit( 2026)?\b/gi, 'but requires onboarding')
+    .replace(/\bwhile you're here at Summit\b/gi, 'through onboarding') : '';
+  const noteHtml = noteText ? `<div class="ab-note">${noteText}</div>` : '';
   const domain = metaDomain || '';
 
   return {
