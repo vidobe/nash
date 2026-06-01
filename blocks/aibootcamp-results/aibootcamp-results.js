@@ -1232,19 +1232,18 @@ function buildSolutions(solutions, roadmapResults, success, nextSteps, keyFindin
     const [name, , desc, tags, quickWin, strategicTitle] = row;
     const bullets = tags ? tags.split('·').map((t) => t.trim()).filter(Boolean) : [];
     const cardTitle = strategicTitle || name;
-    const showProduct = strategicTitle && strategicTitle !== name;
     return `
       <div class="ab-priority-card">
-        <div class="ab-priority-card-head">
+        <div class="ab-priority-card-left">
           <span class="ab-priority-num">0${i + 1}</span>
           <span class="ab-priority-icon">${priorityIcons[i] || priorityIcons[0]}</span>
           <h3 class="ab-priority-title">${cardTitle}</h3>
+          <span class="ab-priority-product-badge">${name}</span>
         </div>
-        <p class="ab-priority-desc">${desc || ''}</p>
-        ${bullets.length ? `<ul class="ab-priority-bullets">${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>` : ''}
-        <div class="ab-priority-footer">
+        <div class="ab-priority-card-right">
+          <p class="ab-priority-desc">${desc || ''}</p>
+          ${bullets.length ? `<ul class="ab-priority-bullets">${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>` : ''}
           ${quickWin ? `<div class="ab-priority-result"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>${quickWin}</div>` : ''}
-          ${showProduct ? `<span class="ab-priority-product-badge">${name}</span>` : ''}
         </div>
       </div>`;
   }).join('');
