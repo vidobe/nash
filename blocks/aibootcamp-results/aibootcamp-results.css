@@ -2145,6 +2145,24 @@ header:has(+ main .aibootcamp-results) {
   border-left-color: #ef4444;
 }
 
+.ab-perf-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.ab-perf-info-note-top {
+  margin-bottom: 16px;
+}
+
 .ab-per-page-footer {
   display: flex;
   align-items: center;
