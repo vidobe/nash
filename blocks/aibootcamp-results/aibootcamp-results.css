@@ -375,7 +375,7 @@ main:has(.aibootcamp-results) {
 .ab-page-body {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px 10% 80px;
+  padding: 24px 32px 80px;
   width: 100%;
 }
 
@@ -4596,16 +4596,6 @@ main:has(.aibootcamp-results) {
 
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (width < 1100px) {
-  .ab-topbar-inner {
-    padding-left: 4%;
-    padding-right: 4%;
-  }
-
-  .ab-page-body {
-    padding-left: 4%;
-    padding-right: 4%;
-  }
-
   .ab-report-footer {
     margin-left: 4%;
     margin-right: 4%;
