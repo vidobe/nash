@@ -1,0 +1,315 @@
+/* nash-session block — Claude-style conversational home */
+
+.nash-session {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* ── Hero (greeting + composer) ──────────────────────── */
+
+.nash-session .nash-session-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - var(--nav-height, 52px) - 40px);
+  text-align: center;
+  transition: min-height 0.4s ease, padding 0.4s ease;
+}
+
+.nash-session .nash-session-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
+  color: var(--red, #eb1000);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.nash-session .nash-session-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nash-session .nash-session-greeting {
+  margin: 0 0 6px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-sub {
+  margin: 0 0 28px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 16px;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* ── Composer ────────────────────────────────────────── */
+
+.nash-session .nash-session-composer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 12px 12px 8px;
+  background: var(--white, #fff);
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 18px;
+  box-shadow: 0 2px 14px rgb(17 19 24 / 6%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nash-session .nash-session-composer:focus-within {
+  border-color: var(--ink-40, #9a9da6);
+  box-shadow: 0 4px 22px rgb(17 19 24 / 10%);
+}
+
+.nash-session .nash-session-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 6px 8px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink, #111318);
+  background: none;
+  max-height: 220px;
+  box-sizing: border-box;
+}
+
+.nash-session .nash-session-input::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.nash-session .nash-session-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-session .nash-session-icon-btn:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nash-session .nash-session-send {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+}
+
+.nash-session .nash-session-send:disabled {
+  background: var(--ink-15, #e8e9ec);
+  color: var(--ink-40, #9a9da6);
+  cursor: default;
+}
+
+.nash-session .nash-session-send:hover:not(:disabled) {
+  background: #c90e00;
+}
+
+.nash-session .nash-session-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.nash-session .nash-session-send svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ── Suggested prompts ───────────────────────────────── */
+
+.nash-session .nash-session-prompts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 22px;
+}
+
+.nash-session .nash-session-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  color: var(--ink-70, #4a4d55);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.nash-session .nash-session-chip:hover {
+  background: var(--ink-08, #f4f4f6);
+  border-color: var(--ink-15, #e8e9ec);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-chip-icon {
+  display: grid;
+  place-items: center;
+  color: var(--red, #eb1000);
+  flex-shrink: 0;
+}
+
+.nash-session .nash-session-chip-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Conversation thread ─────────────────────────────── */
+
+.nash-session .nash-session-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  padding: 8px 0 40px;
+}
+
+.nash-session .nash-session-msg {
+  display: flex;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.nash-session .nash-session-msg.user {
+  justify-content: flex-end;
+}
+
+.nash-session .nash-session-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-bubble {
+  padding: 11px 15px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-msg.user .nash-session-bubble {
+  background: var(--ink-08, #f4f4f6);
+  border-radius: 16px 16px 4px;
+  max-width: 80%;
+}
+
+.nash-session .nash-session-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.nash-session .nash-session-typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-40, #9a9da6);
+  animation: nash-session-bounce 1.2s infinite ease-in-out;
+}
+
+.nash-session .nash-session-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.nash-session .nash-session-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes nash-session-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ── Compact state (after first message) ─────────────── */
+
+.nash-session .nash-session-hero.compact {
+  min-height: 0;
+  padding: 28px 0 16px;
+}
+
+.nash-session .nash-session-hero.compact .nash-session-mark {
+  width: 32px;
+  height: 32px;
+}
+
+.nash-session .nash-session-hero.compact .nash-session-greeting {
+  font-size: 22px;
+}
+
+.nash-session .nash-session-hero.compact .nash-session-sub,
+.nash-session .nash-session-hero.compact .nash-session-prompts {
+  display: none;
+}
+
+/* ── Tablet / desktop ────────────────────────────────── */
+
+@media (width >= 600px) {
+  .nash-session .nash-session-greeting {
+    font-size: 46px;
+  }
+
+  .nash-session .nash-session-prompts {
+    grid-template-columns: 1fr 1fr;
+  }
+}

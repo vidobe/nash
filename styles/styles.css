@@ -96,7 +96,7 @@
 body {
   display: none;
   margin: 0;
-  background-color: var(--surface, #f8f8fa);
+  background-color: var(--white, #fff);
   color: var(--text-color);
   font-family: var(--body-font-family);
   font-size: var(--body-font-size-m);

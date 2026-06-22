@@ -4,8 +4,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--white, #fff);
-  border-right: 1px solid var(--border, #e5e6ea);
+  background: linear-gradient(180deg, #f7f7f6 0%, #f1f1ef 100%);
   overflow: hidden;
 }
 
@@ -57,7 +56,7 @@
 }
 
 .nash-sidebar .nash-sidebar-item:hover {
-  background: var(--ink-08, #f4f4f6);
+  background: var(--white, #fff);
   color: var(--ink, #111318);
 }
 
@@ -95,11 +94,8 @@
   color: var(--ink-70, #4a4d55);
 }
 
-.nash-sidebar .nash-sidebar-divider {
-  height: 1px;
-  margin: 4px 12px;
-  border: none;
-  background: var(--border, #e5e6ea);
+.nash-sidebar .nash-sidebar-section + .nash-sidebar-section {
+  padding-top: 2px;
 }
 
 /* ── User card ───────────────────────────────────────── */
@@ -115,7 +111,8 @@
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
-  background: var(--surface, #f8f8fa);
+  background: var(--white, #fff);
+  border: 1px solid var(--ink-15, #e8e9ec);
   cursor: pointer;
   transition: background 0.15s ease;
 }
