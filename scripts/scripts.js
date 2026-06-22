@@ -236,7 +236,7 @@ function loadDelayed() {
   // load anything that can be postponed to the latest here
 }
 
-async function loadPage() {
+export async function loadPage() {
   enforceAuth();
   await loadEager(document);
   await loadLazy(document);
@@ -244,3 +244,9 @@ async function loadPage() {
 }
 
 loadPage();
+
+(() => {
+  const hasQE = new URL(window.location.href).searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-cycle
+  if (hasQE) import('../tools/quick-edit/quick-edit.js').then((mod) => mod.default());
+})();
