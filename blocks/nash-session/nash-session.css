@@ -114,6 +114,40 @@
   color: var(--ink-40, #9a9da6);
 }
 
+/* ── Connection status ───────────────────────────────── */
+
+.nash-session .nash-session-conn {
+  margin-top: 20px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-session-conn-btn {
+  border: none;
+  background: none;
+  color: var(--red, #eb1000);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nash-session .nash-session-conn-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green-dot, #22c55e);
+}
+
 /* ── Modal ───────────────────────────────────────────── */
 
 .nash-session .nash-session-modal {

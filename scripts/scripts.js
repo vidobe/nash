@@ -11,6 +11,7 @@ import {
   loadSections,
   loadCSS,
 } from './aem.js';
+import { handleRedirectCallback } from './nash-auth.js';
 
 /**
  * Builds hero block and prepends to main in a new section.
@@ -250,6 +251,8 @@ function loadDelayed() {
 }
 
 export async function loadPage() {
+  // Complete a FluffyJaws Okta login if returning with ?code, before auth gating.
+  await handleRedirectCallback();
   enforceAuth();
   await loadEager(document);
   await loadLazy(document);

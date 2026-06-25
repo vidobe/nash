@@ -4,6 +4,7 @@ import { streamQualification } from '../../scripts/fluffyjaws.js';
 import {
   saveAssessment, getAssessment, newAssessmentId,
 } from '../../scripts/nash-assessments.js';
+import { isAuthenticated, login } from '../../scripts/nash-auth.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -70,6 +71,11 @@ function renderLauncher(block, name) {
           </button>
         `).join('')}
       </div>
+      <div class="nash-session-conn">
+        ${isAuthenticated()
+    ? '<span class="nash-session-conn-ok"><span class="nash-session-conn-dot"></span>Connected to FluffyJaws</span>'
+    : '<button class="nash-session-conn-btn" type="button">Connect to FluffyJaws to run live assessments</button>'}
+      </div>
     </div>
 
     <div class="nash-session-modal" hidden>
@@ -113,6 +119,8 @@ function renderLauncher(block, name) {
       else if (action === 'skills') window.location.href = '/solutions/';
     });
   });
+
+  block.querySelector('.nash-session-conn-btn')?.addEventListener('click', () => login());
 
   modal.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });

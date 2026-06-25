@@ -9,6 +9,8 @@
  * Docs: https://fluffyjaws.adobe.com/docs/api
  */
 
+import { ensureFreshToken } from './nash-auth.js';
+
 const FJ_BASE_URL = 'https://api.fluffyjaws.adobe.com';
 const MODEL = 'gpt-5.4';
 
@@ -102,7 +104,7 @@ async function mockStream({ onDelta, onDone }) {
 export async function streamQualification({
   messages, previousResponseId, onDelta, onDone = () => {}, onError = () => {}, signal,
 } = {}) {
-  const token = getToken();
+  const token = await ensureFreshToken();
 
   if (!token) {
     await mockStream({ onDelta, onDone });
