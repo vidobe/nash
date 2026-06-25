@@ -396,12 +396,13 @@ function buildQualPrompt({
 
 Goal: qualify the opportunity for "${company}" for ${solutionNames}, and produce a structured, insight-rich qualification dossier suitable for sales, solutioning, and executive briefings.
 
+CRITICAL: Do NOT call any tools, web search, or document/knowledge search. Do not look anything up. Use ONLY the attached document and the Adobe solution knowledge provided below, plus your own existing knowledge. Write the dossier directly and immediately — no research steps.
+
 Guidance:
 - Ground your scoring strictly in the Adobe solution knowledge provided below — use ITS scoring dimensions, key signals, red flags, competitive alternatives, and recommended products. Do not invent competitors or criteria that contradict it.
-- Use reputable, recent public sources for the market/news section; include dates and links next to each claim.
+- For the market/news section, use your existing knowledge and clearly label it as not verified against live sources; do not fabricate dates or links.
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
-- Tie market/news insights back into Win Sentiment and the Recommendation.
 
 ${docLine}
 
@@ -509,6 +510,7 @@ async function runAssessment(block) {
     : prompt;
   let answer = '';
   let thinking = '';
+  let errMsg = '';
   const working = area.querySelector('.nash-session-working span:last-child');
 
   await streamQualification({
@@ -524,8 +526,13 @@ async function runAssessment(block) {
       stream.textContent = answer; // switch to the real dossier as it streams
     },
     onDone: ({ responseId }) => {
-      const src = answer || thinking;
-      const { meta, body } = parseMeta(src);
+      // No real answer produced (e.g. a tool loop errored before writing) — surface it.
+      if (!answer) {
+        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">The run didn't produce a report${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try running again.</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
+        block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
+        return;
+      }
+      const { meta, body } = parseMeta(answer);
       current.reportMarkdown = body;
       if (meta) {
         current.score = meta.score;
@@ -543,9 +550,7 @@ async function runAssessment(block) {
       persist(current);
       setStatusDone(block);
     },
-    onError: (err) => {
-      stream.innerHTML = `<p>Run failed: ${escapeHtml(err.message)}</p>`;
-    },
+    onError: (err) => { errMsg = err.message; },
   });
 }
 
