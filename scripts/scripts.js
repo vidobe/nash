@@ -175,17 +175,6 @@ function enforceAuth() {
 }
 
 /**
- * Loads the Nash topbar into the <header> element.
- * @param {Element} header The header element
- */
-async function loadNashTopbar(header) {
-  const block = buildBlock('nash-topbar', [['']]);
-  header.append(block);
-  decorateBlock(block);
-  return loadBlock(block);
-}
-
-/**
  * Injects the Nash sidebar <nav> before <main> and loads the block.
  * @param {Element} main The main element
  */
@@ -205,14 +194,12 @@ async function loadNashSidebar(main) {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  const header = doc.querySelector('header');
   const main = doc.querySelector('main');
   const path = window.location.pathname;
   const onLogin = path === '/login' || path.startsWith('/login/');
   const isPublic = path.startsWith('/aibootcamp/');
 
   if (!onLogin && !isPublic) {
-    loadNashTopbar(header);
     loadNashSidebar(main);
   }
 

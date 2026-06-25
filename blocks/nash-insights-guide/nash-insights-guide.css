@@ -1,64 +1,101 @@
-.nash-insights-guide {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 120px);
-  padding: 40px;
+/* nash-insights-guide block — editorial guide, Claude-style */
+
+.nash-insights-guide .nash-guide {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
 }
 
-.nash-insights-guide .nash-guide-shell {
-  text-align: center;
-  max-width: 540px;
+/* ── Hero ─────────────────────────────────────────────── */
+
+.nash-insights-guide .nash-guide-hero {
+  padding: 56px 0 8px;
 }
 
-.nash-insights-guide .nash-guide-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--amber, #b45309);
-  background: var(--amber-lt, #fef3c7);
-  border: 1px solid #fcd34d;
-  padding: 4px 12px;
-  border-radius: 20px;
-  margin-bottom: 28px;
-}
-
-.nash-insights-guide .nash-guide-title {
-  font-family: var(--serif, 'DM Serif Display', georgia, serif);
-  font-size: clamp(32px, 4vw, 48px);
-  font-weight: 400;
-  color: var(--ink, #111318);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0 0 24px;
-}
-
-.nash-insights-guide .nash-guide-sub {
-  font-size: 15px;
-  color: var(--ink-70, #4a4d55);
-  line-height: 1.65;
-  margin: 0 0 12px;
-}
-
-.nash-insights-guide .nash-guide-sub2 {
-  font-size: 13px;
-  color: var(--ink-40, #9a9da6);
-  line-height: 1.6;
-  margin: 0 0 32px;
-  font-style: italic;
-}
-
-.nash-insights-guide .nash-guide-eta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.nash-insights-guide .nash-guide-eyebrow {
+  display: block;
+  margin-bottom: 18px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 12px;
   font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink-40, #9a9da6);
-  background: var(--surface, #f8f8fa);
-  border: 1px solid var(--border, #e5e6ea);
-  padding: 7px 16px;
-  border-radius: 20px;
+}
+
+.nash-insights-guide .nash-guide-headline {
+  margin: 0 0 12px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink, #111318);
+}
+
+.nash-insights-guide .nash-guide-subhead {
+  margin: 0 0 28px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 18px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-insights-guide .nash-guide-lead {
+  margin: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink-70, #4a4d55);
+}
+
+/* ── Sections ─────────────────────────────────────────── */
+
+.nash-insights-guide .nash-guide-section {
+  margin-top: 56px;
+}
+
+.nash-insights-guide .nash-guide-section-title {
+  margin: 0 0 4px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink, #111318);
+}
+
+.nash-insights-guide .nash-guide-list {
+  margin: 0;
+}
+
+.nash-insights-guide .nash-guide-item {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-insights-guide .nash-guide-item:last-child {
+  border-bottom: none;
+}
+
+.nash-insights-guide .nash-guide-term {
+  margin: 0 0 7px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.nash-insights-guide .nash-guide-def {
+  margin: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--ink-70, #4a4d55);
+}
+
+/* ── Desktop ──────────────────────────────────────────── */
+
+@media (width >= 900px) {
+  .nash-insights-guide .nash-guide-headline {
+    font-size: 48px;
+  }
 }

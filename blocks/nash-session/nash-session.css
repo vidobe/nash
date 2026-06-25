@@ -1,4 +1,4 @@
-/* nash-session block — Claude-style conversational home */
+/* nash-session block — launcher + assessment chat */
 
 .nash-session {
   display: flex;
@@ -10,16 +10,15 @@
   box-sizing: border-box;
 }
 
-/* ── Hero (greeting + composer) ──────────────────────── */
+/* ── Launcher hero ───────────────────────────────────── */
 
 .nash-session .nash-session-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100dvh - var(--nav-height, 52px) - 40px);
+  min-height: calc(100dvh - 40px);
   text-align: center;
-  transition: min-height 0.4s ease, padding 0.4s ease;
 }
 
 .nash-session .nash-session-mark {
@@ -29,7 +28,6 @@
   height: 44px;
   margin-bottom: 18px;
   color: var(--red, #eb1000);
-  transition: width 0.4s ease, height 0.4s ease;
 }
 
 .nash-session .nash-session-mark svg {
@@ -53,6 +51,394 @@
   color: var(--ink-40, #9a9da6);
 }
 
+/* ── Launcher buttons ────────────────────────────────── */
+
+.nash-session .nash-session-launch {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.nash-session .nash-session-launch-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 14px;
+  background: var(--white, #fff);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.nash-session .nash-session-launch-btn:hover {
+  border-color: var(--ink-40, #9a9da6);
+  background: var(--surface, #f8f8fa);
+}
+
+.nash-session .nash-session-launch-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-launch-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nash-session .nash-session-launch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nash-session .nash-session-launch-title {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-launch-desc {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* ── Modal ───────────────────────────────────────────── */
+
+.nash-session .nash-session-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.nash-session .nash-session-modal[hidden] {
+  display: none;
+}
+
+.nash-session .nash-session-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(17 19 24 / 38%);
+}
+
+.nash-session .nash-session-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--white, #fff);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgb(17 19 24 / 18%);
+  padding: 22px 24px 24px;
+}
+
+.nash-session .nash-session-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.nash-session .nash-session-modal-title {
+  margin: 0;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-modal-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+}
+
+.nash-session .nash-session-modal-close:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nash-session .nash-session-field {
+  margin-bottom: 14px;
+}
+
+.nash-session .nash-session-flabel {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-finput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink, #111318);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.nash-session .nash-session-finput:focus {
+  border-color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-file {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.nash-session .nash-session-btn-ghost {
+  padding: 9px 16px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session .nash-session-btn-ghost:hover {
+  background: var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-btn-primary {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red, #eb1000);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nash-session .nash-session-btn-primary:hover {
+  background: #c90e00;
+}
+
+/* ── Assessment view ─────────────────────────────────── */
+
+.nash-session.wide {
+  max-width: 1180px;
+}
+
+.nash-session .nash-session-assess {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 40px);
+  padding-top: 24px;
+}
+
+.nash-session .nash-session-assess-split {
+  display: flex;
+  gap: 28px;
+  flex: 1;
+  min-height: 0;
+}
+
+.nash-session .nash-session-assess-main {
+  flex: 1.4;
+  min-width: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+.nash-session .nash-session-assess-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nash-session .nash-session-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.nash-session .nash-session-back:hover {
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-back svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nash-session .nash-session-assess-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-assess-title {
+  margin: 0 0 4px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-assess-meta {
+  margin: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-assess-status {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-assess-status.draft {
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+}
+
+/* ── Conversation thread ─────────────────────────────── */
+
+.nash-session .nash-session-thread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 0 12px;
+}
+
+.nash-session .nash-session-msg {
+  display: flex;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.nash-session .nash-session-msg.user {
+  justify-content: flex-end;
+}
+
+.nash-session .nash-session-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-bubble {
+  padding: 11px 15px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-msg.user .nash-session-bubble {
+  background: var(--ink-08, #f4f4f6);
+  border-radius: 16px 16px 4px;
+  max-width: 80%;
+}
+
+.nash-session .nash-session-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.nash-session .nash-session-typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-40, #9a9da6);
+  animation: nash-session-bounce 1.2s infinite ease-in-out;
+}
+
+.nash-session .nash-session-typing i:nth-child(2) { animation-delay: 0.15s; }
+.nash-session .nash-session-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes nash-session-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
 /* ── Composer ────────────────────────────────────────── */
 
 .nash-session .nash-session-composer {
@@ -60,6 +446,7 @@
   flex-direction: column;
   width: 100%;
   padding: 12px 12px 8px;
+  margin-bottom: 24px;
   background: var(--white, #fff);
   border: 1px solid var(--ink-15, #e8e9ec);
   border-radius: 18px;
@@ -131,7 +518,7 @@
   background: var(--red, #eb1000);
   color: #fff;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .nash-session .nash-session-send:disabled {
@@ -140,176 +527,217 @@
   cursor: default;
 }
 
-.nash-session .nash-session-send:hover:not(:disabled) {
-  background: #c90e00;
-}
-
-.nash-session .nash-session-send:active:not(:disabled) {
-  transform: scale(0.94);
-}
+.nash-session .nash-session-send:hover:not(:disabled) { background: #c90e00; }
+.nash-session .nash-session-send:active:not(:disabled) { transform: scale(0.94); }
 
 .nash-session .nash-session-send svg {
   width: 17px;
   height: 17px;
 }
 
-/* ── Suggested prompts ───────────────────────────────── */
+/* ── Report panel + run CTA ──────────────────────────── */
 
-.nash-session .nash-session-prompts {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  width: 100%;
-  margin-top: 22px;
-}
-
-.nash-session .nash-session-chip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 12px;
-  background: var(--white, #fff);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 13.5px;
-  color: var(--ink-70, #4a4d55);
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-
-.nash-session .nash-session-chip:hover {
-  background: var(--ink-08, #f4f4f6);
-  border-color: var(--ink-15, #e8e9ec);
-  color: var(--ink, #111318);
-}
-
-.nash-session .nash-session-chip-icon {
-  display: grid;
-  place-items: center;
-  color: var(--red, #eb1000);
-  flex-shrink: 0;
-}
-
-.nash-session .nash-session-chip-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* ── Conversation thread ─────────────────────────────── */
-
-.nash-session .nash-session-thread {
+.nash-session .nash-session-run {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 100%;
-  padding: 8px 0 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 20px;
+  margin-top: 12px;
+  background: var(--surface, #f8f8fa);
+  border-radius: 14px;
+  text-align: center;
 }
 
-.nash-session .nash-session-msg {
-  display: flex;
-  gap: 10px;
-  max-width: 100%;
-}
-
-.nash-session .nash-session-msg.user {
-  justify-content: flex-end;
-}
-
-.nash-session .nash-session-avatar {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: var(--red, #eb1000);
-  color: #fff;
+.nash-session .nash-session-run-text {
+  margin: 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
 }
 
-.nash-session .nash-session-bubble {
-  padding: 11px 15px;
+.nash-session .nash-session-run-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red, #eb1000);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nash-session .nash-session-run-btn:hover {
+  background: #c90e00;
+}
+
+.nash-session .nash-session-report {
+  margin-top: 8px;
+}
+
+.nash-session .nash-session-report-lead {
+  margin: 0 0 4px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 15px;
   line-height: 1.6;
   color: var(--ink, #111318);
 }
 
-.nash-session .nash-session-msg.user .nash-session-bubble {
-  background: var(--ink-08, #f4f4f6);
-  border-radius: 16px 16px 4px;
-  max-width: 80%;
-}
-
-.nash-session .nash-session-typing {
-  display: inline-flex;
-  gap: 4px;
+.nash-session .nash-session-report-top {
+  display: flex;
   align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.nash-session .nash-session-typing i {
-  width: 6px;
+.nash-session .nash-session-score {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.nash-session .nash-session-score span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-40, #9a9da6);
+  margin-left: 4px;
+}
+
+.nash-session .nash-session-verdict {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nash-session .nash-session-verdict.go {
+  background: var(--green-lt, #edf7f2);
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-session-verdict.conditional {
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-session-verdict.nogo {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-dims {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.nash-session .nash-session-dim-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
+  margin-bottom: 4px;
+}
+
+.nash-session .nash-session-dim-track {
   height: 6px;
-  border-radius: 50%;
-  background: var(--ink-40, #9a9da6);
-  animation: nash-session-bounce 1.2s infinite ease-in-out;
+  border-radius: 3px;
+  background: var(--ink-08, #f4f4f6);
 }
 
-.nash-session .nash-session-typing i:nth-child(2) {
-  animation-delay: 0.15s;
+.nash-session .nash-session-dim-fill {
+  height: 6px;
+  border-radius: 3px;
 }
 
-.nash-session .nash-session-typing i:nth-child(3) {
-  animation-delay: 0.3s;
+.nash-session .nash-session-report-cms {
+  padding: 4px 11px;
+  border-radius: 20px;
+  background: var(--ink-08, #f4f4f6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
 }
 
-@keyframes nash-session-bounce {
-  0%,
-  60%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-
-  30% {
-    transform: translateY(-4px);
-    opacity: 1;
-  }
+.nash-session .nash-session-report-summary {
+  margin: 0 0 4px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-70, #4a4d55);
 }
 
-/* ── Compact state (after first message) ─────────────── */
-
-.nash-session .nash-session-hero.compact {
-  min-height: 0;
-  padding: 28px 0 16px;
+.nash-session .nash-session-report-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.nash-session .nash-session-hero.compact .nash-session-mark {
-  width: 32px;
-  height: 32px;
+.nash-session .nash-session-report-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--ink-08, #f4f4f6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
 }
 
-.nash-session .nash-session-hero.compact .nash-session-greeting {
-  font-size: 22px;
+.nash-session .nash-session-report-h {
+  margin: 18px 0 8px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
 }
 
-.nash-session .nash-session-hero.compact .nash-session-sub,
-.nash-session .nash-session-hero.compact .nash-session-prompts {
-  display: none;
+.nash-session .nash-session-report-list {
+  margin: 0;
+  padding-left: 18px;
 }
 
-/* ── Tablet / desktop ────────────────────────────────── */
+.nash-session .nash-session-report-list li {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-70, #4a4d55);
+  margin-bottom: 6px;
+}
 
 @media (width >= 600px) {
-  .nash-session .nash-session-greeting {
-    font-size: 46px;
+  .nash-session .nash-session-greeting { font-size: 46px; }
+
+  .nash-session .nash-session-dims { grid-template-columns: 1fr 1fr; }
+}
+
+/* Stack the report + chat on narrow screens. */
+@media (width < 900px) {
+  .nash-session .nash-session-assess {
+    height: auto;
+    min-height: calc(100dvh - 40px);
   }
 
-  .nash-session .nash-session-prompts {
-    grid-template-columns: 1fr 1fr;
+  .nash-session .nash-session-assess-split {
+    flex-direction: column;
+  }
+
+  .nash-session .nash-session-assess-main {
+    overflow: visible;
+  }
+
+  .nash-session .nash-session-assess-chat {
+    border-left: none;
+    padding-left: 0;
+    min-height: 440px;
+  }
+
+  .nash-session .nash-session-thread {
+    overflow: visible;
   }
 }

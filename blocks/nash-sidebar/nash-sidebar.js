@@ -1,39 +1,31 @@
 /* eslint-disable no-use-before-define */
 
+import { listAssessments, deleteAssessment } from '../../scripts/nash-assessments.js';
+
 const NAV = [
   {
-    label: 'Main',
+    label: '',
     items: [
       {
-        view: 'session', text: 'New Session', icon: 'message', href: '/indextest',
+        view: 'session', text: 'New Session', icon: 'plus', href: '/indextest',
       },
       {
         view: 'overview', text: 'Overview', badge: 'count', icon: 'grid', href: '/',
       },
     ],
   },
-  {
-    label: 'Tools',
-    items: [
-      {
-        view: 'solutions', text: 'Solutions Skills', icon: 'layers', href: '/solutions/',
-      },
-      {
-        view: 'feedback', text: 'Feedback Hub', icon: 'signal', href: '/feedback',
-      },
-    ],
-  },
-  {
-    label: 'Reference',
-    items: [
-      {
-        view: 'about', text: 'About Nash', icon: 'info', href: '/about-nash',
-      },
-      {
-        view: 'guide', text: 'Insights Guide', icon: 'book', href: '/insights-guide',
-      },
-    ],
-  },
+];
+
+const MOCK_RECENT = [
+  { title: 'Ministry of Defence — NL', path: '#' },
+  { title: 'Sannetestcompany', path: '#' },
+  { title: 'Nash Detail View', path: '#' },
+];
+
+const USER_MENU = [
+  { text: 'About Nash', icon: 'info', href: '/about-nash' },
+  { text: 'How to read the insights', icon: 'book', href: '/insights-guide' },
+  { text: 'Solution Skills', icon: 'layers', href: '/solutions/' },
 ];
 
 const ICONS = {
@@ -47,7 +39,57 @@ const ICONS = {
   info: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
   book: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',
   message: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  panel: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',
+  logout: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
 };
+
+function cleanTitle(t) {
+  return (t || '').replace(/\s*\|.*$/, '').trim();
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function statusClass(s) {
+  const t = (s || '').toLowerCase();
+  if (t === 'done' || t === 'complete') return 'status-done';
+  if (t === 'generating' || t === 'running') return 'status-running';
+  if (t === 'error' || t === 'failed') return 'status-error';
+  return '';
+}
+
+/* Assessments — locally-created (in-progress) merged with published qualifications. */
+function assessmentsHtml(reports) {
+  const local = listAssessments().slice(0, 10);
+  const published = [...reports]
+    .filter((r) => cleanTitle(r.title))
+    .sort((a, b) => Number(b.lastModified || 0) - Number(a.lastModified || 0))
+    .slice(0, 6);
+  if (!local.length && !published.length) return '';
+
+  const localItems = local.map((a) => `
+    <div class="nash-sidebar-recent-item">
+      <a class="nash-sidebar-recent ${statusClass(a.status)}" href="/indextest?a=${encodeURIComponent(a.id)}" title="${esc(a.company)}">${esc(a.company)}</a>
+      <button class="nash-sidebar-recent-del" type="button" data-assess="${esc(a.id)}" aria-label="Delete assessment">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  const pubItems = published.map((r) => `
+    <a class="nash-sidebar-recent ${statusClass(r.status)}" href="${r.path || '#'}" title="${esc(cleanTitle(r.title))}">${esc(cleanTitle(r.title))}</a>
+  `).join('');
+
+  return `
+    <div class="nash-sidebar-section nash-sidebar-recent-section">
+      <span class="nash-sidebar-label">Assessments</span>
+      ${localItems}
+      ${pubItems}
+    </div>
+  `;
+}
 
 function badge(item, countEl) {
   if (!item.badge) return '';
@@ -60,11 +102,11 @@ function badge(item, countEl) {
 function renderNav(block, reportCount) {
   const sectionsHtml = NAV.map((section) => `
     <div class="nash-sidebar-section">
-      <span class="nash-sidebar-label">${section.label}</span>
+      ${section.label ? `<span class="nash-sidebar-label">${section.label}</span>` : ''}
       ${section.items.map((item) => `
-        <button class="nash-sidebar-item" data-view="${item.view}" ${item.href ? `data-href="${item.href}"` : ''} type="button">
+        <button class="nash-sidebar-item" data-view="${item.view}" ${item.href ? `data-href="${item.href}"` : ''} type="button" title="${item.text}">
           ${ICONS[item.icon] || ''}
-          ${item.text}
+          <span class="nash-sidebar-text">${item.text}</span>
           ${badge(item, reportCount)}
         </button>
       `).join('')}
@@ -72,11 +114,38 @@ function renderNav(block, reportCount) {
   `).join('');
 
   block.innerHTML = `
+    <div class="nash-sidebar-head">
+      <a class="nash-sidebar-brand" href="/" aria-label="Nash home">
+        <span class="nash-sidebar-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
+            <rect width="20" height="20" rx="2" fill="#eb1000"/>
+            <polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="white"/>
+          </svg>
+        </span>
+        <span class="nash-sidebar-wordmark">Nash</span>
+        <span class="nash-sidebar-subtitle">Solution Qualifier</span>
+      </a>
+      <button class="nash-sidebar-toggle" type="button" aria-label="Collapse sidebar">${ICONS.panel}</button>
+    </div>
     <nav class="nash-sidebar-nav" aria-label="Nash navigation">
       ${sectionsHtml}
+      <div class="nash-sidebar-assess"></div>
     </nav>
     <div class="nash-sidebar-bottom">
-      <div class="nash-sidebar-user" role="button" tabindex="0" aria-label="User profile">
+      <div class="nash-sidebar-usermenu" role="menu" hidden>
+        ${USER_MENU.map((m) => `
+          <a class="nash-sidebar-menuitem" href="${m.href}" role="menuitem">
+            ${ICONS[m.icon] || ''}
+            ${m.text}
+          </a>
+        `).join('')}
+        <hr class="nash-sidebar-menudivider"/>
+        <button class="nash-sidebar-menuitem nash-sidebar-logout" type="button" role="menuitem">
+          ${ICONS.logout}
+          Log out
+        </button>
+      </div>
+      <div class="nash-sidebar-user" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
         <div class="nash-sidebar-user-av" aria-hidden="true">VG</div>
         <div>
           <div class="nash-sidebar-user-name">Vitor</div>
@@ -96,41 +165,116 @@ function setActive(block, view) {
   });
 }
 
+const COLLAPSE_KEY = 'nash-nav-collapsed';
+
+function setupCollapse(block) {
+  const toggleBtn = block.querySelector('.nash-sidebar-toggle');
+
+  const apply = (collapsed) => {
+    document.body.classList.toggle('nash-nav-collapsed', collapsed);
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    }
+    try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch { /* ignore */ }
+  };
+
+  // restore saved state
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { /* ignore */ }
+  apply(collapsed);
+
+  toggleBtn?.addEventListener('click', () => {
+    apply(!document.body.classList.contains('nash-nav-collapsed'));
+  });
+}
+
+function setupUserMenu(block) {
+  const user = block.querySelector('.nash-sidebar-user');
+  const menu = block.querySelector('.nash-sidebar-usermenu');
+  if (!user || !menu) return;
+
+  const close = () => {
+    menu.hidden = true;
+    user.setAttribute('aria-expanded', 'false');
+  };
+
+  user.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    user.setAttribute('aria-expanded', String(open));
+  });
+
+  document.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  block.querySelector('.nash-sidebar-logout')?.addEventListener('click', () => {
+    try { localStorage.removeItem('nash-auth'); } catch { /* ignore */ }
+    window.location.href = '/login';
+  });
+}
+
 /**
  * loads and decorates the nash-sidebar block
  * No authored content needed — navigation is programmatic.
  * @param {Element} block The block element
  */
 export default async function decorate(block) {
-  let reportCount = 0;
+  let reports = [];
 
   try {
     const resp = await fetch('/qualifications/query.json');
     if (resp.ok) {
       const data = await resp.json();
-      reportCount = (data.data || []).length;
+      reports = data.data || [];
     }
   } catch {
-    reportCount = 12; // mock fallback
+    reports = [];
   }
+  if (!reports.length) reports = MOCK_RECENT; // dev fallback
 
-  renderNav(block, reportCount);
+  renderNav(block, reports.length);
+
+  const refreshAssess = () => {
+    const container = block.querySelector('.nash-sidebar-assess');
+    if (container) container.innerHTML = assessmentsHtml(reports);
+  };
+  refreshAssess();
+  document.addEventListener('nash:assessments-changed', refreshAssess);
+
+  setupCollapse(block);
+  setupUserMenu(block);
 
   // Detect active item from current URL
   const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const onAssessment = new URLSearchParams(window.location.search).has('a');
   const allItems = NAV.flatMap((s) => s.items);
-  const matched = allItems.find((item) => {
+  let matched = allItems.find((item) => {
     if (!item.href) return false;
     const itemPath = item.href.replace(/\/$/, '') || '/';
     if (itemPath === '/') return path === '/' || path === '';
     return path === itemPath || path.startsWith(`${itemPath}/`);
   });
+  // Viewing an assessment (/indextest?a=…) is not "New Session".
+  if (onAssessment && matched?.view === 'session') matched = null;
   setActive(block, matched?.view || '');
 
   block.addEventListener('click', (e) => {
+    const del = e.target.closest('.nash-sidebar-recent-del');
+    if (del) {
+      e.preventDefault();
+      e.stopPropagation();
+      deleteAssessment(del.dataset.assess);
+      return;
+    }
     const btn = e.target.closest('.nash-sidebar-item');
     if (!btn) return;
     const { view, href } = btn.dataset;
+    // New Session: if already on the chat home, reset it in place; otherwise navigate.
+    if (view === 'session' && window.location.pathname.startsWith('/indextest')) {
+      document.dispatchEvent(new CustomEvent('nash:new-session', { bubbles: true }));
+      return;
+    }
     if (href) {
       window.location.href = href;
       return;

@@ -202,6 +202,56 @@
   cursor: pointer;
 }
 
+/* Solutions-in-scope multi-select */
+.nash-new-analysis .nash-wizard-solgrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.nash-new-analysis .nash-wizard-solchip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: var(--white, #fff);
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.nash-new-analysis .nash-wizard-solchip:hover {
+  border-color: var(--ink-40, #9a9da6);
+}
+
+.nash-new-analysis .nash-wizard-solchip:has(input:checked) {
+  border-color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  color: var(--ink, #111318);
+}
+
+.nash-new-analysis .nash-wizard-solchip input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--red, #eb1000);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nash-new-analysis .nash-wizard-solchip-name {
+  font-weight: 500;
+}
+
+@media (width >= 600px) {
+  .nash-new-analysis .nash-wizard-solgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* URL hint box */
 .nash-new-analysis .nash-wizard-url-hint {
   display: flex;

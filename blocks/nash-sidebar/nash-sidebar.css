@@ -8,6 +8,69 @@
   overflow: hidden;
 }
 
+/* ── Brand ───────────────────────────────────────────── */
+
+.nash-sidebar .nash-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 10px 18px;
+  flex-shrink: 0;
+}
+
+.nash-sidebar .nash-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.nash-sidebar .nash-sidebar-toggle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-toggle:hover {
+  background: var(--white, #fff);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-sidebar .nash-sidebar-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nash-sidebar .nash-sidebar-logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.nash-sidebar .nash-sidebar-wordmark {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-subtitle {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-40, #9a9da6);
+}
+
 /* ── Nav ─────────────────────────────────────────────── */
 
 .nash-sidebar .nash-sidebar-nav {
@@ -98,18 +161,109 @@
   padding-top: 2px;
 }
 
-/* ── User card ───────────────────────────────────────── */
+/* ── Recent analyses (Claude-style list) ─────────────── */
+
+.nash-sidebar .nash-sidebar-recent {
+  display: block;
+  position: relative;
+  padding: 4px 10px 4px 22px;
+  border-radius: 7px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--ink-70, #4a4d55);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-recent::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-40, #9a9da6);
+}
+
+.nash-sidebar .nash-sidebar-recent.status-done::before {
+  background: var(--green-dot, #22c55e);
+}
+
+.nash-sidebar .nash-sidebar-recent.status-running::before {
+  background: var(--amber, #b45309);
+}
+
+.nash-sidebar .nash-sidebar-recent.status-error::before {
+  background: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-recent:hover {
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-recent-item {
+  position: relative;
+}
+
+.nash-sidebar .nash-sidebar-recent-item .nash-sidebar-recent {
+  padding-right: 28px;
+}
+
+.nash-sidebar .nash-sidebar-recent-del {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-recent-item:hover .nash-sidebar-recent-del {
+  opacity: 1;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-sidebar .nash-sidebar-recent-del:hover {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-sidebar .nash-sidebar-recent-del svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Bottom area (About + user) ──────────────────────── */
 
 .nash-sidebar .nash-sidebar-bottom {
-  padding: 12px;
+  padding: 8px 12px 12px;
   flex-shrink: 0;
 }
 
 .nash-sidebar .nash-sidebar-user {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 8px;
   border-radius: 8px;
   background: var(--white, #fff);
   border: 1px solid var(--ink-15, #e8e9ec);
@@ -118,31 +272,132 @@
 }
 
 .nash-sidebar .nash-sidebar-user:hover {
-  background: var(--ink-15, #e8e9ec);
+  background: var(--ink-08, #f4f4f6);
 }
 
 .nash-sidebar .nash-sidebar-user-av {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   flex-shrink: 0;
 }
 
 .nash-sidebar .nash-sidebar-user-name {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--ink, #111318);
+  line-height: 1.2;
 }
 
 .nash-sidebar .nash-sidebar-user-email {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-40, #9a9da6);
+  line-height: 1.2;
+}
+
+/* ── User menu popup ─────────────────────────────────── */
+
+.nash-sidebar .nash-sidebar-usermenu {
+  position: fixed;
+  left: 12px;
+  bottom: 62px;
+  z-index: 95;
+  width: 216px;
+  padding: 6px;
+  background: var(--white, #fff);
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgb(17 19 24 / 12%);
+}
+
+.nash-sidebar .nash-sidebar-menuitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-menuitem:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-sidebar .nash-sidebar-menuitem svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.nash-sidebar .nash-sidebar-logout {
+  color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-logout:hover {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-menudivider {
+  height: 1px;
+  margin: 6px 8px;
+  border: none;
+  background: var(--ink-15, #e8e9ec);
+}
+
+/* ── Collapsed icon rail ─────────────────────────────── */
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-text,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-wordmark,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-subtitle,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-badge,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-recent-section,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user-name,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user-email {
+  display: none;
+}
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-head {
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0 8px;
+  justify-content: center;
+}
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-toggle {
+  margin-left: 0;
+}
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-section {
+  padding: 6px;
+}
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-item {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user {
+  justify-content: center;
+  padding: 6px 0;
 }

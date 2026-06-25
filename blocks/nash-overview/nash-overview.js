@@ -77,6 +77,7 @@ function mapQueryRow(row, idx) {
     user: row.user || '',
     cms: row.cms || 'Unknown',
     time: relativeTime(row.lastmodified || row.lastModified),
+    ts: Number(row.lastmodified || row.lastModified) || 0,
     score: status === 'done' ? score : null,
     path: row.path || null,
   };
@@ -209,12 +210,6 @@ export default async function decorate(block) {
   const doneCount = reports.filter((r) => r.status === 'done').length;
 
   block.innerHTML = `
-    <div class="nash-overview-notif" id="nash-notif" role="status">
-      <span>&#128203;&nbsp;&nbsp;Skills File for AEM has been updated — April 2026. <strong style="cursor:pointer">Review changes &#8594;</strong></span>
-      <button class="nash-overview-notif-close" type="button" aria-label="Dismiss notification">
-        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
     <div class="nash-overview-toolbar">
       <div class="nash-overview-search-wrap">
         <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -251,11 +246,6 @@ export default async function decorate(block) {
   `;
 
   renderCards(block, reports);
-
-  // Dismiss notification
-  block.querySelector('.nash-overview-notif-close').addEventListener('click', () => {
-    block.querySelector('#nash-notif').remove();
-  });
 
   // Search
   block.querySelector('.nash-overview-search').addEventListener('input', (e) => {

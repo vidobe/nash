@@ -2,19 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "aem",
-      "runtimeExecutable": "aem",
-      "runtimeArgs": ["up"],
-      "port": 3000
+      "name": "nash",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "@adobe/aem-cli", "up", "--no-open", "--port", "3001"],
+      "port": 3001
     },
     {
       "name": "securbank",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "cwd": "/Users/vgabriel/Sites/AEM/SecureBankApp/summit-2024-l425-ue-z-final-with-events/react-app",
-      "port": 3001,
+      "port": 3000,
       "env": {
-        "PORT": "3001",
+        "PORT": "3000",
         "BROWSER": "none"
       }
     }

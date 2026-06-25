@@ -108,12 +108,7 @@ body.appear {
 }
 
 header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: var(--nav-height, 52px);
+  display: none;
 }
 
 header .header,
@@ -341,7 +336,7 @@ main > .section:first-of-type {
 /* section metadata */
 main .section.light,
 main .section.highlight {
-  background-color: var(--light-color);
+  background-color: transparent;
   margin: 0;
   padding: 40px 0;
 }
@@ -353,17 +348,25 @@ main .section.highlight {
 
 .nash-app-nav {
   position: fixed;
-  top: var(--nav-height, 52px);
+  top: 0;
   left: 0;
   width: var(--sidebar-w, 240px);
-  height: calc(100dvh - var(--nav-height, 52px));
+  height: 100dvh;
   z-index: 90;
   overflow: hidden;
+  transition: width 0.22s ease;
 }
 
 main {
-  margin-top: var(--nav-height, 52px);
+  margin-top: 0;
   margin-left: var(--sidebar-w, 240px);
-  min-height: calc(100dvh - var(--nav-height, 52px));
+  min-height: 100dvh;
   overflow-y: auto;
+  transition: margin-left 0.22s ease;
+}
+
+/* ── Collapsed sidebar → narrow icon rail ────────────── */
+
+body.nash-nav-collapsed {
+  --sidebar-w: 64px;
 }

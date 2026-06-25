@@ -87,5 +87,7 @@ export default async function decorate(block) {
   const grid = block.querySelector('#nash-solutions-grid');
   solutions.forEach((sol) => grid.appendChild(buildCard(sol)));
 
-  document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: 'Solutions Files' }, bubbles: true }));
+  if (window.location.pathname.startsWith('/solutions')) {
+    document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: 'Solutions Files' }, bubbles: true }));
+  }
 }

@@ -187,5 +187,7 @@ export default async function decorate(block) {
     send(input.value);
   });
 
-  document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: 'Feedback Hub' }, bubbles: true }));
+  if (window.location.pathname.startsWith('/feedback')) {
+    document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: 'Feedback Hub' }, bubbles: true }));
+  }
 }

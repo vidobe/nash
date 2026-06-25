@@ -39,9 +39,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 32px;
-  background: var(--white, #fff);
-  border-bottom: 1px solid var(--border, #e5e6ea);
+  padding: 8px 32px 16px;
+  background: none;
   flex-shrink: 0;
 }
 
@@ -62,10 +61,10 @@
 
 .nash-overview .nash-overview-search {
   width: 100%;
-  padding: 8px 12px 8px 34px;
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 8px;
-  background: var(--surface, #f8f8fa);
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: var(--white, #fff);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13.5px;
   color: var(--ink, #111318);
@@ -84,9 +83,9 @@
 }
 
 .nash-overview .nash-overview-filter {
-  padding: 7px 28px 7px 11px;
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 8px;
+  padding: 8px 28px 8px 11px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
   background: var(--white, #fff);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
@@ -110,9 +109,9 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 7px 12px;
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
   background: none;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 12.5px;
@@ -122,8 +121,8 @@
 
 .nash-overview .nash-overview-view-toggle {
   display: flex;
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 8px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -153,7 +152,7 @@
 .nash-overview .nash-overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .nash-overview .nash-overview-grid[data-layout="list"] {
@@ -166,18 +165,16 @@
   position: relative;
   overflow: hidden;
   background: var(--white, #fff);
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 12px;
-  padding: 18px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 16px;
+  padding: 20px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.18s ease, background 0.18s ease;
 }
 
 .nash-overview .nash-overview-card:hover {
-  border-color: #d0d1d6;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
-  transform: translateY(-1px);
+  border-color: var(--ink-40, #9a9da6);
+  background: var(--surface, #f8f8fa);
 }
 
 .nash-overview .nash-overview-card.generating {

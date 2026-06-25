@@ -120,15 +120,44 @@ function buildQuickSetup() {
   `;
 }
 
-function buildCustomize() {
+function cleanTitle(t) {
+  return (t || '').replace(/\s*\|.*$/, '').trim();
+}
+
+function buildCustomize(solutions = []) {
+  const solOptions = solutions.length
+    ? solutions.map((s) => `
+        <label class="nash-wizard-solchip">
+          <input type="checkbox" name="solutions" value="${s.path || ''}"/>
+          <span class="nash-wizard-solchip-name">${cleanTitle(s.title)}</span>
+        </label>
+      `).join('')
+    : '<p class="nash-wizard-hint">No solution skills found. Add one under Solution Skills first.</p>';
+
   return `
-    <div class="nash-wizard-form" id="nash-step-1">
+    <form class="nash-wizard-form" id="nash-step-1" novalidate>
       <h2 class="nash-wizard-form-title">Customize</h2>
-      <div class="nash-wizard-placeholder">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
-        <p>Customize options coming soon.</p>
+
+      <div class="nash-wizard-grid">
+        <div class="nash-wizard-field">
+          <label class="nash-wizard-label" for="account-manager">Account Manager</label>
+          <p class="nash-wizard-hint">The account owner for this opportunity</p>
+          <input class="nash-wizard-input" id="account-manager" name="accountManager" type="text"
+            placeholder="e.g. Jane Smith" autocomplete="name"/>
+        </div>
       </div>
-    </div>
+
+      <div class="nash-wizard-field">
+        <label class="nash-wizard-label">
+          Solutions in Scope
+          <span class="nash-wizard-required">Required</span>
+        </label>
+        <p class="nash-wizard-hint">Which Adobe solutions to qualify this opportunity against — drives the skills Nash scores with</p>
+        <div class="nash-wizard-solgrid">
+          ${solOptions}
+        </div>
+      </div>
+    </form>
   `;
 }
 
@@ -168,6 +197,17 @@ function buildUrlChips(url) {
 
 export default async function decorate(block) {
   let currentStep = 0;
+  let solutions = [];
+
+  try {
+    const resp = await fetch('/solutions/query.json');
+    if (resp.ok) {
+      const data = await resp.json();
+      solutions = (data.data || []).filter((s) => cleanTitle(s.title));
+    }
+  } catch {
+    solutions = [];
+  }
 
   function wireStep(step) {
     block.querySelector('.nash-wizard-next-btn').addEventListener('click', () => {
@@ -216,7 +256,7 @@ export default async function decorate(block) {
         <div class="nash-wizard-card">
           ${buildStepBar(currentStep)}
           <div class="nash-wizard-body">
-            ${STEP_BUILDERS[currentStep]()}
+            ${STEP_BUILDERS[currentStep](solutions)}
           </div>
           <div class="nash-wizard-footer">
             ${currentStep > 0 ? '<button class="nash-wizard-back-btn" type="button">← Back</button>' : '<span></span>'}
