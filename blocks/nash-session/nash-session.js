@@ -428,6 +428,7 @@ Guidance:
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
 - Tie market/news insights back into Win Sentiment and the Recommendation.
+- IMPORTANT: Do NOT reproduce, echo, dump, or quote the attached document verbatim. Summarise and paraphrase its requirements in your own words. Quote at most a short phrase (under 15 words) only when essential. Do not print raw spreadsheet rows or large blocks of the source — synthesise them into analysis.
 
 ${docLine}
 
@@ -560,11 +561,19 @@ async function runAssessment(block, attempt = 1) {
     },
     onError: (err) => { errMsg = err.message; },
     onDone: ({ responseId }) => {
+      const fail = (msg) => {
+        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
+        block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
+      };
+      // Azure content filter blocked the output (usually reproducing the source doc).
+      if (errMsg === 'content_filter') {
+        fail('The analysis was blocked by the content filter — usually because the report reproduced too much of the uploaded document verbatim. Run it again; the prompt now asks the model to summarise rather than echo the source.');
+        return;
+      }
       // No answer (e.g. FluffyJaws response expired mid tool-loop) — retry once, then surface.
       if (!answer) {
         if (attempt < 2) { runAssessment(block, attempt + 1); return; }
-        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. This usually means the analysis timed out — try again.</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
-        block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
+        fail(`The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. This usually means the analysis timed out — try again.`);
         return;
       }
       const { meta, body } = parseMeta(answer);

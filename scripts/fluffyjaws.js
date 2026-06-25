@@ -186,8 +186,15 @@ export async function streamQualification({
         onDelta(data.text);
       }
       if (type === 'response.completed') {
-        // eslint-disable-next-line no-console
-        console.log('[fluffyjaws] completed. events:', seen, 'answerDeltas:', sawDelta);
+        finish();
+      }
+      if (type === 'response.incomplete') {
+        const reason = data.response?.incomplete_details?.reason;
+        if (reason === 'content_filter') {
+          onError(new Error('content_filter'));
+        } else if (reason) {
+          onError(new Error(`Run stopped early (${reason}).`));
+        }
         finish();
       }
       if (type === 'response.failed' || type === 'error') {
