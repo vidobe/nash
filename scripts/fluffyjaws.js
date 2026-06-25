@@ -139,6 +139,8 @@ export async function streamQualification({
     }
 
     let responseId = previousResponseId || null;
+    let sawDelta = false;
+    const seen = {};
 
     await readSSE(response, (eventName, data) => {
       if (!data) {
@@ -146,13 +148,23 @@ export async function streamQualification({
         return;
       }
       const type = data.type || eventName;
+      seen[type] = (seen[type] || 0) + 1;
       if (type === 'response.created' || type === 'response.completed') {
         responseId = data.response?.id || data.id || responseId;
       }
       if (type === 'response.output_text.delta' && typeof data.delta === 'string') {
+        sawDelta = true;
         onDelta(data.delta);
       }
-      if (type === 'response.completed') onDone({ responseId });
+      // Fallback: some responses deliver the whole block once, not as deltas.
+      if (type === 'response.output_text.done' && !sawDelta && typeof data.text === 'string') {
+        onDelta(data.text);
+      }
+      if (type === 'response.completed') {
+        // eslint-disable-next-line no-console
+        console.log('[fluffyjaws] stream events:', seen);
+        onDone({ responseId });
+      }
       if (type === 'response.failed' || type === 'error') {
         onError(new Error(data.error?.message || data.message || 'FluffyJaws error'));
       }
