@@ -48,6 +48,8 @@ function inlineMd(s) {
   return s
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+    .replace(/(^|[^_\w])_([^_\n]+)_(?![_\w])/g, '$1<em>$2</em>')
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
 
@@ -521,7 +523,7 @@ async function runAssessment(block) {
       answer += d;
       stream.textContent = answer; // switch to the real dossier as it streams
     },
-    onDone: () => {
+    onDone: ({ responseId }) => {
       const src = answer || thinking;
       const { meta, body } = parseMeta(src);
       current.reportMarkdown = body;
@@ -529,6 +531,12 @@ async function runAssessment(block) {
         current.score = meta.score;
         current.verdict = meta.verdict;
         current.cms = meta.cms;
+      }
+      // Continue this exact FluffyJaws thread in the chat, so follow-up questions
+      // are aware of the document and the dossier.
+      if (responseId) {
+        previousResponseId = responseId;
+        current.previousResponseId = responseId;
       }
       current.status = 'done';
       area.innerHTML = renderDossier(current);
@@ -623,10 +631,20 @@ async function send(block, text) {
   const typing = typingIndicator(thread);
   let bubble = null;
   let answer = '';
+  let thinking = '';
 
   await streamQualification({
     messages: [{ role: 'user', content: value }],
     previousResponseId,
+    webSearch: true,
+    onThinking: (delta) => {
+      thinking += delta;
+      if (!bubble) {
+        typing.remove();
+        bubble = addMessage(thread, 'assistant', '');
+      }
+      if (!answer) { bubble.textContent = thinking; thread.scrollTop = thread.scrollHeight; }
+    },
     onDelta: (delta) => {
       if (!bubble) { typing.remove(); bubble = addMessage(thread, 'assistant', ''); }
       answer += delta;
@@ -636,8 +654,8 @@ async function send(block, text) {
     onDone: ({ responseId }) => {
       if (responseId) previousResponseId = responseId;
       if (!bubble) typing.remove();
-      else bubble.innerHTML = renderMarkdown(answer);
-      current.messages.push({ role: 'assistant', content: answer });
+      else bubble.innerHTML = renderMarkdown(answer || thinking);
+      current.messages.push({ role: 'assistant', content: answer || thinking });
       current.previousResponseId = previousResponseId;
       persist(current);
     },
