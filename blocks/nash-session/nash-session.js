@@ -416,7 +416,7 @@ function buildQualPrompt({
   company, fileName, solutionNames, skills, maxSearches = 6,
 }) {
   const docLine = fileName
-    ? `An RFI/RFP document is attached (${fileName}). Analyse it as the primary input.`
+    ? `MANDATORY FIRST STEP: An RFI/RFP document is attached (${fileName}). Before any web/internal search, OPEN AND READ IT — for a spreadsheet (.xlsx/.csv) use the code interpreter to load every sheet (e.g. openpyxl) and read all requirement rows. This is the PRIMARY input and the basis for Sections 3–5. Reading the attachment does NOT count against the search budget below. If you genuinely cannot open it, say so explicitly at the top and state that scoring is provisional — do not silently proceed as if no document exists.`
     : 'No document is attached — use the customer name and public data.';
   return `You are an Adobe cross-functional deal team (Business Consultant + Solution Consultant + System Architect + Sales Strategist + Market Analyst).
 
@@ -429,7 +429,7 @@ Guidance:
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
 - Tie market/news insights back into Win Sentiment and the Recommendation.
 - IMPORTANT: Do NOT reproduce, echo, dump, or quote the attached document verbatim. Summarise and paraphrase its requirements in your own words. Quote at most a short phrase (under 15 words) only when essential. Do not print raw spreadsheet rows or large blocks of the source — synthesise them into analysis.
-- EFFICIENCY (critical): You must finish in a limited number of tool iterations. Perform AT MOST ${maxSearches} searches total across all sources, batching related queries into a single call where possible, then STOP searching and write the full dossier. Do NOT exhaustively search every available source — prioritise completing the report over extra searches. A complete report from a few good sources beats an unfinished one.
+- EFFICIENCY (critical): After reading the attachment, perform AT MOST ${maxSearches} EXTERNAL searches (web + internal docs) total, batching related queries into a single call where possible, then STOP searching and write the full dossier. Reading the attached file is required and is NOT one of these searches. Do NOT exhaustively search every source — prioritise completing the report. A complete report from a few good sources beats an unfinished one.
 
 ${docLine}
 
@@ -553,7 +553,7 @@ async function runAssessment(block, attempt = 1) {
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
-    reasoningEffort: 'low',
+    reasoningEffort: 'medium',
     onActivity: (text) => { if (!answer && label) label.textContent = text; },
     onThinking: (d) => {
       thinking += d;
