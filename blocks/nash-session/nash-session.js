@@ -513,7 +513,7 @@ async function runAssessment(block) {
 
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
-    webSearch: true,
+    reasoningEffort: 'medium',
     onThinking: (d) => {
       thinking += d;
       if (!answer) stream.textContent = thinking; // live "thinking" until the answer starts
@@ -636,7 +636,6 @@ async function send(block, text) {
   await streamQualification({
     messages: [{ role: 'user', content: value }],
     previousResponseId,
-    webSearch: true,
     onThinking: (delta) => {
       thinking += delta;
       if (!bubble) {

@@ -104,7 +104,7 @@ async function mockStream({ onDelta, onDone }) {
  */
 export async function streamQualification({
   messages, previousResponseId, onDelta, onThinking = () => {}, onDone = () => {},
-  onError = () => {}, signal, webSearch = false,
+  onError = () => {}, signal, webSearch = false, canvasMode = false, reasoningEffort,
 } = {}) {
   const token = await ensureFreshToken();
 
@@ -117,9 +117,10 @@ export async function streamQualification({
     const body = {
       model: MODEL,
       messages,
-      canvasMode: true,
+      canvasMode,
       webSearchEnabled: webSearch,
     };
+    if (reasoningEffort) body.reasoningEffort = reasoningEffort;
     if (FLUFFYPACK_SLUG) body.fluffyPackSlug = FLUFFYPACK_SLUG;
     if (previousResponseId) body.previousResponseId = previousResponseId;
 
