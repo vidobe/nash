@@ -140,19 +140,25 @@ export async function streamQualification({
 
     let responseId = previousResponseId || null;
     let sawDelta = false;
+    let finished = false;
     const phases = {}; // item_id → phase ('commentary' = thinking, else = answer)
+    const seen = {};
+    const finish = () => { if (!finished) { finished = true; onDone({ responseId }); } };
 
     await readSSE(response, (eventName, data) => {
       if (!data) {
-        if (eventName === 'done') onDone({ responseId });
+        if (eventName === 'done') finish();
         return;
       }
       const type = data.type || eventName;
+      seen[type] = (seen[type] || 0) + 1;
       if (type === 'response.created' || type === 'response.completed') {
         responseId = data.response?.id || data.id || responseId;
       }
       if (type === 'response.output_item.added' && data.item?.id) {
         phases[data.item.id] = data.item.phase || 'answer';
+        // eslint-disable-next-line no-console
+        console.log('[fluffyjaws] item added — phase:', data.item.phase, 'id:', data.item.id);
       }
       if (type === 'response.output_text.delta' && typeof data.delta === 'string') {
         if (phases[data.item_id] === 'commentary') {
@@ -162,16 +168,23 @@ export async function streamQualification({
           onDelta(data.delta);
         }
       }
-      // Fallback: some responses deliver the whole block once, not as deltas.
       if (type === 'response.output_text.done' && !sawDelta && typeof data.text === 'string'
         && phases[data.item_id] !== 'commentary') {
         onDelta(data.text);
       }
-      if (type === 'response.completed') onDone({ responseId });
+      if (type === 'response.completed') {
+        // eslint-disable-next-line no-console
+        console.log('[fluffyjaws] completed. events:', seen, 'answerDeltas:', sawDelta);
+        finish();
+      }
       if (type === 'response.failed' || type === 'error') {
         onError(new Error(data.error?.message || data.message || 'FluffyJaws error'));
       }
     });
+    // Stream closed — render whatever we have even if no explicit "completed" arrived.
+    // eslint-disable-next-line no-console
+    console.log('[fluffyjaws] stream closed. events:', seen, 'answerDeltas:', sawDelta);
+    finish();
   } catch (err) {
     onError(err);
   }
