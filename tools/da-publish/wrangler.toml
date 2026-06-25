@@ -1,0 +1,17 @@
+name = "nash-da-publish"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Public, non-secret config.
+[vars]
+ORG = "vidobe"
+REPO = "nash"
+OKTA_ISSUER = "https://adobe.okta.com/oauth2/aus1gan31wnmCPyB60h8"
+IMS_SCOPES = "AdobeID,openid,read_organizations"
+
+# Secrets — set with `wrangler secret put <NAME>` (never commit these):
+#   Recommended (auto-refreshing service token):
+#     IMS_CLIENT_ID
+#     IMS_CLIENT_SECRET
+#   Fallback (a long-lived IMS bearer token with DA + AEM admin access):
+#     DA_TOKEN

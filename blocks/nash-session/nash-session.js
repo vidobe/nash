@@ -5,6 +5,7 @@ import {
   saveAssessment, getAssessment, newAssessmentId,
 } from '../../scripts/nash-assessments.js';
 import { isAuthenticated, login } from '../../scripts/nash-auth.js';
+import { publishAssessment } from '../../scripts/da-publish.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -500,6 +501,56 @@ ${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it
 function setStatusDone(block) {
   const badge = block.querySelector('.nash-session-assess-status');
   if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
+  wirePublish(block);
+}
+
+/* Rendered report HTML for the published DA page body. */
+function reportHtmlForPublish(a) {
+  let header = `<h1>${escapeHtml(a.company)}</h1>`;
+  if (typeof a.score === 'number') {
+    const label = a.verdict || verdictFor(a.score).label;
+    const platform = a.cms && a.cms.toLowerCase() !== 'n/a'
+      ? ` · <strong>Platform:</strong> ${escapeHtml(a.cms)}` : '';
+    header += `<p><strong>Fit score:</strong> ${a.score} / 100 — ${escapeHtml(label)}${platform}</p>`;
+  }
+  let body = '';
+  if (a.reportMarkdown) body = renderMarkdown(a.reportMarkdown);
+  else if (a.report) body = reportPanel(a.report, a.company);
+  return header + body;
+}
+
+/* Reveals and wires the "Publish to DA" button once a report exists. */
+function wirePublish(block) {
+  const btn = block.querySelector('.nash-session-publish');
+  if (!btn || btn.dataset.wired) return;
+  if (!current || !(current.reportMarkdown || current.report)) return;
+  btn.hidden = false;
+  btn.dataset.wired = '1';
+  btn.addEventListener('click', async () => {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Publishing…';
+    block.querySelector('.nash-session-publish-error')?.remove();
+    try {
+      const res = await publishAssessment(current, reportHtmlForPublish(current));
+      current.publishedUrl = res.url;
+      persist(current);
+      const link = document.createElement('a');
+      link.className = 'nash-session-published';
+      link.href = res.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Published ↗';
+      btn.replaceWith(link);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = original;
+      const note = document.createElement('p');
+      note.className = 'nash-session-publish-error';
+      note.textContent = e.message;
+      btn.parentElement.appendChild(note);
+    }
+  });
 }
 
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
@@ -674,7 +725,12 @@ function renderAssessment(block, a) {
           <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
-        <span class="nash-session-assess-status ${a.status}">${a.status}</span>
+        <div class="nash-session-assess-actions">
+          ${a.publishedUrl
+    ? `<a class="nash-session-published" href="${escapeHtml(a.publishedUrl)}" target="_blank" rel="noopener">Published ↗</a>`
+    : '<button type="button" class="nash-session-publish" hidden>Publish to DA</button>'}
+          <span class="nash-session-assess-status ${a.status}">${a.status}</span>
+        </div>
       </div>
       <div class="nash-session-assess-split">
         <div class="nash-session-assess-main">
@@ -720,6 +776,8 @@ function renderAssessment(block, a) {
 
   const runBtn = block.querySelector('.nash-session-run-btn');
   if (runBtn) runBtn.addEventListener('click', () => runAssessment(block));
+
+  wirePublish(block);
 }
 
 async function send(block, text) {
