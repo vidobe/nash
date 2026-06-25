@@ -103,8 +103,8 @@ async function mockStream({ onDelta, onDone }) {
  * @param {AbortSignal} [opts.signal] abort the stream
  */
 export async function streamQualification({
-  messages, previousResponseId, onDelta, onDone = () => {}, onError = () => {},
-  signal, webSearch = false,
+  messages, previousResponseId, onDelta, onThinking = () => {}, onDone = () => {},
+  onError = () => {}, signal, webSearch = false,
 } = {}) {
   const token = await ensureFreshToken();
 
@@ -140,7 +140,7 @@ export async function streamQualification({
 
     let responseId = previousResponseId || null;
     let sawDelta = false;
-    const seen = {};
+    const phases = {}; // item_id → phase ('commentary' = thinking, else = answer)
 
     await readSSE(response, (eventName, data) => {
       if (!data) {
@@ -148,23 +148,26 @@ export async function streamQualification({
         return;
       }
       const type = data.type || eventName;
-      seen[type] = (seen[type] || 0) + 1;
       if (type === 'response.created' || type === 'response.completed') {
         responseId = data.response?.id || data.id || responseId;
       }
+      if (type === 'response.output_item.added' && data.item?.id) {
+        phases[data.item.id] = data.item.phase || 'answer';
+      }
       if (type === 'response.output_text.delta' && typeof data.delta === 'string') {
-        sawDelta = true;
-        onDelta(data.delta);
+        if (phases[data.item_id] === 'commentary') {
+          onThinking(data.delta);
+        } else {
+          sawDelta = true;
+          onDelta(data.delta);
+        }
       }
       // Fallback: some responses deliver the whole block once, not as deltas.
-      if (type === 'response.output_text.done' && !sawDelta && typeof data.text === 'string') {
+      if (type === 'response.output_text.done' && !sawDelta && typeof data.text === 'string'
+        && phases[data.item_id] !== 'commentary') {
         onDelta(data.text);
       }
-      if (type === 'response.completed') {
-        // eslint-disable-next-line no-console
-        console.log('[fluffyjaws] stream events:', seen);
-        onDone({ responseId });
-      }
+      if (type === 'response.completed') onDone({ responseId });
       if (type === 'response.failed' || type === 'error') {
         onError(new Error(data.error?.message || data.message || 'FluffyJaws error'));
       }

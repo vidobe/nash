@@ -506,13 +506,24 @@ async function runAssessment(block) {
     ]
     : prompt;
   let answer = '';
+  let thinking = '';
+  const working = area.querySelector('.nash-session-working span:last-child');
 
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
-    onDelta: (d) => { answer += d; stream.textContent = answer; },
+    onThinking: (d) => {
+      thinking += d;
+      if (!answer) stream.textContent = thinking; // live "thinking" until the answer starts
+    },
+    onDelta: (d) => {
+      if (!answer && working) working.textContent = `Writing the ${solutionNames} qualification…`;
+      answer += d;
+      stream.textContent = answer; // switch to the real dossier as it streams
+    },
     onDone: () => {
-      const { meta, body } = parseMeta(answer);
+      const src = answer || thinking;
+      const { meta, body } = parseMeta(src);
       current.reportMarkdown = body;
       if (meta) {
         current.score = meta.score;
