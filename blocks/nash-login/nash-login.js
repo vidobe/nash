@@ -10,6 +10,8 @@
  * @param {Element} block
  */
 
+import { login as oktaLogin } from '../../scripts/nash-auth.js';
+
 const SESSION_KEY = 'nash-auth';
 const SESSION_HOURS = 8;
 
@@ -286,6 +288,11 @@ function renderSignIn(block, switchFn) {
           <span class="nash-login-wordmark">Nash</span>
         </div>
         <h1 class="nash-login-heading">Sign in to Nash</h1>
+        <button class="nash-login-sso" type="button">
+          <svg width="18" height="18" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="20" height="20" rx="3" fill="#eb1000"/><polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="white"/></svg>
+          Sign in with Adobe
+        </button>
+        <div class="nash-login-or"><span>or use a password</span></div>
         <form class="nash-login-form" novalidate>
           <div class="nash-login-field">
             <label class="nash-login-label" for="nl-email">Email</label>
@@ -329,6 +336,8 @@ function renderSignIn(block, switchFn) {
     const person = getPerson(emailEl.value);
     rotator.swap(person ? person.sentences : DEFAULT_SENTENCES);
   });
+
+  block.querySelector('.nash-login-sso')?.addEventListener('click', () => oktaLogin());
 
   block.querySelector('.nash-login-switch').addEventListener('click', () => {
     rotator.stop();

@@ -151,11 +151,12 @@ async function loadEager(doc) {
   }
 }
 
-/** Returns true if the user has a valid Nash auth session in localStorage. */
+/** Returns true if the user has a valid Nash session — Okta (FluffyJaws) or passcode. */
 function isAuthenticated() {
   try {
-    const SESSION_KEY = 'nash-auth';
-    const auth = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    const fj = JSON.parse(localStorage.getItem('nash-fj-auth') || 'null');
+    if (fj && fj.accessToken && Date.now() < fj.expires) return true;
+    const auth = JSON.parse(localStorage.getItem('nash-auth') || 'null');
     return auth && Date.now() < auth.expires;
   } catch {
     return false;

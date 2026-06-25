@@ -131,6 +131,48 @@
   opacity: 0.87;
 }
 
+.nash-login .nash-login-sso {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 18px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 8px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.nash-login .nash-login-sso:hover {
+  background: var(--surface, #f8f8fa);
+  border-color: var(--ink-40, #9a9da6);
+}
+
+.nash-login .nash-login-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: var(--ink-40, #9a9da6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+}
+
+.nash-login .nash-login-or::before,
+.nash-login .nash-login-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ink-15, #e8e9ec);
+}
+
 .nash-login .nash-login-btn:active {
   transform: scale(0.99);
 }

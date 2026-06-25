@@ -90,6 +90,19 @@ export function logout() {
  */
 export async function handleRedirectCallback() {
   const url = new URL(window.location.href);
+  const err = url.searchParams.get('error');
+  if (err) {
+    const desc = url.searchParams.get('error_description') || err;
+    // eslint-disable-next-line no-console
+    console.error(`[nash-auth] Okta login failed: ${err} — ${desc}`);
+    sessionStorage.removeItem(PKCE_KEY);
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('state');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    document.dispatchEvent(new CustomEvent('nash:auth-error', { detail: { error: err, description: desc }, bubbles: true }));
+    return false;
+  }
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   if (!code || !state) return false;
