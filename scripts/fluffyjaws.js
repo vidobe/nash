@@ -14,8 +14,9 @@ import { ensureFreshToken } from './nash-auth.js';
 const FJ_BASE_URL = 'https://api.fluffyjaws.adobe.com';
 const MODEL = 'gpt-5.4';
 
-// Focused qualification context. Replace with a real FluffyPack slug once authored.
-const FLUFFYPACK_SLUG = 'nash-rfx';
+// Optional FluffyPack slug for focused context. Leave empty for plain chat —
+// sending a slug that doesn't exist makes /api/v1/stream return 404.
+const FLUFFYPACK_SLUG = '';
 
 const AUTH_KEY = 'nash-fj-auth';
 
@@ -114,11 +115,11 @@ export async function streamQualification({
   try {
     const body = {
       model: MODEL,
-      fluffyPackSlug: FLUFFYPACK_SLUG,
       messages,
       canvasMode: true,
       webSearchEnabled: false,
     };
+    if (FLUFFYPACK_SLUG) body.fluffyPackSlug = FLUFFYPACK_SLUG;
     if (previousResponseId) body.previousResponseId = previousResponseId;
 
     const response = await fetch(`${FJ_BASE_URL}/api/v1/stream`, {
