@@ -675,6 +675,51 @@
   margin-top: 8px;
 }
 
+/* Live "thinking" run state */
+.nash-session .nash-session-running {
+  margin-top: 8px;
+}
+
+.nash-session .nash-session-working {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-working-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--red, #eb1000);
+  animation: nash-session-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes nash-session-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+.nash-session .nash-session-stream {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-40, #9a9da6);
+  white-space: pre-wrap;
+}
+
 /* Markdown dossier (live FluffyJaws run) */
 .nash-session .nash-session-report.nash-md p {
   margin: 0 0 10px;

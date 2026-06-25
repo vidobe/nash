@@ -1,10 +1,13 @@
 /**
  * loads and decorates the nash-overview block
  * Fetches /qualifications/query.json for live data; falls back to mock data in dev.
+ * Also merges locally-created assessments (localStorage) so completed runs appear here.
  * Document metadata fields: title, description (domain), status, score, cms, user, lastModified
  *
  * @param {Element} block The block element
  */
+
+import { listAssessments } from '../../scripts/nash-assessments.js';
 
 const MOCK_REPORTS = [
   {
@@ -80,6 +83,27 @@ function mapQueryRow(row, idx) {
     ts: Number(row.lastmodified || row.lastModified) || 0,
     score: status === 'done' ? score : null,
     path: row.path || null,
+  };
+}
+
+/* Map a locally-created assessment (localStorage) to the card model. */
+function mapLocalAssessment(a, idx) {
+  const ts = Math.floor((a.updatedAt || a.createdAt || Date.now()) / 1000);
+  return {
+    id: `local-${idx}`,
+    company: a.company || 'Untitled',
+    domain: a.dr ? `DR ${a.dr}` : '',
+    status: a.status === 'done' ? 'done' : 'generating',
+    pct: a.status === 'done' ? 100 : 0,
+    steps: 0,
+    total: 23,
+    task: 'Draft',
+    user: 'vgabriel@adobe.com',
+    cms: a.cms && a.cms.toLowerCase() !== 'n/a' ? a.cms : 'Unknown',
+    time: relativeTime(ts),
+    ts,
+    score: a.status === 'done' && typeof a.score === 'number' ? a.score : null,
+    path: `/indextest?a=${encodeURIComponent(a.id)}`,
   };
 }
 
@@ -205,6 +229,10 @@ export default async function decorate(block) {
     reports = MOCK_REPORTS;
     usingMock = true;
   }
+
+  // Merge locally-created assessments (newest first) ahead of published ones.
+  const local = listAssessments().map(mapLocalAssessment);
+  reports = [...local, ...reports];
 
   const genCount = reports.filter((r) => r.status === 'generating').length;
   const doneCount = reports.filter((r) => r.status === 'done').length;

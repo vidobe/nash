@@ -403,6 +403,10 @@ Guidance:
 
 ${docLine}
 
+Begin your response with ONE machine-readable line in EXACTLY this format (the tool parses it and strips it from display):
+NASH_META: score=<integer 0-100> | verdict=<Go|Conditional-Go|No-go> | cms=<detected current platform or n/a>
+Then continue with the dossier.
+
 Produce the report in markdown with exactly these sections:
 # 1. Executive Overview
 # 2. Market, Competitor & Financial Intelligence
@@ -423,6 +427,37 @@ function setStatusDone(block) {
   if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
 }
 
+/* Pull the NASH_META header out of a dossier; returns { meta, body }. */
+function parseMeta(text) {
+  const m = text.match(/NASH_META:\s*score=(\d+)\s*\|\s*verdict=([^|]+?)\s*\|\s*cms=([^\n]*)/i);
+  if (!m) return { meta: null, body: text };
+  return {
+    meta: { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() },
+    body: text.replace(/NASH_META:[^\n]*\n?/i, '').trimStart(),
+  };
+}
+
+/* Renders a completed dossier: score/verdict header + markdown body. */
+function renderDossier(a) {
+  let head = '';
+  if (typeof a.score === 'number') {
+    const v = verdictFor(a.score);
+    head = `<div class="nash-session-report-top">
+      <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
+      <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
+      ${a.cms && a.cms.toLowerCase() !== 'n/a' ? `<span class="nash-session-report-cms">${escapeHtml(a.cms)}</span>` : ''}
+    </div>`;
+  }
+  return `<div class="nash-session-report nash-md">${head}${renderMarkdown(a.reportMarkdown || '')}</div>`;
+}
+
+/* Persist an assessment without the large file bytes (keep localStorage small). */
+function persist(a) {
+  const copy = { ...a };
+  delete copy.fileData;
+  saveAssessment(copy);
+}
+
 async function runAssessment(block) {
   const area = block.querySelector('.nash-session-report-area');
 
@@ -432,7 +467,7 @@ async function runAssessment(block) {
     window.setTimeout(() => {
       current.report = simulateReport();
       current.status = 'done';
-      saveAssessment(current);
+      persist(current);
       area.innerHTML = reportPanel(current.report, current.company);
       setStatusDone(block);
     }, 1100);
@@ -440,13 +475,22 @@ async function runAssessment(block) {
   }
 
   // Live run — ground FluffyJaws in the in-scope solution skills, stream the dossier.
-  area.innerHTML = '<div class="nash-session-report nash-md"><p class="nash-session-run-text">Running the assessment against your solution skills…</p></div>';
-  const target = area.querySelector('.nash-session-report');
   const sols = (current.solutions && current.solutions.length)
     ? current.solutions
     : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
-  const skills = await fetchSkillsText(sols.map((s) => s.slug));
   const solutionNames = sols.map((s) => s.name).join(' and ');
+
+  area.innerHTML = `
+    <div class="nash-session-running">
+      <div class="nash-session-working">
+        <span class="nash-session-working-dot" aria-hidden="true"></span>
+        <span>Analysing ${escapeHtml(solutionNames)} fit for ${escapeHtml(current.company)}…</span>
+      </div>
+      <div class="nash-session-stream"></div>
+    </div>`;
+  const stream = area.querySelector('.nash-session-stream');
+
+  const skills = await fetchSkillsText(sols.map((s) => s.slug));
   const prompt = buildQualPrompt({
     company: current.company, fileName: current.fileName, solutionNames, skills,
   });
@@ -466,15 +510,23 @@ async function runAssessment(block) {
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
-    onDelta: (d) => { answer += d; target.textContent = answer; },
+    onDelta: (d) => { answer += d; stream.textContent = answer; },
     onDone: () => {
-      target.innerHTML = renderMarkdown(answer);
-      current.reportMarkdown = answer;
+      const { meta, body } = parseMeta(answer);
+      current.reportMarkdown = body;
+      if (meta) {
+        current.score = meta.score;
+        current.verdict = meta.verdict;
+        current.cms = meta.cms;
+      }
       current.status = 'done';
-      saveAssessment(current);
+      area.innerHTML = renderDossier(current);
+      persist(current);
       setStatusDone(block);
     },
-    onError: (err) => { target.innerHTML = `<p>Run failed: ${escapeHtml(err.message)}</p>`; },
+    onError: (err) => {
+      stream.innerHTML = `<p>Run failed: ${escapeHtml(err.message)}</p>`;
+    },
   });
 }
 
@@ -500,7 +552,7 @@ function renderAssessment(block, a) {
       <div class="nash-session-assess-split">
         <div class="nash-session-assess-main">
           <div class="nash-session-report-area">${a.reportMarkdown
-    ? `<div class="nash-session-report nash-md">${renderMarkdown(a.reportMarkdown)}</div>`
+    ? renderDossier(a)
     : reportPanel(a.report, a.company)}</div>
         </div>
         <div class="nash-session-assess-chat">
@@ -555,7 +607,7 @@ async function send(block, text) {
   block.querySelector('.nash-session-send').disabled = true;
 
   current.messages.push({ role: 'user', content: value });
-  saveAssessment(current);
+  persist(current);
 
   const typing = typingIndicator(thread);
   let bubble = null;
@@ -576,7 +628,7 @@ async function send(block, text) {
       else bubble.innerHTML = renderMarkdown(answer);
       current.messages.push({ role: 'assistant', content: answer });
       current.previousResponseId = previousResponseId;
-      saveAssessment(current);
+      persist(current);
     },
     onError: (err) => {
       typing.remove();
