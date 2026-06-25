@@ -413,7 +413,7 @@ async function fetchSkillsText(slugs) {
 }
 
 function buildQualPrompt({
-  company, fileName, solutionNames, skills,
+  company, fileName, solutionNames, skills, maxSearches = 6,
 }) {
   const docLine = fileName
     ? `An RFI/RFP document is attached (${fileName}). Analyse it as the primary input.`
@@ -429,6 +429,7 @@ Guidance:
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
 - Tie market/news insights back into Win Sentiment and the Recommendation.
 - IMPORTANT: Do NOT reproduce, echo, dump, or quote the attached document verbatim. Summarise and paraphrase its requirements in your own words. Quote at most a short phrase (under 15 words) only when essential. Do not print raw spreadsheet rows or large blocks of the source — synthesise them into analysis.
+- EFFICIENCY (critical): You must finish in a limited number of tool iterations. Perform AT MOST ${maxSearches} searches total across all sources, batching related queries into a single call where possible, then STOP searching and write the full dossier. Do NOT exhaustively search every available source — prioritise completing the report over extra searches. A complete report from a few good sources beats an unfinished one.
 
 ${docLine}
 
@@ -527,8 +528,12 @@ async function runAssessment(block, attempt = 1) {
   const label = area.querySelector('.nash-session-working-label');
 
   const skills = await fetchSkillsText(sols.map((s) => s.slug));
+  // FluffyJaws chains an Azure response per tool iteration; long loops expire the
+  // chain (previous_response_not_found). Fewer searches → higher completion rate.
+  // The retry is tighter still, so it's more likely to finish than the first pass.
+  const maxSearches = attempt > 1 ? 3 : 6;
   const prompt = buildQualPrompt({
-    company: current.company, fileName: current.fileName, solutionNames, skills,
+    company: current.company, fileName: current.fileName, solutionNames, skills, maxSearches,
   });
   const userContent = current.fileData
     ? [
@@ -548,7 +553,7 @@ async function runAssessment(block, attempt = 1) {
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
-    reasoningEffort: 'medium',
+    reasoningEffort: 'low',
     onActivity: (text) => { if (!answer && label) label.textContent = text; },
     onThinking: (d) => {
       thinking += d;
@@ -570,10 +575,14 @@ async function runAssessment(block, attempt = 1) {
         fail('The analysis was blocked by the content filter — usually because the report reproduced too much of the uploaded document verbatim. Run it again; the prompt now asks the model to summarise rather than echo the source.');
         return;
       }
-      // No answer (e.g. FluffyJaws response expired mid tool-loop) — retry once, then surface.
+      // No answer — usually FluffyJaws's internal response chain expired during a long
+      // tool loop (previous_response_not_found). Retry once with a tighter search budget.
       if (!answer) {
         if (attempt < 2) { runAssessment(block, attempt + 1); return; }
-        fail(`The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. This usually means the analysis timed out — try again.`);
+        const expired = /previous_response_not_found/i.test(errMsg);
+        fail(expired
+          ? 'FluffyJaws ran a long multi-tool search and its internal response chain expired before writing the report (previous_response_not_found). This is a FluffyJaws-side limit on long agentic runs, not a Nash timeout. Re-running often succeeds — the prompt now caps the number of searches so it finishes sooner.'
+          : `The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try again.`);
         return;
       }
       const { meta, body } = parseMeta(answer);
