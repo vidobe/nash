@@ -248,10 +248,66 @@
   border-color: var(--ink-40, #9a9da6);
 }
 
-.nash-session .nash-session-file {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--ink-70, #4a4d55);
+.nash-session .nash-session-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 1.5px dashed var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.nash-session .nash-session-drop:hover,
+.nash-session .nash-session-drop.dragging {
+  border-color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+}
+
+.nash-session .nash-session-drop.has-file {
+  border-style: solid;
+  border-color: var(--ink-15, #e8e9ec);
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-session-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--white, #fff);
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-drop.has-file .nash-session-drop-icon {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-drop-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nash-session .nash-session-drop-text {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink, #111318);
+  overflow-wrap: anywhere;
+}
+
+.nash-session .nash-session-drop-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-40, #9a9da6);
 }
 
 .nash-session .nash-session-solgrid {

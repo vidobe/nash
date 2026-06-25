@@ -17,6 +17,8 @@ const ICONS = {
   send: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
   back: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
   close: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
 };
 
 const LAUNCH = [
@@ -160,8 +162,12 @@ function renderLauncher(block, name, solutions = []) {
             <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
           </div>
           <div class="nash-session-field">
-            <label class="nash-session-flabel" for="na-file">Document (PDF, Word, or Excel)</label>
-            <input class="nash-session-finput nash-session-file" id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx"/>
+            <label class="nash-session-flabel">Document (PDF, Word, or Excel)</label>
+            <label class="nash-session-drop" for="na-file">
+              <span class="nash-session-drop-icon" aria-hidden="true">${ICONS.upload}</span>
+              <span class="nash-session-drop-text">Click to upload <span class="nash-session-drop-sub">or drag a file here</span></span>
+              <input id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" hidden/>
+            </label>
           </div>
           <div class="nash-session-field">
             <label class="nash-session-flabel">Solutions in scope</label>
@@ -200,6 +206,26 @@ function renderLauncher(block, name, solutions = []) {
 
   modal.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // Modern file upload: reflect the chosen file + drag-and-drop.
+  const drop = block.querySelector('.nash-session-drop');
+  const fileInput = block.querySelector('#na-file');
+  const showFile = () => {
+    const f = fileInput.files[0];
+    const textEl = drop.querySelector('.nash-session-drop-text');
+    if (f) {
+      drop.classList.add('has-file');
+      drop.querySelector('.nash-session-drop-icon').innerHTML = ICONS.doc;
+      textEl.innerHTML = `${escapeHtml(f.name)}<span class="nash-session-drop-sub">${(f.size / 1024 / 1024).toFixed(1)} MB · click to replace</span>`;
+    }
+  };
+  fileInput.addEventListener('change', showFile);
+  ['dragover', 'dragenter'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('dragging'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove('dragging')));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; showFile(); }
+  });
 
   block.querySelector('.nash-session-modal-form').addEventListener('submit', async (e) => {
     e.preventDefault();
