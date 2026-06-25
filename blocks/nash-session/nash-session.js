@@ -51,33 +51,58 @@ function inlineMd(s) {
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
 
-/* Minimal, safe markdown → HTML for chat replies (escapes first). */
+function splitRow(line) {
+  const cells = line.split('|').map((c) => c.trim());
+  if (cells[0] === '') cells.shift();
+  if (cells[cells.length - 1] === '') cells.pop();
+  return cells;
+}
+
+/* Minimal, safe markdown → HTML for replies (escapes first). Handles headings,
+   lists, inline styles, links, and GFM tables. */
 function renderMarkdown(src) {
   const lines = escapeHtml(src).split('\n');
   const out = [];
   let list = null;
   const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
-  lines.forEach((raw) => {
-    const line = raw.trimEnd();
-    const h = line.match(/^(#{1,6})\s+(.*)$/);
-    const ul = line.match(/^[-*]\s+(.*)$/);
-    const ol = line.match(/^\d+\.\s+(.*)$/);
-    if (h) {
+  const isSep = (l) => l && /\|/.test(l) && /^[\s|:-]+$/.test(l.trim()) && l.includes('-');
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trimEnd();
+
+    if (line.includes('|') && isSep(lines[i + 1])) {
       closeList();
-      out.push(`<p class="nash-md-h">${inlineMd(h[2])}</p>`);
-    } else if (ul) {
-      if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
-      out.push(`<li>${inlineMd(ul[1])}</li>`);
-    } else if (ol) {
-      if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
-      out.push(`<li>${inlineMd(ol[1])}</li>`);
-    } else if (!line) {
-      closeList();
+      const header = splitRow(line);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim()) {
+        rows.push(splitRow(lines[i].trimEnd()));
+        i += 1;
+      }
+      out.push(`<table class="nash-md-table"><thead><tr>${header.map((h) => `<th>${inlineMd(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inlineMd(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
     } else {
-      closeList();
-      out.push(`<p>${inlineMd(line)}</p>`);
+      const h = line.match(/^(#{1,6})\s+(.*)$/);
+      const ul = line.match(/^[-*]\s+(.*)$/);
+      const ol = line.match(/^\d+\.\s+(.*)$/);
+      if (h) {
+        closeList();
+        out.push(`<p class="nash-md-h" data-lvl="${h[1].length}">${inlineMd(h[2])}</p>`);
+      } else if (ul) {
+        if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+        out.push(`<li>${inlineMd(ul[1])}</li>`);
+      } else if (ol) {
+        if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+        out.push(`<li>${inlineMd(ol[1])}</li>`);
+      } else if (!line) {
+        closeList();
+      } else {
+        closeList();
+        out.push(`<p>${inlineMd(line)}</p>`);
+      }
+      i += 1;
     }
-  });
+  }
   closeList();
   return out.join('');
 }
@@ -89,7 +114,7 @@ function autoResize(ta) {
 
 /* ── Launcher ────────────────────────────────────────── */
 
-function renderLauncher(block, name) {
+function renderLauncher(block, name, solutions = []) {
   block.classList.remove('wide');
   block.innerHTML = `
     <div class="nash-session-hero">
@@ -136,6 +161,17 @@ function renderLauncher(block, name) {
             <label class="nash-session-flabel" for="na-file">Document (PDF, Word, or Excel)</label>
             <input class="nash-session-finput nash-session-file" id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx"/>
           </div>
+          <div class="nash-session-field">
+            <label class="nash-session-flabel">Solutions in scope</label>
+            ${solutions.length ? `<div class="nash-session-solgrid">
+              ${solutions.map((s) => `
+                <label class="nash-session-solchip">
+                  <input type="checkbox" name="solutions" value="${s.slug}" data-name="${escapeHtml(s.name)}"/>
+                  <span>${escapeHtml(s.name)}</span>
+                </label>
+              `).join('')}
+            </div>` : '<p class="nash-session-flabel" style="font-weight:400">No solution files found.</p>'}
+          </div>
           <div class="nash-session-modal-actions">
             <button class="nash-session-btn-ghost" type="button" data-close>Cancel</button>
             <button class="nash-session-btn-primary" type="submit">Create assessment</button>
@@ -163,23 +199,55 @@ function renderLauncher(block, name) {
   modal.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  block.querySelector('.nash-session-modal-form').addEventListener('submit', (e) => {
+  block.querySelector('.nash-session-modal-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
     const company = form.company.value.trim();
     if (!company) return;
+    const submitBtn = form.querySelector('.nash-session-btn-primary');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating…';
+
+    const sols = [...form.querySelectorAll('input[name="solutions"]:checked')]
+      .map((c) => ({ slug: c.value, name: c.dataset.name }));
+
     const file = form.file.files[0];
+    let fileData = '';
+    let fileMime = '';
+    if (file) {
+      fileMime = file.type || '';
+      if (file.size <= 4 * 1024 * 1024) {
+        // eslint-disable-next-line no-await-in-loop
+        fileData = await new Promise((resolve) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.onerror = () => resolve('');
+          fr.readAsDataURL(file);
+        });
+      }
+    }
+
     const assessment = {
       id: newAssessmentId(),
       company,
       dr: form.dr.value.trim(),
       fileName: file ? file.name : '',
+      fileMime,
+      fileData,
+      solutions: sols,
       status: 'draft',
       createdAt: Date.now(),
       messages: [],
     };
-    saveAssessment(assessment);
-    window.location.href = `/indextest?a=${encodeURIComponent(assessment.id)}`;
+    // Persist metadata only (keep large file bytes out of localStorage); render in
+    // place so the in-memory document survives for the immediate run.
+    const stored = { ...assessment };
+    delete stored.fileData;
+    saveAssessment(stored);
+    current = assessment;
+    previousResponseId = null;
+    window.history.pushState({}, '', `/indextest?a=${encodeURIComponent(assessment.id)}`);
+    renderAssessment(block, assessment);
   });
 }
 
@@ -300,17 +368,114 @@ function reportPanel(report, company) {
   `;
 }
 
-function runAssessment(block) {
+/* Pull authored solution-skills content from DA as grounding text. */
+async function fetchSkillsText(slugs) {
+  const parts = await Promise.all(slugs.map(async (slug) => {
+    try {
+      const r = await fetch(`/solutions/${slug}.plain.html`);
+      if (!r.ok) return '';
+      const div = document.createElement('div');
+      div.innerHTML = await r.text();
+      return `## ${slug}\n${div.textContent.replace(/\n{3,}/g, '\n\n').trim()}`;
+    } catch {
+      return '';
+    }
+  }));
+  return parts.filter(Boolean).join('\n\n');
+}
+
+function buildQualPrompt({
+  company, fileName, solutionNames, skills,
+}) {
+  const docLine = fileName
+    ? `An RFI/RFP document is attached (${fileName}). Analyse it as the primary input.`
+    : 'No document is attached — use the customer name and public data.';
+  return `You are an Adobe cross-functional deal team (Business Consultant + Solution Consultant + System Architect + Sales Strategist + Market Analyst).
+
+Goal: qualify the opportunity for "${company}" for ${solutionNames}, and produce a structured, insight-rich qualification dossier suitable for sales, solutioning, and executive briefings.
+
+Guidance:
+- Ground your scoring strictly in the Adobe solution knowledge provided below — use ITS scoring dimensions, key signals, red flags, competitive alternatives, and recommended products. Do not invent competitors or criteria that contradict it.
+- Use reputable, recent public sources for the market/news section; include dates and links next to each claim.
+- Be honest, objective and pragmatic — do NOT just say yes to please me.
+- Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
+- Tie market/news insights back into Win Sentiment and the Recommendation.
+
+${docLine}
+
+Produce the report in markdown with exactly these sections:
+# 1. Executive Overview
+# 2. Market, Competitor & Financial Intelligence
+# 3. Business Analysis
+# 4. Technical & Architectural Evaluation
+# 5. Qualification & Discovery Questions
+# 6. Competitive Positioning & Win Sentiment
+# 7. Final Recommendation and Adobe Solution Scope
+
+Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+
+=== ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
+${skills}`;
+}
+
+function setStatusDone(block) {
+  const badge = block.querySelector('.nash-session-assess-status');
+  if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
+}
+
+async function runAssessment(block) {
   const area = block.querySelector('.nash-session-report-area');
-  area.innerHTML = '<div class="nash-session-run"><span class="nash-session-typing"><i></i><i></i><i></i></span><p class="nash-session-run-text">Running the assessment…</p></div>';
-  window.setTimeout(() => {
-    current.report = simulateReport();
-    current.status = 'done';
-    saveAssessment(current);
-    area.innerHTML = reportPanel(current.report, current.company);
-    const badge = block.querySelector('.nash-session-assess-status');
-    if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
-  }, 1100);
+
+  // Not connected to FluffyJaws → simulated structured report.
+  if (!isAuthenticated()) {
+    area.innerHTML = '<div class="nash-session-run"><span class="nash-session-typing"><i></i><i></i><i></i></span><p class="nash-session-run-text">Running the assessment…</p></div>';
+    window.setTimeout(() => {
+      current.report = simulateReport();
+      current.status = 'done';
+      saveAssessment(current);
+      area.innerHTML = reportPanel(current.report, current.company);
+      setStatusDone(block);
+    }, 1100);
+    return;
+  }
+
+  // Live run — ground FluffyJaws in the in-scope solution skills, stream the dossier.
+  area.innerHTML = '<div class="nash-session-report nash-md"><p class="nash-session-run-text">Running the assessment against your solution skills…</p></div>';
+  const target = area.querySelector('.nash-session-report');
+  const sols = (current.solutions && current.solutions.length)
+    ? current.solutions
+    : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
+  const skills = await fetchSkillsText(sols.map((s) => s.slug));
+  const solutionNames = sols.map((s) => s.name).join(' and ');
+  const prompt = buildQualPrompt({
+    company: current.company, fileName: current.fileName, solutionNames, skills,
+  });
+  const userContent = current.fileData
+    ? [
+      { type: 'input_text', text: prompt },
+      {
+        type: 'input_file',
+        filename: current.fileName,
+        file_data: current.fileData,
+        ...(current.fileMime ? { mime_type: current.fileMime } : {}),
+      },
+    ]
+    : prompt;
+  let answer = '';
+
+  await streamQualification({
+    messages: [{ role: 'user', content: userContent }],
+    webSearch: true,
+    onDelta: (d) => { answer += d; target.textContent = answer; },
+    onDone: () => {
+      target.innerHTML = renderMarkdown(answer);
+      current.reportMarkdown = answer;
+      current.status = 'done';
+      saveAssessment(current);
+      setStatusDone(block);
+    },
+    onError: (err) => { target.innerHTML = `<p>Run failed: ${escapeHtml(err.message)}</p>`; },
+  });
 }
 
 function renderAssessment(block, a) {
@@ -334,7 +499,9 @@ function renderAssessment(block, a) {
       </div>
       <div class="nash-session-assess-split">
         <div class="nash-session-assess-main">
-          <div class="nash-session-report-area">${reportPanel(a.report, a.company)}</div>
+          <div class="nash-session-report-area">${a.reportMarkdown
+    ? `<div class="nash-session-report nash-md">${renderMarkdown(a.reportMarkdown)}</div>`
+    : reportPanel(a.report, a.company)}</div>
         </div>
         <div class="nash-session-assess-chat">
           <div class="nash-session-thread" aria-live="polite"></div>
@@ -424,6 +591,19 @@ async function send(block, text) {
  * With ?a=<id>: the assessment view with its chat.
  * @param {Element} block The block element
  */
+async function loadSolutions() {
+  try {
+    const r = await fetch('/solutions/query.json');
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data || [])
+      .map((s) => ({ slug: (s.path || '').split('/').pop(), name: (s.title || '').replace(/\s*\|.*$/, '').trim() }))
+      .filter((s) => s.slug && s.name);
+  } catch {
+    return [];
+  }
+}
+
 export default async function decorate(block) {
   const name = 'Vitor';
   const id = new URLSearchParams(window.location.search).get('a');
@@ -432,17 +612,17 @@ export default async function decorate(block) {
   if (assessment) {
     renderAssessment(block, assessment);
   } else {
-    renderLauncher(block, name);
+    renderLauncher(block, name, await loadSolutions());
   }
 
   // "New Session" in the sidebar returns to the launcher.
-  document.addEventListener('nash:new-session', () => {
+  document.addEventListener('nash:new-session', async () => {
     if (new URLSearchParams(window.location.search).get('a')) {
       window.location.href = '/indextest';
     } else {
       current = null;
       previousResponseId = null;
-      renderLauncher(block, name);
+      renderLauncher(block, name, await loadSolutions());
     }
   });
 }

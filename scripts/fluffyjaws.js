@@ -103,7 +103,8 @@ async function mockStream({ onDelta, onDone }) {
  * @param {AbortSignal} [opts.signal] abort the stream
  */
 export async function streamQualification({
-  messages, previousResponseId, onDelta, onDone = () => {}, onError = () => {}, signal,
+  messages, previousResponseId, onDelta, onDone = () => {}, onError = () => {},
+  signal, webSearch = false,
 } = {}) {
   const token = await ensureFreshToken();
 
@@ -117,7 +118,7 @@ export async function streamQualification({
       model: MODEL,
       messages,
       canvasMode: true,
-      webSearchEnabled: false,
+      webSearchEnabled: webSearch,
     };
     if (FLUFFYPACK_SLUG) body.fluffyPackSlug = FLUFFYPACK_SLUG;
     if (previousResponseId) body.previousResponseId = previousResponseId;

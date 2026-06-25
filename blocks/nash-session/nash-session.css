@@ -254,6 +254,40 @@
   color: var(--ink-70, #4a4d55);
 }
 
+.nash-session .nash-session-solgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.nash-session .nash-session-solchip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 9px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.nash-session .nash-session-solchip:has(input:checked) {
+  border-color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-solchip input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--red, #eb1000);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .nash-session .nash-session-modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -641,6 +675,66 @@
   margin-top: 8px;
 }
 
+/* Markdown dossier (live FluffyJaws run) */
+.nash-session .nash-session-report.nash-md p {
+  margin: 0 0 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-report.nash-md .nash-md-h {
+  margin: 22px 0 8px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-report.nash-md .nash-md-h[data-lvl="2"] { font-size: 17px; }
+
+.nash-session .nash-session-report.nash-md .nash-md-h[data-lvl="3"] {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-report.nash-md ul,
+.nash-session .nash-session-report.nash-md ol {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+}
+
+.nash-session .nash-session-report.nash-md li {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-70, #4a4d55);
+  margin-bottom: 5px;
+}
+
+.nash-session .nash-session-report.nash-md .nash-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 14px;
+  font-size: 13px;
+}
+
+.nash-session .nash-session-report.nash-md .nash-md-table th,
+.nash-session .nash-session-report.nash-md .nash-md-table td {
+  border: 1px solid var(--ink-15, #e8e9ec);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-report.nash-md .nash-md-table th {
+  background: var(--surface, #f8f8fa);
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+
 .nash-session .nash-session-report-lead {
   margin: 0 0 4px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
@@ -766,6 +860,7 @@
   padding-left: 18px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-report-list li {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
