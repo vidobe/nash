@@ -102,9 +102,21 @@ async function mockStream({ onDelta, onDone }) {
  * @param {(err:Error)=>void} [opts.onError] called on failure
  * @param {AbortSignal} [opts.signal] abort the stream
  */
+const TOOL_LABELS = {
+  field_readiness_sharepoint_search: 'Searching Adobe Field Readiness…',
+  experience_league_documentation_search: 'Searching Experience League docs…',
+  sharepoint_search: 'Searching Adobe SharePoint…',
+  web_search: 'Searching the web…',
+};
+
+function toolLabel(name) {
+  return TOOL_LABELS[name] || `Looking up ${(name || 'sources').replace(/_/g, ' ')}…`;
+}
+
 export async function streamQualification({
-  messages, previousResponseId, onDelta, onThinking = () => {}, onDone = () => {},
-  onError = () => {}, signal, webSearch = false, canvasMode = false, reasoningEffort,
+  messages, previousResponseId, onDelta, onThinking = () => {}, onActivity = () => {},
+  onDone = () => {}, onError = () => {}, signal, webSearch = false, canvasMode = false,
+  reasoningEffort,
 } = {}) {
   const token = await ensureFreshToken();
 
@@ -158,9 +170,9 @@ export async function streamQualification({
       }
       if (type === 'response.output_item.added' && data.item?.id) {
         phases[data.item.id] = data.item.phase || 'answer';
-        // eslint-disable-next-line no-console
-        console.log('[fluffyjaws] item added — phase:', data.item.phase, 'id:', data.item.id);
       }
+      if (type === 'tool_executing') onActivity(toolLabel(data.tool_name));
+      if (type === 'tool_complete') onActivity('Reviewing findings…');
       if (type === 'response.output_text.delta' && typeof data.delta === 'string') {
         if (phases[data.item_id] === 'commentary') {
           onThinking(data.delta);

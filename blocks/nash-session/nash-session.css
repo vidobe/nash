@@ -747,24 +747,40 @@
   color: var(--ink-70, #4a4d55);
 }
 
-.nash-session .nash-session-working-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--red, #eb1000);
-  animation: nash-session-pulse 1.2s ease-in-out infinite;
+.nash-session .nash-session-working-label {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
 }
 
-@keyframes nash-session-pulse {
+/* Pixelated "still working" animation */
+.nash-session .nash-session-pixels {
+  display: grid;
+  grid-template-columns: repeat(8, 10px);
+  grid-auto-rows: 10px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.nash-session .nash-session-pixels span {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--ink-15, #e8e9ec);
+  animation: nash-session-pixel 1.4s ease-in-out infinite;
+}
+
+@keyframes nash-session-pixel {
   0%,
   100% {
-    opacity: 1;
-    transform: scale(1);
+    background: var(--ink-15, #e8e9ec);
+    transform: scale(0.85);
   }
 
   50% {
-    opacity: 0.4;
-    transform: scale(0.7);
+    background: var(--red, #eb1000);
+    transform: scale(1);
   }
 }
 

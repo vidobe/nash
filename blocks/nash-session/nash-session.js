@@ -422,13 +422,12 @@ function buildQualPrompt({
 
 Goal: qualify the opportunity for "${company}" for ${solutionNames}, and produce a structured, insight-rich qualification dossier suitable for sales, solutioning, and executive briefings.
 
-CRITICAL: Do NOT call any tools, web search, or document/knowledge search. Do not look anything up. Use ONLY the attached document and the Adobe solution knowledge provided below, plus your own existing knowledge. Write the dossier directly and immediately — no research steps.
-
 Guidance:
 - Ground your scoring strictly in the Adobe solution knowledge provided below — use ITS scoring dimensions, key signals, red flags, competitive alternatives, and recommended products. Do not invent competitors or criteria that contradict it.
-- For the market/news section, use your existing knowledge and clearly label it as not verified against live sources; do not fabricate dates or links.
+- Use Adobe internal sources and reputable, recent public sources for the market/news section; include dates and links next to each claim. Prefer Adobe sources first.
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
+- Tie market/news insights back into Win Sentiment and the Recommendation.
 
 ${docLine}
 
@@ -487,7 +486,13 @@ function persist(a) {
   saveAssessment(copy);
 }
 
-async function runAssessment(block) {
+function pixelGrid() {
+  return `<div class="nash-session-pixels" aria-hidden="true">${
+    Array.from({ length: 24 }).map((unused, i) => `<span style="animation-delay:${(i % 8) * 0.1 + Math.floor(i / 8) * 0.05}s"></span>`).join('')
+  }</div>`;
+}
+
+async function runAssessment(block, attempt = 1) {
   const area = block.querySelector('.nash-session-report-area');
 
   // Not connected to FluffyJaws → simulated structured report.
@@ -511,13 +516,14 @@ async function runAssessment(block) {
 
   area.innerHTML = `
     <div class="nash-session-running">
+      ${pixelGrid()}
       <div class="nash-session-working">
-        <span class="nash-session-working-dot" aria-hidden="true"></span>
-        <span>Analysing ${escapeHtml(solutionNames)} fit for ${escapeHtml(current.company)}…</span>
+        <span class="nash-session-working-label">${attempt > 1 ? 'Retrying' : 'Starting the analysis'} — this can take several minutes…</span>
       </div>
       <div class="nash-session-stream"></div>
     </div>`;
   const stream = area.querySelector('.nash-session-stream');
+  const label = area.querySelector('.nash-session-working-label');
 
   const skills = await fetchSkillsText(sols.map((s) => s.slug));
   const prompt = buildQualPrompt({
@@ -537,24 +543,27 @@ async function runAssessment(block) {
   let answer = '';
   let thinking = '';
   let errMsg = '';
-  const working = area.querySelector('.nash-session-working span:last-child');
 
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
+    webSearch: true,
     reasoningEffort: 'medium',
+    onActivity: (text) => { if (!answer && label) label.textContent = text; },
     onThinking: (d) => {
       thinking += d;
-      if (!answer) stream.textContent = thinking; // live "thinking" until the answer starts
+      if (!answer) stream.textContent = thinking;
     },
     onDelta: (d) => {
-      if (!answer && working) working.textContent = `Writing the ${solutionNames} qualification…`;
+      if (!answer && label) label.textContent = `Writing the ${solutionNames} qualification…`;
       answer += d;
-      stream.textContent = answer; // switch to the real dossier as it streams
+      stream.textContent = answer;
     },
+    onError: (err) => { errMsg = err.message; },
     onDone: ({ responseId }) => {
-      // No real answer produced (e.g. a tool loop errored before writing) — surface it.
+      // No answer (e.g. FluffyJaws response expired mid tool-loop) — retry once, then surface.
       if (!answer) {
-        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">The run didn't produce a report${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try running again.</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
+        if (attempt < 2) { runAssessment(block, attempt + 1); return; }
+        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. This usually means the analysis timed out — try again.</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
         block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
         return;
       }
@@ -565,8 +574,7 @@ async function runAssessment(block) {
         current.verdict = meta.verdict;
         current.cms = meta.cms;
       }
-      // Continue this exact FluffyJaws thread in the chat, so follow-up questions
-      // are aware of the document and the dossier.
+      // Continue this exact FluffyJaws thread in the chat (aware of doc + dossier).
       if (responseId) {
         previousResponseId = responseId;
         current.previousResponseId = responseId;
@@ -576,7 +584,6 @@ async function runAssessment(block) {
       persist(current);
       setStatusDone(block);
     },
-    onError: (err) => { errMsg = err.message; },
   });
 }
 
