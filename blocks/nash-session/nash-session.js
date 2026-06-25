@@ -242,10 +242,14 @@ function renderLauncher(block, name, solutions = []) {
     const file = form.file.files[0];
     let fileData = '';
     let fileMime = '';
+    let fileText = '';
     if (file) {
       fileMime = file.type || '';
-      if (file.size <= 4 * 1024 * 1024) {
-        // eslint-disable-next-line no-await-in-loop
+      // Parse spreadsheets/CSV in the browser so the model reads the content from
+      // the prompt directly — FluffyJaws does not reliably mount uploads into its
+      // code-interpreter runtime (/mnt/data), so we can't depend on that.
+      fileText = await extractFileText(file);
+      if (!fileText && file.size <= 4 * 1024 * 1024) {
         fileData = await new Promise((resolve) => {
           const fr = new FileReader();
           fr.onload = () => resolve(fr.result);
@@ -262,15 +266,17 @@ function renderLauncher(block, name, solutions = []) {
       fileName: file ? file.name : '',
       fileMime,
       fileData,
+      fileText,
       solutions: sols,
       status: 'draft',
       createdAt: Date.now(),
       messages: [],
     };
-    // Persist metadata only (keep large file bytes out of localStorage); render in
-    // place so the in-memory document survives for the immediate run.
+    // Persist metadata only (keep large file bytes/text out of localStorage); render
+    // in place so the in-memory document survives for the immediate run.
     const stored = { ...assessment };
     delete stored.fileData;
+    delete stored.fileText;
     saveAssessment(stored);
     current = assessment;
     previousResponseId = null;
@@ -412,12 +418,50 @@ async function fetchSkillsText(slugs) {
   return parts.filter(Boolean).join('\n\n');
 }
 
+// Largest amount of extracted document text we embed in the prompt.
+const MAX_DOC_CHARS = 120000;
+
+/*
+ * Extracts readable text from a file in the browser. Spreadsheets/CSV are parsed
+ * to CSV-per-sheet (via SheetJS, loaded on demand) so we never rely on FluffyJaws
+ * mounting the upload into its tool runtime. Returns '' for formats we don't parse
+ * here (pdf/docx) — those still go to the model as an input_file attachment.
+ */
+async function extractFileText(file) {
+  const name = (file.name || '').toLowerCase();
+  const isText = name.endsWith('.csv') || name.endsWith('.txt')
+    || file.type === 'text/csv' || file.type === 'text/plain';
+  if (isText) {
+    const t = await file.text();
+    return t.slice(0, MAX_DOC_CHARS);
+  }
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    try {
+      const sheetjsUrl = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';
+      const XLSX = await import(sheetjsUrl);
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      const text = wb.SheetNames
+        .map((n) => `### Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`)
+        .join('\n\n');
+      return text.slice(0, MAX_DOC_CHARS);
+    } catch (e) {
+      return '';
+    }
+  }
+  return '';
+}
+
 function buildQualPrompt({
-  company, fileName, solutionNames, skills, maxSearches = 6,
+  company, fileName, solutionNames, skills, maxSearches = 6, docText = '',
 }) {
-  const docLine = fileName
-    ? `MANDATORY FIRST STEP: An RFI/RFP document is attached (${fileName}). Before any web/internal search, OPEN AND READ IT — for a spreadsheet (.xlsx/.csv) use the code interpreter to load every sheet (e.g. openpyxl) and read all requirement rows. This is the PRIMARY input and the basis for Sections 3–5. Reading the attachment does NOT count against the search budget below. If you genuinely cannot open it, say so explicitly at the top and state that scoring is provisional — do not silently proceed as if no document exists.`
-    : 'No document is attached — use the customer name and public data.';
+  let docLine;
+  if (docText) {
+    docLine = `The full contents of the attached document (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===". Read them there directly — no tool or code interpreter is needed. This is the PRIMARY input and the basis for Sections 3–5; ground the requirement analysis and scoring in it.`;
+  } else if (fileName) {
+    docLine = `MANDATORY FIRST STEP: A document is attached (${fileName}). Before any web/internal search, OPEN AND READ IT (use the code interpreter if needed). It is the PRIMARY input for Sections 3–5 and does NOT count against the search budget below. If you genuinely cannot open it, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
+  } else {
+    docLine = 'No document is attached — use the customer name and public data.';
+  }
   return `You are an Adobe cross-functional deal team (Business Consultant + Solution Consultant + System Architect + Sales Strategist + Market Analyst).
 
 Goal: qualify the opportunity for "${company}" for ${solutionNames}, and produce a structured, insight-rich qualification dossier suitable for sales, solutioning, and executive briefings.
@@ -449,7 +493,8 @@ Produce the report in markdown with exactly these sections:
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
-${skills}`;
+${skills}
+${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it; do NOT reproduce it verbatim in your answer ===\n${docText}` : ''}`;
 }
 
 function setStatusDone(block) {
@@ -533,9 +578,16 @@ async function runAssessment(block, attempt = 1) {
   // The retry is tighter still, so it's more likely to finish than the first pass.
   const maxSearches = attempt > 1 ? 3 : 6;
   const prompt = buildQualPrompt({
-    company: current.company, fileName: current.fileName, solutionNames, skills, maxSearches,
+    company: current.company,
+    fileName: current.fileName,
+    solutionNames,
+    skills,
+    maxSearches,
+    docText: current.fileText || '',
   });
-  const userContent = current.fileData
+  // If we already extracted the document text (spreadsheets/CSV), it's embedded in
+  // the prompt — send text only. Otherwise (pdf/docx) attach the raw bytes.
+  const userContent = (!current.fileText && current.fileData)
     ? [
       { type: 'input_text', text: prompt },
       {
