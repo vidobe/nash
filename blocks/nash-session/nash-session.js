@@ -44,6 +44,44 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+function inlineMd(s) {
+  return s
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+/* Minimal, safe markdown → HTML for chat replies (escapes first). */
+function renderMarkdown(src) {
+  const lines = escapeHtml(src).split('\n');
+  const out = [];
+  let list = null;
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  lines.forEach((raw) => {
+    const line = raw.trimEnd();
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    const ul = line.match(/^[-*]\s+(.*)$/);
+    const ol = line.match(/^\d+\.\s+(.*)$/);
+    if (h) {
+      closeList();
+      out.push(`<p class="nash-md-h">${inlineMd(h[2])}</p>`);
+    } else if (ul) {
+      if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+      out.push(`<li>${inlineMd(ul[1])}</li>`);
+    } else if (ol) {
+      if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+      out.push(`<li>${inlineMd(ol[1])}</li>`);
+    } else if (!line) {
+      closeList();
+    } else {
+      closeList();
+      out.push(`<p>${inlineMd(line)}</p>`);
+    }
+  });
+  closeList();
+  return out.join('');
+}
+
 function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`;
@@ -319,7 +357,7 @@ function renderAssessment(block, a) {
   if (a.messages.length === 0) {
     addMessage(thread, 'assistant', `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once the assessment runs I'll share the fit score, verdict, red flags, and recommendations here — and you can ask me anything about it.`);
   } else {
-    a.messages.forEach((m) => addMessage(thread, m.role, escapeHtml(m.content)));
+    a.messages.forEach((m) => addMessage(thread, m.role, m.role === 'assistant' ? renderMarkdown(m.content) : escapeHtml(m.content)));
   }
 
   input.addEventListener('input', () => {
@@ -368,6 +406,7 @@ async function send(block, text) {
     onDone: ({ responseId }) => {
       if (responseId) previousResponseId = responseId;
       if (!bubble) typing.remove();
+      else bubble.innerHTML = renderMarkdown(answer);
       current.messages.push({ role: 'assistant', content: answer });
       current.previousResponseId = previousResponseId;
       saveAssessment(current);

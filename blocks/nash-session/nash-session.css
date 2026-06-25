@@ -436,6 +436,36 @@
   color: var(--ink, #111318);
 }
 
+.nash-session .nash-session-bubble p {
+  margin: 0 0 8px;
+}
+
+.nash-session .nash-session-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.nash-session .nash-session-bubble .nash-md-h {
+  font-weight: 600;
+}
+
+.nash-session .nash-session-bubble ul,
+.nash-session .nash-session-bubble ol {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+
+.nash-session .nash-session-bubble li {
+  margin-bottom: 4px;
+}
+
+.nash-session .nash-session-bubble code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--ink-08, #f4f4f6);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
 .nash-session .nash-session-msg.user .nash-session-bubble {
   background: var(--ink-08, #f4f4f6);
   border-radius: 16px 16px 4px;
