@@ -42,15 +42,49 @@ function read() {
   }
 }
 
+/* Decode a JWT payload (id_token) to read OIDC claims like name/email. */
+function decodeJwt(jwt) {
+  try {
+    const part = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = part.length % 4 ? '='.repeat(4 - (part.length % 4)) : '';
+    const bytes = Uint8Array.from(atob(part + pad), (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
+
 function store(data) {
   const prev = read() || {};
+  const claims = data.id_token ? decodeJwt(data.id_token) : null;
   const payload = {
     accessToken: data.access_token,
     refreshToken: data.refresh_token || prev.refreshToken || null,
     expires: Date.now() + ((data.expires_in || 3600) - 60) * 1000,
+    // Identity from the id_token; preserve previous values if a refresh omits it.
+    name: (claims && claims.name) || prev.name || null,
+    email: (claims && (claims.email || claims.preferred_username)) || prev.email || null,
   };
   localStorage.setItem(TOKEN_KEY, JSON.stringify(payload));
   document.dispatchEvent(new CustomEvent('nash:auth-changed', { bubbles: true }));
+}
+
+/* Initials for the avatar — from the name, else the email local-part. */
+function initialsFrom(name, email) {
+  const src = (name || email || '').trim();
+  if (!src) return '?';
+  const parts = src.replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return src.slice(0, 2).toUpperCase();
+}
+
+/** Returns the signed-in user's display info, or null if not logged in. */
+export function getUserInfo() {
+  const a = read();
+  if (!a || !a.accessToken) return null;
+  const email = a.email || null;
+  const name = a.name || (email ? email.split('@')[0] : 'Signed in');
+  return { name, email, initials: initialsFrom(a.name, email) };
 }
 
 /** True when a non-expired FluffyJaws token is present. */

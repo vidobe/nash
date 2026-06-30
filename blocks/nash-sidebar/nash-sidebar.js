@@ -1,6 +1,7 @@
 /* eslint-disable no-use-before-define */
 
 import { listAssessments, deleteAssessment } from '../../scripts/nash-assessments.js';
+import { getUserInfo } from '../../scripts/nash-auth.js';
 
 const NAV = [
   {
@@ -100,6 +101,7 @@ function badge(item, countEl) {
 }
 
 function renderNav(block, reportCount) {
+  const u = getUserInfo() || { name: 'Signed in', email: '', initials: '?' };
   const sectionsHtml = NAV.map((section) => `
     <div class="nash-sidebar-section">
       ${section.label ? `<span class="nash-sidebar-label">${section.label}</span>` : ''}
@@ -146,10 +148,10 @@ function renderNav(block, reportCount) {
         </button>
       </div>
       <div class="nash-sidebar-user" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
-        <div class="nash-sidebar-user-av" aria-hidden="true">VG</div>
+        <div class="nash-sidebar-user-av" aria-hidden="true">${esc(u.initials)}</div>
         <div>
-          <div class="nash-sidebar-user-name">Vitor</div>
-          <div class="nash-sidebar-user-email">vgabriel@adobe.com</div>
+          <div class="nash-sidebar-user-name">${esc(u.name)}</div>
+          <div class="nash-sidebar-user-email">${esc(u.email)}</div>
         </div>
       </div>
     </div>
