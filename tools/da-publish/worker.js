@@ -113,7 +113,9 @@ export default {
       const slug = String(p.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80);
       if (!slug) return json({ error: 'Missing or invalid slug.' }, 400, cors);
 
-      const html = buildPage({ ...p, user });
+      // The client sends the full DA document (built by scripts/da-doc.js). Fall
+      // back to buildPage only if a legacy bodyHtml payload arrives.
+      const html = p.html || buildPage({ ...p, user });
       const token = await serviceToken(env);
       const org = env.ORG;
       const repo = env.REPO;

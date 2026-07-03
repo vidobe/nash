@@ -547,7 +547,7 @@ async function publishCurrent(block, trigger) {
   trigger.textContent = 'Publishing…';
   block.querySelector('.nash-session-publish-error')?.remove();
   try {
-    const res = await publishAssessment(current, reportHtmlForPublish(current));
+    const res = await publishAssessment(current, reportHtmlForPublish(current), getUserInfo()?.email || '');
     current.publishedUrl = res.url;
     persist(current);
     renderBelowBar(block);

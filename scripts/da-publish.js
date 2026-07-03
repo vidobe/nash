@@ -7,19 +7,13 @@
  */
 
 import { ensureFreshToken } from './nash-auth.js';
+import { buildDaDocument, slugify } from './da-doc.js';
 
 // TODO: set to your deployed Worker URL, e.g.
 // 'https://nash-da-publish.example.workers.dev'
 const WORKER_URL = '';
 
-/** kebab-case slug from a company name, safe for a DA path. */
-export function slugify(name) {
-  return String(name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'assessment';
-}
+export { slugify };
 
 /** True when a publish endpoint has been configured. */
 export function isPublishConfigured() {
@@ -27,30 +21,36 @@ export function isPublishConfigured() {
 }
 
 /**
+ * Builds the full DA document for an assessment (without writing it). Exposed so
+ * the doc can be generated/previewed independently of publishing.
+ * @param {object} a the assessment
+ * @param {string} bodyHtml the rendered report body
+ * @param {string} [user] author email for the `user` metadata
+ * @returns {{ slug:string, html:string }}
+ */
+export function buildAssessmentDoc(a, bodyHtml, user = '') {
+  return { slug: slugify(a.company), html: buildDaDocument(a, bodyHtml, user) };
+}
+
+/**
  * Publishes an assessment to DA via the Worker.
- * @param {object} a the assessment ({ company, dr, score, cms, verdict })
+ * @param {object} a the assessment
  * @param {string} bodyHtml the rendered report HTML for the page body
+ * @param {string} [user] the author email, for the `user` metadata
  * @returns {Promise<{path:string, url:string, previewUrl:string}>}
  */
-export async function publishAssessment(a, bodyHtml) {
+export async function publishAssessment(a, bodyHtml, user = '') {
   if (!isPublishConfigured()) {
     throw new Error('Publishing isn’t set up yet — deploy the Worker in tools/da-publish/ and set WORKER_URL in scripts/da-publish.js.');
   }
   const token = await ensureFreshToken();
   if (!token) throw new Error('Sign in to Nash before publishing.');
 
+  const { slug, html } = buildAssessmentDoc(a, bodyHtml, user);
   const res = await fetch(`${WORKER_URL}/publish`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      slug: slugify(a.company),
-      title: a.company,
-      description: a.dr || a.company,
-      score: a.score ?? '',
-      cms: a.cms || 'n/a',
-      verdict: a.verdict || '',
-      bodyHtml,
-    }),
+    body: JSON.stringify({ slug, html }),
   });
 
   if (!res.ok) {
