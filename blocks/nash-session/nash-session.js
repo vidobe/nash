@@ -4,8 +4,9 @@ import { streamQualification } from '../../scripts/fluffyjaws.js';
 import {
   saveAssessment, getAssessment, newAssessmentId,
 } from '../../scripts/nash-assessments.js';
-import { isAuthenticated, login } from '../../scripts/nash-auth.js';
+import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js';
 import { publishAssessment } from '../../scripts/da-publish.js';
+import { renderOppPanel, wireOppPanel } from '../../scripts/nash-opp.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -813,13 +814,7 @@ function renderAssessment(block, a) {
           </div>
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="opp">
-          <div class="nash-session-comingsoon">
-            ${ICONS.briefcase}
-            <h2>Opportunity management</h2>
-            <p>Coming soon — track this deal’s stage, stakeholders, and next steps here.</p>
-          </div>
-        </div>
+        <div class="nash-session-panel" data-panel="opp">${renderOppPanel(a, getUserInfo()?.name || '')}</div>
       </div>
     </div>
   `;
@@ -829,6 +824,7 @@ function renderAssessment(block, a) {
   });
   wireDaPanel(block);
   renderBelowBar(block);
+  wireOppPanel(block, current, (data) => { current.opp = data; persist(current); }, getUserInfo()?.name || '');
 
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
