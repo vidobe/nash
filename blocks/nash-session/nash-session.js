@@ -519,8 +519,7 @@ ${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it
 }
 
 function setStatusDone(block) {
-  const badge = block.querySelector('.nash-session-assess-status');
-  if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
+  current.status = 'done';
   renderBelowBar(block);
   renderDaPanelContent(block);
 }
@@ -786,7 +785,6 @@ function renderAssessment(block, a) {
           <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
-        <span class="nash-session-assess-status ${a.status}">${a.status}</span>
       </div>
       <div class="nash-session-tabs" role="tablist">
         ${TABS.map((t, i) => `
@@ -804,12 +802,15 @@ function renderAssessment(block, a) {
           </div>
           <form class="nash-session-composer" autocomplete="off">
             <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
-            <div class="nash-session-toolbar">
-              <button type="button" class="nash-session-icon-btn" aria-label="Add documents">${ICONS.plusadd}</button>
-              <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
-            </div>
+            <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
           </form>
-          <div class="nash-session-belowbar"></div>
+          <div class="nash-session-footer">
+            <div class="nash-session-footer-left">
+              <button type="button" class="nash-session-footer-btn" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
+              <div class="nash-session-belowbar"></div>
+            </div>
+            <span class="nash-session-model">FluffyJaws</span>
+          </div>
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">

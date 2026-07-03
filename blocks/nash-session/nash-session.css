@@ -386,7 +386,7 @@
 /* ── Assessment view ─────────────────────────────────── */
 
 .nash-session.wide {
-  max-width: 900px;
+  max-width: 1160px;
 }
 
 .nash-session .nash-session-assess {
@@ -467,13 +467,12 @@
   padding-bottom: 16px;
 }
 
-/* ── Below the chat bar: Publish to DA ── */
+/* ── Publish to DA (lives in the composer footer) ── */
 .nash-session .nash-session-belowbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 20px;
+  gap: 8px;
 }
 
 .nash-session .nash-session-belowbar:empty {
@@ -600,23 +599,6 @@
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
   color: var(--ink-40, #9a9da6);
-}
-
-.nash-session .nash-session-assess-status {
-  flex-shrink: 0;
-  padding: 4px 11px;
-  border-radius: 20px;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
-  background: var(--ink-08, #f4f4f6);
-  color: var(--ink-70, #4a4d55);
-}
-
-.nash-session .nash-session-assess-status.draft {
-  background: var(--amber-lt, #fef3c7);
-  color: var(--amber, #b45309);
 }
 
 /* stylelint-disable-next-line no-descending-specificity */
@@ -785,11 +767,12 @@
 
 .nash-session .nash-session-composer {
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
   flex-shrink: 0;
   width: 100%;
-  padding: 12px 12px 8px;
-  margin: 12px 0 24px;
+  padding: 8px 8px 8px 16px;
+  margin-top: 12px;
   background: var(--white, #fff);
   border: 1px solid var(--ink-15, #e8e9ec);
   border-radius: 18px;
@@ -803,11 +786,12 @@
 }
 
 .nash-session .nash-session-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   resize: none;
-  padding: 6px 8px;
+  padding: 8px 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 15.5px;
   line-height: 1.5;
@@ -821,34 +805,66 @@
   color: var(--ink-40, #9a9da6);
 }
 
-.nash-session .nash-session-toolbar {
+/* Claude-style footer row below the input: controls left, model right. */
+.nash-session .nash-session-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 8px 6px 20px;
 }
 
-.nash-session .nash-session-icon-btn {
+.nash-session .nash-session-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nash-session .nash-session-footer-btn {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 9px;
+  border-radius: 8px;
   background: none;
   color: var(--ink-40, #9a9da6);
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.nash-session .nash-session-icon-btn:hover {
+.nash-session .nash-session-footer-btn:hover {
   background: var(--ink-08, #f4f4f6);
   color: var(--ink-70, #4a4d55);
 }
 
-.nash-session .nash-session-icon-btn svg {
+.nash-session .nash-session-footer-btn svg {
   width: 18px;
   height: 18px;
+}
+
+.nash-session .nash-session-model {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Publish button in the footer reads like Claude's "Accept edits". */
+.nash-session .nash-session-footer-left .nash-session-publish {
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  color: var(--ink-70, #4a4d55);
+  border-radius: 8px;
+}
+
+.nash-session .nash-session-footer-left .nash-session-publish:hover {
+  border: none;
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
 }
 
 .nash-session .nash-session-send {
