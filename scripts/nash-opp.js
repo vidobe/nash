@@ -195,31 +195,19 @@ function viewFieldsHtml(viewId, opp) {
   }</div>`;
 }
 
-function statusSelect(tp) {
-  const opts = TP_STATUS.map((o) => `<option value="${o}"${o === tp.status ? ' selected' : ''}>${o}</option>`).join('');
-  return `<select class="nash-session-opp-select nash-opp-tp-status" data-tp-field="status" data-tone="${toneFor(tp.status)}">${opts}</select>`;
+function statusOptions(status) {
+  return TP_STATUS.map((o) => `<option value="${o}"${o === status ? ' selected' : ''}>${o}</option>`).join('');
 }
 
-function touchpointCard(tp) {
+/* A saved touchpoint shown on the main screen as a compact icon tile. */
+function tileHtml(tp) {
   const meta = typeMeta(tp.type);
-  return `<div class="nash-opp-tp" data-tp-id="${esc(tp.id)}">
-    <div class="nash-opp-tp-head">
-      <span class="nash-opp-tp-icon">${ICON[meta.icon] || ICON.clipboard}</span>
-      <input class="nash-opp-tp-name" data-tp-field="name" value="${esc(tp.name)}" aria-label="Touchpoint name">
-      ${statusSelect(tp)}
-      <button type="button" class="nash-opp-tp-remove" aria-label="Remove touchpoint">${ICON.close}</button>
-    </div>
-    <div class="nash-opp-tp-type">${esc(meta.label)}</div>
-    <textarea class="nash-session-opp-textarea nash-opp-tp-comments" data-tp-field="comments" rows="2" placeholder="Solution comments…">${esc(tp.comments || '')}</textarea>
-    <div class="nash-opp-tp-row">
-      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Date</span>
-        <input type="date" class="nash-session-opp-input" data-tp-field="date" value="${esc(tp.date || '')}"></label>
-      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Assignments</span>
-        <input type="text" class="nash-session-opp-input" data-tp-field="assignments" value="${esc(tp.assignments || '')}"></label>
-      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Links</span>
-        <input type="text" class="nash-session-opp-input" data-tp-field="links" value="${esc(tp.links || '')}"></label>
-    </div>
-  </div>`;
+  return `<button type="button" class="nash-opp-tptile" data-tp-id="${esc(tp.id)}" data-tone="${toneFor(tp.status)}">
+    <span class="nash-opp-tptile-remove" data-remove aria-label="Remove">${ICON.close}</span>
+    <span class="nash-opp-tptile-icon">${ICON[meta.icon] || ICON.clipboard}</span>
+    <span class="nash-opp-tptile-name">${esc(tp.name || meta.label)}</span>
+    <span class="nash-opp-tptile-status">${esc(tp.status || '')}</span>
+  </button>`;
 }
 
 function touchpointsAreaHtml(touchpoints) {
@@ -229,8 +217,35 @@ function touchpointsAreaHtml(touchpoints) {
       <p>No touchpoints yet.<br>Add the engagement touchpoints for this opportunity.</p>
     </div>`;
   }
-  return `<div class="nash-opp-tplist">${touchpoints.map(touchpointCard).join('')}</div>
-    <button type="button" class="nash-opp-addmore">${ICON.plus} Add touchpoints</button>`;
+  return `<div class="nash-opp-tpgrid">
+    ${touchpoints.map(tileHtml).join('')}
+    <button type="button" class="nash-opp-tptile nash-opp-tptile-add" aria-label="Add touchpoints">
+      <span class="nash-opp-tptile-icon">${ICON.plus}</span>
+      <span class="nash-opp-tptile-name">Add</span>
+    </button>
+  </div>`;
+}
+
+/* One touchpoint's editable detail block — shown inside the modal. */
+function detailHtml(meta, tp = {}) {
+  const idAttr = tp.id ? ` data-tp-id="${esc(tp.id)}"` : '';
+  const status = tp.status || 'New';
+  return `<div class="nash-opp-detail" data-type="${meta.type}"${idAttr}>
+    <div class="nash-opp-detail-head">
+      <span class="nash-opp-detail-icon">${ICON[meta.icon] || ICON.clipboard}</span>
+      <input class="nash-opp-detail-name" data-detail-field="name" value="${esc(tp.name || meta.label)}" aria-label="Touchpoint name">
+      <select class="nash-session-opp-select nash-opp-detail-status" data-detail-field="status" data-tone="${toneFor(status)}">${statusOptions(status)}</select>
+    </div>
+    <textarea class="nash-session-opp-textarea" data-detail-field="comments" rows="2" placeholder="Solution comments…">${esc(tp.comments || '')}</textarea>
+    <div class="nash-opp-detail-row">
+      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Date</span>
+        <input type="date" class="nash-session-opp-input" data-detail-field="date" value="${esc(tp.date || '')}"></label>
+      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Assignments</span>
+        <input type="text" class="nash-session-opp-input" data-detail-field="assignments" value="${esc(tp.assignments || '')}"></label>
+      <label class="nash-session-opp-field"><span class="nash-session-opp-label">Links</span>
+        <input type="text" class="nash-session-opp-input" data-detail-field="links" value="${esc(tp.links || '')}"></label>
+    </div>
+  </div>`;
 }
 
 function modalHtml() {
@@ -239,17 +254,18 @@ function modalHtml() {
       <span class="nash-opp-typecard-icon">${ICON[t.icon]}</span>
       <span>${esc(t.label)}</span>
     </button>`).join('');
-  return `<div class="nash-opp-modal" hidden>
-    <div class="nash-opp-modal-card" role="dialog" aria-modal="true" aria-label="Add touchpoints">
+  return `<div class="nash-opp-modal" hidden data-mode="add">
+    <div class="nash-opp-modal-card" role="dialog" aria-modal="true" aria-label="Touchpoints">
       <div class="nash-opp-modal-head">
-        <h3>Add touchpoints</h3>
+        <h3 class="nash-opp-modal-title">Add touchpoints</h3>
         <button type="button" class="nash-opp-modal-close" aria-label="Close">${ICON.close}</button>
       </div>
-      <p class="nash-opp-modal-sub">Choose one or more — each becomes a row you can fill in.</p>
+      <p class="nash-opp-modal-sub">Choose one or more types, then fill in the details below.</p>
       <div class="nash-opp-typegrid">${cards}</div>
+      <div class="nash-opp-details"></div>
       <div class="nash-opp-modal-foot">
         <button type="button" class="nash-opp-modal-cancel">Cancel</button>
-        <button type="button" class="nash-opp-modal-add" disabled>Add</button>
+        <button type="button" class="nash-opp-modal-add" disabled>Save</button>
       </div>
     </div>
   </div>`;
@@ -352,73 +368,106 @@ export function wireOppPanel(block, a, onSave, userName = '') {
   });
 
   // ── Touchpoints ──
-  const renderTp = () => {
-    tparea.innerHTML = touchpointsAreaHtml(touchpoints);
-    tparea.querySelectorAll('.nash-session-opp-textarea').forEach(grow);
+  const details = modal.querySelector('.nash-opp-details');
+  const modalTitle = modal.querySelector('.nash-opp-modal-title');
+  const modalAdd = modal.querySelector('.nash-opp-modal-add');
+  let editingId = null;
+
+  const renderTp = () => { tparea.innerHTML = touchpointsAreaHtml(touchpoints); };
+  const growModal = () => details.querySelectorAll('.nash-session-opp-textarea').forEach(grow);
+  const refreshAddState = () => {
+    if (modal.dataset.mode === 'add') modalAdd.disabled = !details.querySelector('.nash-opp-detail');
   };
-  const openModal = () => {
-    modal.querySelectorAll('.nash-opp-typecard').forEach((c) => c.classList.remove('selected'));
-    modal.querySelector('.nash-opp-modal-add').disabled = true;
-    modal.hidden = false;
-  };
+  const newId = () => `tp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   const closeModal = () => { modal.hidden = true; };
 
+  const openAdd = () => {
+    editingId = null;
+    modal.dataset.mode = 'add';
+    modalTitle.textContent = 'Add touchpoints';
+    modal.querySelectorAll('.nash-opp-typecard').forEach((c) => c.classList.remove('selected'));
+    details.innerHTML = '';
+    modalAdd.disabled = true;
+    modal.hidden = false;
+  };
+  const openEdit = (tp) => {
+    editingId = tp.id;
+    modal.dataset.mode = 'edit';
+    modalTitle.textContent = 'Edit touchpoint';
+    details.innerHTML = detailHtml(typeMeta(tp.type), tp);
+    modalAdd.disabled = false;
+    modal.hidden = false;
+    growModal();
+  };
+
+  const collectDetail = (b) => {
+    const d = { type: b.dataset.type };
+    b.querySelectorAll('[data-detail-field]').forEach((el) => { d[el.dataset.detailField] = el.value; });
+    return d;
+  };
+
   tparea.addEventListener('click', (e) => {
-    if (e.target.closest('.nash-opp-addbig, .nash-opp-addmore')) { openModal(); return; }
-    const rm = e.target.closest('.nash-opp-tp-remove');
+    if (e.target.closest('.nash-opp-addbig, .nash-opp-tptile-add')) { openAdd(); return; }
+    const rm = e.target.closest('[data-remove]');
     if (rm) {
-      const id = rm.closest('.nash-opp-tp').dataset.tpId;
+      e.stopPropagation();
+      const id = rm.closest('.nash-opp-tptile').dataset.tpId;
       const idx = touchpoints.findIndex((t) => t.id === id);
       if (idx > -1) { touchpoints.splice(idx, 1); renderTp(); save(); }
+      return;
+    }
+    const tile = e.target.closest('.nash-opp-tptile');
+    if (tile && tile.dataset.tpId) {
+      const tp = touchpoints.find((t) => t.id === tile.dataset.tpId);
+      if (tp) openEdit(tp);
     }
   });
-  tparea.addEventListener('input', (e) => {
-    const card = e.target.closest('.nash-opp-tp');
-    const field = e.target.dataset.tpField;
-    if (!card || !field) return;
-    if (e.target.matches('.nash-session-opp-textarea')) grow(e.target);
-    const tp = touchpoints.find((t) => t.id === card.dataset.tpId);
-    if (tp) { tp[field] = e.target.value; save(); }
-  });
-  tparea.addEventListener('change', (e) => {
-    const card = e.target.closest('.nash-opp-tp');
-    const field = e.target.dataset.tpField;
-    if (!card || !field) return;
-    if (e.target.matches('.nash-opp-tp-status')) e.target.dataset.tone = toneFor(e.target.value);
-    const tp = touchpoints.find((t) => t.id === card.dataset.tpId);
-    if (tp) { tp[field] = e.target.value; save(); }
-  });
 
-  // Modal interactions.
   modal.addEventListener('click', (e) => {
     if (e.target === modal || e.target.closest('.nash-opp-modal-close, .nash-opp-modal-cancel')) {
       closeModal();
       return;
     }
+    // Toggle a type (add mode) → show/hide its detail block.
     const card = e.target.closest('.nash-opp-typecard');
-    if (card) {
+    if (card && modal.dataset.mode === 'add') {
+      const { type } = card.dataset;
       card.classList.toggle('selected');
-      modal.querySelector('.nash-opp-modal-add').disabled = !modal.querySelector('.nash-opp-typecard.selected');
+      const existing = details.querySelector(`.nash-opp-detail[data-type="${type}"]`);
+      if (card.classList.contains('selected') && !existing) {
+        details.insertAdjacentHTML('beforeend', detailHtml(typeMeta(type)));
+        growModal();
+      } else if (existing) {
+        existing.remove();
+      }
+      refreshAddState();
+      return;
     }
+    // Save.
     if (e.target.closest('.nash-opp-modal-add')) {
-      modal.querySelectorAll('.nash-opp-typecard.selected').forEach((c) => {
-        const meta = typeMeta(c.dataset.type);
-        touchpoints.push({
-          id: `tp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-          type: c.dataset.type,
-          name: meta.label,
-          status: 'New',
-          comments: '',
-          date: '',
-          assignments: '',
-          links: '',
+      if (modal.dataset.mode === 'edit') {
+        const b = details.querySelector('.nash-opp-detail');
+        const tp = touchpoints.find((t) => t.id === editingId);
+        if (tp && b) Object.assign(tp, collectDetail(b));
+      } else {
+        details.querySelectorAll('.nash-opp-detail').forEach((b) => {
+          touchpoints.push({
+            id: newId(), status: 'New', comments: '', date: '', assignments: '', links: '', ...collectDetail(b),
+          });
         });
-      });
+      }
       closeModal();
       renderTp();
       save();
     }
   });
+
+  // Detail-block interactions inside the modal.
+  modal.addEventListener('input', (e) => { if (e.target.matches('.nash-session-opp-textarea')) grow(e.target); });
+  modal.addEventListener('change', (e) => {
+    if (e.target.matches('.nash-opp-detail-status')) e.target.dataset.tone = toneFor(e.target.value);
+  });
+
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
 
   growAll();
