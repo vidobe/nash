@@ -516,3 +516,133 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Sectioned side-nav layout ───────────────────────────────────────────── */
+.nash-qual-layout {
+  display: flex;
+  gap: 36px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 40px 56px;
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+.nash-qual-nav {
+  position: sticky;
+  top: 16px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 190px;
+}
+
+.nash-qual-tab {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.nash-qual-tab svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nash-qual-tab:hover {
+  background: var(--ink-04, #fafafb);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-qual-tab.active {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-qual-panels {
+  flex: 1;
+  min-width: 0;
+}
+
+.nash-qual-panel {
+  display: none;
+}
+
+.nash-qual-panel.active {
+  display: block;
+}
+
+.nash-qual-panel-title {
+  margin: 0 0 20px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink, #111318);
+}
+
+.nash-qual-panel .nash-qual-scorecard {
+  padding: 0;
+  margin: 0 0 30px;
+  max-width: none;
+}
+
+/* Panel body content (moved out of .default-content-wrapper) */
+/* stylelint-disable no-descending-specificity */
+.nash-qual-panel-body h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  margin: 22px 0 8px;
+}
+
+.nash-qual-panel-body p {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+.nash-qual-panel-body ul,
+.nash-qual-panel-body ol {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+
+.nash-qual-panel-body li {
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  line-height: 1.65;
+  margin-bottom: 6px;
+}
+
+.nash-qual-panel-body strong {
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+/* stylelint-enable no-descending-specificity */
+
+@media (width < 800px) {
+  .nash-qual-layout {
+    flex-direction: column;
+    padding: 8px 20px 48px;
+  }
+
+  .nash-qual-nav {
+    position: static;
+    flex-flow: row wrap;
+    width: 100%;
+  }
+}

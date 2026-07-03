@@ -499,9 +499,13 @@ Guidance:
 
 ${docLine}
 
-Begin your response with ONE machine-readable line in EXACTLY this format (the tool parses it and strips it from display):
+Begin your response with these machine-readable lines EXACTLY in this format (the tool parses them and strips them from display):
 NASH_META: score=<integer 0-100> | verdict=<Go|Conditional-Go|No-go> | cms=<detected current platform or n/a>
-Then continue with the dossier.
+NASH_DIMS:
+<dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
+<dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
+NASH_DIMS_END
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). The weighted scores must sum to the overall score. Then continue with the dossier.
 
 Produce the report in markdown with exactly these sections:
 # 1. Executive Overview
@@ -612,11 +616,32 @@ function renderDaPanelContent(block) {
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
 function parseMeta(text) {
   const m = text.match(/NASH_META:\s*score=(\d+)\s*\|\s*verdict=([^|]+?)\s*\|\s*cms=([^\n]*)/i);
-  if (!m) return { meta: null, body: text };
-  return {
-    meta: { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() },
-    body: text.replace(/NASH_META:[^\n]*\n?/i, '').trimStart(),
-  };
+  if (!m) return { meta: null, body: text, dimensions: [] };
+  const meta = { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() };
+
+  // Optional structured scorecard between NASH_DIMS: and NASH_DIMS_END.
+  const dimensions = [];
+  const block = text.match(/NASH_DIMS:\s*([\s\S]*?)NASH_DIMS_END/i);
+  if (block) {
+    block[1].split('\n').forEach((line) => {
+      const parts = line.split('|').map((p) => p.trim());
+      if (parts.length >= 4 && parts[0]) {
+        dimensions.push({
+          dimension: parts[0],
+          weight: /%/.test(parts[1]) ? parts[1] : `${parts[1]}%`,
+          scored: parseInt(parts[2], 10) || 0,
+          max: parseInt(parts[3], 10) || 0,
+          notes: parts[4] || '',
+        });
+      }
+    });
+  }
+
+  const body = text
+    .replace(/NASH_META:[^\n]*\n?/i, '')
+    .replace(/NASH_DIMS:[\s\S]*?NASH_DIMS_END\n?/i, '')
+    .trimStart();
+  return { meta, body, dimensions };
 }
 
 /* Renders a completed dossier: score/verdict header + markdown body. */
@@ -744,8 +769,9 @@ async function runAssessment(block, attempt = 1) {
           : `The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try again.`);
         return;
       }
-      const { meta, body } = parseMeta(answer);
+      const { meta, body, dimensions } = parseMeta(answer);
       current.reportMarkdown = body;
+      if (dimensions.length) current.dimensions = dimensions;
       if (meta) {
         current.score = meta.score;
         current.verdict = meta.verdict;

@@ -88,6 +88,89 @@ function dimCardHTML(d) {
     </div>`;
 }
 
+const TAB_ICONS = {
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  briefcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  cpu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+};
+
+/* Short label + icon for a section, matched from its heading text. */
+function tabMeta(title) {
+  const t = title.toLowerCase();
+  if (/executive|overview/.test(t)) return { label: 'Overview', icon: 'grid' };
+  if (/market|competitor|financial|intelligence/.test(t)) return { label: 'Market', icon: 'chart' };
+  if (/business/.test(t)) return { label: 'Business', icon: 'briefcase' };
+  if (/technical|architect|tech/.test(t)) return { label: 'Tech Fit', icon: 'cpu' };
+  if (/qualification|discovery|question/.test(t)) return { label: 'Discovery', icon: 'search' };
+  if (/competitive|win|position/.test(t)) return { label: 'Competition', icon: 'target' };
+  if (/recommendation|scope|final|verdict/.test(t)) return { label: 'Recommendation', icon: 'flag' };
+  return { label: title.replace(/^\d+\.\s*/, ''), icon: 'doc' };
+}
+
+/* Group the report body (siblings after the block's section) into H2 sections. */
+function collectSections(blockSection) {
+  const sections = [];
+  let current = null;
+  let sib = blockSection.nextElementSibling;
+  const nodes = [];
+  while (sib) {
+    const wraps = sib.querySelectorAll(':scope > .default-content-wrapper');
+    if (wraps.length) wraps.forEach((w) => nodes.push(...w.children));
+    else nodes.push(...sib.children);
+    sib = sib.nextElementSibling;
+  }
+  nodes.forEach((node) => {
+    if (node.tagName === 'H2') {
+      current = { title: node.textContent.trim(), el: document.createElement('div') };
+      current.el.className = 'nash-qual-panel-body';
+      sections.push(current);
+    } else if (current) {
+      current.el.appendChild(node);
+    }
+  });
+  return sections;
+}
+
+/* Build the side-nav + panels layout and attach it to the block. */
+function buildTabs(block, sections, scorecardHTML) {
+  if (!sections.length) return;
+  if (scorecardHTML) {
+    const sc = document.createElement('div');
+    sc.innerHTML = scorecardHTML;
+    if (sc.firstElementChild) sections[0].el.prepend(sc.firstElementChild);
+  }
+  const layout = document.createElement('div');
+  layout.className = 'nash-qual-layout';
+  const nav = sections.map((s, i) => {
+    const { label, icon } = tabMeta(s.title);
+    return `<button type="button" class="nash-qual-tab${i === 0 ? ' active' : ''}" data-idx="${i}" title="${s.title}">${TAB_ICONS[icon]}<span>${label}</span></button>`;
+  }).join('');
+  layout.innerHTML = `<nav class="nash-qual-nav">${nav}</nav><div class="nash-qual-panels"></div>`;
+  const panels = layout.querySelector('.nash-qual-panels');
+  sections.forEach((s, i) => {
+    const panel = document.createElement('div');
+    panel.className = `nash-qual-panel${i === 0 ? ' active' : ''}`;
+    panel.dataset.idx = String(i);
+    const h = document.createElement('h2');
+    h.className = 'nash-qual-panel-title';
+    h.textContent = s.title;
+    panel.append(h, s.el);
+    panels.append(panel);
+  });
+  block.append(layout);
+  layout.querySelectorAll('.nash-qual-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      layout.querySelectorAll('.nash-qual-tab').forEach((b) => b.classList.toggle('active', b === tab));
+      panels.querySelectorAll('.nash-qual-panel').forEach((p) => p.classList.toggle('active', p.dataset.idx === tab.dataset.idx));
+    });
+  });
+}
+
 export default async function decorate(block) {
   const rows = [...block.querySelectorAll(':scope > div')];
   if (!rows.length) return;
@@ -179,11 +262,17 @@ export default async function decorate(block) {
         <div class="nash-qual-verdict nash-qual-verdict--${verdictColour}">${verdict}</div>
       </div>
     </div>
-    ${scorecardHTML}
   `;
 
   const main = block.closest('main');
   if (main) main.classList.add('nash-qual-page');
+
+  // Group the report body into H2 sections, then build the side-nav + panels.
+  const blockSection = block.closest('.section') || block.parentElement;
+  const sections = collectSections(blockSection);
+  let sib = blockSection.nextElementSibling;
+  while (sib) { const next = sib.nextElementSibling; sib.remove(); sib = next; }
+  buildTabs(block, sections, scorecardHTML);
 
   requestAnimationFrame(() => {
     enhanceBodyContent(main);
