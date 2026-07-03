@@ -396,12 +396,164 @@
   padding-top: 24px;
 }
 
+/* ── Tabs (Assessment / DA content / Opp management) ── */
+.nash-session .nash-session-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 6px 0 16px;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  margin-bottom: -1px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.nash-session .nash-session-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nash-session .nash-session-tab:hover {
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-tab.active {
+  color: var(--ink, #111318);
+  border-bottom-color: var(--red, #eb1000);
+}
+
+/* ── Panels ── */
+.nash-session .nash-session-panels {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.nash-session .nash-session-panel {
+  display: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.nash-session .nash-session-panel.active {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nash-session .nash-session-panel[data-panel='da'].active,
+.nash-session .nash-session-panel[data-panel='opp'].active {
+  overflow-y: auto;
+}
+
 /* Single scrollable column: report at top, conversation below it. */
 .nash-session .nash-session-assess-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding-bottom: 16px;
+}
+
+/* ── Below the chat bar: Publish to DA ── */
+.nash-session .nash-session-belowbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.nash-session .nash-session-belowbar:empty {
+  display: none;
+}
+
+.nash-session .nash-session-publish.subtle {
+  border: none;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  padding: 6px;
+}
+
+.nash-session .nash-session-publish.subtle:hover {
+  color: var(--ink, #111318);
+  background: none;
+}
+
+/* ── DA content tab ── */
+.nash-session .nash-session-da {
+  padding-bottom: 24px;
+}
+
+.nash-session .nash-session-da-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 4px 0 22px;
+  background: var(--ink-04, #fafafb);
+  border: 1px solid var(--ink-08, #f4f4f6);
+  border-radius: 10px;
+}
+
+.nash-session .nash-session-da-link {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--red, #eb1000);
+  text-decoration: none;
+}
+
+/* ── Placeholder panels (Opp management, unpublished DA) ── */
+.nash-session .nash-session-comingsoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: auto;
+  max-width: 420px;
+  padding: 56px 20px;
+  text-align: center;
+}
+
+.nash-session .nash-session-comingsoon svg {
+  width: 38px;
+  height: 38px;
+  color: var(--ink-15, #e8e9ec);
+}
+
+.nash-session .nash-session-comingsoon h2 {
+  margin: 0;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-comingsoon p {
+  margin: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-comingsoon .nash-session-publish {
+  margin-top: 6px;
 }
 
 .nash-session .nash-session-back {
@@ -467,15 +619,7 @@
   color: var(--amber, #b45309);
 }
 
-.nash-session .nash-session-assess-actions {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
+/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-publish {
   padding: 6px 14px;
   border: 1px solid var(--border, #e5e6ea);

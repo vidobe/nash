@@ -24,7 +24,17 @@ const ICONS = {
   close: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
   upload: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
   doc: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
+  briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
+
+const TABS = [
+  { tab: 'assessment', icon: 'clipboard', label: 'Assessment' },
+  { tab: 'da', icon: 'cloud', label: 'DA content' },
+  { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
+];
 
 const LAUNCH = [
   {
@@ -511,7 +521,8 @@ ${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it
 function setStatusDone(block) {
   const badge = block.querySelector('.nash-session-assess-status');
   if (badge) { badge.textContent = 'done'; badge.className = 'nash-session-assess-status done'; }
-  wirePublish(block);
+  renderBelowBar(block);
+  renderDaPanelContent(block);
 }
 
 /* Rendered report HTML for the published DA page body. */
@@ -529,38 +540,73 @@ function reportHtmlForPublish(a) {
   return header + body;
 }
 
-/* Reveals and wires the "Publish to DA" button once a report exists. */
-function wirePublish(block) {
-  const btn = block.querySelector('.nash-session-publish');
-  if (!btn || btn.dataset.wired) return;
-  if (!current || !(current.reportMarkdown || current.report)) return;
-  btn.hidden = false;
-  btn.dataset.wired = '1';
-  btn.addEventListener('click', async () => {
-    const original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Publishing…';
-    block.querySelector('.nash-session-publish-error')?.remove();
-    try {
-      const res = await publishAssessment(current, reportHtmlForPublish(current));
-      current.publishedUrl = res.url;
-      persist(current);
-      const link = document.createElement('a');
-      link.className = 'nash-session-published';
-      link.href = res.url;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      link.textContent = 'Published ↗';
-      btn.replaceWith(link);
-    } catch (e) {
-      btn.disabled = false;
-      btn.textContent = original;
-      const note = document.createElement('p');
-      note.className = 'nash-session-publish-error';
-      note.textContent = e.message;
-      btn.parentElement.appendChild(note);
-    }
-  });
+/* Shared publish action — drives the below-bar button and the DA-tab button. */
+async function publishCurrent(block, trigger) {
+  const original = trigger.textContent;
+  trigger.disabled = true;
+  trigger.textContent = 'Publishing…';
+  block.querySelector('.nash-session-publish-error')?.remove();
+  try {
+    const res = await publishAssessment(current, reportHtmlForPublish(current));
+    current.publishedUrl = res.url;
+    persist(current);
+    renderBelowBar(block);
+    renderDaPanelContent(block);
+  } catch (e) {
+    trigger.disabled = false;
+    trigger.textContent = original;
+    const note = document.createElement('p');
+    note.className = 'nash-session-publish-error';
+    note.textContent = e.message;
+    trigger.parentElement.appendChild(note);
+  }
+}
+
+/* The area below the chat bar: Publish to DA (or the published link + re-publish). */
+function renderBelowBar(block) {
+  const el = block.querySelector('.nash-session-belowbar');
+  if (!el || !current) return;
+  if (!(current.reportMarkdown || current.report)) { el.innerHTML = ''; return; }
+  if (current.publishedUrl) {
+    el.innerHTML = `<a class="nash-session-published" href="${escapeHtml(current.publishedUrl)}" target="_blank" rel="noopener">Published to DA ↗</a>
+      <button type="button" class="nash-session-publish subtle">Re-publish</button>`;
+  } else {
+    el.innerHTML = '<button type="button" class="nash-session-publish">Publish to DA</button>';
+  }
+  el.querySelector('.nash-session-publish')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
+}
+
+/* DA content tab body — the published page (rendered) + live link, or a CTA. */
+function daPanelHtml(a) {
+  const hasReport = a.reportMarkdown || a.report;
+  if (a.publishedUrl) {
+    return `<div class="nash-session-da">
+      <div class="nash-session-da-bar">
+        <span class="nash-session-published">Published to DA</span>
+        <a class="nash-session-da-link" href="${escapeHtml(a.publishedUrl)}" target="_blank" rel="noopener">Open live page ↗</a>
+      </div>
+      ${a.reportMarkdown ? renderDossier(a) : reportPanel(a.report, a.company)}
+    </div>`;
+  }
+  return `<div class="nash-session-comingsoon">
+    ${ICONS.cloud}
+    <h2>Not published to DA yet</h2>
+    <p>${hasReport
+    ? 'Publish this assessment so the team can find it in DA.'
+    : 'Run the assessment first, then publish it to DA.'}</p>
+    ${hasReport ? '<button type="button" class="nash-session-publish" data-da-publish>Publish to DA</button>' : ''}
+  </div>`;
+}
+
+function wireDaPanel(block) {
+  block.querySelector('[data-da-publish]')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
+}
+
+function renderDaPanelContent(block) {
+  const panel = block.querySelector('.nash-session-panel[data-panel="da"]');
+  if (!panel || !current) return;
+  panel.innerHTML = daPanelHtml(current);
+  wireDaPanel(block);
 }
 
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
@@ -740,28 +786,48 @@ function renderAssessment(block, a) {
           <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
-        <div class="nash-session-assess-actions">
-          ${a.publishedUrl
-    ? `<a class="nash-session-published" href="${escapeHtml(a.publishedUrl)}" target="_blank" rel="noopener">Published ↗</a>`
-    : '<button type="button" class="nash-session-publish" hidden>Publish to DA</button>'}
-          <span class="nash-session-assess-status ${a.status}">${a.status}</span>
-        </div>
+        <span class="nash-session-assess-status ${a.status}">${a.status}</span>
       </div>
-      <div class="nash-session-assess-scroll">
-        <div class="nash-session-report-area">${a.reportMarkdown
+      <div class="nash-session-tabs" role="tablist">
+        ${TABS.map((t, i) => `
+          <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}">
+            ${ICONS[t.icon]}<span>${t.label}</span>
+          </button>`).join('')}
+      </div>
+      <div class="nash-session-panels">
+        <div class="nash-session-panel active" data-panel="assessment">
+          <div class="nash-session-assess-scroll">
+            <div class="nash-session-report-area">${a.reportMarkdown
     ? renderDossier(a)
     : reportPanel(a.report, a.company)}</div>
-        <div class="nash-session-thread" aria-live="polite"></div>
-      </div>
-      <form class="nash-session-composer" autocomplete="off">
-        <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
-        <div class="nash-session-toolbar">
-          <button type="button" class="nash-session-icon-btn" aria-label="Attach a document">${ICONS.attach}</button>
-          <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+            <div class="nash-session-thread" aria-live="polite"></div>
+          </div>
+          <form class="nash-session-composer" autocomplete="off">
+            <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
+            <div class="nash-session-toolbar">
+              <button type="button" class="nash-session-icon-btn" aria-label="Add documents">${ICONS.plusadd}</button>
+              <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+            </div>
+          </form>
+          <div class="nash-session-belowbar"></div>
         </div>
-      </form>
+        <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
+        <div class="nash-session-panel" data-panel="opp">
+          <div class="nash-session-comingsoon">
+            ${ICONS.briefcase}
+            <h2>Opportunity management</h2>
+            <p>Coming soon — track this deal’s stage, stakeholders, and next steps here.</p>
+          </div>
+        </div>
+      </div>
     </div>
   `;
+
+  block.querySelectorAll('.nash-session-tab').forEach((t) => {
+    t.addEventListener('click', () => switchTab(block, t.dataset.tab));
+  });
+  wireDaPanel(block);
+  renderBelowBar(block);
 
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
@@ -790,8 +856,18 @@ function renderAssessment(block, a) {
 
   const runBtn = block.querySelector('.nash-session-run-btn');
   if (runBtn) runBtn.addEventListener('click', () => runAssessment(block));
+}
 
-  wirePublish(block);
+/* Switch the active assessment tab (assessment | da | opp). */
+function switchTab(block, name) {
+  block.querySelectorAll('.nash-session-tab').forEach((t) => {
+    const on = t.dataset.tab === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', String(on));
+  });
+  block.querySelectorAll('.nash-session-panel').forEach((p) => {
+    p.classList.toggle('active', p.dataset.panel === name);
+  });
 }
 
 /* Compact context so FluffyJaws can answer follow-ups grounded in the assessment,
