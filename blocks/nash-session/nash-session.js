@@ -9,6 +9,10 @@ import { publishAssessment } from '../../scripts/da-publish.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
+// Whether FluffyJaws already has this assessment's context in the current thread.
+// Reset on every (re)open so the first follow-up re-sends the report — FluffyJaws
+// response IDs expire server-side, so we can't rely on a stored previousResponseId.
+let chatGrounded = false;
 
 const ICONS = {
   plus: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -288,6 +292,12 @@ function renderLauncher(block, name, solutions = []) {
 
 /* ── Assessment view (with chat) ─────────────────────── */
 
+/* Scroll the assessment column (or the thread itself) to the newest message. */
+function scrollToBottom(thread) {
+  const scroller = thread.closest('.nash-session-assess-scroll') || thread;
+  scroller.scrollTop = scroller.scrollHeight;
+}
+
 function addMessage(thread, role, html) {
   const msg = document.createElement('div');
   msg.className = `nash-session-msg ${role}`;
@@ -295,7 +305,7 @@ function addMessage(thread, role, html) {
     ? `<div class="nash-session-avatar" aria-hidden="true">N</div><div class="nash-session-bubble">${html}</div>`
     : `<div class="nash-session-bubble">${html}</div>`;
   thread.append(msg);
-  thread.scrollTop = thread.scrollHeight;
+  scrollToBottom(thread);
   return msg.querySelector('.nash-session-bubble');
 }
 
@@ -304,7 +314,7 @@ function typingIndicator(thread) {
   msg.className = 'nash-session-msg assistant';
   msg.innerHTML = '<div class="nash-session-avatar" aria-hidden="true">N</div><div class="nash-session-bubble"><span class="nash-session-typing"><i></i><i></i><i></i></span></div>';
   thread.append(msg);
-  thread.scrollTop = thread.scrollHeight;
+  scrollToBottom(thread);
   return msg;
 }
 
@@ -695,10 +705,12 @@ async function runAssessment(block, attempt = 1) {
         current.verdict = meta.verdict;
         current.cms = meta.cms;
       }
-      // Continue this exact FluffyJaws thread in the chat (aware of doc + dossier).
+      // Continue this exact FluffyJaws thread in the chat (aware of doc + dossier),
+      // so an immediate follow-up doesn't need to re-send the report.
       if (responseId) {
         previousResponseId = responseId;
         current.previousResponseId = responseId;
+        chatGrounded = true;
       }
       current.status = 'done';
       area.innerHTML = renderDossier(current);
@@ -710,7 +722,10 @@ async function runAssessment(block, attempt = 1) {
 
 function renderAssessment(block, a) {
   current = a;
-  previousResponseId = a.previousResponseId || null;
+  // Start a fresh FluffyJaws thread on open; the first follow-up re-grounds it
+  // with the report (stored response IDs expire, so we don't reuse them).
+  previousResponseId = null;
+  chatGrounded = false;
   block.classList.add('wide');
   const meta = [
     a.dr ? `DR ${escapeHtml(a.dr)}` : '',
@@ -732,23 +747,19 @@ function renderAssessment(block, a) {
           <span class="nash-session-assess-status ${a.status}">${a.status}</span>
         </div>
       </div>
-      <div class="nash-session-assess-split">
-        <div class="nash-session-assess-main">
-          <div class="nash-session-report-area">${a.reportMarkdown
+      <div class="nash-session-assess-scroll">
+        <div class="nash-session-report-area">${a.reportMarkdown
     ? renderDossier(a)
     : reportPanel(a.report, a.company)}</div>
-        </div>
-        <div class="nash-session-assess-chat">
-          <div class="nash-session-thread" aria-live="polite"></div>
-          <form class="nash-session-composer" autocomplete="off">
-            <textarea class="nash-session-input" rows="1" placeholder="Ask about this assessment, or add context…" aria-label="Message Nash"></textarea>
-            <div class="nash-session-toolbar">
-              <button type="button" class="nash-session-icon-btn" aria-label="Attach a document">${ICONS.attach}</button>
-              <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
-            </div>
-          </form>
-        </div>
+        <div class="nash-session-thread" aria-live="polite"></div>
       </div>
+      <form class="nash-session-composer" autocomplete="off">
+        <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
+        <div class="nash-session-toolbar">
+          <button type="button" class="nash-session-icon-btn" aria-label="Attach a document">${ICONS.attach}</button>
+          <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+        </div>
+      </form>
     </div>
   `;
 
@@ -757,7 +768,10 @@ function renderAssessment(block, a) {
   const sendBtn = block.querySelector('.nash-session-send');
 
   if (a.messages.length === 0) {
-    addMessage(thread, 'assistant', `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once the assessment runs I'll share the fit score, verdict, red flags, and recommendations here — and you can ask me anything about it.`);
+    const hasReport = a.reportMarkdown || a.report;
+    addMessage(thread, 'assistant', hasReport
+      ? `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`
+      : `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`);
   } else {
     a.messages.forEach((m) => addMessage(thread, m.role, m.role === 'assistant' ? renderMarkdown(m.content) : escapeHtml(m.content)));
   }
@@ -780,6 +794,24 @@ function renderAssessment(block, a) {
   wirePublish(block);
 }
 
+/* Compact context so FluffyJaws can answer follow-ups grounded in the assessment,
+   even after a reload when the previous response thread has expired. */
+function buildChatContext(a) {
+  const head = [
+    `Company: ${a.company}`,
+    typeof a.score === 'number' ? `Fit score: ${a.score}/100 — ${a.verdict || verdictFor(a.score).label}` : '',
+    a.cms && a.cms.toLowerCase() !== 'n/a' ? `Detected platform: ${a.cms}` : '',
+    a.solutions?.length ? `Solutions in scope: ${a.solutions.map((s) => s.name).join(', ')}` : '',
+  ].filter(Boolean).join('\n');
+  const report = (a.reportMarkdown || '').slice(0, 40000);
+  return `You previously produced this Adobe qualification assessment. Answer my follow-up questions using it as the source of truth; be specific and reference its findings.
+
+${head}
+
+=== ASSESSMENT REPORT ===
+${report}`;
+}
+
 async function send(block, text) {
   const value = text.trim();
   if (!value || !current) return;
@@ -794,38 +826,59 @@ async function send(block, text) {
   current.messages.push({ role: 'user', content: value });
   persist(current);
 
+  // First turn after opening: prepend the assessment context and start a fresh
+  // thread. Later turns continue via previousResponseId.
+  const needsContext = !chatGrounded && (current.reportMarkdown || current.report);
+  const payload = needsContext
+    ? `${buildChatContext(current)}\n\n---\n\nMy question: ${value}`
+    : value;
+
   const typing = typingIndicator(thread);
   let bubble = null;
   let answer = '';
   let thinking = '';
 
   await streamQualification({
-    messages: [{ role: 'user', content: value }],
-    previousResponseId,
+    messages: [{ role: 'user', content: payload }],
+    previousResponseId: needsContext ? null : previousResponseId,
     onThinking: (delta) => {
       thinking += delta;
       if (!bubble) {
         typing.remove();
         bubble = addMessage(thread, 'assistant', '');
       }
-      if (!answer) { bubble.textContent = thinking; thread.scrollTop = thread.scrollHeight; }
+      if (!answer) { bubble.textContent = thinking; scrollToBottom(thread); }
     },
     onDelta: (delta) => {
       if (!bubble) { typing.remove(); bubble = addMessage(thread, 'assistant', ''); }
       answer += delta;
       bubble.textContent = answer;
-      thread.scrollTop = thread.scrollHeight;
+      scrollToBottom(thread);
     },
     onDone: ({ responseId }) => {
+      const content = answer || thinking;
+      if (!content) {
+        // Nothing came back (e.g. the thread expired mid-turn) — re-ground next time.
+        if (!bubble) typing.remove(); else bubble.remove();
+        chatGrounded = false;
+        previousResponseId = null;
+        addMessage(thread, 'assistant', 'I didn’t get a response that time — ask again and I’ll re-read the assessment.');
+        return;
+      }
       if (responseId) previousResponseId = responseId;
-      if (!bubble) typing.remove();
-      else bubble.innerHTML = renderMarkdown(answer || thinking);
-      current.messages.push({ role: 'assistant', content: answer || thinking });
+      chatGrounded = true;
+      bubble.innerHTML = renderMarkdown(content);
+      current.messages.push({ role: 'assistant', content });
       current.previousResponseId = previousResponseId;
       persist(current);
     },
     onError: (err) => {
       typing.remove();
+      // If FluffyJaws' thread expired, drop it so the next question re-grounds.
+      if (/previous_response_not_found/i.test(err.message)) {
+        chatGrounded = false;
+        previousResponseId = null;
+      }
       addMessage(thread, 'assistant', escapeHtml(`Something went wrong reaching FluffyJaws: ${err.message}`));
     },
   });
