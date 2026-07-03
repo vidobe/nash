@@ -785,12 +785,12 @@ function renderAssessment(block, a) {
           <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
-      </div>
-      <div class="nash-session-tabs" role="tablist">
-        ${TABS.map((t, i) => `
-          <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}">
-            ${ICONS[t.icon]}<span>${t.label}</span>
-          </button>`).join('')}
+        <div class="nash-session-tabs" role="tablist">
+          ${TABS.map((t, i) => `
+            <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
+              ${ICONS[t.icon]}
+            </button>`).join('')}
+        </div>
       </div>
       <div class="nash-session-panels">
         <div class="nash-session-panel active" data-panel="assessment">
