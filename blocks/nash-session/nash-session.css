@@ -553,7 +553,7 @@
 
 /* ── Opp management form ── */
 .nash-session .nash-session-opp {
-  padding: 4px 2px 32px;
+  padding: 0 2px 24px;
 }
 
 .nash-session .nash-session-opp-banner {
@@ -562,11 +562,8 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 10px 14px;
-  margin-bottom: 22px;
-  background: var(--ink-04, #fafafb);
-  border: 1px solid var(--ink-08, #f4f4f6);
-  border-radius: 10px;
+  padding: 0 0 4px;
+  margin-bottom: 4px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 12.5px;
   color: var(--ink-40, #9a9da6);
@@ -583,43 +580,46 @@
   cursor: pointer;
 }
 
+/* Groups separated by whitespace + a hairline — no boxes. */
 .nash-session .nash-session-opp-section {
-  margin-bottom: 26px;
+  padding: 22px 0;
+}
+
+.nash-session .nash-session-opp-section + .nash-session-opp-section {
+  border-top: 1px solid var(--ink-08, #f4f4f6);
 }
 
 .nash-session .nash-session-opp-sechead {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .nash-session .nash-session-opp-sechead h3 {
   margin: 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-70, #4a4d55);
+  letter-spacing: -0.01em;
+  color: var(--ink, #111318);
 }
 
 .nash-session .nash-session-opp-sechead span {
+  display: block;
+  margin-top: 2px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--ink-40, #9a9da6);
 }
 
 .nash-session .nash-session-opp-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 20px;
+  gap: 16px 28px;
 }
 
 .nash-session .nash-session-opp-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -629,31 +629,32 @@
 
 .nash-session .nash-session-opp-label {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--ink-70, #4a4d55);
+  color: var(--ink-40, #9a9da6);
 }
 
+/* Borderless fields — subtle fill, no pills. */
 .nash-session .nash-session-opp-input,
 .nash-session .nash-session-opp-select,
 .nash-session .nash-session-opp-textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 9px 11px;
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 9px;
-  background: var(--white, #fff);
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--ink-04, #fafafb);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--ink, #111318);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.12s;
 }
 
 .nash-session .nash-session-opp-textarea {
   resize: none;
-  min-height: 42px;
-  line-height: 1.5;
+  min-height: 34px;
+  line-height: 1.55;
   overflow: hidden;
 }
 
@@ -662,31 +663,31 @@
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9da6' stroke-width='2.4' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 11px center;
-  padding-right: 30px;
+  background-position: right 10px center;
+  padding-right: 28px;
 }
 
+.nash-session .nash-session-opp-input:hover,
+.nash-session .nash-session-opp-select:hover,
+.nash-session .nash-session-opp-textarea:hover,
 .nash-session .nash-session-opp-input:focus,
 .nash-session .nash-session-opp-select:focus,
 .nash-session .nash-session-opp-textarea:focus {
-  border-color: var(--red, #eb1000);
-  box-shadow: 0 0 0 3px rgb(235 16 0 / 8%);
+  background-color: var(--ink-08, #f4f4f6);
 }
 
+/* Colour-coded values — text only, no borders. */
 .nash-session .nash-session-opp-select[data-tone='danger'] {
-  border-color: rgb(235 16 0 / 45%);
   color: var(--red, #eb1000);
   font-weight: 500;
 }
 
 .nash-session .nash-session-opp-select[data-tone='warn'] {
-  border-color: rgb(180 83 9 / 40%);
   color: var(--amber, #b45309);
   font-weight: 500;
 }
 
 .nash-session .nash-session-opp-select[data-tone='ok'] {
-  border-color: rgb(21 128 61 / 40%);
   color: var(--green, #15803d);
   font-weight: 500;
 }
@@ -698,9 +699,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 14px;
-  padding: 14px 0;
-  margin-top: 8px;
-  background: linear-gradient(to top, var(--white, #fff) 60%, rgb(255 255 255 / 0%));
+  padding: 16px 0 4px;
+  margin-top: 4px;
+  background: linear-gradient(to top, var(--white, #fff) 65%, rgb(255 255 255 / 0%));
 }
 
 .nash-session .nash-session-opp-saved {
