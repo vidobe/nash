@@ -551,8 +551,10 @@
   margin-top: 6px;
 }
 
-/* ── Opp management form ── */
+/* ── Opp management (icon-nav + views) ── */
 .nash-session .nash-session-opp {
+  display: flex;
+  flex-direction: column;
   padding: 0 2px 24px;
 }
 
@@ -562,11 +564,18 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 0 0 4px;
-  margin-bottom: 4px;
+  padding: 0 0 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 12.5px;
   color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-opp-bannerright {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .nash-session .nash-session-opp-prefill {
@@ -580,34 +589,69 @@
   cursor: pointer;
 }
 
-/* Groups separated by whitespace + a hairline — no boxes. */
-.nash-session .nash-session-opp-section {
-  padding: 22px 0;
+.nash-session .nash-session-opp-main {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
 }
 
-.nash-session .nash-session-opp-section + .nash-session-opp-section {
-  border-top: 1px solid var(--ink-08, #f4f4f6);
+/* Left icon-nav (Claude-settings style) */
+.nash-session .nash-session-opp-nav {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 172px;
+  padding-top: 8px;
 }
 
-.nash-session .nash-session-opp-sechead {
-  margin-bottom: 14px;
-}
-
-.nash-session .nash-session-opp-sechead h3 {
-  margin: 0;
+.nash-session .nash-opp-navbtn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 9px;
+  background: none;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.nash-session .nash-opp-navbtn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-opp-navbtn:hover {
+  background: var(--ink-04, #fafafb);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-opp-navbtn.active {
+  background: var(--ink-08, #f4f4f6);
   color: var(--ink, #111318);
 }
 
-.nash-session .nash-session-opp-sechead span {
+.nash-session .nash-session-opp-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.nash-session .nash-opp-view {
+  display: none;
+}
+
+.nash-session .nash-opp-view.active {
   display: block;
-  margin-top: 2px;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12px;
-  color: var(--ink-40, #9a9da6);
 }
 
 .nash-session .nash-session-opp-grid {
@@ -692,25 +736,317 @@
   font-weight: 500;
 }
 
-.nash-session .nash-session-opp-savebar {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
-  padding: 16px 0 4px;
-  margin-top: 4px;
-  background: linear-gradient(to top, var(--white, #fff) 65%, rgb(255 255 255 / 0%));
-}
-
 .nash-session .nash-session-opp-saved {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12.5px;
+  font-size: 12px;
+  color: var(--green, #15803d);
+}
+
+/* ── Touchpoints ── */
+.nash-session .nash-opp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 320px;
+  text-align: center;
+}
+
+.nash-session .nash-opp-addbig {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: 1.5px dashed var(--ink-15, #e8e9ec);
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.nash-session .nash-opp-addbig svg {
+  width: 26px;
+  height: 26px;
+}
+
+.nash-session .nash-opp-addbig:hover {
+  border-color: var(--red, #eb1000);
+  color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+}
+
+.nash-session .nash-opp-empty p {
+  margin: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--ink-40, #9a9da6);
 }
 
-.nash-session .nash-session-opp-save {
+.nash-session .nash-opp-tplist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nash-session .nash-opp-tp {
+  padding: 14px 16px;
+  border: 1px solid var(--ink-08, #f4f4f6);
+  border-radius: 12px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-opp-tp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nash-session .nash-opp-tp-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--ink-04, #fafafb);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-opp-tp-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.nash-session .nash-opp-tp-name {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 4px 2px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  outline: none;
+  border-radius: 6px;
+}
+
+.nash-session .nash-opp-tp-name:hover,
+.nash-session .nash-opp-tp-name:focus {
+  background: var(--ink-04, #fafafb);
+}
+
+.nash-session .nash-opp-tp-status {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-opp-tp-remove {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.nash-session .nash-opp-tp-remove svg {
+  width: 15px;
+  height: 15px;
+}
+
+.nash-session .nash-opp-tp-remove:hover {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-opp-tp-type {
+  margin: 2px 0 10px 42px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-opp-tp-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 16px;
+  margin-top: 10px;
+}
+
+.nash-session .nash-opp-addmore {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border: 1px dashed var(--ink-15, #e8e9ec);
+  border-radius: 9px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.nash-session .nash-opp-addmore svg {
+  width: 15px;
+  height: 15px;
+}
+
+.nash-session .nash-opp-addmore:hover {
+  border-color: var(--red, #eb1000);
+  color: var(--red, #eb1000);
+}
+
+/* ── Touchpoint picker modal ── */
+.nash-session .nash-opp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(17 19 24 / 45%);
+}
+
+.nash-session .nash-opp-modal[hidden] {
+  display: none;
+}
+
+.nash-session .nash-opp-modal-card {
+  width: 100%;
+  max-width: 640px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 22px 24px 20px;
+  background: var(--white, #fff);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgb(17 19 24 / 25%);
+}
+
+.nash-session .nash-opp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nash-session .nash-opp-modal-head h3 {
+  margin: 0;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-opp-modal-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+}
+
+.nash-session .nash-opp-modal-close:hover {
+  background: var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-opp-modal-sub {
+  margin: 4px 0 18px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-opp-typegrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.nash-session .nash-opp-typecard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 10px;
+  border: 1px solid var(--ink-08, #f4f4f6);
+  border-radius: 12px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.nash-session .nash-opp-typecard-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--ink-04, #fafafb);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-opp-typecard-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nash-session .nash-opp-typecard:hover {
+  border-color: var(--ink-15, #e8e9ec);
+  background: var(--ink-04, #fafafb);
+}
+
+.nash-session .nash-opp-typecard.selected {
+  border-color: var(--red, #eb1000);
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-opp-typecard.selected .nash-opp-typecard-icon {
+  background: var(--red, #eb1000);
+  color: #fff;
+}
+
+.nash-session .nash-opp-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.nash-session .nash-opp-modal-cancel {
+  padding: 9px 18px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 9px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session .nash-opp-modal-add {
   padding: 9px 22px;
   border: none;
   border-radius: 9px;
@@ -720,11 +1056,12 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.nash-session .nash-session-opp-save:hover {
-  background: #c90e00;
+.nash-session .nash-opp-modal-add:disabled {
+  background: var(--ink-15, #e8e9ec);
+  color: var(--ink-40, #9a9da6);
+  cursor: default;
 }
 
 .nash-session .nash-session-back {
@@ -1382,7 +1719,22 @@
 }
 
 @media (width < 700px) {
-  .nash-session .nash-session-opp-grid {
+  .nash-session .nash-session-opp-grid,
+  .nash-session .nash-opp-tp-row {
     grid-template-columns: 1fr;
+  }
+
+  .nash-session .nash-session-opp-main {
+    flex-direction: column;
+  }
+
+  .nash-session .nash-session-opp-nav {
+    position: static;
+    flex-flow: row wrap;
+    width: 100%;
+  }
+
+  .nash-session .nash-opp-typegrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
