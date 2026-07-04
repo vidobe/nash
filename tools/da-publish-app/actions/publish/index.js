@@ -16,25 +16,12 @@
  * Runtime: Node 18 (global fetch / FormData / Blob).
  */
 
-const ALLOW_SUFFIXES = ['--nash--vidobe.aem.page', '--nash--vidobe.aem.live'];
-
-function corsHeaders(origin) {
-  let ok = false;
-  try {
-    ok = !!origin && ALLOW_SUFFIXES.some((s) => new URL(origin).host.endsWith(s));
-  } catch (e) {
-    ok = false;
-  }
-  return {
-    'Access-Control-Allow-Origin': ok ? origin : 'null',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-    'Access-Control-Max-Age': '86400',
-  };
-}
-
-function reply(statusCode, body, cors) {
-  return { statusCode, headers: { ...cors, 'Content-Type': 'application/json' }, body };
+// NOTE: the I/O Runtime already adds `Access-Control-Allow-Origin: *` (and the
+// default allow-headers incl. Authorization) to web-action responses. We must
+// NOT set our own CORS headers or the browser sees two ACAO values and rejects.
+// The real access gate is the Okta token check below.
+function reply(statusCode, body) {
+  return { statusCode, headers: { 'Content-Type': 'application/json' }, body };
 }
 
 function esc(s) {
@@ -89,18 +76,17 @@ function buildPage(p, user) {
 
 async function main(params) {
   const headers = params.__ow_headers || {};
-  const cors = corsHeaders(headers.origin);
   const method = (params.__ow_method || 'post').toLowerCase();
 
-  if (method === 'options') return { statusCode: 204, headers: cors };
-  if (method !== 'post') return reply(405, { error: 'Method not allowed' }, cors);
+  if (method === 'options') return { statusCode: 204 };
+  if (method !== 'post') return reply(405, { error: 'Method not allowed' });
 
   try {
     const user = await validateUser(headers.authorization, params);
-    if (!user) return reply(401, { error: 'Unauthorized — sign in to Nash first.' }, cors);
+    if (!user) return reply(401, { error: 'Unauthorized — sign in to Nash first.' });
 
     const slug = String(params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80);
-    if (!slug) return reply(400, { error: 'Missing or invalid slug.' }, cors);
+    if (!slug) return reply(400, { error: 'Missing or invalid slug.' });
 
     const html = params.html || buildPage(params, user);
     const token = await serviceToken(params);
@@ -115,7 +101,7 @@ async function main(params) {
       { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: fd },
     );
     if (!daRes.ok) {
-      return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() }, cors);
+      return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() });
     }
 
     // 2) Preview + publish so the index regenerates.
@@ -130,9 +116,9 @@ async function main(params) {
       url: `https://main--${repo}--${org}.aem.live/${path}`,
       preview: prev.status,
       publish: live.status,
-    }, cors);
+    });
   } catch (e) {
-    return reply(500, { error: e.message }, cors);
+    return reply(500, { error: e.message });
   }
 }
 
