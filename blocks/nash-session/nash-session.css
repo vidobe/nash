@@ -512,6 +512,206 @@
   text-decoration: none;
 }
 
+.nash-session .nash-session-da-note {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+/* ── DA document preview (rich, tabbed) ── */
+.nash-session .nash-session-qual-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 22px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-qual-account {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-qual-solution {
+  margin-top: 2px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-qual-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-qual-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-session-qual-ring {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid currentcolor;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.nash-session .nash-session-qual-ring span {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 10px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-qual-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.nash-session .nash-session-qual-nav {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+}
+
+.nash-session .nash-session-qtab {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.nash-session .nash-session-qtab svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-session-qtab:hover {
+  background: var(--ink-04, #fafafb);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-qtab.active {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-qual-panels {
+  flex: 1;
+  min-width: 0;
+}
+
+.nash-session .nash-session-qpanel {
+  display: none;
+}
+
+.nash-session .nash-session-qpanel.active {
+  display: block;
+}
+
+.nash-session .nash-session-qpanel-title {
+  margin: 0 0 16px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+/* Scorecard cards */
+.nash-session .nash-session-scorecard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.nash-session .nash-session-sc-card {
+  padding: 14px 16px;
+  border: 1px solid var(--ink-08, #f4f4f6);
+  border-radius: 12px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-session-sc-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-sc-weight {
+  font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-sc-score {
+  margin: 8px 0 10px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-sc-score span {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-sc-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ink-08, #f4f4f6);
+  overflow: hidden;
+}
+
+.nash-session .nash-session-sc-bar div {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.nash-session .nash-session-sc-card p {
+  margin: 10px 0 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-40, #9a9da6);
+}
+
 /* ── Placeholder panels (Opp management, unpublished DA) ── */
 .nash-session .nash-session-comingsoon {
   display: flex;
@@ -1791,5 +1991,15 @@
 
   .nash-session .nash-opp-typegrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nash-session .nash-session-qual-layout {
+    flex-direction: column;
+  }
+
+  .nash-session .nash-session-qual-nav {
+    position: static;
+    flex-flow: row wrap;
+    width: 100%;
   }
 }
