@@ -1609,6 +1609,24 @@
   height: 18px;
 }
 
+.nash-session .nash-session-rerun {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-session .nash-session-rerun:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
 .nash-session .nash-session-model {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;

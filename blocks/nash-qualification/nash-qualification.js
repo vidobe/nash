@@ -97,10 +97,11 @@ const TAB_ICONS = {
   target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
   flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
 };
 
 // One distinct icon per section position (standard 7-section order).
-const TAB_ICON_ORDER = ['grid', 'chart', 'briefcase', 'cpu', 'search', 'target', 'flag', 'doc'];
+const TAB_ICON_ORDER = ['grid', 'chart', 'briefcase', 'cpu', 'search', 'target', 'flag', 'zap'];
 
 /* Short nav label for a section, matched from its heading text. */
 function tabLabel(title) {
@@ -110,6 +111,7 @@ function tabLabel(title) {
   if (/business/.test(t)) return 'Business';
   if (/technical|architect|tech/.test(t)) return 'Tech Fit';
   if (/qualification|discovery|question/.test(t)) return 'Discovery';
+  if (/accelerat|reference/.test(t)) return 'Accelerators';
   if (/competitive|win|position/.test(t)) return 'Competition';
   if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
   return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);

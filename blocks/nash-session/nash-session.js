@@ -523,8 +523,15 @@ Produce the report in markdown with exactly these sections:
 # 5. Qualification & Discovery Questions
 # 6. Competitive Positioning & Win Sentiment
 # 7. Final Recommendation and Adobe Solution Scope
+# 8. Deal Accelerators & References
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists (grounded in the attached document), plus current tech stack and what success looks like. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+Section 8 (Deal Accelerators & References) must cover, as clear subsections with bullets:
+- **Ideas to win the deal** — concrete plays and next best actions tailored to this opportunity's objectives and gaps.
+- **VIP / early-access products** — relevant Adobe VIP, limited-availability, or newly launched products that strengthen the offer (only real ones; note if uncertain).
+- **Beta features** — relevant Adobe beta / pre-release / private-beta capabilities that could differentiate, with a note that they are beta.
+- **Co-innovation opportunities** — where a joint co-innovation / design-partner engagement makes sense for this customer.
+- **Similar customer references** — comparable Adobe customers (same industry/use case/region where possible), each with a one-line "why relevant" and a source link. Prefer Adobe Field Readiness / internal references; only cite real, sourced references and mark any that are uncertain.
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
 ${skills}
@@ -580,7 +587,7 @@ function renderBelowBar(block) {
   if (!el || !current) return;
   if (!(current.reportMarkdown || current.report)) { el.innerHTML = ''; return; }
   if (current.publishedUrl) {
-    el.innerHTML = `<a class="nash-session-published" href="${escapeHtml(current.publishedUrl)}" target="_blank" rel="noopener">Published to DA ↗</a>
+    el.innerHTML = `<span class="nash-session-published">Published to DA</span>
       <button type="button" class="nash-session-publish subtle">Re-publish</button>`;
   } else {
     el.innerHTML = '<button type="button" class="nash-session-publish">Publish to DA</button>';
@@ -599,7 +606,7 @@ const SECTION_ICON_POOL = [
   SVG('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
   SVG('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
   SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
-  SVG('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
+  SVG('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
 ];
 
 /* Short nav label for a section, matched from its heading text. */
@@ -610,6 +617,7 @@ function sectionLabel(title) {
   if (/business/.test(t)) return 'Business';
   if (/technical|architect|tech/.test(t)) return 'Tech Fit';
   if (/qualification|discovery|question/.test(t)) return 'Discovery';
+  if (/accelerat|reference/.test(t)) return 'Accelerators';
   if (/competitive|win|position/.test(t)) return 'Competition';
   if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
   return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
@@ -694,7 +702,6 @@ function daPanelHtml(a) {
   const bar = a.publishedUrl
     ? `<div class="nash-session-da-bar">
         <span class="nash-session-published">Published to DA</span>
-        <a class="nash-session-da-link" href="${escapeHtml(a.publishedUrl)}" target="_blank" rel="noopener">Open live page ↗</a>
         <button type="button" class="nash-session-publish subtle" data-da-publish>Re-publish</button>
       </div>`
     : `<div class="nash-session-da-bar">
@@ -797,7 +804,7 @@ function pixelGrid() {
   }</div>`;
 }
 
-async function runAssessment(block, attempt = 1) {
+async function runAssessment(block, attempt = 1, insights = '') {
   const area = block.querySelector('.nash-session-report-area');
 
   // Not connected to FluffyJaws → simulated structured report.
@@ -819,11 +826,14 @@ async function runAssessment(block, attempt = 1) {
     : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
   const solutionNames = sols.map((s) => s.name).join(' and ');
 
+  let phase = 'Starting the analysis';
+  if (insights) phase = 'Re-running with your latest insights';
+  else if (attempt > 1) phase = 'Retrying';
   area.innerHTML = `
     <div class="nash-session-running">
       ${pixelGrid()}
       <div class="nash-session-working">
-        <span class="nash-session-working-label">${attempt > 1 ? 'Retrying' : 'Starting the analysis'} — this can take several minutes…</span>
+        <span class="nash-session-working-label">${phase} — this can take several minutes…</span>
       </div>
       <div class="nash-session-stream"></div>
     </div>`;
@@ -843,11 +853,16 @@ async function runAssessment(block, attempt = 1) {
     maxSearches,
     docText: current.fileText || '',
   });
+  // On a re-run, fold in the analyst's chat discussion so the model updates the
+  // report, score, and recommendation with the new insights.
+  const finalPrompt = insights
+    ? `${prompt}\n\n=== ANALYST DISCUSSION & NEW INSIGHTS TO INCORPORATE ===\nRegenerate the FULL assessment (all machine-readable blocks and all sections). Take the following analyst discussion into account and adjust the score, dimensions, and recommendation where warranted.\n\n${insights}`
+    : prompt;
   // If we already extracted the document text (spreadsheets/CSV), it's embedded in
   // the prompt — send text only. Otherwise (pdf/docx) attach the raw bytes.
   const userContent = (!current.fileText && current.fileData)
     ? [
-      { type: 'input_text', text: prompt },
+      { type: 'input_text', text: finalPrompt },
       {
         type: 'input_file',
         filename: current.fileName,
@@ -855,7 +870,7 @@ async function runAssessment(block, attempt = 1) {
         ...(current.fileMime ? { mime_type: current.fileMime } : {}),
       },
     ]
-    : prompt;
+    : finalPrompt;
   let answer = '';
   let thinking = '';
   let errMsg = '';
@@ -888,7 +903,7 @@ async function runAssessment(block, attempt = 1) {
       // No answer — usually FluffyJaws's internal response chain expired during a long
       // tool loop (previous_response_not_found). Retry once with a tighter search budget.
       if (!answer) {
-        if (attempt < 2) { runAssessment(block, attempt + 1); return; }
+        if (attempt < 2) { runAssessment(block, attempt + 1, insights); return; }
         const expired = /previous_response_not_found/i.test(errMsg);
         fail(expired
           ? 'FluffyJaws ran a long multi-tool search and its internal response chain expired before writing the report (previous_response_not_found). This is a FluffyJaws-side limit on long agentic runs, not a Nash timeout. Re-running often succeeds — the prompt now caps the number of searches so it finishes sooner.'
@@ -963,6 +978,7 @@ function renderAssessment(block, a) {
           <div class="nash-session-footer">
             <div class="nash-session-footer-left">
               <button type="button" class="nash-session-footer-btn" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
+              <button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>
               <div class="nash-session-belowbar"></div>
             </div>
             <span class="nash-session-model">FluffyJaws</span>
@@ -1008,6 +1024,21 @@ function renderAssessment(block, a) {
 
   const runBtn = block.querySelector('.nash-session-run-btn');
   if (runBtn) runBtn.addEventListener('click', () => runAssessment(block));
+
+  block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
+    switchTab(block, 'assessment');
+    runAssessment(block, 1, chatInsightsText());
+  });
+}
+
+/* The chat discussion as plain text, to fold into a re-run. */
+function chatInsightsText() {
+  if (!current || !Array.isArray(current.messages)) return '';
+  return current.messages
+    .filter((m) => m && m.content)
+    .map((m) => `${m.role === 'user' ? 'Analyst' : 'Fluffy'}: ${m.content}`)
+    .join('\n\n')
+    .slice(0, 20000);
 }
 
 /* Switch the active assessment tab (assessment | da | opp). */
