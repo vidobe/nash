@@ -505,7 +505,15 @@ NASH_DIMS:
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
 NASH_DIMS_END
-Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). The weighted scores must sum to the overall score. Then continue with the dossier.
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). The weighted scores must sum to the overall score.
+NASH_CONTEXT:
+objectives: <top business objective>; <objective>; <objective>
+challenges: <top pain or challenge>; <challenge>; <challenge>
+tech_stack: <current tools/platforms the customer uses, or n/a>
+success: <what success looks like for the customer in one or two sentences>
+use_cases: <primary use case>; <use case>; <use case>
+NASH_CONTEXT_END
+For NASH_CONTEXT, uncover the customer's business objectives and their pains/challenges FIRST from the attached document, then from public evidence; base tech_stack, success, and use_cases on the same. If something isn't stated, infer conservatively and keep it short. Then continue with the dossier.
 
 Produce the report in markdown with exactly these sections:
 # 1. Executive Overview
@@ -516,7 +524,7 @@ Produce the report in markdown with exactly these sections:
 # 6. Competitive Positioning & Win Sentiment
 # 7. Final Recommendation and Adobe Solution Scope
 
-Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists (grounded in the attached document), plus current tech stack and what success looks like. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
 ${skills}
@@ -717,7 +725,11 @@ function renderDaPanelContent(block) {
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
 function parseMeta(text) {
   const m = text.match(/NASH_META:\s*score=(\d+)\s*\|\s*verdict=([^|]+?)\s*\|\s*cms=([^\n]*)/i);
-  if (!m) return { meta: null, body: text, dimensions: [] };
+  if (!m) {
+    return {
+      meta: null, body: text, dimensions: [], context: {},
+    };
+  }
   const meta = { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() };
 
   // Optional structured scorecard between NASH_DIMS: and NASH_DIMS_END.
@@ -738,11 +750,24 @@ function parseMeta(text) {
     });
   }
 
+  // Optional customer context (objectives, challenges, tech stack, success, use cases).
+  const context = {};
+  const cblock = text.match(/NASH_CONTEXT:\s*([\s\S]*?)NASH_CONTEXT_END/i);
+  if (cblock) {
+    cblock[1].split('\n').forEach((line) => {
+      const kv = line.match(/^\s*([a-z_]+)\s*:\s*(.+)$/i);
+      if (kv) context[kv[1].toLowerCase()] = kv[2].trim();
+    });
+  }
+
   const body = text
     .replace(/NASH_META:[^\n]*\n?/i, '')
     .replace(/NASH_DIMS:[\s\S]*?NASH_DIMS_END\n?/i, '')
+    .replace(/NASH_CONTEXT:[\s\S]*?NASH_CONTEXT_END\n?/i, '')
     .trimStart();
-  return { meta, body, dimensions };
+  return {
+    meta, body, dimensions, context,
+  };
 }
 
 /* Renders a completed dossier: score/verdict header + markdown body. */
@@ -870,9 +895,12 @@ async function runAssessment(block, attempt = 1) {
           : `The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try again.`);
         return;
       }
-      const { meta, body, dimensions } = parseMeta(answer);
+      const {
+        meta, body, dimensions, context,
+      } = parseMeta(answer);
       current.reportMarkdown = body;
       if (dimensions.length) current.dimensions = dimensions;
+      if (context && Object.keys(context).length) current.context = context;
       if (meta) {
         current.score = meta.score;
         current.verdict = meta.verdict;

@@ -150,6 +150,13 @@ function toneFor(value) {
   return '';
 }
 
+/* Turn a "a; b; c" context value into a bulleted textarea value. */
+function bullets(s) {
+  if (!s) return '';
+  return s.split(';').map((x) => x.trim()).filter(Boolean).map((x) => `• ${x}`)
+    .join('\n');
+}
+
 export function defaultOpp(a, userName = '') {
   let techRisk = '';
   if (typeof a.score === 'number') {
@@ -157,6 +164,10 @@ export function defaultOpp(a, userName = '') {
     else if (a.score >= 45) techRisk = 'Medium Risk';
     else techRisk = 'High Risk';
   }
+  const ctx = a.context || {};
+  let techStack = '';
+  if (ctx.tech_stack && ctx.tech_stack.toLowerCase() !== 'n/a') techStack = ctx.tech_stack;
+  else if (a.cms && a.cms.toLowerCase() !== 'n/a') techStack = a.cms;
   return {
     oppName: [a.dr, a.company].filter(Boolean).join(' - '),
     techDriver: userName,
@@ -165,7 +176,12 @@ export function defaultOpp(a, userName = '') {
     techWin: 'In Progress',
     techCase: 'Not Required',
     techRisk,
-    techStack: a.cms && a.cms.toLowerCase() !== 'n/a' ? a.cms : '',
+    techStack,
+    // Customer info seeded from the assessment's uncovered context.
+    businessObjectives: bullets(ctx.objectives),
+    pains: bullets(ctx.challenges),
+    successLooksLike: ctx.success || '',
+    useCases: bullets(ctx.use_cases),
   };
 }
 
