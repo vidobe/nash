@@ -22,6 +22,14 @@ export function isPublishConfigured() {
 }
 
 /**
+ * Stable DA slug for an opportunity — keyed on the DR (opportunity id) so every
+ * assessment/re-run for the same opp maps to ONE document. Falls back to company.
+ */
+export function assessmentSlug(a) {
+  return slugify(a.dr || a.company);
+}
+
+/**
  * Builds the full DA document for an assessment (without writing it). Exposed so
  * the doc can be generated/previewed independently of publishing.
  * @param {object} a the assessment
@@ -30,7 +38,7 @@ export function isPublishConfigured() {
  * @returns {{ slug:string, html:string }}
  */
 export function buildAssessmentDoc(a, bodyHtml, user = '') {
-  return { slug: slugify(a.company), html: buildDaDocument(a, bodyHtml, user) };
+  return { slug: assessmentSlug(a), html: buildDaDocument(a, bodyHtml, user) };
 }
 
 /**
@@ -48,10 +56,15 @@ export async function publishAssessment(a, bodyHtml, user = '') {
   if (!token) throw new Error('Sign in to Nash before publishing.');
 
   const { slug, html } = buildAssessmentDoc(a, bodyHtml, user);
+  const payload = { slug, html };
+  // If this assessment was previously published under a different slug, tell the
+  // action to unpublish the stale doc so we don't leave duplicates.
+  if (a.publishedSlug && a.publishedSlug !== slug) payload.unpublish = a.publishedSlug;
+
   const res = await fetch(PUBLISH_ENDPOINT, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ slug, html }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -64,5 +77,6 @@ export async function publishAssessment(a, bodyHtml, user = '') {
     }
     throw new Error(`Publish failed (${res.status})${detail ? `: ${detail}` : ''}`);
   }
-  return res.json();
+  const data = await res.json();
+  return { ...data, slug };
 }

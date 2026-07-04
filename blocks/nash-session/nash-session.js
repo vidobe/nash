@@ -568,6 +568,7 @@ async function publishCurrent(block, trigger) {
   try {
     const res = await publishAssessment(current, reportHtmlForPublish(current), getUserInfo()?.email || '');
     current.publishedUrl = res.url;
+    current.publishedSlug = res.slug;
     persist(current);
     renderBelowBar(block);
     renderDaPanelContent(block);

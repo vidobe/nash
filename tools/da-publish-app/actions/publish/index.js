@@ -92,13 +92,23 @@ async function main(params) {
     const token = await serviceToken(params);
     const org = params.ORG;
     const repo = params.REPO;
+    const authHdr = { Authorization: `Bearer ${token}` };
+
+    // 0) Unpublish a stale doc if this opportunity moved to a new slug.
+    const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (old && old !== slug) {
+      const oldPath = `qualifications/${old}`;
+      await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: authHdr });
+      await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: authHdr });
+      await fetch(`https://admin.da.live/source/${org}/${repo}/${oldPath}.html`, { method: 'DELETE', headers: authHdr });
+    }
 
     // 1) Write the source document to DA.
     const fd = new FormData();
     fd.append('data', new Blob([html], { type: 'text/html' }), `${slug}.html`);
     const daRes = await fetch(
       `https://admin.da.live/source/${org}/${repo}/qualifications/${slug}.html`,
-      { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: fd },
+      { method: 'PUT', headers: authHdr, body: fd },
     );
     if (!daRes.ok) {
       return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() });
@@ -106,11 +116,12 @@ async function main(params) {
 
     // 2) Preview + publish so the index regenerates.
     const path = `qualifications/${slug}`;
-    const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-    const live = await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: authHdr });
+    const live = await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'POST', headers: authHdr });
 
     return reply(200, {
       ok: true,
+      slug,
       path: `/${path}`,
       previewUrl: `https://main--${repo}--${org}.aem.page/${path}`,
       url: `https://main--${repo}--${org}.aem.live/${path}`,
