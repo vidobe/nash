@@ -1,0 +1,9 @@
+{
+  "name": "nash-da-publish",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Adobe App Builder action: publish a Nash assessment to DA",
+  "engines": {
+    "node": ">=18"
+  }
+}

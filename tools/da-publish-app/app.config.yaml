@@ -1,0 +1,23 @@
+application:
+  runtimeManifest:
+    packages:
+      nash-da-publish:
+        license: Apache-2.0
+        actions:
+          publish:
+            function: actions/publish/index.js
+            web: 'yes'
+            runtime: nodejs:18
+            inputs:
+              OKTA_ISSUER: $OKTA_ISSUER
+              ORG: $ORG
+              REPO: $REPO
+              IMS_CLIENT_ID: $IMS_CLIENT_ID
+              IMS_CLIENT_SECRET: $IMS_CLIENT_SECRET
+              IMS_SCOPES: $IMS_SCOPES
+              DA_TOKEN: $DA_TOKEN
+            annotations:
+              # We validate the caller's Okta token ourselves, so the runtime
+              # gateway must NOT require an Adobe IMS token on the request.
+              require-adobe-auth: false
+              final: true

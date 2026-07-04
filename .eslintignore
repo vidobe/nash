@@ -1,3 +1,4 @@
 helix-importer-ui
 *.min.js
 tools/da-publish/worker.js
+tools/da-publish-app/

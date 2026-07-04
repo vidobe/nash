@@ -1,23 +1,26 @@
 /*
- * Client for the Nash → DA publish Worker (see tools/da-publish/).
- * Sends a completed assessment + the signed-in user's Okta token to the Worker,
+ * Client for the Nash → DA publish endpoint.
+ * Sends a completed assessment + the signed-in user's Okta token to the endpoint,
  * which writes the page to DA and publishes it under /qualifications/{slug}.
  *
- * After deploying the Worker, set WORKER_URL to its URL and push.
+ * The endpoint is either the Adobe App Builder action (tools/da-publish-app/) or
+ * the Cloudflare Worker (tools/da-publish/). After deploying, set PUBLISH_ENDPOINT
+ * to the FULL publish URL and push.
  */
 
 import { ensureFreshToken } from './nash-auth.js';
 import { buildDaDocument, slugify } from './da-doc.js';
 
-// TODO: set to your deployed Worker URL, e.g.
-// 'https://nash-da-publish.example.workers.dev'
-const WORKER_URL = '';
+// TODO: set to your deployed publish URL, e.g.
+//   App Builder: 'https://<namespace>.adobeioruntime.net/api/v1/web/nash-da-publish/publish'
+//   Worker:      'https://nash-da-publish.<subdomain>.workers.dev/publish'
+const PUBLISH_ENDPOINT = '';
 
 export { slugify };
 
 /** True when a publish endpoint has been configured. */
 export function isPublishConfigured() {
-  return WORKER_URL.startsWith('http');
+  return PUBLISH_ENDPOINT.startsWith('http');
 }
 
 /**
@@ -41,13 +44,13 @@ export function buildAssessmentDoc(a, bodyHtml, user = '') {
  */
 export async function publishAssessment(a, bodyHtml, user = '') {
   if (!isPublishConfigured()) {
-    throw new Error('Publishing isn’t set up yet — deploy the Worker in tools/da-publish/ and set WORKER_URL in scripts/da-publish.js.');
+    throw new Error('Publishing isn’t set up yet — deploy the publish action (tools/da-publish-app/) and set PUBLISH_ENDPOINT in scripts/da-publish.js.');
   }
   const token = await ensureFreshToken();
   if (!token) throw new Error('Sign in to Nash before publishing.');
 
   const { slug, html } = buildAssessmentDoc(a, bodyHtml, user);
-  const res = await fetch(`${WORKER_URL}/publish`, {
+  const res = await fetch(PUBLISH_ENDPOINT, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ slug, html }),
