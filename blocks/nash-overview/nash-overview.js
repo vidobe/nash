@@ -8,6 +8,7 @@
  */
 
 import { listAssessments } from '../../scripts/nash-assessments.js';
+import { slugify } from '../../scripts/da-doc.js';
 
 const MOCK_REPORTS = [
   {
@@ -230,9 +231,19 @@ export default async function decorate(block) {
     usingMock = true;
   }
 
-  // Merge locally-created assessments (newest first) ahead of published ones.
-  const local = listAssessments().map(mapLocalAssessment);
-  reports = [...local, ...reports];
+  // Merge locally-created assessments (newest first) ahead of published ones,
+  // deduped by opportunity: keep the local (editable) copy and drop any published
+  // doc for the same opp.
+  const seen = new Set();
+  const localRaw = listAssessments().filter((a) => {
+    const slug = slugify(a.dr || a.company);
+    if (seen.has(slug)) return false;
+    seen.add(slug);
+    return true;
+  });
+  const local = localRaw.map(mapLocalAssessment);
+  const publishedDeduped = reports.filter((r) => !seen.has((r.path || '').split('/').pop()));
+  reports = [...local, ...publishedDeduped];
 
   const genCount = reports.filter((r) => r.status === 'generating').length;
   const doneCount = reports.filter((r) => r.status === 'done').length;

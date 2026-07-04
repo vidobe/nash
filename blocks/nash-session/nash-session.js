@@ -830,7 +830,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   let phase = 'Starting the analysis';
   if (insights) phase = 'Re-running with your latest insights';
   else if (attempt > 1) phase = 'Retrying';
-  area.innerHTML = `
+  const runningHTML = `
     <div class="nash-session-running">
       ${pixelGrid()}
       <div class="nash-session-working">
@@ -838,8 +838,15 @@ async function runAssessment(block, attempt = 1, insights = '') {
       </div>
       <div class="nash-session-stream"></div>
     </div>`;
-  const stream = area.querySelector('.nash-session-stream');
-  const label = area.querySelector('.nash-session-working-label');
+
+  // Re-run (a report already exists): show progress as the last chat message so
+  // it's visible without scrolling. Initial run: show it in the report area.
+  const thread = block.querySelector('.nash-session-thread');
+  const inThread = !!current.reportMarkdown && !!thread;
+  const host = inThread ? addMessage(thread, 'assistant', runningHTML) : area;
+  if (!inThread) area.innerHTML = runningHTML;
+  const stream = host.querySelector('.nash-session-stream');
+  const label = host.querySelector('.nash-session-working-label');
 
   const skills = await fetchSkillsText(sols.map((s) => s.slug));
   // FluffyJaws chains an Azure response per tool iteration; long loops expire the
@@ -876,6 +883,13 @@ async function runAssessment(block, attempt = 1, insights = '') {
   let thinking = '';
   let errMsg = '';
 
+  const scroll = () => { if (inThread) scrollToBottom(thread); };
+  const failMsg = (msg) => {
+    if (inThread) { host.innerHTML = renderMarkdown(msg); scroll(); return; }
+    area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
+    block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
+  };
+
   await streamQualification({
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
@@ -883,30 +897,31 @@ async function runAssessment(block, attempt = 1, insights = '') {
     onActivity: (text) => { if (!answer && label) label.textContent = text; },
     onThinking: (d) => {
       thinking += d;
-      if (!answer) stream.textContent = thinking;
+      if (!answer) { stream.textContent = thinking; scroll(); }
     },
     onDelta: (d) => {
       if (!answer && label) label.textContent = `Writing the ${solutionNames} qualification…`;
       answer += d;
       stream.textContent = answer;
+      scroll();
     },
     onError: (err) => { errMsg = err.message; },
     onDone: ({ responseId }) => {
-      const fail = (msg) => {
-        area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
-        block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
-      };
       // Azure content filter blocked the output (usually reproducing the source doc).
       if (errMsg === 'content_filter') {
-        fail('The analysis was blocked by the content filter — usually because the report reproduced too much of the uploaded document verbatim. Run it again; the prompt now asks the model to summarise rather than echo the source.');
+        failMsg('The analysis was blocked by the content filter — usually because the report reproduced too much of the uploaded document verbatim. Run it again; the prompt now asks the model to summarise rather than echo the source.');
         return;
       }
       // No answer — usually FluffyJaws's internal response chain expired during a long
       // tool loop (previous_response_not_found). Retry once with a tighter search budget.
       if (!answer) {
-        if (attempt < 2) { runAssessment(block, attempt + 1, insights); return; }
+        if (attempt < 2) {
+          if (inThread) host.closest('.nash-session-msg')?.remove();
+          runAssessment(block, attempt + 1, insights);
+          return;
+        }
         const expired = /previous_response_not_found/i.test(errMsg);
-        fail(expired
+        failMsg(expired
           ? 'FluffyJaws ran a long multi-tool search and its internal response chain expired before writing the report (previous_response_not_found). This is a FluffyJaws-side limit on long agentic runs, not a Nash timeout. Re-running often succeeds — the prompt now caps the number of searches so it finishes sooner.'
           : `The run didn't finish${errMsg ? `: ${escapeHtml(errMsg)}` : ''}. Try again.`);
         return;
@@ -933,6 +948,13 @@ async function runAssessment(block, attempt = 1, insights = '') {
       area.innerHTML = renderDossier(current);
       persist(current);
       setStatusDone(block);
+      // Replace the in-chat progress bubble with a short confirmation.
+      if (inThread) {
+        const s = typeof current.score === 'number'
+          ? ` — fit score is now ${current.score}/100 (${escapeHtml(current.verdict || '')})` : '';
+        host.innerHTML = `<p>✓ Updated the assessment${s}. The report above has been refreshed.</p>`;
+        scroll();
+      }
     },
   });
 }

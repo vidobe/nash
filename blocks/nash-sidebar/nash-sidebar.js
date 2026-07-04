@@ -2,6 +2,10 @@
 
 import { listAssessments, deleteAssessment } from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
+import { slugify } from '../../scripts/da-doc.js';
+
+/* Stable per-opportunity key (matches the DA publish slug). */
+const oppSlug = (a) => slugify(a.dr || a.company);
 
 const NAV = [
   {
@@ -63,9 +67,18 @@ function statusClass(s) {
 
 /* Assessments — locally-created (in-progress) merged with published qualifications. */
 function assessmentsHtml(reports) {
-  const local = listAssessments().slice(0, 10);
+  // Dedupe: one row per opportunity. Keep the local (editable) copy and drop any
+  // published doc for the same opp.
+  const seen = new Set();
+  const local = listAssessments().filter((a) => {
+    const slug = oppSlug(a);
+    if (seen.has(slug)) return false;
+    seen.add(slug);
+    return true;
+  }).slice(0, 10);
   const published = [...reports]
     .filter((r) => cleanTitle(r.title))
+    .filter((r) => !seen.has((r.path || '').split('/').pop()))
     .sort((a, b) => Number(b.lastModified || 0) - Number(a.lastModified || 0))
     .slice(0, 6);
   if (!local.length && !published.length) return '';
