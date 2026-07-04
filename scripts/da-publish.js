@@ -11,10 +11,8 @@
 import { ensureFreshToken } from './nash-auth.js';
 import { buildDaDocument, slugify } from './da-doc.js';
 
-// TODO: set to your deployed publish URL, e.g.
-//   App Builder: 'https://<namespace>.adobeioruntime.net/api/v1/web/nash-da-publish/publish'
-//   Worker:      'https://nash-da-publish.<subdomain>.workers.dev/publish'
-const PUBLISH_ENDPOINT = '';
+// Adobe App Builder action (tools/da-publish-app/), Stage workspace.
+const PUBLISH_ENDPOINT = 'https://97154-nashdapublish-stage.adobeioruntime.net/api/v1/web/nash-da-publish/publish';
 
 export { slugify };
 
