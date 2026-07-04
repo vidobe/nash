@@ -99,20 +99,29 @@ const TAB_ICONS = {
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
 };
 
-/* Short label + icon for a section, matched from its heading text. */
-function tabMeta(title) {
+// One distinct icon per section position (standard 7-section order).
+const TAB_ICON_ORDER = ['grid', 'chart', 'briefcase', 'cpu', 'search', 'target', 'flag', 'doc'];
+
+/* Short nav label for a section, matched from its heading text. */
+function tabLabel(title) {
   const t = title.toLowerCase();
-  if (/executive|overview/.test(t)) return { label: 'Overview', icon: 'grid' };
-  if (/market|competitor|financial|intelligence/.test(t)) return { label: 'Market', icon: 'chart' };
-  if (/business/.test(t)) return { label: 'Business', icon: 'briefcase' };
-  if (/technical|architect|tech/.test(t)) return { label: 'Tech Fit', icon: 'cpu' };
-  if (/qualification|discovery|question/.test(t)) return { label: 'Discovery', icon: 'search' };
-  if (/competitive|win|position/.test(t)) return { label: 'Competition', icon: 'target' };
-  if (/recommendation|scope|final|verdict/.test(t)) return { label: 'Recommendation', icon: 'flag' };
-  return { label: title.replace(/^\d+\.\s*/, ''), icon: 'doc' };
+  if (/executive|overview/.test(t)) return 'Overview';
+  if (/market|financial|intelligence/.test(t)) return 'Market';
+  if (/business/.test(t)) return 'Business';
+  if (/technical|architect|tech/.test(t)) return 'Tech Fit';
+  if (/qualification|discovery|question/.test(t)) return 'Discovery';
+  if (/competitive|win|position/.test(t)) return 'Competition';
+  if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
+  return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
 }
 
-/* Group the report body (siblings after the block's section) into H2 sections. */
+/* True for a numbered top-level section heading (e.g. "2. Market …"). */
+function isSectionHeading(node) {
+  return /^H[1-3]$/.test(node.tagName) && /^\d+[.)]\s/.test(node.textContent.trim());
+}
+
+/* Group the report body into numbered top-level sections (subsections stay in
+   the body of their parent section). */
 function collectSections(blockSection) {
   const sections = [];
   let current = null;
@@ -125,7 +134,7 @@ function collectSections(blockSection) {
     sib = sib.nextElementSibling;
   }
   nodes.forEach((node) => {
-    if (node.tagName === 'H2') {
+    if (isSectionHeading(node)) {
       current = { title: node.textContent.trim(), el: document.createElement('div') };
       current.el.className = 'nash-qual-panel-body';
       sections.push(current);
@@ -147,8 +156,8 @@ function buildTabs(block, sections, scorecardHTML) {
   const layout = document.createElement('div');
   layout.className = 'nash-qual-layout';
   const nav = sections.map((s, i) => {
-    const { label, icon } = tabMeta(s.title);
-    return `<button type="button" class="nash-qual-tab${i === 0 ? ' active' : ''}" data-idx="${i}" title="${s.title}">${TAB_ICONS[icon]}<span>${label}</span></button>`;
+    const icon = TAB_ICONS[TAB_ICON_ORDER[i % TAB_ICON_ORDER.length]];
+    return `<button type="button" class="nash-qual-tab${i === 0 ? ' active' : ''}" data-idx="${i}" title="${s.title}">${icon}<span>${tabLabel(s.title)}</span></button>`;
   }).join('');
   layout.innerHTML = `<nav class="nash-qual-nav">${nav}</nav><div class="nash-qual-panels"></div>`;
   const panels = layout.querySelector('.nash-qual-panels');

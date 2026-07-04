@@ -581,30 +581,47 @@ function renderBelowBar(block) {
 }
 
 /* DA content tab body — the published page (rendered) + live link, or a CTA. */
-/* Short label + icon for a report section, matched from its heading. */
-function sectionMeta(title) {
+const SVG = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+// One distinct icon per section position (standard 7-section order).
+const SECTION_ICON_POOL = [
+  SVG('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'),
+  SVG('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
+  SVG('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
+  SVG('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'),
+  SVG('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
+  SVG('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
+  SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
+  SVG('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
+];
+
+/* Short nav label for a section, matched from its heading text. */
+function sectionLabel(title) {
   const t = title.toLowerCase();
-  const svg = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-  if (/executive|overview/.test(t)) return { label: 'Overview', icon: svg('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>') };
-  if (/market|competitor|financial|intelligence/.test(t)) return { label: 'Market', icon: svg('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>') };
-  if (/business/.test(t)) return { label: 'Business', icon: svg('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>') };
-  if (/technical|architect|tech/.test(t)) return { label: 'Tech Fit', icon: svg('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>') };
-  if (/qualification|discovery|question/.test(t)) return { label: 'Discovery', icon: svg('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>') };
-  if (/competitive|win|position/.test(t)) return { label: 'Competition', icon: svg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>') };
-  if (/recommendation|scope|final|verdict/.test(t)) return { label: 'Recommendation', icon: svg('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>') };
-  return { label: title.replace(/^\d+\.\s*/, ''), icon: ICONS.doc };
+  if (/executive|overview/.test(t)) return 'Overview';
+  if (/market|financial|intelligence/.test(t)) return 'Market';
+  if (/business/.test(t)) return 'Business';
+  if (/technical|architect|tech/.test(t)) return 'Tech Fit';
+  if (/qualification|discovery|question/.test(t)) return 'Discovery';
+  if (/competitive|win|position/.test(t)) return 'Competition';
+  if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
+  return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
 }
 
-/* Split the report markdown into H1/H2 sections: [{ title, md }]. */
+/* Split into the numbered top-level report sections only (subsections stay in
+   the body). Falls back to H1/H2 splitting if nothing is numbered. */
 function splitReportSections(md) {
   if (!md) return [];
-  const sections = [];
-  let cur = null;
+  const numbered = [];
+  const anyHeading = [];
+  let curN = null;
+  let curH = null;
   md.split('\n').forEach((line) => {
-    const m = line.match(/^#{1,2}\s+(.*)/);
-    if (m) { cur = { title: m[1].trim(), md: '' }; sections.push(cur); } else if (cur) cur.md += `${line}\n`;
+    const num = line.match(/^#{1,4}\s*\d+[.)]\s+(.*)/);
+    const head = line.match(/^#{1,2}\s+(.*)/);
+    if (num) { curN = { title: num[1].trim(), md: '' }; numbered.push(curN); } else if (curN) curN.md += `${line}\n`;
+    if (head) { curH = { title: head[1].trim(), md: '' }; anyHeading.push(curH); } else if (curH) curH.md += `${line}\n`;
   });
-  return sections;
+  return numbered.length >= 2 ? numbered : anyHeading;
 }
 
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
@@ -630,8 +647,8 @@ function daPreviewHtml(a) {
   const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
   const nav = sections.map((s, i) => {
-    const { label, icon } = sectionMeta(s.title);
-    return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${icon}<span>${label}</span></button>`;
+    const icon = SECTION_ICON_POOL[i % SECTION_ICON_POOL.length];
+    return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${icon}<span>${sectionLabel(s.title)}</span></button>`;
   }).join('');
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
     ${i === 0 ? scorecardCards(a.dimensions) : ''}
