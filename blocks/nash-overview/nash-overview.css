@@ -35,6 +35,27 @@
 
 /* ── Toolbar ─────────────────────────────────────────── */
 
+.nash-overview .nash-overview-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 28px 32px 4px;
+}
+
+.nash-overview .nash-overview-title {
+  margin: 0;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-overview .nash-overview-count {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink-40, #9a9da6);
+}
+
 .nash-overview .nash-overview-toolbar {
   display: flex;
   align-items: center;

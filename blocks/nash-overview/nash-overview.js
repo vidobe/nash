@@ -294,6 +294,10 @@ export default async function decorate(block) {
   const doneCount = reports.filter((r) => r.status === 'done').length;
 
   block.innerHTML = `
+    <div class="nash-overview-head">
+      <h1 class="nash-overview-title">Qualifications</h1>
+      <span class="nash-overview-count">${reports.length}</span>
+    </div>
     <div class="nash-overview-toolbar">
       <div class="nash-overview-search-wrap">
         <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
