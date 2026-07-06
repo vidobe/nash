@@ -15,6 +15,7 @@ application:
               IMS_CLIENT_ID: $IMS_CLIENT_ID
               IMS_CLIENT_SECRET: $IMS_CLIENT_SECRET
               IMS_SCOPES: $IMS_SCOPES
+              AEM_API_KEY: $AEM_API_KEY
               DA_TOKEN: $DA_TOKEN
             annotations:
               # We validate the caller's Okta token ourselves, so the runtime

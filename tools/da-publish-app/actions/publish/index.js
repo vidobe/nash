@@ -92,15 +92,18 @@ async function main(params) {
     const token = await serviceToken(params);
     const org = params.ORG;
     const repo = params.REPO;
-    const authHdr = { Authorization: `Bearer ${token}` };
+    // DA source writes use the IMS (S2S) identity token; AEM admin (preview/
+    // publish) uses the site API key — they authenticate to different systems.
+    const daHdr = { Authorization: `Bearer ${token}` };
+    const aemHdr = { 'X-Auth-Token': params.AEM_API_KEY };
 
     // 0) Unpublish a stale doc if this opportunity moved to a new slug.
     const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (old && old !== slug) {
       const oldPath = `qualifications/${old}`;
-      await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: authHdr });
-      await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: authHdr });
-      await fetch(`https://admin.da.live/source/${org}/${repo}/${oldPath}.html`, { method: 'DELETE', headers: authHdr });
+      await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: aemHdr });
+      await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: aemHdr });
+      await fetch(`https://admin.da.live/source/${org}/${repo}/${oldPath}.html`, { method: 'DELETE', headers: daHdr });
     }
 
     // 1) Write the source document to DA.
@@ -108,7 +111,7 @@ async function main(params) {
     fd.append('data', new Blob([html], { type: 'text/html' }), `${slug}.html`);
     const daRes = await fetch(
       `https://admin.da.live/source/${org}/${repo}/qualifications/${slug}.html`,
-      { method: 'PUT', headers: authHdr, body: fd },
+      { method: 'PUT', headers: daHdr, body: fd },
     );
     if (!daRes.ok) {
       return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() });
@@ -116,8 +119,8 @@ async function main(params) {
 
     // 2) Preview + publish so the index regenerates.
     const path = `qualifications/${slug}`;
-    const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: authHdr });
-    const live = await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'POST', headers: authHdr });
+    const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
+    const live = await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
 
     return reply(200, {
       ok: true,
