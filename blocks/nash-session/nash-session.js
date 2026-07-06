@@ -178,11 +178,11 @@ function renderLauncher(block, name, solutions = []) {
             <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
           </div>
           <div class="nash-session-field">
-            <label class="nash-session-flabel">Document (PDF, Word, or Excel)</label>
+            <label class="nash-session-flabel">Documents (PDF, Word, Excel — you can add several)</label>
             <label class="nash-session-drop" for="na-file">
               <span class="nash-session-drop-icon" aria-hidden="true">${ICONS.upload}</span>
-              <span class="nash-session-drop-text">Click to upload <span class="nash-session-drop-sub">or drag a file here</span></span>
-              <input id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" hidden/>
+              <span class="nash-session-drop-text">Click to upload <span class="nash-session-drop-sub">or drag files here</span></span>
+              <input id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" multiple hidden/>
             </label>
           </div>
           <div class="nash-session-field">
@@ -227,12 +227,14 @@ function renderLauncher(block, name, solutions = []) {
   const drop = block.querySelector('.nash-session-drop');
   const fileInput = block.querySelector('#na-file');
   const showFile = () => {
-    const f = fileInput.files[0];
+    const fs = [...fileInput.files];
     const textEl = drop.querySelector('.nash-session-drop-text');
-    if (f) {
+    if (fs.length) {
       drop.classList.add('has-file');
       drop.querySelector('.nash-session-drop-icon').innerHTML = ICONS.doc;
-      textEl.innerHTML = `${escapeHtml(f.name)}<span class="nash-session-drop-sub">${(f.size / 1024 / 1024).toFixed(1)} MB · click to replace</span>`;
+      const label = fs.length === 1 ? escapeHtml(fs[0].name) : `${fs.length} files`;
+      const names = fs.map((f) => escapeHtml(f.name)).join(', ');
+      textEl.innerHTML = `${label}<span class="nash-session-drop-sub">${fs.length === 1 ? `${(fs[0].size / 1024 / 1024).toFixed(1)} MB` : names} · click to change</span>`;
     }
   };
   fileInput.addEventListener('change', showFile);
@@ -240,7 +242,7 @@ function renderLauncher(block, name, solutions = []) {
   ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove('dragging')));
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; showFile(); }
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFile(); }
   });
 
   block.querySelector('.nash-session-modal-form').addEventListener('submit', async (e) => {
@@ -255,44 +257,46 @@ function renderLauncher(block, name, solutions = []) {
     const sols = [...form.querySelectorAll('input[name="solutions"]:checked')]
       .map((c) => ({ slug: c.value, name: c.dataset.name }));
 
-    const file = form.file.files[0];
-    let fileData = '';
-    let fileMime = '';
-    let fileText = '';
-    if (file) {
-      fileMime = file.type || '';
-      // Parse spreadsheets/CSV in the browser so the model reads the content from
-      // the prompt directly — FluffyJaws does not reliably mount uploads into its
-      // code-interpreter runtime (/mnt/data), so we can't depend on that.
-      fileText = await extractFileText(file);
-      if (!fileText && file.size <= 4 * 1024 * 1024) {
-        fileData = await new Promise((resolve) => {
+    // Process every uploaded file: parse spreadsheets/CSV to text in the browser
+    // (FluffyJaws doesn't reliably mount uploads), else keep the raw bytes.
+    const files = [];
+    // eslint-disable-next-line no-restricted-syntax
+    for (const f of [...form.file.files]) {
+      const mime = f.type || '';
+      // eslint-disable-next-line no-await-in-loop
+      const text = await extractFileText(f);
+      let data = '';
+      if (!text && f.size <= 4 * 1024 * 1024) {
+        // eslint-disable-next-line no-await-in-loop
+        data = await new Promise((resolve) => {
           const fr = new FileReader();
           fr.onload = () => resolve(fr.result);
           fr.onerror = () => resolve('');
-          fr.readAsDataURL(file);
+          fr.readAsDataURL(f);
         });
       }
+      files.push({
+        name: f.name, mime, text, data,
+      });
     }
+    let fileName = '';
+    if (files.length === 1) fileName = files[0].name;
+    else if (files.length) fileName = `${files.length} files`;
 
     const assessment = {
       id: newAssessmentId(),
       company,
       dr: form.dr.value.trim(),
-      fileName: file ? file.name : '',
-      fileMime,
-      fileData,
-      fileText,
+      fileName,
+      files,
       solutions: sols,
       status: 'draft',
       createdAt: Date.now(),
       messages: [],
     };
     // Persist metadata only (keep large file bytes/text out of localStorage); render
-    // in place so the in-memory document survives for the immediate run.
-    const stored = { ...assessment };
-    delete stored.fileData;
-    delete stored.fileText;
+    // in place so the in-memory documents survive for the immediate run.
+    const stored = { ...assessment, files: files.map((f) => ({ name: f.name, mime: f.mime })) };
     saveAssessment(stored);
     current = assessment;
     previousResponseId = null;
@@ -478,9 +482,9 @@ function buildQualPrompt({
 }) {
   let docLine;
   if (docText) {
-    docLine = `The full contents of the attached document (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===". Read them there directly — no tool or code interpreter is needed. This is the PRIMARY input and the basis for Sections 3–5; ground the requirement analysis and scoring in it.`;
+    docLine = `The full contents of the attached document(s) (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===" (each preceded by its filename). Read them there directly — no tool or code interpreter is needed. These are the PRIMARY input and the basis for Sections 3–5; ground the requirement analysis and scoring in them.`;
   } else if (fileName) {
-    docLine = `MANDATORY FIRST STEP: A document is attached (${fileName}). Before any web/internal search, OPEN AND READ IT (use the code interpreter if needed). It is the PRIMARY input for Sections 3–5 and does NOT count against the search budget below. If you genuinely cannot open it, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
+    docLine = `MANDATORY FIRST STEP: Document(s) are attached (${fileName}). Before any web/internal search, OPEN AND READ them (use the code interpreter if needed). They are the PRIMARY input for Sections 3–5 and do NOT count against the search budget below. If you genuinely cannot open them, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
   } else {
     docLine = 'No document is attached — use the customer name and public data.';
   }
@@ -792,10 +796,25 @@ function renderDossier(a) {
   return `<div class="nash-session-report nash-md">${head}${renderMarkdown(a.reportMarkdown || '')}</div>`;
 }
 
+/* Legacy single-file assessments → a uniform files array. */
+function assessmentFiles(a) {
+  if (Array.isArray(a.files) && a.files.length) return a.files;
+  if (a.fileText || a.fileData) {
+    return [{
+      name: a.fileName || 'document', mime: a.fileMime || '', text: a.fileText || '', data: a.fileData || '',
+    }];
+  }
+  return [];
+}
+
 /* Persist an assessment without the large file bytes (keep localStorage small). */
 function persist(a) {
   const copy = { ...a };
   delete copy.fileData;
+  delete copy.fileText;
+  if (Array.isArray(copy.files)) {
+    copy.files = copy.files.map((f) => ({ name: f.name, mime: f.mime }));
+  }
   saveAssessment(copy);
 }
 
@@ -853,31 +872,32 @@ async function runAssessment(block, attempt = 1, insights = '') {
   // chain (previous_response_not_found). Fewer searches → higher completion rate.
   // The retry is tighter still, so it's more likely to finish than the first pass.
   const maxSearches = attempt > 1 ? 3 : 6;
+  // Combine every uploaded file: extracted text goes inline in the prompt;
+  // binary files (pdf/docx) are attached separately.
+  const files = assessmentFiles(current);
+  const docText = files.filter((f) => f.text)
+    .map((f) => `--- ${f.name} ---\n${f.text}`).join('\n\n');
+  const attachments = files.filter((f) => f.data).map((f) => ({
+    type: 'input_file',
+    filename: f.name,
+    file_data: f.data,
+    ...(f.mime ? { mime_type: f.mime } : {}),
+  }));
   const prompt = buildQualPrompt({
     company: current.company,
-    fileName: current.fileName,
+    fileName: files.map((f) => f.name).join(', '),
     solutionNames,
     skills,
     maxSearches,
-    docText: current.fileText || '',
+    docText,
   });
   // On a re-run, fold in the analyst's chat discussion so the model updates the
   // report, score, and recommendation with the new insights.
   const finalPrompt = insights
     ? `${prompt}\n\n=== ANALYST DISCUSSION & NEW INSIGHTS TO INCORPORATE ===\nRegenerate the FULL assessment (all machine-readable blocks and all sections). Take the following analyst discussion into account and adjust the score, dimensions, and recommendation where warranted.\n\n${insights}`
     : prompt;
-  // If we already extracted the document text (spreadsheets/CSV), it's embedded in
-  // the prompt — send text only. Otherwise (pdf/docx) attach the raw bytes.
-  const userContent = (!current.fileText && current.fileData)
-    ? [
-      { type: 'input_text', text: finalPrompt },
-      {
-        type: 'input_file',
-        filename: current.fileName,
-        file_data: current.fileData,
-        ...(current.fileMime ? { mime_type: current.fileMime } : {}),
-      },
-    ]
+  const userContent = attachments.length
+    ? [{ type: 'input_text', text: finalPrompt }, ...attachments]
     : finalPrompt;
   let answer = '';
   let thinking = '';
