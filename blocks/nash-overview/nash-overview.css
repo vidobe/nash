@@ -155,8 +155,77 @@
   gap: 16px;
 }
 
-.nash-overview .nash-overview-grid[data-layout="list"] {
-  grid-template-columns: 1fr;
+/* Grid ⇄ list-table toggle */
+.nash-overview .nash-overview-listwrap {
+  display: none;
+}
+
+.nash-overview .nash-overview-area[data-layout="list"] .nash-overview-grid {
+  display: none;
+}
+
+.nash-overview .nash-overview-area[data-layout="list"] .nash-overview-listwrap {
+  display: block;
+}
+
+/* ── List table (clean, borderless) ─────────────────────── */
+.nash-overview .nash-overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-table th {
+  text-align: left;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--ink, #111318);
+  vertical-align: middle;
+}
+
+.nash-overview .nash-overview-trow {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.nash-overview .nash-overview-trow:hover {
+  background: var(--ink-04, #fafafb);
+}
+
+.nash-overview .nash-overview-t-name {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 600;
+}
+
+.nash-overview .nash-overview-t-score {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 20px;
+}
+
+.nash-overview .nash-overview-t-of,
+.nash-overview .nash-overview-t-muted {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-t-time {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.nash-overview .nash-overview-t-gen {
+  font-size: 13px;
+  color: var(--amber, #b45309);
 }
 
 /* ── Card ────────────────────────────────────────────── */

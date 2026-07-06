@@ -214,6 +214,51 @@ function renderCards(block, reports) {
   reports.forEach((r) => grid.appendChild(buildCard(r)));
 }
 
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* Clean, borderless table for the list view. */
+function tableRow(r) {
+  const scoreCell = r.status === 'generating'
+    ? `<span class="nash-overview-t-gen">Generating ${r.pct}%</span>`
+    : `<span class="nash-overview-t-score" style="color:${scoreColor(r.score)}">${r.score}</span><span class="nash-overview-t-of"> / 100</span>`;
+  const verdictCell = r.status === 'generating'
+    ? '<span class="nash-overview-t-muted">—</span>'
+    : `<span class="nash-overview-verdict" style="${verdictStyle(r.score)}">${verdictLabel(r.score)}</span>`;
+  return `<tr class="nash-overview-trow" data-id="${esc(r.id)}" data-status="${esc(r.status)}" data-company="${esc(r.company.toLowerCase())}"${r.path ? ` data-path="${esc(r.path)}"` : ''}>
+    <td class="nash-overview-t-name">
+      <span class="nash-overview-favicon" aria-hidden="true">${esc(r.company.charAt(0))}</span>
+      <span>${esc(r.company)}</span>
+    </td>
+    <td>${scoreCell}</td>
+    <td>${verdictCell}</td>
+    <td class="nash-overview-t-muted">${esc(r.cms || '—')}</td>
+    <td class="nash-overview-t-muted">${esc(r.user || '')}</td>
+    <td class="nash-overview-t-muted nash-overview-t-time">${esc(r.time || '')}</td>
+  </tr>`;
+}
+
+function renderTable(block, reports) {
+  const wrap = block.querySelector('.nash-overview-listwrap');
+  if (!wrap) return;
+  wrap.innerHTML = `<table class="nash-overview-table">
+    <thead><tr>
+      <th>Company</th><th>Fit score</th><th>Verdict</th><th>Platform</th><th>Owner</th><th>Updated</th>
+    </tr></thead>
+    <tbody>${reports.map(tableRow).join('')}</tbody>
+  </table>`;
+  wrap.querySelectorAll('.nash-overview-trow').forEach((row) => {
+    row.addEventListener('click', () => {
+      const report = reports.find((r) => String(r.id) === row.dataset.id);
+      if (row.dataset.path) window.location.href = row.dataset.path;
+      else if (report) document.dispatchEvent(new CustomEvent('nash:open-detail', { detail: { report }, bubbles: true }));
+    });
+  });
+}
+
 export default async function decorate(block) {
   let reports = [];
   let usingMock = false;
@@ -274,8 +319,9 @@ export default async function decorate(block) {
         </div>
       </div>
     </div>
-    <div class="nash-overview-area">
+    <div class="nash-overview-area" data-layout="grid">
       <div class="nash-overview-grid" aria-label="Qualification reports" role="list"></div>
+      <div class="nash-overview-listwrap"></div>
       ${reports.length === 0 ? `<div class="nash-overview-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <p>No qualifications yet. Start a new analysis to get going.</p>
@@ -285,24 +331,25 @@ export default async function decorate(block) {
   `;
 
   renderCards(block, reports);
+  renderTable(block, reports);
 
-  // Search
+  // Search (applies to both card and table rows)
   block.querySelector('.nash-overview-search').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
-    block.querySelectorAll('.nash-overview-card').forEach((card) => {
-      card.hidden = q && !card.dataset.company.includes(q);
+    block.querySelectorAll('.nash-overview-card, .nash-overview-trow').forEach((el) => {
+      el.hidden = q && !el.dataset.company.includes(q);
     });
   });
 
   // Filter
   block.querySelector('.nash-overview-filter').addEventListener('change', (e) => {
     const val = e.target.value;
-    block.querySelectorAll('.nash-overview-card').forEach((card) => {
-      card.hidden = val !== 'all' && card.dataset.status !== val;
+    block.querySelectorAll('.nash-overview-card, .nash-overview-trow').forEach((el) => {
+      el.hidden = val !== 'all' && el.dataset.status !== val;
     });
   });
 
-  // View toggle
+  // View toggle (grid ⇄ list table)
   block.querySelectorAll('.nash-overview-vt-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       block.querySelectorAll('.nash-overview-vt-btn').forEach((b) => {
@@ -311,7 +358,7 @@ export default async function decorate(block) {
       });
       btn.classList.add('active');
       btn.setAttribute('aria-pressed', 'true');
-      block.querySelector('.nash-overview-grid').dataset.layout = btn.dataset.layout;
+      block.querySelector('.nash-overview-area').dataset.layout = btn.dataset.layout;
     });
   });
 }
