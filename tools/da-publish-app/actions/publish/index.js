@@ -92,10 +92,14 @@ async function main(params) {
     const token = await serviceToken(params);
     const org = params.ORG;
     const repo = params.REPO;
-    // DA source writes use the IMS (S2S) identity token; AEM admin (preview/
-    // publish) uses the site API key — they authenticate to different systems.
+    // DA source writes use the S2S identity token (permanent). AEM admin
+    // (preview/publish): preview must read the DA content bus as a real user, so
+    // it needs a user DA_TOKEN when present; the site API key can only publish,
+    // not preview. So prefer the user token for AEM admin, else the key.
     const daHdr = { Authorization: `Bearer ${token}` };
-    const aemHdr = { 'X-Auth-Token': params.AEM_API_KEY };
+    const aemHdr = params.DA_TOKEN
+      ? { Authorization: `Bearer ${params.DA_TOKEN}` }
+      : { 'X-Auth-Token': params.AEM_API_KEY };
 
     // 0) Unpublish a stale doc if this opportunity moved to a new slug.
     const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
