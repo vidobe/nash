@@ -9,9 +9,12 @@
  *  - The browser forwards its Okta (FluffyJaws) access token; we validate it via
  *    Okta /userinfo. Only a valid Adobe user can publish; we use their email for
  *    the page's `user` metadata.
- *  - DA writes + AEM publish use a SERVICE token: minted from IMS client
- *    credentials (IMS_CLIENT_ID/IMS_CLIENT_SECRET/IMS_SCOPES) or a static
- *    DA_TOKEN. These are action inputs (set via .env → app.config.yaml).
+ *  - Everything server-side runs on a SERVICE token minted from IMS client
+ *    credentials (IMS_CLIENT_ID/IMS_CLIENT_SECRET/IMS_SCOPES). It writes DA
+ *    directly, and is forwarded to DA for the preview/publish content read via
+ *    the `x-content-source-authorization` header (caller auth = AEM_API_KEY site
+ *    key). Nothing here expires or needs refreshing. DA_TOKEN is a manual
+ *    fallback only. All are action inputs (set via .env → app.config.yaml).
  *
  * Runtime: Node 18 (global fetch / FormData / Blob).
  */
@@ -32,11 +35,11 @@ function esc(s) {
 let cachedToken = null;
 
 async function serviceToken(params) {
-  // A real user DA token (darkalley, scope aem.frontend.all) is the only identity
-  // that can do the whole flow — DA write + preview + publish — because preview
-  // reads the DA content bus as the caller. Prefer it when present. S2S below is
-  // a fallback that can write DA but cannot render a working preview.
-  if (params.DA_TOKEN) return params.DA_TOKEN;
+  // Mint an S2S (client_credentials) token for the technical account. This token
+  // both writes DA (Authorization) and — critically — is forwarded to DA for the
+  // preview/publish content read via `x-content-source-authorization`, so the
+  // whole flow runs on service credentials with nothing to refresh. DA_TOKEN is
+  // only a manual fallback if IMS creds aren't configured.
   if (params.IMS_CLIENT_ID && params.IMS_CLIENT_SECRET) {
     const now = Date.now();
     if (cachedToken && cachedToken.exp > now + 60000) return cachedToken.token;
@@ -97,13 +100,16 @@ async function main(params) {
     const token = await serviceToken(params);
     const org = params.ORG;
     const repo = params.REPO;
-    // With a user DA_TOKEN set, the same token authenticates every call (DA +
-    // AEM admin) — the known-good flow. Without it we fall back to S2S for the DA
-    // write and the site API key for publish (preview will not render).
+    // DA source writes authenticate with the service token directly. AEM admin
+    // (preview/publish) authenticates the *caller* with the site API key, and
+    // carries the service token in `x-content-source-authorization` so EDS can
+    // forward it to DA and read the source content. This is what lets the whole
+    // flow run on service credentials with nothing to refresh.
     const daHdr = { Authorization: `Bearer ${token}` };
-    const aemHdr = params.DA_TOKEN
-      ? { Authorization: `Bearer ${params.DA_TOKEN}` }
-      : { 'X-Auth-Token': params.AEM_API_KEY };
+    const aemHdr = {
+      'X-Auth-Token': params.AEM_API_KEY,
+      'x-content-source-authorization': `Bearer ${token}`,
+    };
 
     // 0) Unpublish a stale doc if this opportunity moved to a new slug.
     const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -125,10 +131,27 @@ async function main(params) {
       return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() });
     }
 
-    // 2) Preview + publish so the index regenerates.
+    // 2) Preview, then publish. Both must succeed — a failed preview means the
+    //    page never rendered, so we surface it instead of reporting false success.
     const path = `qualifications/${slug}`;
     const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
+    if (!prev.ok) {
+      return reply(502, {
+        error: `Preview failed (${prev.status})`,
+        detail: prev.headers.get('x-error') || await prev.text(),
+      });
+    }
     const live = await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
+    if (!live.ok) {
+      return reply(502, {
+        error: `Publish failed (${live.status})`,
+        detail: live.headers.get('x-error') || await live.text(),
+      });
+    }
+
+    // 3) Nudge the query index so the new page appears in listings immediately
+    //    (publish alone doesn't always regenerate query.json right away).
+    await fetch(`https://admin.hlx.page/index/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
 
     return reply(200, {
       ok: true,
