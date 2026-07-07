@@ -459,10 +459,12 @@ async function fetchSkillsText(slugs) {
 const MAX_DOC_CHARS = 120000;
 
 /*
- * Extracts readable text from a file in the browser. Spreadsheets/CSV are parsed
- * to CSV-per-sheet (via SheetJS, loaded on demand) so we never rely on FluffyJaws
- * mounting the upload into its tool runtime. Returns '' for formats we don't parse
- * here (pdf/docx) — those still go to the model as an input_file attachment.
+ * Extracts readable text from a file in the browser so it can go straight into
+ * the prompt — we never rely on FluffyJaws mounting the upload into its tool
+ * runtime (PDFs were coming back "not readable in-session"). Spreadsheets/CSV via
+ * SheetJS, PDFs via pdf.js (both loaded on demand). Returns '' for formats we
+ * don't parse here (e.g. docx) — those still go to the model as an input_file
+ * attachment.
  */
 async function extractFileText(file) {
   const name = (file.name || '').toLowerCase();
@@ -481,6 +483,26 @@ async function extractFileText(file) {
         .map((n) => `### Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`)
         .join('\n\n');
       return text.slice(0, MAX_DOC_CHARS);
+    } catch (e) {
+      return '';
+    }
+  }
+  if (name.endsWith('.pdf') || file.type === 'application/pdf') {
+    try {
+      const pdfjsBase = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build';
+      const pdfjs = await import(`${pdfjsBase}/pdf.min.mjs`);
+      pdfjs.GlobalWorkerOptions.workerSrc = `${pdfjsBase}/pdf.worker.min.mjs`;
+      const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      const parts = [];
+      for (let i = 1; i <= pdf.numPages; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const page = await pdf.getPage(i);
+        // eslint-disable-next-line no-await-in-loop
+        const content = await page.getTextContent();
+        parts.push(content.items.map((it) => it.str).join(' '));
+        if (parts.reduce((n, p) => n + p.length, 0) > MAX_DOC_CHARS) break;
+      }
+      return parts.join('\n\n').slice(0, MAX_DOC_CHARS);
     } catch (e) {
       return '';
     }
