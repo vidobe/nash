@@ -83,6 +83,9 @@ export default async function decorate(block) {
     messages: [],
   };
 
+  // This page IS the published/live document.
+  assessment.publishedUrl = window.location.href;
+
   // Remove the now-duplicated static body; render the interactive session view.
   toRemove.forEach((s) => s.remove());
   // Load the session styles before revealing the view (the block is hidden via

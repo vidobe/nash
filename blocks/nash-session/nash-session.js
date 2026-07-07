@@ -708,7 +708,7 @@ function daPreviewHtml(a) {
 }
 
 function daPanelHtml(a) {
-  const hasReport = a.reportMarkdown || a.report;
+  const hasReport = a.reportMarkdown || a.report || a.reportHtml;
   if (!hasReport) {
     return `<div class="nash-session-comingsoon">
       ${ICONS.cloud}
@@ -719,13 +719,18 @@ function daPanelHtml(a) {
   const bar = a.publishedUrl
     ? `<div class="nash-session-da-bar">
         <span class="nash-session-published">Published to DA</span>
-        <button type="button" class="nash-session-publish subtle" data-da-publish>Re-publish</button>
+        <a class="nash-session-da-link" href="${a.publishedUrl}" target="_blank" rel="noopener">View live page ↗</a>
+        ${a.published ? '' : '<button type="button" class="nash-session-publish subtle" data-da-publish>Re-publish</button>'}
       </div>`
     : `<div class="nash-session-da-bar">
         <span class="nash-session-da-note">Preview of the DA document — not published yet.</span>
         <button type="button" class="nash-session-publish" data-da-publish>Publish to DA</button>
       </div>`;
-  return `<div class="nash-session-da">${bar}${a.reportMarkdown ? daPreviewHtml(a) : reportPanel(a.report, a.company)}</div>`;
+  let body;
+  if (a.reportMarkdown) body = daPreviewHtml(a);
+  else if (a.reportHtml) body = `<div class="nash-session-report nash-md">${a.reportHtml}</div>`;
+  else body = reportPanel(a.report, a.company);
+  return `<div class="nash-session-da">${bar}${body}</div>`;
 }
 
 function wireDaPanel(block) {
