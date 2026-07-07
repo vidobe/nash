@@ -32,6 +32,11 @@ function esc(s) {
 let cachedToken = null;
 
 async function serviceToken(params) {
+  // A real user DA token (darkalley, scope aem.frontend.all) is the only identity
+  // that can do the whole flow — DA write + preview + publish — because preview
+  // reads the DA content bus as the caller. Prefer it when present. S2S below is
+  // a fallback that can write DA but cannot render a working preview.
+  if (params.DA_TOKEN) return params.DA_TOKEN;
   if (params.IMS_CLIENT_ID && params.IMS_CLIENT_SECRET) {
     const now = Date.now();
     if (cachedToken && cachedToken.exp > now + 60000) return cachedToken.token;
@@ -92,10 +97,9 @@ async function main(params) {
     const token = await serviceToken(params);
     const org = params.ORG;
     const repo = params.REPO;
-    // DA source writes use the S2S identity token (permanent). AEM admin
-    // (preview/publish): preview must read the DA content bus as a real user, so
-    // it needs a user DA_TOKEN when present; the site API key can only publish,
-    // not preview. So prefer the user token for AEM admin, else the key.
+    // With a user DA_TOKEN set, the same token authenticates every call (DA +
+    // AEM admin) — the known-good flow. Without it we fall back to S2S for the DA
+    // write and the site API key for publish (preview will not render).
     const daHdr = { Authorization: `Bearer ${token}` };
     const aemHdr = params.DA_TOKEN
       ? { Authorization: `Bearer ${params.DA_TOKEN}` }
