@@ -47,6 +47,7 @@ const ICONS = {
   clock: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
   panel: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',
   logout: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
 };
 
 function cleanTitle(t) {
@@ -132,9 +133,8 @@ function renderNav(block, reportCount) {
     <div class="nash-sidebar-head">
       <a class="nash-sidebar-brand" href="/" aria-label="Nash home">
         <span class="nash-sidebar-logo" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
-            <rect width="20" height="20" rx="2" fill="#eb1000"/>
-            <polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="white"/>
+          <svg width="24" height="21" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
+            <path fill="#FA0F00" d="M13.966 22.624l-1.69-4.281H8.122l3.892-9.144 5.662 13.425zM8.884 1.376H0v21.248zm6.232 0H24v21.248z"/>
           </svg>
         </span>
         <span class="nash-sidebar-wordmark">Nash</span>
@@ -148,6 +148,11 @@ function renderNav(block, reportCount) {
     </nav>
     <div class="nash-sidebar-bottom">
       <div class="nash-sidebar-usermenu" role="menu" hidden>
+        <button class="nash-sidebar-themetoggle" type="button" role="menuitemcheckbox" aria-checked="false">
+          <span class="nash-sidebar-theme-label">${ICONS.moon} Dark mode</span>
+          <span class="nash-sidebar-switch" aria-hidden="true"><span class="nash-sidebar-switch-knob"></span></span>
+        </button>
+        <hr class="nash-sidebar-menudivider"/>
         ${USER_MENU.map((m) => `
           <a class="nash-sidebar-menuitem" href="${m.href}" role="menuitem">
             ${ICONS[m.icon] || ''}
@@ -200,6 +205,31 @@ function setupCollapse(block) {
 
   toggleBtn?.addEventListener('click', () => {
     apply(!document.body.classList.contains('nash-nav-collapsed'));
+  });
+}
+
+const THEME_KEY = 'nash-theme';
+function currentTheme() {
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* ignore */ }
+}
+
+function setupThemeToggle(block) {
+  const btn = block.querySelector('.nash-sidebar-themetoggle');
+  if (!btn) return;
+  const sync = () => {
+    const dark = currentTheme() === 'dark';
+    btn.setAttribute('aria-checked', String(dark));
+    btn.classList.toggle('on', dark);
+  };
+  sync();
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation(); // keep the menu open
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+    sync();
   });
 }
 
@@ -259,6 +289,7 @@ export default async function decorate(block) {
 
   setupCollapse(block);
   setupUserMenu(block);
+  setupThemeToggle(block);
 
   // Detect active item from current URL
   const path = window.location.pathname.replace(/\/$/, '') || '/';

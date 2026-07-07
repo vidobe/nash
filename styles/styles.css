@@ -63,6 +63,35 @@
 
 }
 
+/* Dark theme — flips the semantic tokens the blocks are built on. Set by the
+   no-flash init in head.html and the sidebar toggle (localStorage 'nash-theme'). */
+html[data-theme="dark"] {
+  --background-color: #16181d;
+  --light-color: #202329;
+  --dark-color: #c7cad2;
+  --text-color: #e9eaee;
+  --link-color: #6b8afd;
+  --link-hover-color: #91a8ff;
+
+  --red: #ff5d50;
+  --red-lt: #3a1613;
+  --ink: #eceef2;
+  --ink-70: #b6bac2;
+  --ink-40: #7f838c;
+  --ink-15: #333741;
+  --ink-08: #23262c;
+  --white: #1c1f25;
+  --surface: #23262c;
+  --green: #3ed88a;
+  --green-lt: #12271b;
+  --green-dot: #22c55e;
+  --amber: #e2953a;
+  --amber-lt: #2f2410;
+  --blue: #6b8afd;
+  --blue-lt: #172033;
+  --border: #2f333b;
+}
+
 /* fallback fonts */
 @font-face {
   font-family: roboto-condensed-fallback;

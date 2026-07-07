@@ -365,6 +365,71 @@
   background: var(--ink-15, #e8e9ec);
 }
 
+/* ── Theme toggle ────────────────────────────────────── */
+.nash-sidebar .nash-sidebar-themetoggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.nash-sidebar .nash-sidebar-themetoggle:hover {
+  background: var(--ink-08, #f4f4f6);
+}
+
+.nash-sidebar .nash-sidebar-theme-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-sidebar .nash-sidebar-theme-label svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+}
+
+.nash-sidebar .nash-sidebar-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: var(--ink-15, #e8e9ec);
+  transition: background 0.18s ease;
+}
+
+.nash-sidebar .nash-sidebar-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  transition: transform 0.18s ease;
+}
+
+.nash-sidebar .nash-sidebar-themetoggle.on .nash-sidebar-switch {
+  background: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-themetoggle.on .nash-sidebar-switch-knob {
+  transform: translateX(14px);
+}
+
 /* ── Collapsed icon rail ─────────────────────────────── */
 
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-text,
