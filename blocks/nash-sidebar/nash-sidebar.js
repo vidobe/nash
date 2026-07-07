@@ -133,8 +133,9 @@ function renderNav(block, reportCount) {
     <div class="nash-sidebar-head">
       <a class="nash-sidebar-brand" href="/" aria-label="Nash home">
         <span class="nash-sidebar-logo" aria-hidden="true">
-          <svg width="24" height="21" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
-            <path fill="#FA0F00" d="M13.966 22.624l-1.69-4.281H8.122l3.892-9.144 5.662 13.425zM8.884 1.376H0v21.248zm6.232 0H24v21.248z"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
+            <rect width="24" height="24" rx="5" fill="#FA0F00"/>
+            <path fill="#fff" transform="translate(5.4,5.4) scale(0.55)" d="M13.966 22.624l-1.69-4.281H8.122l3.892-9.144 5.662 13.425zM8.884 1.376H0v21.248zm6.232 0H24v21.248z"/>
           </svg>
         </span>
         <span class="nash-sidebar-wordmark">Nash</span>
