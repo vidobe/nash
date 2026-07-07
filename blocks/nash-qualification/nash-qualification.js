@@ -85,7 +85,9 @@ export default async function decorate(block) {
 
   // Remove the now-duplicated static body; render the interactive session view.
   toRemove.forEach((s) => s.remove());
-  loadCSS(`${window.hlx.codeBasePath}/blocks/nash-session/nash-session.css`);
+  // Load the session styles before revealing the view (the block is hidden via
+  // CSS until it gets the `nash-session` class) to avoid an unstyled flash.
+  await loadCSS(`${window.hlx.codeBasePath}/blocks/nash-session/nash-session.css`);
   block.classList.add('nash-session');
   renderAssessment(block, assessment);
 }
