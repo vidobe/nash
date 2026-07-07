@@ -79,8 +79,12 @@ function splitRow(line) {
 }
 
 /* Minimal, safe markdown → HTML for replies (escapes first). Handles headings,
-   lists, inline styles, links, and GFM tables. */
-function renderMarkdown(src) {
+   lists, inline styles, links, and GFM tables.
+   With `{ headings: 'real' }` it emits real <h2>–<h6> tags (used for the
+   published page, where the nash-qualification block splits the report into
+   sections by heading and EDS strips custom <p> classes); otherwise it emits
+   styled `<p class="nash-md-h">` for the in-app chat/preview. */
+function renderMarkdown(src, { headings = 'p' } = {}) {
   const lines = escapeHtml(src).split('\n');
   const out = [];
   let list = null;
@@ -107,7 +111,14 @@ function renderMarkdown(src) {
       const ol = line.match(/^\d+\.\s+(.*)$/);
       if (h) {
         closeList();
-        out.push(`<p class="nash-md-h" data-lvl="${h[1].length}">${inlineMd(h[2])}</p>`);
+        if (headings === 'real') {
+          // Offset by one so the page's single <h1> title stays unique and the
+          // top-level "N. …" sections land on <h2> (what the block splits on).
+          const lvl = Math.min(h[1].length + 1, 6);
+          out.push(`<h${lvl}>${inlineMd(h[2])}</h${lvl}>`);
+        } else {
+          out.push(`<p class="nash-md-h" data-lvl="${h[1].length}">${inlineMd(h[2])}</p>`);
+        }
       } else if (ul) {
         if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
         out.push(`<li>${inlineMd(ul[1])}</li>`);
@@ -558,7 +569,7 @@ function reportHtmlForPublish(a) {
     header += `<p><strong>Fit score:</strong> ${a.score} / 100 — ${escapeHtml(label)}${platform}</p>`;
   }
   let body = '';
-  if (a.reportMarkdown) body = renderMarkdown(a.reportMarkdown);
+  if (a.reportMarkdown) body = renderMarkdown(a.reportMarkdown, { headings: 'real' });
   else if (a.report) body = reportPanel(a.report, a.company);
   return header + body;
 }

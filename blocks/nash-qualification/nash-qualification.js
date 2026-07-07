@@ -279,11 +279,15 @@ export default async function decorate(block) {
   if (main) main.classList.add('nash-qual-page');
 
   // Group the report body into H2 sections, then build the side-nav + panels.
+  // Only take over the body sections once we've actually collected them — never
+  // remove them when parsing finds nothing, or the whole report would vanish.
   const blockSection = block.closest('.section') || block.parentElement;
   const sections = collectSections(blockSection);
-  let sib = blockSection.nextElementSibling;
-  while (sib) { const next = sib.nextElementSibling; sib.remove(); sib = next; }
-  buildTabs(block, sections, scorecardHTML);
+  if (sections.length) {
+    let sib = blockSection.nextElementSibling;
+    while (sib) { const next = sib.nextElementSibling; sib.remove(); sib = next; }
+    buildTabs(block, sections, scorecardHTML);
+  }
 
   requestAnimationFrame(() => {
     enhanceBodyContent(main);
