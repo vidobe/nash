@@ -1319,27 +1319,6 @@
   cursor: default;
 }
 
-.nash-session .nash-session-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 13px;
-  color: var(--ink-40, #9a9da6);
-  text-decoration: none;
-  margin-bottom: 16px;
-}
-
-.nash-session .nash-session-back:hover {
-  color: var(--ink, #111318);
-}
-
-.nash-session .nash-session-back svg {
-  width: 14px;
-  height: 14px;
-}
-
 .nash-session .nash-session-assess-head {
   display: flex;
   align-items: center;

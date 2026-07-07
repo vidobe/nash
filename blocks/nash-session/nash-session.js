@@ -1004,7 +1004,6 @@ function renderAssessment(block, a) {
 
   block.innerHTML = `
     <div class="nash-session-assess">
-      <a class="nash-session-back" href="/indextest">${ICONS.back} New session</a>
       <div class="nash-session-assess-head">
         <div>
           <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
@@ -1055,14 +1054,13 @@ function renderAssessment(block, a) {
   const input = block.querySelector('.nash-session-input');
   const sendBtn = block.querySelector('.nash-session-send');
 
-  if (a.messages.length === 0) {
-    const hasReport = a.reportMarkdown || a.report;
-    addMessage(thread, 'assistant', hasReport
-      ? `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`
-      : `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`);
-  } else {
-    a.messages.forEach((m) => addMessage(thread, m.role, m.role === 'assistant' ? renderMarkdown(m.content) : escapeHtml(m.content)));
-  }
+  // Always open on a clean thread — prior chat history is not replayed (the
+  // report is the focus), but the composer stays so Fluffy can be asked about
+  // the results. Past messages are still kept for re-run context.
+  const hasReport = a.reportMarkdown || a.report;
+  addMessage(thread, 'assistant', hasReport
+    ? `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`
+    : `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`);
 
   input.addEventListener('input', () => {
     autoResize(input);
