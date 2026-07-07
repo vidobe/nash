@@ -8,6 +8,11 @@
   overflow: hidden;
 }
 
+html[data-theme="dark"] .nash-sidebar {
+  background: linear-gradient(180deg, #1c1f25 0%, #16181d 100%);
+  border-right: 1px solid var(--border, #2f333b);
+}
+
 /* ── Brand ───────────────────────────────────────────── */
 
 .nash-sidebar .nash-sidebar-head {
