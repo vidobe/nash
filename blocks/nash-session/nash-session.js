@@ -571,6 +571,7 @@ function reportHtmlForPublish(a) {
   let body = '';
   if (a.reportMarkdown) body = renderMarkdown(a.reportMarkdown, { headings: 'real' });
   else if (a.report) body = reportPanel(a.report, a.company);
+  else if (a.reportHtml) body = a.reportHtml;
   return header + body;
 }
 
@@ -804,7 +805,10 @@ function renderDossier(a) {
       ${a.cms && a.cms.toLowerCase() !== 'n/a' ? `<span class="nash-session-report-cms">${escapeHtml(a.cms)}</span>` : ''}
     </div>`;
   }
-  return `<div class="nash-session-report nash-md">${head}${renderMarkdown(a.reportMarkdown || '')}</div>`;
+  // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a
+  // published page reconstructed without the original markdown).
+  const body = a.reportMarkdown ? renderMarkdown(a.reportMarkdown) : (a.reportHtml || '');
+  return `<div class="nash-session-report nash-md">${head}${body}</div>`;
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -818,8 +822,11 @@ function assessmentFiles(a) {
   return [];
 }
 
-/* Persist an assessment without the large file bytes (keep localStorage small). */
+/* Persist an assessment without the large file bytes (keep localStorage small).
+   Published views (reconstructed from a shared page) are read-only — never write
+   them into this viewer's local list. */
 function persist(a) {
+  if (a.published) return;
   const copy = { ...a };
   delete copy.fileData;
   delete copy.fileText;
@@ -990,7 +997,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   });
 }
 
-function renderAssessment(block, a) {
+export function renderAssessment(block, a) {
   current = a;
   // Start a fresh FluffyJaws thread on open; the first follow-up re-grounds it
   // with the report (stored response IDs expire, so we don't reuse them).
@@ -1030,8 +1037,9 @@ function renderAssessment(block, a) {
           </form>
           <div class="nash-session-footer">
             <div class="nash-session-footer-left">
+              ${a.published ? '' : `
               <button type="button" class="nash-session-footer-btn" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
-              <button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>
+              <button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>`}
               <div class="nash-session-belowbar"></div>
             </div>
             <span class="nash-session-model">FluffyJaws</span>
@@ -1057,7 +1065,7 @@ function renderAssessment(block, a) {
   // Always open on a clean thread — prior chat history is not replayed (the
   // report is the focus), but the composer stays so Fluffy can be asked about
   // the results. Past messages are still kept for re-run context.
-  const hasReport = a.reportMarkdown || a.report;
+  const hasReport = a.reportMarkdown || a.report || a.reportHtml;
   addMessage(thread, 'assistant', hasReport
     ? `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`
     : `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`);
@@ -1114,7 +1122,8 @@ function buildChatContext(a) {
     a.cms && a.cms.toLowerCase() !== 'n/a' ? `Detected platform: ${a.cms}` : '',
     a.solutions?.length ? `Solutions in scope: ${a.solutions.map((s) => s.name).join(', ')}` : '',
   ].filter(Boolean).join('\n');
-  const report = (a.reportMarkdown || '').slice(0, 40000);
+  const report = (a.reportMarkdown
+    || (a.reportHtml || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).slice(0, 40000);
   return `You previously produced this Adobe qualification assessment. Answer my follow-up questions using it as the source of truth; be specific and reference its findings.
 
 ${head}
@@ -1139,7 +1148,8 @@ async function send(block, text) {
 
   // First turn after opening: prepend the assessment context and start a fresh
   // thread. Later turns continue via previousResponseId.
-  const needsContext = !chatGrounded && (current.reportMarkdown || current.report);
+  const needsContext = !chatGrounded
+    && (current.reportMarkdown || current.report || current.reportHtml);
   const payload = needsContext
     ? `${buildChatContext(current)}\n\n---\n\nMy question: ${value}`
     : value;

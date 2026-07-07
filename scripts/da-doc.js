@@ -58,6 +58,31 @@ function qualificationBlock(a) {
   return `<div class="nash-qualification">${row1}${dimRows}</div>`;
 }
 
+/* Base64 (Unicode-safe) payload so a published page can reconstruct the full
+   assessment — report markdown + opp + meta — and render the interactive view. */
+function encodePayload(a) {
+  const data = {
+    v: 1,
+    company: a.company,
+    dr: a.dr || '',
+    fileName: a.fileName || '',
+    solutions: a.solutions || [],
+    solutionNames: a.solutionNames || '',
+    proposedSolution: a.proposedSolution || '',
+    score: a.score ?? null,
+    verdict: a.verdict || '',
+    cms: a.cms || '',
+    dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
+    reportMarkdown: a.reportMarkdown || '',
+    opp: a.opp || {},
+  };
+  try {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  } catch {
+    return '';
+  }
+}
+
 function metadataBlock(a, user) {
   return `<div class="metadata">${
     kv('Title', a.company)
@@ -67,6 +92,7 @@ function metadataBlock(a, user) {
     + kv('verdict', a.verdict || '')
     + kv('user', user || '')
     + kv('description', a.dr || a.company)
+    + kv('nash-payload', encodePayload(a))
   }</div>`;
 }
 

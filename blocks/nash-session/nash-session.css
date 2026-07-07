@@ -1782,6 +1782,25 @@
   font-weight: 600;
 }
 
+/* Real headings — used when a report is reconstructed from published HTML. */
+.nash-session .nash-session-report.nash-md h2,
+.nash-session .nash-session-report.nash-md h3,
+.nash-session .nash-session-report.nash-md h4 {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-weight: 400;
+  color: var(--ink, #111318);
+  margin: 22px 0 8px;
+}
+
+.nash-session .nash-session-report.nash-md h2 { font-size: 20px; }
+
+.nash-session .nash-session-report.nash-md h3 { font-size: 17px; }
+
+.nash-session .nash-session-report.nash-md h4 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .nash-session .nash-session-report.nash-md ul,
 .nash-session .nash-session-report.nash-md ol {
   margin: 4px 0 12px;
@@ -1796,15 +1815,15 @@
   margin-bottom: 5px;
 }
 
-.nash-session .nash-session-report.nash-md .nash-md-table {
+.nash-session .nash-session-report.nash-md table {
   width: 100%;
   border-collapse: collapse;
   margin: 8px 0 14px;
   font-size: 13px;
 }
 
-.nash-session .nash-session-report.nash-md .nash-md-table th,
-.nash-session .nash-session-report.nash-md .nash-md-table td {
+.nash-session .nash-session-report.nash-md table th,
+.nash-session .nash-session-report.nash-md table td {
   border: 1px solid var(--ink-15, #e8e9ec);
   padding: 7px 10px;
   text-align: left;
@@ -1812,7 +1831,7 @@
   color: var(--ink-70, #4a4d55);
 }
 
-.nash-session .nash-session-report.nash-md .nash-md-table th {
+.nash-session .nash-session-report.nash-md table th {
   background: var(--surface, #f8f8fa);
   color: var(--ink, #111318);
   font-weight: 600;
