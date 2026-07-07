@@ -36,10 +36,7 @@
 /* ── Toolbar ─────────────────────────────────────────── */
 
 .nash-overview .nash-overview-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 28px 32px 4px;
+  padding: 28px 32px 0;
 }
 
 .nash-overview .nash-overview-title {
@@ -50,9 +47,42 @@
   color: var(--ink, #111318);
 }
 
-.nash-overview .nash-overview-count {
+.nash-overview .nash-overview-subtitle {
+  margin: 4px 0 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 14px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 18px 32px 4px;
+}
+
+.nash-overview .nash-overview-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 92px;
+  padding: 12px 16px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 10px;
+  background: var(--surface, #f8f8fa);
+}
+
+.nash-overview .nash-overview-stat-value {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink, #111318);
+}
+
+.nash-overview .nash-overview-stat-label {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
   color: var(--ink-40, #9a9da6);
 }
 

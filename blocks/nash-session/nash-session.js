@@ -719,7 +719,6 @@ function daPanelHtml(a) {
   const bar = a.publishedUrl
     ? `<div class="nash-session-da-bar">
         <span class="nash-session-published">Published to DA</span>
-        <a class="nash-session-da-link" href="${a.publishedUrl}" target="_blank" rel="noopener">View live page ↗</a>
         ${a.published ? '' : '<button type="button" class="nash-session-publish subtle" data-da-publish>Re-publish</button>'}
       </div>`
     : `<div class="nash-session-da-bar">

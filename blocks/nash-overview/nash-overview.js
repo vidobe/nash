@@ -293,10 +293,31 @@ export default async function decorate(block) {
   const genCount = reports.filter((r) => r.status === 'generating').length;
   const doneCount = reports.filter((r) => r.status === 'done').length;
 
+  // Stats over completed qualifications
+  const scored = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
+  const avgScore = scored.length
+    ? Math.round(scored.reduce((sum, r) => sum + r.score, 0) / scored.length) : null;
+  const goCount = scored.filter((r) => r.score >= 70).length;
+  const condCount = scored.filter((r) => r.score >= 50 && r.score < 70).length;
+  const nogoCount = scored.filter((r) => r.score < 50).length;
+  const stat = (label, value, style = '') => `<div class="nash-overview-stat">
+      <span class="nash-overview-stat-value"${style ? ` style="${style}"` : ''}>${value}</span>
+      <span class="nash-overview-stat-label">${label}</span>
+    </div>`;
+
   block.innerHTML = `
     <div class="nash-overview-head">
       <h1 class="nash-overview-title">Qualifications</h1>
-      <span class="nash-overview-count">${reports.length}</span>
+      <p class="nash-overview-subtitle">Every opportunity your team has qualified with Nash.</p>
+    </div>
+    <div class="nash-overview-stats">
+      ${stat('Total', reports.length)}
+      ${stat('Completed', doneCount)}
+      ${stat('In progress', genCount)}
+      ${stat('Avg fit score', avgScore == null ? '—' : avgScore, avgScore == null ? '' : `color:${scoreColor(avgScore)}`)}
+      ${stat('Go', goCount, 'color:var(--green,#0d7a45)')}
+      ${stat('Conditional', condCount, 'color:var(--amber,#b45309)')}
+      ${stat('No-go', nogoCount, 'color:var(--red,#eb1000)')}
     </div>
     <div class="nash-overview-toolbar">
       <div class="nash-overview-search-wrap">
