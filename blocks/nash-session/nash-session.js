@@ -312,7 +312,9 @@ function renderLauncher(block, name, solutions = []) {
     current = assessment;
     previousResponseId = null;
     window.history.pushState({}, '', `/indextest?a=${encodeURIComponent(assessment.id)}`);
-    renderAssessment(block, assessment);
+    // Freshly created with docs still in memory — kick off the assessment
+    // immediately instead of waiting for a manual "Run assessment" click.
+    renderAssessment(block, assessment, true);
   });
 }
 
@@ -403,8 +405,8 @@ function reportPanel(report, company) {
   if (!report) {
     return `
       <div class="nash-session-run">
-        <p class="nash-session-run-text">Ready to qualify <strong>${escapeHtml(company)}</strong> against your solution skills.</p>
-        <button class="nash-session-run-btn" type="button">Run assessment</button>
+        <span class="nash-session-typing"><i></i><i></i><i></i></span>
+        <p class="nash-session-run-text">Preparing the assessment for <strong>${escapeHtml(company)}</strong>…</p>
       </div>
     `;
   }
@@ -1023,7 +1025,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   });
 }
 
-export function renderAssessment(block, a) {
+export function renderAssessment(block, a, autoRun = false) {
   current = a;
   // Start a fresh FluffyJaws thread on open; the first follow-up re-grounds it
   // with the report (stored response IDs expire, so we don't reuse them).
@@ -1092,9 +1094,16 @@ export function renderAssessment(block, a) {
   // report is the focus), but the composer stays so Fluffy can be asked about
   // the results. Past messages are still kept for re-run context.
   const hasReport = a.reportMarkdown || a.report || a.reportHtml;
-  addMessage(thread, 'assistant', hasReport
-    ? `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`
-    : `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`);
+  const willAutoRun = autoRun && !hasReport;
+  let openingMsg;
+  if (hasReport) {
+    openingMsg = `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`;
+  } else if (willAutoRun) {
+    openingMsg = `Running the assessment for <strong>${escapeHtml(a.company)}</strong> now — I'll share the fit score, verdict, red flags, and recommendations here as soon as it's ready.`;
+  } else {
+    openingMsg = `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`;
+  }
+  addMessage(thread, 'assistant', openingMsg);
 
   input.addEventListener('input', () => {
     autoResize(input);
@@ -1108,8 +1117,10 @@ export function renderAssessment(block, a) {
     send(block, input.value);
   });
 
-  const runBtn = block.querySelector('.nash-session-run-btn');
-  if (runBtn) runBtn.addEventListener('click', () => runAssessment(block));
+  // No manual "Run assessment" step — start automatically whenever the view
+  // opens without a report yet (fresh creation, or a reopened unfinished run).
+  // The only remaining run button lives in the error/retry fallback (failMsg).
+  if (willAutoRun) runAssessment(block);
 
   block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
     switchTab(block, 'assessment');
@@ -1256,7 +1267,9 @@ export default async function decorate(block) {
   const assessment = id ? getAssessment(id) : null;
 
   if (assessment) {
-    renderAssessment(block, assessment);
+    // autoRun only takes effect when there's no report yet, so a finished
+    // assessment just re-opens, while an unfinished one restarts automatically.
+    renderAssessment(block, assessment, true);
   } else {
     renderLauncher(block, name, await loadSolutions());
   }
