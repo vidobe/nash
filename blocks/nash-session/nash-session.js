@@ -464,9 +464,9 @@ const MAX_DOC_CHARS = 120000;
  * Extracts readable text from a file in the browser so it can go straight into
  * the prompt — we never rely on FluffyJaws mounting the upload into its tool
  * runtime (PDFs were coming back "not readable in-session"). Spreadsheets/CSV via
- * SheetJS, PDFs via pdf.js (both loaded on demand). Returns '' for formats we
- * don't parse here (e.g. docx) — those still go to the model as an input_file
- * attachment.
+ * SheetJS, PDFs via pdf.js, .docx via fflate (all loaded on demand). Returns ''
+ * for formats we don't parse here (e.g. legacy binary .doc) — those still go to
+ * the model as an input_file attachment.
  */
 async function extractFileText(file) {
   const name = (file.name || '').toLowerCase();
@@ -505,6 +505,32 @@ async function extractFileText(file) {
         if (parts.reduce((n, p) => n + p.length, 0) > MAX_DOC_CHARS) break;
       }
       return parts.join('\n\n').slice(0, MAX_DOC_CHARS);
+    } catch (e) {
+      return '';
+    }
+  }
+  if (name.endsWith('.docx')) {
+    try {
+      const fflateUrl = 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js';
+      const fflate = await import(fflateUrl);
+      const zip = fflate.unzipSync(new Uint8Array(await file.arrayBuffer()));
+      const raw = zip['word/document.xml'];
+      if (!raw) return '';
+      // .docx is a ZIP; word/document.xml holds the body. Turn paragraph/line/tab
+      // tags into whitespace, strip the rest, and decode entities.
+      const text = fflate.strFromU8(raw)
+        .replace(/<w:tab\b[^>]*\/?>/g, '\t')
+        .replace(/<w:br\b[^>]*\/?>/g, '\n')
+        .replace(/<\/w:p>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;|&apos;/g, "'")
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      return text.slice(0, MAX_DOC_CHARS);
     } catch (e) {
       return '';
     }
