@@ -14,6 +14,8 @@ let current = null; // assessment being viewed in chat mode
 // Reset on every (re)open so the first follow-up re-sends the report — FluffyJaws
 // response IDs expire server-side, so we can't rely on a stored previousResponseId.
 let chatGrounded = false;
+// Documents attached in the composer, to fold into the next Fluffy message.
+let pendingDocs = [];
 
 const ICONS = {
   plus: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -1057,6 +1059,7 @@ export function renderAssessment(block, a, autoRun = false) {
   // with the report (stored response IDs expire, so we don't reuse them).
   previousResponseId = null;
   chatGrounded = false;
+  pendingDocs = [];
   block.classList.add('wide');
   const meta = [
     a.dr ? `DR ${escapeHtml(a.dr)}` : '',
@@ -1085,7 +1088,10 @@ export function renderAssessment(block, a, autoRun = false) {
     : reportPanel(a.report, a.company)}</div>
             <div class="nash-session-thread" aria-live="polite"></div>
           </div>
+          <div class="nash-session-attachments" hidden></div>
           <form class="nash-session-composer" autocomplete="off">
+            <button type="button" class="nash-session-attach" aria-label="Attach document" title="Attach a document">${ICONS.attach}</button>
+            <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
             <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
             <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
           </form>
@@ -1131,16 +1137,41 @@ export function renderAssessment(block, a, autoRun = false) {
   }
   addMessage(thread, 'assistant', openingMsg);
 
-  input.addEventListener('input', () => {
-    autoResize(input);
-    sendBtn.disabled = input.value.trim().length === 0;
-  });
+  const syncSend = () => {
+    sendBtn.disabled = input.value.trim().length === 0 && pendingDocs.length === 0;
+  };
+  input.addEventListener('input', () => { autoResize(input); syncSend(); });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(block, input.value); }
   });
   block.querySelector('.nash-session-composer').addEventListener('submit', (e) => {
     e.preventDefault();
     send(block, input.value);
+  });
+
+  // Attach documents in the composer — their text is folded into the next Fluffy
+  // message (and into current.files so a re-run picks them up too).
+  const attachInput = block.querySelector('.nash-session-attach-input');
+  const chips = block.querySelector('.nash-session-attachments');
+  const renderChips = () => {
+    chips.hidden = pendingDocs.length === 0;
+    chips.innerHTML = pendingDocs.map((d, i) => `<span class="nash-session-chip">${ICONS.doc}<span>${escapeHtml(d.name)}</span><button type="button" data-i="${i}" aria-label="Remove ${escapeHtml(d.name)}">&times;</button></span>`).join('');
+    chips.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      pendingDocs.splice(Number(b.dataset.i), 1);
+      renderChips();
+      syncSend();
+    }));
+    syncSend();
+  };
+  block.querySelector('.nash-session-attach').addEventListener('click', () => attachInput.click());
+  attachInput.addEventListener('change', async () => {
+    const picked = [...attachInput.files];
+    attachInput.value = '';
+    const extracted = await Promise.all(
+      picked.map(async (f) => ({ name: f.name, text: await extractFileText(f) })),
+    );
+    pendingDocs.push(...extracted);
+    renderChips();
   });
 
   // No manual "Run assessment" step — start automatically whenever the view
@@ -1197,25 +1228,44 @@ ${report}`;
 
 async function send(block, text) {
   const value = text.trim();
-  if (!value || !current) return;
+  if ((!value && !pendingDocs.length) || !current) return;
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
 
-  addMessage(thread, 'user', escapeHtml(value));
+  // Take any composer attachments for this turn, then clear the chips.
+  const docs = pendingDocs;
+  pendingDocs = [];
+  const chips = block.querySelector('.nash-session-attachments');
+  if (chips) { chips.hidden = true; chips.innerHTML = ''; }
+
+  const question = value || 'Please factor in the attached document(s) in your answer.';
+  const docNote = docs.length
+    ? ` <span class="nash-session-msg-files">📎 ${docs.length} file${docs.length > 1 ? 's' : ''}</span>` : '';
+  addMessage(thread, 'user', escapeHtml(question) + docNote);
   input.value = '';
   autoResize(input);
   block.querySelector('.nash-session-send').disabled = true;
 
-  current.messages.push({ role: 'user', content: value });
+  current.messages.push({ role: 'user', content: question });
+  // Fold attached docs into current.files so a later re-run includes them too.
+  docs.filter((d) => d.text).forEach((d) => {
+    current.files = [...(current.files || []), {
+      name: d.name, mime: '', text: d.text, data: '',
+    }];
+  });
   persist(current);
+
+  const docsText = docs.length
+    ? `\n\n=== ATTACHED DOCUMENT(S) ===\n${docs.map((d) => `--- ${d.name} ---\n${d.text || '(this file could not be read)'}`).join('\n\n')}`
+    : '';
 
   // First turn after opening: prepend the assessment context and start a fresh
   // thread. Later turns continue via previousResponseId.
   const needsContext = !chatGrounded
     && (current.reportMarkdown || current.report || current.reportHtml);
   const payload = needsContext
-    ? `${buildChatContext(current)}\n\n---\n\nMy question: ${value}`
-    : value;
+    ? `${buildChatContext(current)}${docsText}\n\n---\n\nMy question: ${question}`
+    : `${question}${docsText}`;
 
   const typing = typingIndicator(thread);
   let bubble = null;

@@ -1514,7 +1514,7 @@
   gap: 8px;
   flex-shrink: 0;
   width: 100%;
-  padding: 8px 8px 8px 16px;
+  padding: 8px 8px 8px 10px;
   margin-top: 12px;
   background: var(--white, #fff);
   border: 1px solid var(--ink-15, #e8e9ec);
@@ -1526,6 +1526,85 @@
 .nash-session .nash-session-composer:focus-within {
   border-color: var(--ink-40, #9a9da6);
   box-shadow: 0 4px 22px rgb(17 19 24 / 10%);
+}
+
+.nash-session .nash-session-attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nash-session .nash-session-attach:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-attach svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nash-session .nash-session-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.nash-session .nash-session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 8px;
+  background: var(--surface, #f8f8fa);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-chip svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nash-session .nash-session-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nash-session .nash-session-chip button {
+  border: none;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.nash-session .nash-session-chip button:hover {
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-msg-files {
+  font-size: 12px;
+  opacity: 0.75;
 }
 
 .nash-session .nash-session-input {
