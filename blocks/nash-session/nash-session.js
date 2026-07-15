@@ -1090,16 +1090,14 @@ export function renderAssessment(block, a, autoRun = false) {
           </div>
           <div class="nash-session-attachments" hidden></div>
           <form class="nash-session-composer" autocomplete="off">
-            <button type="button" class="nash-session-attach" aria-label="Attach document" title="Attach a document">${ICONS.attach}</button>
-            <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
             <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
             <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
           </form>
           <div class="nash-session-footer">
             <div class="nash-session-footer-left">
-              ${a.published ? '' : `
-              <button type="button" class="nash-session-footer-btn" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
-              <button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>`}
+              <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
+              <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
+              ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
               <div class="nash-session-belowbar"></div>
             </div>
             <span class="nash-session-model">FluffyJaws</span>
