@@ -457,6 +457,68 @@
   overflow-y: auto;
 }
 
+/* Architecture diagram (Spectrum 2-styled, rendered from a NASH_ARCH block). */
+.nash-session .nash-arch {
+  width: 100%;
+  margin: 16px 0 22px;
+  overflow-x: auto;
+}
+
+.nash-session .nash-arch svg {
+  width: 100%;
+  height: auto;
+  min-width: 520px;
+}
+
+.nash-session .nash-arch-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  border: 1px solid #d5d5d5;
+  border-left: 3px solid #1473e6;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: #2c2c2c;
+  text-align: center;
+  overflow: hidden;
+}
+
+.nash-session .nash-arch-node span {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nash-session .nash-arch-wire {
+  fill: none;
+  stroke: #959595;
+  stroke-width: 1.5;
+}
+
+.nash-session .nash-arch-arrow {
+  fill: #959595;
+}
+
+.nash-session .nash-arch-layer {
+  fill: #6b6b6b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.nash-session .nash-arch-elabel {
+  fill: #6b6b6b;
+  font-size: 11px;
+}
+
 /* Pre-assessment interview: extract from docs, ask the analyst about the gaps. */
 .nash-session .nash-session-interview {
   display: flex;

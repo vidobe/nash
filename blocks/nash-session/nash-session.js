@@ -177,6 +177,161 @@ function autoResize(ta) {
   ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`;
 }
 
+/* ── Architecture diagram (Spectrum-styled, no build/deps) ──────────────
+   FluffyJaws emits a machine-readable NASH_ARCH block in Section 4; we render
+   it as a layered boxes-and-arrows SVG. A mermaid flowchart fence is accepted
+   as a fallback so older/looser output still draws instead of dumping text. */
+
+function parseArch(text) {
+  const arch = { layers: [], nodes: [], edges: [] };
+  text.split('\n').forEach((line) => {
+    const l = line.trim();
+    if (!l) return;
+    let m = l.match(/^layers?\s*:\s*(.+)$/i);
+    if (m) { arch.layers = m[1].split(/[;|]/).map((s) => s.trim()).filter(Boolean); return; }
+    m = l.match(/^node\s*:\s*(.+)$/i);
+    if (m) {
+      const p = m[1].split('|').map((s) => s.trim());
+      if (p[0]) arch.nodes.push({ id: p[0], label: p[1] || p[0], layer: p[2] || '' });
+      return;
+    }
+    m = l.match(/^edge\s*:\s*(.+)$/i);
+    if (m) {
+      const p = m[1].split('|').map((s) => s.trim());
+      if (p[0] && p[1]) arch.edges.push({ from: p[0], to: p[1], label: p[2] || '' });
+    }
+  });
+  return arch;
+}
+
+/* Best-effort parse of a mermaid flowchart into the same node/edge model. */
+function parseMermaidFlow(code) {
+  const arch = { layers: [], nodes: [], edges: [] };
+  const labels = new Map();
+  const grab = (token) => {
+    const m = (token || '').trim().match(/^([A-Za-z0-9_]+)\s*(?:\[(.+?)\]|\((.+?)\)|\{(.+?)\})?$/);
+    if (!m) return null;
+    return { id: m[1], label: (m[2] || m[3] || m[4] || '').trim() };
+  };
+  code.split('\n').forEach((raw) => {
+    const line = raw.trim();
+    if (!line || /^(flowchart|graph|subgraph|end|%%)/i.test(line)) return;
+    if (line.includes('-->')) {
+      const parts = line.split('-->').map((s) => s.trim());
+      for (let k = 0; k < parts.length - 1; k += 1) {
+        let right = parts[k + 1];
+        let elabel = '';
+        const lm = right.match(/^\|(.+?)\|\s*(.*)$/);
+        if (lm) { [, elabel, right] = lm; parts[k + 1] = right; }
+        const L = grab(parts[k]);
+        const R = grab(right);
+        if (L) labels.set(L.id, L.label || labels.get(L.id) || L.id);
+        if (R) labels.set(R.id, R.label || labels.get(R.id) || R.id);
+        if (L && R) arch.edges.push({ from: L.id, to: R.id, label: elabel });
+      }
+    } else {
+      const N = grab(line);
+      if (N) labels.set(N.id, N.label || labels.get(N.id) || N.id);
+    }
+  });
+  arch.nodes = [...labels].map(([id, label]) => ({ id, label, layer: '' }));
+  return arch;
+}
+
+/* Group nodes into left→right columns: by declared layers, else by flow depth. */
+function archColumns(arch) {
+  const byId = new Map(arch.nodes.map((n) => [n.id, n]));
+  if (arch.layers.length) {
+    const cols = arch.layers.map((label) => ({ label, nodes: [] }));
+    const idx = new Map(arch.layers.map((l, i) => [l.toLowerCase(), i]));
+    let other = null;
+    arch.nodes.forEach((n) => {
+      const i = idx.has((n.layer || '').toLowerCase()) ? idx.get((n.layer || '').toLowerCase()) : -1;
+      if (i >= 0) cols[i].nodes.push(n);
+      else { if (!other) { other = { label: '', nodes: [] }; cols.push(other); } other.nodes.push(n); }
+    });
+    return cols.filter((c) => c.nodes.length);
+  }
+  // No layers → longest-path levelling from the roots.
+  const level = new Map();
+  const adj = new Map(arch.nodes.map((n) => [n.id, []]));
+  const indeg = new Map(arch.nodes.map((n) => [n.id, 0]));
+  arch.edges.forEach((e) => {
+    if (adj.has(e.from) && byId.has(e.to)) {
+      adj.get(e.from).push(e.to);
+      indeg.set(e.to, indeg.get(e.to) + 1);
+    }
+  });
+  const queue = arch.nodes.filter((n) => !indeg.get(n.id)).map((n) => n.id);
+  const seen = new Set(queue);
+  queue.forEach((id) => level.set(id, 0));
+  for (let h = 0; h < queue.length; h += 1) {
+    const u = queue[h];
+    (adj.get(u) || []).forEach((v) => {
+      level.set(v, Math.max(level.get(v) || 0, (level.get(u) || 0) + 1));
+      if (!seen.has(v)) { seen.add(v); queue.push(v); }
+    });
+  }
+  arch.nodes.forEach((n) => { if (!level.has(n.id)) level.set(n.id, 0); });
+  const maxL = Math.max(0, ...level.values());
+  const cols = Array.from({ length: maxL + 1 }, () => ({ label: '', nodes: [] }));
+  arch.nodes.forEach((n) => cols[level.get(n.id)].nodes.push(n));
+  return cols.filter((c) => c.nodes.length);
+}
+
+function archToHtml(arch) {
+  if (!arch || !arch.nodes.length) return '';
+  const cols = archColumns(arch);
+  if (!cols.length) return '';
+  const hasLabels = cols.some((c) => c.label);
+  const BW = 190; const BH = 58; const CG = 84; const RG = 22; const PAD = 16;
+  const LH = hasLabels ? 26 : 0;
+  const pos = new Map();
+  cols.forEach((col, ci) => col.nodes.forEach((n, ri) => {
+    pos.set(n.id, { x: PAD + ci * (BW + CG), y: PAD + LH + ri * (BH + RG) });
+  }));
+  const maxRows = Math.max(...cols.map((c) => c.nodes.length));
+  const W = PAD * 2 + cols.length * BW + (cols.length - 1) * CG;
+  const H = PAD * 2 + LH + maxRows * BH + Math.max(0, maxRows - 1) * RG;
+  const uid = `n${Math.random().toString(36).slice(2, 8)}`;
+  const wires = arch.edges.map((e) => {
+    const a = pos.get(e.from); const b = pos.get(e.to);
+    if (!a || !b) return '';
+    const sx = a.x + BW; const sy = a.y + BH / 2; const tx = b.x; const ty = b.y + BH / 2;
+    let d;
+    if (tx > sx) { const dx = Math.max(30, (tx - sx) / 2); d = `M${sx} ${sy} C${sx + dx} ${sy} ${tx - dx} ${ty} ${tx} ${ty}`; } else { const my = Math.max(sy, ty) + BH; d = `M${sx} ${sy} C${sx + 44} ${my} ${tx - 44} ${my} ${tx} ${ty}`; }
+    const lbl = e.label ? `<text class="nash-arch-elabel" x="${(sx + tx) / 2}" y="${(sy + ty) / 2 - 6}" text-anchor="middle">${escapeHtml(e.label)}</text>` : '';
+    return `<path class="nash-arch-wire" d="${d}" marker-end="url(#${uid})"/>${lbl}`;
+  }).join('');
+  const layerLabels = hasLabels ? cols.map((c, ci) => (c.label ? `<text class="nash-arch-layer" x="${PAD + ci * (BW + CG) + BW / 2}" y="${PAD + 14}" text-anchor="middle">${escapeHtml(c.label)}</text>` : '')).join('') : '';
+  const boxes = arch.nodes.map((n) => {
+    const p = pos.get(n.id);
+    if (!p) return '';
+    return `<foreignObject x="${p.x}" y="${p.y}" width="${BW}" height="${BH}"><div xmlns="http://www.w3.org/1999/xhtml" class="nash-arch-node"><span>${escapeHtml(n.label)}</span></div></foreignObject>`;
+  }).join('');
+  return `<div class="nash-arch"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Target architecture diagram" preserveAspectRatio="xMidYMid meet"><defs><marker id="${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="nash-arch-arrow" d="M0 0L10 5L0 10z"/></marker></defs>${layerLabels}${wires}${boxes}</svg></div>`;
+}
+
+/* Render report markdown, swapping any NASH_ARCH block (or mermaid fence) for a
+   rendered Spectrum diagram. */
+function renderReportMarkdown(src, opts) {
+  const diagrams = [];
+  const tokenFor = (html) => {
+    if (!html) return '';
+    const tok = `ARCH${diagrams.length}`;
+    diagrams.push({ tok, html });
+    return `\n\n${tok}\n\n`;
+  };
+  const cleaned = (src || '')
+    .replace(/NASH_ARCH:\s*([\s\S]*?)NASH_ARCH_END/gi, (m, inner) => tokenFor(archToHtml(parseArch(inner))))
+    .replace(/```mermaid\s*([\s\S]*?)```/gi, (m, code) => tokenFor(archToHtml(parseMermaidFlow(code))));
+  let html = renderMarkdown(cleaned, opts);
+  diagrams.forEach(({ tok, html: d }) => {
+    html = html.split(`<p>${tok}</p>`).join(d).split(tok).join(d);
+  });
+  return html;
+}
+
 /* ── Launcher ────────────────────────────────────────── */
 
 function renderLauncher(block, name, solutions = []) {
@@ -625,6 +780,13 @@ Produce the report in markdown with exactly these sections:
 # 8. Deal Accelerators & References
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists (grounded in the attached document), plus current tech stack and what success looks like. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+Section 4 (Technical & Architectural Evaluation) must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences for it. Use this EXACT format, with short labels, and place it inline where the diagram belongs:
+NASH_ARCH:
+layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
+node: <id> | <short label> | <layer name>
+edge: <fromId> | <toId> | <optional short label>
+NASH_ARCH_END
+Group nodes into the layers left-to-right following the data flow; aim for ~4-7 layers, keep labels concise, and make sure every edge's ids match declared nodes.
 Section 8 (Deal Accelerators & References) must cover, as clear subsections with bullets:
 - **Ideas to win the deal** — concrete plays and next best actions tailored to this opportunity's objectives and gaps.
 - **VIP / early-access products** — relevant Adobe VIP, limited-availability, or newly launched products that strengthen the offer (only real ones; note if uncertain).
@@ -653,7 +815,7 @@ function reportHtmlForPublish(a) {
     header += `<p><strong>Fit score:</strong> ${a.score} / 100 — ${escapeHtml(label)}${platform}</p>`;
   }
   let body = '';
-  if (a.reportMarkdown) body = renderMarkdown(a.reportMarkdown, { headings: 'real' });
+  if (a.reportMarkdown) body = renderReportMarkdown(a.reportMarkdown, { headings: 'real' });
   else if (a.report) body = reportPanel(a.report, a.company);
   else if (a.reportHtml) body = a.reportHtml;
   return header + body;
@@ -770,7 +932,7 @@ function daPreviewHtml(a) {
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
     ${i === 0 ? scorecardCards(a.dimensions) : ''}
     <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
-    <div class="nash-md">${renderMarkdown(s.md)}</div>
+    <div class="nash-md">${renderReportMarkdown(s.md)}</div>
   </div>`).join('');
   return `<div class="nash-session-qual">
     <div class="nash-session-qual-head">
@@ -895,7 +1057,7 @@ function renderDossier(a) {
   }
   // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a
   // published page reconstructed without the original markdown).
-  const body = a.reportMarkdown ? renderMarkdown(a.reportMarkdown) : (a.reportHtml || '');
+  const body = a.reportMarkdown ? renderReportMarkdown(a.reportMarkdown) : (a.reportHtml || '');
   return `<div class="nash-session-report nash-md">${head}${body}</div>`;
 }
 
