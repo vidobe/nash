@@ -1080,6 +1080,32 @@ function scorecardCards(dims) {
   }).join('')}</div>`;
 }
 
+/* Overview summary built from NASH_CONTEXT: a "what Nash sees" card with topic
+   chips, plus objectives (positive) and challenges (warning) callout panels. */
+function contextBlock(a) {
+  const c = a.context || {};
+  const list = (v) => (v || '').split(/[;\n]/).map((x) => x.trim()).filter(Boolean);
+  const chips = list(c.use_cases).slice(0, 6);
+  const objectives = list(c.objectives);
+  const challenges = list(c.challenges);
+  const stack = c.tech_stack && c.tech_stack.toLowerCase() !== 'n/a' ? c.tech_stack : '';
+  if (!chips.length && !objectives.length && !challenges.length && !c.success && !stack) return '';
+  const chipHtml = chips.length
+    ? `<div class="nash-session-topics">${chips.map((t) => `<span class="nash-session-topic">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+  const stackHtml = stack ? `<p class="nash-session-qc-stack"><strong>Current stack:</strong> ${escapeHtml(stack)}</p>` : '';
+  const summaryCard = (c.success || chipHtml || stackHtml)
+    ? `<div class="nash-session-qcard nash-session-summary">
+      <h3 class="nash-session-summary-title">What Nash sees about ${escapeHtml(a.company)}</h3>
+      ${c.success ? `<p>${escapeHtml(c.success)}</p>` : ''}
+      ${chipHtml}${stackHtml}
+    </div>` : '';
+  const callout = (title, items, cls) => (items.length
+    ? `<div class="nash-session-callout ${cls}"><h4>${title}</h4><ul>${items.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>` : '');
+  const cols = (objectives.length || challenges.length)
+    ? `<div class="nash-session-callouts">${callout('Objectives', objectives, 'is-good')}${callout('Challenges', challenges, 'is-warn')}</div>` : '';
+  return summaryCard + cols;
+}
+
 /* Rich, tabbed preview of the DA document — shown inside the assessment. */
 function daPreviewHtml(a) {
   const sols = (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '';
@@ -1093,9 +1119,12 @@ function daPreviewHtml(a) {
     return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${sectionIcon(label)}<span>${label}</span></button>`;
   }).join('');
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
+    ${i === 0 ? contextBlock(a) : ''}
     ${i === 0 ? scorecardCards(a.dimensions) : ''}
-    <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
-    <div class="nash-md">${renderReportMarkdown(s.md)}</div>
+    <div class="nash-session-qcard">
+      <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
+      <div class="nash-md">${renderReportMarkdown(s.md)}</div>
+    </div>
   </div>`).join('');
   return `<div class="nash-session-qual">
     <div class="nash-session-qual-head">

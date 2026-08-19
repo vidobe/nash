@@ -843,6 +843,105 @@
   color: var(--ink, #111318);
 }
 
+/* Report-style content cards for the DA-document preview. */
+.nash-session .nash-session-qcard {
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  background: #fff;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.nash-session .nash-session-qcard .nash-session-qpanel-title {
+  margin-top: 0;
+}
+
+.nash-session .nash-session-summary-title {
+  margin: 0 0 8px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-summary p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.nash-session .nash-session-topic {
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-70, #4a4d55);
+  background: var(--surface, #f8f8fa);
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 100px;
+}
+
+.nash-session .nash-session-qc-stack {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-callouts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.nash-session .nash-session-callout {
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+}
+
+.nash-session .nash-session-callout.is-good {
+  border-top: 3px solid var(--green, #0d7a45);
+}
+
+.nash-session .nash-session-callout.is-warn {
+  border-top: 3px solid var(--amber, #b45309);
+}
+
+.nash-session .nash-session-callout h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-callout ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.nash-session .nash-session-callout li {
+  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-70, #4a4d55);
+}
+
+@media (width <= 700px) {
+  .nash-session .nash-session-callouts {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Scorecard cards */
 .nash-session .nash-session-scorecard {
   display: grid;

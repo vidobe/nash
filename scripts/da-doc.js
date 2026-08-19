@@ -72,6 +72,7 @@ function encodePayload(a) {
     score: a.score ?? null,
     verdict: a.verdict || '',
     cms: a.cms || '',
+    context: a.context || {},
     dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
     reportMarkdown: a.reportMarkdown || '',
     opp: a.opp || {},
