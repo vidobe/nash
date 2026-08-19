@@ -777,7 +777,8 @@ Produce the report in markdown with exactly these sections:
 # 5. Qualification & Discovery Questions
 # 6. Competitive Positioning & Win Sentiment
 # 7. Final Recommendation and Adobe Solution Scope
-# 8. Deal Accelerators & References
+# 8. Solution Rationale
+# 9. Deal Accelerators & References
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists (grounded in the attached document), plus current tech stack and what success looks like. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
 Section 4 (Technical & Architectural Evaluation) must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences for it. Use this EXACT format, with short labels, and place it inline where the diagram belongs:
@@ -787,7 +788,8 @@ node: <id> | <short label> | <layer name>
 edge: <fromId> | <toId> | <optional short label>
 NASH_ARCH_END
 Group nodes into the layers left-to-right following the data flow; aim for ~4-7 layers, keep labels concise, and make sure every edge's ids match declared nodes.
-Section 8 (Deal Accelerators & References) must cover, as clear subsections with bullets:
+Section 8 (Solution Rationale) is a defensible, RFP-ready synthesis with these subsections, in this order: (1) Customer Context — organisation (who / structure / selection scope), objectives, challenges/bottlenecks, maturity, and the existing stack noting what to integrate vs replace; (2) Core Capability Needs — a markdown table with columns | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |; (3) Solution Fit Comparison — name two viable scenarios (A and B) and a markdown table | Criterion | Scenario A | Scenario B | across ~8-10 decision criteria; (4) Budget Indication — a markdown table | Cost category | Basis / driver | Indication | using placeholders such as "€ TBD" where figures are not provided; (5) Recommendation Summary — the preferred scenario with justification, honest points of attention, and next steps. Ground every point in the attached document and the analyst interview; keep table cells concise.
+Section 9 (Deal Accelerators & References) must cover, as clear subsections with bullets:
 - **Ideas to win the deal** — concrete plays and next best actions tailored to this opportunity's objectives and gaps.
 - **VIP / early-access products** — relevant Adobe VIP, limited-availability, or newly launched products that strengthen the offer (only real ones; note if uncertain).
 - **Beta features** — relevant Adobe beta / pre-release / private-beta capabilities that could differentiate, with a note that they are beta.
@@ -861,16 +863,21 @@ function renderBelowBar(block) {
 /* DA content tab body — the published page (rendered) + live link, or a CTA. */
 const SVG = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 // One distinct icon per section position (standard 7-section order).
-const SECTION_ICON_POOL = [
-  SVG('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'),
-  SVG('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
-  SVG('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
-  SVG('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'),
-  SVG('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
-  SVG('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
-  SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
-  SVG('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
-];
+// Section nav icons, keyed by label so re-ordering sections never misaligns them.
+const SECTION_ICONS = {
+  Overview: SVG('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'),
+  Market: SVG('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
+  Business: SVG('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
+  'Tech Fit': SVG('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'),
+  Discovery: SVG('<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
+  Competition: SVG('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
+  Recommendation: SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
+  Rationale: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>'),
+  Accelerators: SVG('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
+};
+function sectionIcon(label) {
+  return SECTION_ICONS[label] || SECTION_ICONS.Overview;
+}
 
 /* Short nav label for a section, matched from its heading text. */
 function sectionLabel(title) {
@@ -880,6 +887,7 @@ function sectionLabel(title) {
   if (/business/.test(t)) return 'Business';
   if (/technical|architect|tech/.test(t)) return 'Tech Fit';
   if (/qualification|discovery|question/.test(t)) return 'Discovery';
+  if (/rationale/.test(t)) return 'Rationale';
   if (/accelerat|reference/.test(t)) return 'Accelerators';
   if (/competitive|win|position/.test(t)) return 'Competition';
   if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
@@ -926,8 +934,8 @@ function daPreviewHtml(a) {
   const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
   const nav = sections.map((s, i) => {
-    const icon = SECTION_ICON_POOL[i % SECTION_ICON_POOL.length];
-    return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${icon}<span>${sectionLabel(s.title)}</span></button>`;
+    const label = sectionLabel(s.title);
+    return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${sectionIcon(label)}<span>${label}</span></button>`;
   }).join('');
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
     ${i === 0 ? scorecardCards(a.dimensions) : ''}
