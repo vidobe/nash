@@ -333,12 +333,43 @@ function archColumns(arch) {
   return columns.filter((c) => c.cells.length);
 }
 
-function archToHtml(arch) {
-  if (!arch || !arch.nodes.length) return '';
+/* Collapse duplicate nodes: exact id repeats are dropped, and same label+layer
+   nodes with different ids are merged (edges re-pointed to the kept node).
+   Also removes duplicate and self edges so the diagram stays clean. */
+function dedupeArch(arch) {
+  const byId = new Set();
+  const byLabel = new Map();
+  const alias = new Map();
+  const nodes = [];
+  arch.nodes.forEach((n) => {
+    if (byId.has(n.id)) return;
+    const lk = `${(n.label || '').toLowerCase()}|${(n.layer || '').toLowerCase()}`;
+    if (byLabel.has(lk)) { alias.set(n.id, byLabel.get(lk)); return; }
+    byId.add(n.id);
+    byLabel.set(lk, n.id);
+    nodes.push(n);
+  });
+  const seen = new Set();
+  const edges = [];
+  arch.edges.forEach((e) => {
+    const from = alias.get(e.from) || e.from;
+    const to = alias.get(e.to) || e.to;
+    if (from === to) return;
+    const k = `${from}>${to}>${e.type}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    edges.push({ ...e, from, to });
+  });
+  return { ...arch, nodes, edges };
+}
+
+function archToHtml(archIn) {
+  if (!archIn || !archIn.nodes.length) return '';
+  const arch = dedupeArch(archIn);
   const cols = archColumns(arch);
   if (!cols.length) return '';
   const showLayers = cols.some((c) => c.label);
-  const BW = 178; const BH = 50; const CG = 92; const RG = 14; const PAD = 16;
+  const BW = 178; const BH = 50; const CG = 92; const RG = 20; const PAD = 16;
   const GH = 24; const GP = 10; const LH = showLayers ? 26 : 0;
   const colX = (ci) => PAD + ci * (BW + CG);
   const nodeBox = (n, x, y) => `<foreignObject x="${x}" y="${y}" width="${BW}" height="${BH}"><div xmlns="http://www.w3.org/1999/xhtml" class="nash-arch-node"><span>${escapeHtml(n.label)}</span></div></foreignObject>`;
@@ -386,8 +417,7 @@ function archToHtml(arch) {
       const my = Math.max(sy, ty) + BH;
       d = `M${sx} ${sy} C${sx + 44} ${my} ${tx - 44} ${my} ${tx} ${ty}`;
     }
-    const lbl = e.label ? `<text class="nash-arch-elabel" x="${(sx + tx) / 2}" y="${(sy + ty) / 2 - 6}" text-anchor="middle">${escapeHtml(e.label)}</text>` : '';
-    return `<path class="nash-arch-wire ${e.type}" d="${d}" marker-end="url(#${uid}-${e.type})"/>${lbl}`;
+    return `<path class="nash-arch-wire ${e.type}" d="${d}" marker-end="url(#${uid}-${e.type})"/>`;
   }).join('');
   const layerLabels = cols.map((c, ci) => (c.label ? `<text class="nash-arch-layer" x="${colX(ci) + BW / 2}" y="${PAD + 14}" text-anchor="middle">${escapeHtml(c.label)}</text>` : '')).join('');
   const mk = (id, color) => `<marker id="${uid}-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${color}"/></marker>`;
