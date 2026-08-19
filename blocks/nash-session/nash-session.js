@@ -679,6 +679,14 @@ function simulateReport() {
   };
 }
 
+/* Comma-separated names of the Adobe solutions selected for this assessment. */
+function solutionsLabel(a) {
+  if (a && Array.isArray(a.solutions) && a.solutions.length) {
+    return a.solutions.map((s) => s.name).join(', ');
+  }
+  return (a && a.solutionNames) || '';
+}
+
 function reportPanel(report, company) {
   if (!report) {
     return `
@@ -703,7 +711,7 @@ function reportPanel(report, company) {
       <div class="nash-session-report-top">
         <div class="nash-session-score" style="color:${dimColor(report.score)}">${report.score}<span>/ 100</span></div>
         <span class="nash-session-verdict ${v.cls}">${v.label}</span>
-        ${report.cms ? `<span class="nash-session-report-cms">${escapeHtml(report.cms)}</span>` : ''}
+        ${solutionsLabel(current) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(current))}</span>` : ''}
       </div>
       ${report.summary ? `<p class="nash-session-report-lead">${escapeHtml(report.summary)}</p>` : ''}
 
@@ -1018,9 +1026,9 @@ function scorecardCards(dims) {
 
 /* Rich, tabbed preview of the DA document — shown inside the assessment. */
 function daPreviewHtml(a) {
-  const sols = (a.solutions || []).map((s) => s.name).join(', ');
+  const sols = (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '';
   const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-  const metaBits = [date, a.opp?.salesStage, a.cms && a.cms.toLowerCase() !== 'n/a' ? a.cms : '']
+  const metaBits = [date, a.opp?.salesStage, sols]
     .filter(Boolean).map((b) => `<span>${escapeHtml(b)}</span>`).join('');
   const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
@@ -1151,7 +1159,7 @@ function renderDossier(a) {
     head = `<div class="nash-session-report-top">
       <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
       <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
-      ${a.cms && a.cms.toLowerCase() !== 'n/a' ? `<span class="nash-session-report-cms">${escapeHtml(a.cms)}</span>` : ''}
+      ${solutionsLabel(a) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(a))}</span>` : ''}
     </div>`;
   }
   // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a

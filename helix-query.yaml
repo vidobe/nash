@@ -22,6 +22,9 @@ indices:
       cms:
         select: head > meta[name="cms"]
         value: attribute(el, "content")
+      solutionnames:
+        select: head > meta[name="solutionnames"]
+        value: attribute(el, "content")
       user:
         select: head > meta[name="user"]
         value: attribute(el, "content")

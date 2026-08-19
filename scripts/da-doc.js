@@ -89,6 +89,7 @@ function metadataBlock(a, user) {
     + kv('status', 'done')
     + kv('score', a.score ?? '')
     + kv('cms', a.cms || 'n/a')
+    + kv('solutionnames', (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '')
     + kv('verdict', a.verdict || '')
     + kv('user', user || '')
     + kv('description', a.dr || a.company)

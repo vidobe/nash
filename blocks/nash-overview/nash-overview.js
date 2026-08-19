@@ -79,7 +79,7 @@ function mapQueryRow(row, idx) {
     total: parseInt(row.totalsteps, 10) || 23,
     task: row.task || 'Processing',
     user: row.user || '',
-    cms: row.cms || 'Unknown',
+    solutions: row.solutionnames || '',
     time: relativeTime(row.lastmodified || row.lastModified),
     ts: Number(row.lastmodified || row.lastModified) || 0,
     score: status === 'done' ? score : null,
@@ -100,7 +100,7 @@ function mapLocalAssessment(a, idx) {
     total: 23,
     task: 'Draft',
     user: 'vgabriel@adobe.com',
-    cms: a.cms && a.cms.toLowerCase() !== 'n/a' ? a.cms : 'Unknown',
+    solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
     time: relativeTime(ts),
     ts,
     score: a.status === 'done' && typeof a.score === 'number' ? a.score : null,
@@ -185,8 +185,8 @@ function buildCard(r) {
           ${r.user}
         </span>
         <span class="nash-overview-meta-item">
-          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-          ${r.cms}
+          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          ${r.solutions || '—'}
         </span>
       </div>
       <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button">
@@ -235,7 +235,7 @@ function tableRow(r) {
     </td>
     <td>${scoreCell}</td>
     <td>${verdictCell}</td>
-    <td class="nash-overview-t-muted">${esc(r.cms || '—')}</td>
+    <td class="nash-overview-t-muted">${esc(r.solutions || '—')}</td>
     <td class="nash-overview-t-muted">${esc(r.user || '')}</td>
     <td class="nash-overview-t-muted nash-overview-t-time">${esc(r.time || '')}</td>
   </tr>`;
@@ -246,7 +246,7 @@ function renderTable(block, reports) {
   if (!wrap) return;
   wrap.innerHTML = `<table class="nash-overview-table">
     <thead><tr>
-      <th>Company</th><th>Fit score</th><th>Verdict</th><th>Platform</th><th>Owner</th><th>Updated</th>
+      <th>Company</th><th>Fit score</th><th>Verdict</th><th>Solutions</th><th>Owner</th><th>Updated</th>
     </tr></thead>
     <tbody>${reports.map(tableRow).join('')}</tbody>
   </table>`;
