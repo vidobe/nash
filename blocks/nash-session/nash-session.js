@@ -1193,8 +1193,34 @@ function pixelGrid() {
 
 /* Ask FluffyJaws which checklist items the uploaded docs already answer, so we
    interview the analyst only about the gaps. Returns an array of item keys to ask. */
-async function analyseInterviewGaps(docText) {
-  const checklist = INTERVIEW_ITEMS.map((it) => `${it.key}: ${it.q}`).join('\n');
+/* Pull solution-authored interview questions from each in-scope solution's DA
+   doc (an `interview-questions` block). Lets each expert own their discovery
+   questions in DA without a code change. Returns [{ key, q }], de-duplicated. */
+async function fetchSolutionQuestions(slugs) {
+  const lists = await Promise.all((slugs || []).map(async (slug) => {
+    try {
+      const r = await fetch(`/solutions/${slug}.plain.html`);
+      if (!r.ok) return [];
+      const div = document.createElement('div');
+      div.innerHTML = await r.text();
+      const blockEl = div.querySelector('.interview-questions');
+      if (!blockEl) return [];
+      return [...blockEl.children].map((row) => row.textContent.trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }));
+  const seen = new Set();
+  const out = [];
+  lists.flat().forEach((q) => {
+    const k = q.toLowerCase();
+    if (!seen.has(k)) { seen.add(k); out.push({ key: `sol-${out.length}`, q }); }
+  });
+  return out;
+}
+
+async function analyseInterviewGaps(items, docText) {
+  const checklist = items.map((it) => `${it.key}: ${it.q}`).join('\n');
   const prompt = `You are prepping an Adobe opportunity qualification. Below is the text of the customer's uploaded document(s). For each checklist item, decide whether the document already contains enough to answer it.
 
 Return ONLY a JSON object (no prose, no code fences) shaped exactly like {"missing":["key1","key2"]}, listing the keys NOT sufficiently covered by the document. Use the exact keys.
@@ -1216,7 +1242,7 @@ ${docText.slice(0, MAX_DOC_CHARS)}`;
     const match = out.match(/\{[\s\S]*\}/);
     if (!match) return MANDATORY_INTERVIEW_KEYS.slice();
     const missing = JSON.parse(match[0]).missing || [];
-    return missing.filter((k) => INTERVIEW_ITEMS.some((it) => it.key === k));
+    return missing.filter((k) => items.some((it) => it.key === k));
   } catch {
     return MANDATORY_INTERVIEW_KEYS.slice();
   }
@@ -1243,36 +1269,44 @@ function submitInterview(block, items, form) {
     const val = form.querySelector(`[data-key="${it.key}"]`)?.value.trim();
     if (val) answers[it.key] = val;
   });
-  current.interview = { answers, askedKeys: items.map((it) => it.key), at: Date.now() };
+  // Store the asked items (key + question) so their labels survive into the prompt.
+  current.interview = {
+    answers, items: items.map(({ key, q }) => ({ key, q })), at: Date.now(),
+  };
   persist(current);
   runAssessment(block);
 }
 
-/* The interview step: extract from docs, ask about the gaps, then run. */
+/* The interview step: extract from docs, ask about the gaps, then run.
+   Candidate questions = base (code) + solution-authored (DA). */
 async function runInterview(block) {
   const area = block.querySelector('.nash-session-report-area');
   const files = assessmentFiles(current);
   const docText = files.filter((f) => f.text).map((f) => f.text).join('\n\n');
+  const solItems = await fetchSolutionQuestions((current.solutions || []).map((s) => s.slug));
+  const candidates = [...INTERVIEW_ITEMS, ...solItems];
 
   let keys;
-  // No doc text to read (or not connected) → ask the analyst-knowledge items only.
   if (!isAuthenticated() || !docText) {
-    keys = MANDATORY_INTERVIEW_KEYS.slice();
+    // No doc text to gap-check against → ask the base analyst-knowledge items
+    // plus every solution-authored question.
+    keys = [...MANDATORY_INTERVIEW_KEYS, ...solItems.map((it) => it.key)];
   } else {
     area.innerHTML = '<div class="nash-session-run"><span class="nash-session-typing"><i></i><i></i><i></i></span><p class="nash-session-run-text">Reviewing your documents…</p></div>';
-    keys = await analyseInterviewGaps(docText);
+    keys = await analyseInterviewGaps(candidates, docText);
   }
 
   // Docs already cover everything → straight to the assessment.
   if (!keys.length) { runAssessment(block); return; }
 
-  const items = INTERVIEW_ITEMS.filter((it) => keys.includes(it.key));
+  const items = candidates.filter((it) => keys.includes(it.key));
   area.innerHTML = renderInterview(items);
   const form = area.querySelector('.nash-session-interview');
   form.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => autoResize(t)));
   form.addEventListener('submit', (e) => { e.preventDefault(); submitInterview(block, items, form); });
   form.querySelector('.nash-session-interview-skip')?.addEventListener('click', () => {
-    current.interview = { answers: {}, askedKeys: items.map((it) => it.key), skipped: true };
+    const asked = items.map(({ key, q }) => ({ key, q }));
+    current.interview = { answers: {}, items: asked, skipped: true };
     runAssessment(block);
   });
 }
@@ -1281,10 +1315,11 @@ async function runInterview(block) {
 function interviewText(a) {
   const ans = a.interview && a.interview.answers;
   if (!ans) return '';
-  const byKey = Object.fromEntries(INTERVIEW_ITEMS.map((it) => [it.key, it.q]));
+  const all = [...INTERVIEW_ITEMS, ...(a.interview.items || [])];
+  const byKey = new Map(all.map((it) => [it.key, it.q]));
   return Object.entries(ans)
     .filter(([, v]) => v)
-    .map(([k, v]) => `- ${byKey[k] || k}\n  ${v}`)
+    .map(([k, v]) => `- ${byKey.get(k) || k}\n  ${v}`)
     .join('\n');
 }
 

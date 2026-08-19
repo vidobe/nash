@@ -1,0 +1,23 @@
+.interview-questions {
+  margin: 24px 0;
+  padding: 16px 20px;
+  border: 1px solid #e3e3e3;
+  border-left: 3px solid #eb1000;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.interview-questions .interview-questions-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.interview-questions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.interview-questions li {
+  margin: 4px 0;
+}
