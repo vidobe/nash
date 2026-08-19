@@ -1028,7 +1028,7 @@ function scorecardCards(dims) {
 function daPreviewHtml(a) {
   const sols = (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '';
   const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-  const metaBits = [date, a.opp?.salesStage, sols]
+  const metaBits = [date, a.opp?.salesStage]
     .filter(Boolean).map((b) => `<span>${escapeHtml(b)}</span>`).join('');
   const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
