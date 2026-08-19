@@ -182,23 +182,44 @@ function autoResize(ta) {
    it as a layered boxes-and-arrows SVG. A mermaid flowchart fence is accepted
    as a fallback so older/looser output still draws instead of dumping text. */
 
+const ARCH_FLOWS = ['ingress', 'intra', 'egress'];
+
 function parseArch(text) {
-  const arch = { layers: [], nodes: [], edges: [] };
+  const arch = {
+    layers: [], groups: [], nodes: [], edges: [],
+  };
   text.split('\n').forEach((line) => {
     const l = line.trim();
     if (!l) return;
     let m = l.match(/^layers?\s*:\s*(.+)$/i);
     if (m) { arch.layers = m[1].split(/[;|]/).map((s) => s.trim()).filter(Boolean); return; }
+    m = l.match(/^group\s*:\s*(.+)$/i);
+    if (m) {
+      const p = m[1].split('|').map((s) => s.trim());
+      if (p[0]) arch.groups.push({ id: p[0], label: p[1] || p[0], layer: p[2] || '' });
+      return;
+    }
     m = l.match(/^node\s*:\s*(.+)$/i);
     if (m) {
       const p = m[1].split('|').map((s) => s.trim());
-      if (p[0]) arch.nodes.push({ id: p[0], label: p[1] || p[0], layer: p[2] || '' });
+      if (p[0]) {
+        arch.nodes.push({
+          id: p[0], label: p[1] || p[0], layer: p[2] || '', group: p[3] || '',
+        });
+      }
       return;
     }
     m = l.match(/^edge\s*:\s*(.+)$/i);
     if (m) {
       const p = m[1].split('|').map((s) => s.trim());
-      if (p[0] && p[1]) arch.edges.push({ from: p[0], to: p[1], label: p[2] || '' });
+      if (p[0] && p[1]) {
+        let type = 'intra';
+        let label = p[2] || '';
+        if (p[2] && ARCH_FLOWS.includes(p[2].toLowerCase())) { type = p[2].toLowerCase(); label = p[3] || ''; }
+        arch.edges.push({
+          from: p[0], to: p[1], type, label,
+        });
+      }
     }
   });
   return arch;
@@ -206,7 +227,9 @@ function parseArch(text) {
 
 /* Best-effort parse of a mermaid flowchart into the same node/edge model. */
 function parseMermaidFlow(code) {
-  const arch = { layers: [], nodes: [], edges: [] };
+  const arch = {
+    layers: [], groups: [], nodes: [], edges: [],
+  };
   const labels = new Map();
   const grab = (token) => {
     const m = (token || '').trim().match(/^([A-Za-z0-9_]+)\s*(?:\[(.+?)\]|\((.+?)\)|\{(.+?)\})?$/);
@@ -227,33 +250,42 @@ function parseMermaidFlow(code) {
         const R = grab(right);
         if (L) labels.set(L.id, L.label || labels.get(L.id) || L.id);
         if (R) labels.set(R.id, R.label || labels.get(R.id) || R.id);
-        if (L && R) arch.edges.push({ from: L.id, to: R.id, label: elabel });
+        if (L && R) {
+          arch.edges.push({
+            from: L.id, to: R.id, type: 'intra', label: elabel,
+          });
+        }
       }
     } else {
       const N = grab(line);
       if (N) labels.set(N.id, N.label || labels.get(N.id) || N.id);
     }
   });
-  arch.nodes = [...labels].map(([id, label]) => ({ id, label, layer: '' }));
+  arch.nodes = [...labels].map(([id, label]) => ({
+    id, label, layer: '', group: '',
+  }));
   return arch;
 }
 
-/* Group nodes into left→right columns: by declared layers, else by flow depth. */
-function archColumns(arch) {
+/* Assign each node a column index: by declared layers, else by flow depth. */
+function archColumnIndex(arch) {
   const byId = new Map(arch.nodes.map((n) => [n.id, n]));
+  const groupById = new Map(arch.groups.map((g) => [g.id, g]));
+  const colOf = new Map();
   if (arch.layers.length) {
-    const cols = arch.layers.map((label) => ({ label, nodes: [] }));
     const idx = new Map(arch.layers.map((l, i) => [l.toLowerCase(), i]));
-    let other = null;
+    const extra = arch.layers.length;
     arch.nodes.forEach((n) => {
-      const i = idx.has((n.layer || '').toLowerCase()) ? idx.get((n.layer || '').toLowerCase()) : -1;
-      if (i >= 0) cols[i].nodes.push(n);
-      else { if (!other) { other = { label: '', nodes: [] }; cols.push(other); } other.nodes.push(n); }
+      let c = idx.has((n.layer || '').toLowerCase()) ? idx.get((n.layer || '').toLowerCase()) : -1;
+      if (c < 0 && n.group && groupById.has(n.group)) {
+        const gl = (groupById.get(n.group).layer || '').toLowerCase();
+        if (idx.has(gl)) c = idx.get(gl);
+      }
+      colOf.set(n.id, c < 0 ? extra : c);
     });
-    return cols.filter((c) => c.nodes.length);
+    return colOf;
   }
   // No layers → longest-path levelling from the roots.
-  const level = new Map();
   const adj = new Map(arch.nodes.map((n) => [n.id, []]));
   const indeg = new Map(arch.nodes.map((n) => [n.id, 0]));
   arch.edges.forEach((e) => {
@@ -264,52 +296,109 @@ function archColumns(arch) {
   });
   const queue = arch.nodes.filter((n) => !indeg.get(n.id)).map((n) => n.id);
   const seen = new Set(queue);
-  queue.forEach((id) => level.set(id, 0));
+  queue.forEach((id) => colOf.set(id, 0));
   for (let h = 0; h < queue.length; h += 1) {
     const u = queue[h];
     (adj.get(u) || []).forEach((v) => {
-      level.set(v, Math.max(level.get(v) || 0, (level.get(u) || 0) + 1));
+      colOf.set(v, Math.max(colOf.get(v) || 0, (colOf.get(u) || 0) + 1));
       if (!seen.has(v)) { seen.add(v); queue.push(v); }
     });
   }
-  arch.nodes.forEach((n) => { if (!level.has(n.id)) level.set(n.id, 0); });
-  const maxL = Math.max(0, ...level.values());
-  const cols = Array.from({ length: maxL + 1 }, () => ({ label: '', nodes: [] }));
-  arch.nodes.forEach((n) => cols[level.get(n.id)].nodes.push(n));
-  return cols.filter((c) => c.nodes.length);
+  arch.nodes.forEach((n) => { if (!colOf.has(n.id)) colOf.set(n.id, 0); });
+  return colOf;
+}
+
+/* Build ordered columns of cells (a cell is a standalone node or a group box). */
+function archColumns(arch) {
+  const groupById = new Map(arch.groups.map((g) => [g.id, g]));
+  const colOf = archColumnIndex(arch);
+  const numCols = Math.max(0, ...colOf.values()) + 1;
+  const columns = Array.from({ length: numCols }, () => ({ label: '', cells: [], byGroup: new Map() }));
+  arch.layers.forEach((l, i) => { if (columns[i]) columns[i].label = l; });
+  arch.nodes.forEach((n) => {
+    const col = columns[colOf.get(n.id)];
+    if (!col) return;
+    if (n.group && groupById.has(n.group)) {
+      let gc = col.byGroup.get(n.group);
+      if (!gc) {
+        gc = { type: 'group', group: groupById.get(n.group), nodes: [] };
+        col.byGroup.set(n.group, gc);
+        col.cells.push(gc);
+      }
+      gc.nodes.push(n);
+    } else {
+      col.cells.push({ type: 'node', node: n });
+    }
+  });
+  return columns.filter((c) => c.cells.length);
 }
 
 function archToHtml(arch) {
   if (!arch || !arch.nodes.length) return '';
   const cols = archColumns(arch);
   if (!cols.length) return '';
-  const hasLabels = cols.some((c) => c.label);
-  const BW = 190; const BH = 58; const CG = 84; const RG = 22; const PAD = 16;
-  const LH = hasLabels ? 26 : 0;
+  const showLayers = cols.some((c) => c.label);
+  const BW = 178; const BH = 50; const CG = 92; const RG = 14; const PAD = 16;
+  const GH = 24; const GP = 10; const LH = showLayers ? 26 : 0;
+  const colX = (ci) => PAD + ci * (BW + CG);
+  const nodeBox = (n, x, y) => `<foreignObject x="${x}" y="${y}" width="${BW}" height="${BH}"><div xmlns="http://www.w3.org/1999/xhtml" class="nash-arch-node"><span>${escapeHtml(n.label)}</span></div></foreignObject>`;
   const pos = new Map();
-  cols.forEach((col, ci) => col.nodes.forEach((n, ri) => {
-    pos.set(n.id, { x: PAD + ci * (BW + CG), y: PAD + LH + ri * (BH + RG) });
-  }));
-  const maxRows = Math.max(...cols.map((c) => c.nodes.length));
+  const boxes = [];
+  const groups = [];
+  let maxBottom = 0;
+  cols.forEach((col, ci) => {
+    const x = colX(ci);
+    let y = PAD + LH;
+    col.cells.forEach((cell) => {
+      if (cell.type === 'node') {
+        pos.set(cell.node.id, { x, y });
+        boxes.push(nodeBox(cell.node, x, y));
+        y += BH + RG;
+        return;
+      }
+      const top = y;
+      const innerTop = top + GH + GP;
+      cell.nodes.forEach((n, ri) => {
+        const ny = innerTop + ri * (BH + RG);
+        pos.set(n.id, { x, y: ny });
+        boxes.push(nodeBox(n, x, ny));
+      });
+      const gh = GH + GP * 2 + cell.nodes.length * BH + Math.max(0, cell.nodes.length - 1) * RG;
+      groups.push(`<rect class="nash-arch-group" x="${x - GP}" y="${top}" width="${BW + GP * 2}" height="${gh}" rx="8"/><rect class="nash-arch-ghead" x="${x - GP}" y="${top}" width="${BW + GP * 2}" height="${GH}" rx="8"/><text class="nash-arch-gtext" x="${x + BW / 2}" y="${top + 16}" text-anchor="middle">${escapeHtml(cell.group.label)}</text>`);
+      y = top + gh + RG;
+    });
+    maxBottom = Math.max(maxBottom, y);
+  });
   const W = PAD * 2 + cols.length * BW + (cols.length - 1) * CG;
-  const H = PAD * 2 + LH + maxRows * BH + Math.max(0, maxRows - 1) * RG;
+  const H = maxBottom - RG + PAD;
   const uid = `n${Math.random().toString(36).slice(2, 8)}`;
+  const used = new Set();
   const wires = arch.edges.map((e) => {
     const a = pos.get(e.from); const b = pos.get(e.to);
     if (!a || !b) return '';
+    used.add(e.type);
     const sx = a.x + BW; const sy = a.y + BH / 2; const tx = b.x; const ty = b.y + BH / 2;
     let d;
-    if (tx > sx) { const dx = Math.max(30, (tx - sx) / 2); d = `M${sx} ${sy} C${sx + dx} ${sy} ${tx - dx} ${ty} ${tx} ${ty}`; } else { const my = Math.max(sy, ty) + BH; d = `M${sx} ${sy} C${sx + 44} ${my} ${tx - 44} ${my} ${tx} ${ty}`; }
+    if (tx > sx) {
+      const dx = Math.max(30, (tx - sx) / 2);
+      d = `M${sx} ${sy} C${sx + dx} ${sy} ${tx - dx} ${ty} ${tx} ${ty}`;
+    } else {
+      const my = Math.max(sy, ty) + BH;
+      d = `M${sx} ${sy} C${sx + 44} ${my} ${tx - 44} ${my} ${tx} ${ty}`;
+    }
     const lbl = e.label ? `<text class="nash-arch-elabel" x="${(sx + tx) / 2}" y="${(sy + ty) / 2 - 6}" text-anchor="middle">${escapeHtml(e.label)}</text>` : '';
-    return `<path class="nash-arch-wire" d="${d}" marker-end="url(#${uid})"/>${lbl}`;
+    return `<path class="nash-arch-wire ${e.type}" d="${d}" marker-end="url(#${uid}-${e.type})"/>${lbl}`;
   }).join('');
-  const layerLabels = hasLabels ? cols.map((c, ci) => (c.label ? `<text class="nash-arch-layer" x="${PAD + ci * (BW + CG) + BW / 2}" y="${PAD + 14}" text-anchor="middle">${escapeHtml(c.label)}</text>` : '')).join('') : '';
-  const boxes = arch.nodes.map((n) => {
-    const p = pos.get(n.id);
-    if (!p) return '';
-    return `<foreignObject x="${p.x}" y="${p.y}" width="${BW}" height="${BH}"><div xmlns="http://www.w3.org/1999/xhtml" class="nash-arch-node"><span>${escapeHtml(n.label)}</span></div></foreignObject>`;
-  }).join('');
-  return `<div class="nash-arch"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Target architecture diagram" preserveAspectRatio="xMidYMid meet"><defs><marker id="${uid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="nash-arch-arrow" d="M0 0L10 5L0 10z"/></marker></defs>${layerLabels}${wires}${boxes}</svg></div>`;
+  const layerLabels = cols.map((c, ci) => (c.label ? `<text class="nash-arch-layer" x="${colX(ci) + BW / 2}" y="${PAD + 14}" text-anchor="middle">${escapeHtml(c.label)}</text>` : '')).join('');
+  const mk = (id, color) => `<marker id="${uid}-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${color}"/></marker>`;
+  const defs = mk('ingress', '#1473e6') + mk('intra', '#6b6b6b') + mk('egress', '#eb1000');
+  const legNames = { ingress: 'Ingress', intra: 'Intra-system', egress: 'Egress' };
+  const order = ARCH_FLOWS.filter((t) => used.has(t));
+  const legend = order.length > 1
+    ? `<div class="nash-arch-legend">${order.map((t) => `<span class="nash-arch-leg ${t}"><i></i>${legNames[t]}</span>`).join('')}</div>`
+    : '';
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Target architecture diagram" preserveAspectRatio="xMidYMid meet"><defs>${defs}</defs>${layerLabels}${groups.join('')}${wires}${boxes.join('')}</svg>`;
+  return `<div class="nash-arch">${svg}${legend}</div>`;
 }
 
 /* Render report markdown, swapping any NASH_ARCH block (or mermaid fence) for a
@@ -784,10 +873,11 @@ Section 1 must include an initial Fit Score (High / Medium / Low) for ${solution
 Section 4 (Technical & Architectural Evaluation) must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences for it. Use this EXACT format, with short labels, and place it inline where the diagram belongs:
 NASH_ARCH:
 layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
-node: <id> | <short label> | <layer name>
-edge: <fromId> | <toId> | <optional short label>
+group: <groupId> | <Group label> | <layer name>
+node: <id> | <short label> | <layer name> | <groupId or blank>
+edge: <fromId> | <toId> | <flow type> | <optional short label>
 NASH_ARCH_END
-Group nodes into the layers left-to-right following the data flow; aim for ~4-7 layers, keep labels concise, and make sure every edge's ids match declared nodes.
+group lines are optional and draw a labelled red container around related nodes (use them for sub-systems such as Data Ingestion or Real-Time Profile; put the node into a group via its 4th field). Flow type is one of ingress (external data coming in), intra (movement inside the platform) or egress (data or activation going out) — it sets the arrow colour and a legend. Lay out ~4-7 layers left-to-right following the data flow, keep labels concise, and make sure every edge's ids match declared nodes.
 Section 8 (Solution Rationale) is a defensible, RFP-ready synthesis with these subsections, in this order: (1) Customer Context — organisation (who / structure / selection scope), objectives, challenges/bottlenecks, maturity, and the existing stack noting what to integrate vs replace; (2) Core Capability Needs — a markdown table with columns | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |; (3) Solution Fit Comparison — name two viable scenarios (A and B) and a markdown table | Criterion | Scenario A | Scenario B | across ~8-10 decision criteria; (4) Budget Indication — a markdown table | Cost category | Basis / driver | Indication | using placeholders such as "€ TBD" where figures are not provided; (5) Recommendation Summary — the preferred scenario with justification, honest points of attention, and next steps. Ground every point in the attached document and the analyst interview; keep table cells concise.
 Section 9 (Deal Accelerators & References) must cover, as clear subsections with bullets:
 - **Ideas to win the deal** — concrete plays and next best actions tailored to this opportunity's objectives and gaps.

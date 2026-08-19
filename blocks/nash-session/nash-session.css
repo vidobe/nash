@@ -475,15 +475,14 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 6px 10px;
+  padding: 5px 9px;
   box-sizing: border-box;
   border: 1px solid #d5d5d5;
-  border-left: 3px solid #1473e6;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
-  font-size: 12.5px;
-  line-height: 1.25;
+  font-size: 12px;
+  line-height: 1.2;
   color: #2c2c2c;
   text-align: center;
   overflow: hidden;
@@ -496,14 +495,41 @@
   overflow: hidden;
 }
 
-.nash-session .nash-arch-wire {
-  fill: none;
-  stroke: #959595;
-  stroke-width: 1.5;
+/* Grouped sub-system container (Adobe-red framed, like the AEP marketecture). */
+.nash-session .nash-arch-group {
+  fill: #fafafa;
+  stroke: #eb1000;
+  stroke-width: 1.4;
 }
 
-.nash-session .nash-arch-arrow {
-  fill: #959595;
+.nash-session .nash-arch-ghead {
+  fill: #eb1000;
+}
+
+.nash-session .nash-arch-gtext {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nash-session .nash-arch-wire {
+  fill: none;
+  stroke: #6b6b6b;
+  stroke-width: 1.6;
+}
+
+.nash-session .nash-arch-wire.ingress {
+  stroke: #1473e6;
+}
+
+.nash-session .nash-arch-wire.intra {
+  stroke: #6b6b6b;
+  stroke-dasharray: 5 4;
+}
+
+.nash-session .nash-arch-wire.egress {
+  stroke: #eb1000;
 }
 
 .nash-session .nash-arch-layer {
@@ -517,6 +543,38 @@
 .nash-session .nash-arch-elabel {
   fill: #6b6b6b;
   font-size: 11px;
+}
+
+.nash-session .nash-arch-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #555;
+}
+
+.nash-session .nash-arch-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b6b6b;
+}
+
+.nash-session .nash-arch-leg i {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 2px solid currentcolor;
+}
+
+.nash-session .nash-arch-leg.ingress {
+  color: #1473e6;
+}
+
+.nash-session .nash-arch-leg.egress {
+  color: #eb1000;
 }
 
 /* Pre-assessment interview: extract from docs, ask the analyst about the gaps. */
