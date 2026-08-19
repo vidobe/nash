@@ -457,6 +457,55 @@
   overflow-y: auto;
 }
 
+/* Pre-assessment interview: extract from docs, ask the analyst about the gaps. */
+.nash-session .nash-session-interview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 8px;
+}
+
+.nash-session .nash-session-interview-lead {
+  margin: 0;
+  color: var(--nash-muted, #6b7280);
+}
+
+.nash-session .nash-session-interview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nash-session .nash-session-interview-q {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.nash-session .nash-session-interview-a {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--nash-border, #d1d5db);
+  border-radius: 10px;
+  font: inherit;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.nash-session .nash-session-interview-a:focus {
+  outline: none;
+  border-color: var(--nash-accent, #1473e6);
+}
+
+.nash-session .nash-session-interview-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 /* Placeholder shown in audience tabs that have no generation logic yet. */
 .nash-session .nash-session-placeholder {
   display: flex;

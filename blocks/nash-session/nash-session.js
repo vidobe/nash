@@ -52,6 +52,25 @@ function audiencePlaceholder(label) {
     </div>`;
 }
 
+/* Pre-assessment interview. Nash extracts what it can from the uploaded docs,
+   then interviews the analyst about ONLY the gaps. The first three items are
+   analyst knowledge that's rarely written in an RFP/RFI, so they're asked
+   unless the documents explicitly cover them. Solution-agnostic by design. */
+const INTERVIEW_ITEMS = [
+  { key: 'meetingNotes', q: 'Any meeting notes or call summaries we should factor in? Paste the key points (or say "none").' },
+  { key: 'rfpInfluence', q: 'Did we (Adobe) help shape or influence this RFI/RFP? If so, how — and does the wording favour us?' },
+  { key: 'champions', q: 'Do we have known champions or blockers on the customer side? Who are they, and where do they stand?' },
+  { key: 'customerContext', q: 'Customer context not already in the docs — industry, segment, and geography?' },
+  { key: 'techStack', q: 'Current tech stack (CMS / MarTech / CRM / CDP / analytics / commerce) and any existing Adobe footprint?' },
+  { key: 'competitors', q: 'Known incumbents or competitors in play — is this a competitive bake-off?' },
+  { key: 'kpis', q: 'Target KPIs, success metrics, or ROI expectations?' },
+  { key: 'budgetTiming', q: 'Budget signals, fiscal-year timing, or urgency?' },
+  { key: 'decisionCriteria', q: 'The main criteria the customer will judge the decision on?' },
+  { key: 'useCases', q: 'Specific capabilities or use cases the customer has explicitly asked for?' },
+];
+// Analyst-knowledge items — asked unless the docs EXPLICITLY cover them.
+const MANDATORY_INTERVIEW_KEYS = ['meetingNotes', 'rfpInfluence', 'champions'];
+
 const LAUNCH = [
   {
     action: 'new', icon: 'plus', text: 'Create a new analysis', desc: 'Upload an RFP and start a qualification',
@@ -554,7 +573,7 @@ async function extractFileText(file) {
 }
 
 function buildQualPrompt({
-  company, fileName, solutionNames, skills, maxSearches = 6, docText = '',
+  company, fileName, solutionNames, skills, maxSearches = 6, docText = '', interview = '',
 }) {
   let docLine;
   if (docText) {
@@ -574,7 +593,7 @@ Guidance:
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
 - Tie market/news insights back into Win Sentiment and the Recommendation.
-- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
+${interview ? '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence: weave champions/blockers and whether we shaped the RFI/RFP into Section 6 (Win Sentiment) and Section 7 (Recommendation), and any meeting-note context into Sections 1 and 3.\n' : ''}- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
 - EFFICIENCY (critical): After reading the attachment, perform AT MOST ${maxSearches} EXTERNAL searches (web + internal docs) total, batching related queries into a single call where possible, then STOP searching and write the full dossier. Reading the attached file is required and is NOT one of these searches. Do NOT exhaustively search every source — prioritise completing the report. A complete report from a few good sources beats an unfinished one.
 
 ${docLine}
@@ -615,7 +634,7 @@ Section 8 (Deal Accelerators & References) must cover, as clear subsections with
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
 ${skills}
-${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it; do NOT reproduce it verbatim in your answer ===\n${docText}` : ''}`;
+${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it; do NOT reproduce it verbatim in your answer ===\n${docText}` : ''}${interview ? `\n\n=== ANALYST-PROVIDED CONTEXT (pre-assessment interview) — authoritative first-party intelligence; weight equally with the attached document ===\n${interview}` : ''}`;
 }
 
 function setStatusDone(block) {
@@ -911,6 +930,103 @@ function pixelGrid() {
   }</div>`;
 }
 
+/* Ask FluffyJaws which checklist items the uploaded docs already answer, so we
+   interview the analyst only about the gaps. Returns an array of item keys to ask. */
+async function analyseInterviewGaps(docText) {
+  const checklist = INTERVIEW_ITEMS.map((it) => `${it.key}: ${it.q}`).join('\n');
+  const prompt = `You are prepping an Adobe opportunity qualification. Below is the text of the customer's uploaded document(s). For each checklist item, decide whether the document already contains enough to answer it.
+
+Return ONLY a JSON object (no prose, no code fences) shaped exactly like {"missing":["key1","key2"]}, listing the keys NOT sufficiently covered by the document. Use the exact keys.
+Important: for meetingNotes, rfpInfluence and champions, treat them as covered ONLY if the document explicitly addresses them; when in doubt, include them in "missing".
+
+CHECKLIST:
+${checklist}
+
+=== DOCUMENT ===
+${docText.slice(0, MAX_DOC_CHARS)}`;
+  let out = '';
+  try {
+    await streamQualification({
+      messages: [{ role: 'user', content: prompt }],
+      reasoningEffort: 'low',
+      onDelta: (d) => { out += d; },
+      onError: () => {},
+    });
+    const match = out.match(/\{[\s\S]*\}/);
+    if (!match) return MANDATORY_INTERVIEW_KEYS.slice();
+    const missing = JSON.parse(match[0]).missing || [];
+    return missing.filter((k) => INTERVIEW_ITEMS.some((it) => it.key === k));
+  } catch {
+    return MANDATORY_INTERVIEW_KEYS.slice();
+  }
+}
+
+function renderInterview(items) {
+  return `<form class="nash-session-interview">
+      <p class="nash-session-interview-lead">A few quick questions to sharpen the assessment — I couldn't find these in your documents. Answer what you can; leave the rest blank.</p>
+      ${items.map((it) => `
+        <div class="nash-session-interview-item">
+          <label class="nash-session-interview-q" for="iv-${it.key}">${escapeHtml(it.q)}</label>
+          <textarea class="nash-session-interview-a" id="iv-${it.key}" rows="2" data-key="${it.key}" placeholder="Type your answer, or leave blank"></textarea>
+        </div>`).join('')}
+      <div class="nash-session-interview-actions">
+        <button type="button" class="nash-session-btn-ghost nash-session-interview-skip">Skip &amp; run now</button>
+        <button type="submit" class="nash-session-btn-primary">Run assessment</button>
+      </div>
+    </form>`;
+}
+
+function submitInterview(block, items, form) {
+  const answers = {};
+  items.forEach((it) => {
+    const val = form.querySelector(`[data-key="${it.key}"]`)?.value.trim();
+    if (val) answers[it.key] = val;
+  });
+  current.interview = { answers, askedKeys: items.map((it) => it.key), at: Date.now() };
+  persist(current);
+  runAssessment(block);
+}
+
+/* The interview step: extract from docs, ask about the gaps, then run. */
+async function runInterview(block) {
+  const area = block.querySelector('.nash-session-report-area');
+  const files = assessmentFiles(current);
+  const docText = files.filter((f) => f.text).map((f) => f.text).join('\n\n');
+
+  let keys;
+  // No doc text to read (or not connected) → ask the analyst-knowledge items only.
+  if (!isAuthenticated() || !docText) {
+    keys = MANDATORY_INTERVIEW_KEYS.slice();
+  } else {
+    area.innerHTML = '<div class="nash-session-run"><span class="nash-session-typing"><i></i><i></i><i></i></span><p class="nash-session-run-text">Reviewing your documents…</p></div>';
+    keys = await analyseInterviewGaps(docText);
+  }
+
+  // Docs already cover everything → straight to the assessment.
+  if (!keys.length) { runAssessment(block); return; }
+
+  const items = INTERVIEW_ITEMS.filter((it) => keys.includes(it.key));
+  area.innerHTML = renderInterview(items);
+  const form = area.querySelector('.nash-session-interview');
+  form.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => autoResize(t)));
+  form.addEventListener('submit', (e) => { e.preventDefault(); submitInterview(block, items, form); });
+  form.querySelector('.nash-session-interview-skip')?.addEventListener('click', () => {
+    current.interview = { answers: {}, askedKeys: items.map((it) => it.key), skipped: true };
+    runAssessment(block);
+  });
+}
+
+/* Analyst answers, formatted for the qualification prompt. */
+function interviewText(a) {
+  const ans = a.interview && a.interview.answers;
+  if (!ans) return '';
+  const byKey = Object.fromEntries(INTERVIEW_ITEMS.map((it) => [it.key, it.q]));
+  return Object.entries(ans)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `- ${byKey[k] || k}\n  ${v}`)
+    .join('\n');
+}
+
 async function runAssessment(block, attempt = 1, insights = '') {
   const area = block.querySelector('.nash-session-report-area');
 
@@ -977,6 +1093,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     skills,
     maxSearches,
     docText,
+    interview: interviewText(current),
   });
   // On a re-run, fold in the analyst's chat discussion so the model updates the
   // report, score, and recommendation with the new insights.
@@ -1144,7 +1261,7 @@ export function renderAssessment(block, a, autoRun = false) {
   if (hasReport) {
     openingMsg = `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`;
   } else if (willAutoRun) {
-    openingMsg = `Running the assessment for <strong>${escapeHtml(a.company)}</strong> now — I'll share the fit score, verdict, red flags, and recommendations here as soon as it's ready.`;
+    openingMsg = `Let's get started on <strong>${escapeHtml(a.company)}</strong>. I'll review your documents first and ask about anything that's missing, then run the full assessment.`;
   } else {
     openingMsg = `I've created the assessment for <strong>${escapeHtml(a.company)}</strong>. Once it runs I'll share the fit score, verdict, red flags, and recommendations here.`;
   }
@@ -1187,10 +1304,10 @@ export function renderAssessment(block, a, autoRun = false) {
     renderChips();
   });
 
-  // No manual "Run assessment" step — start automatically whenever the view
-  // opens without a report yet (fresh creation, or a reopened unfinished run).
-  // The only remaining run button lives in the error/retry fallback (failMsg).
-  if (willAutoRun) runAssessment(block);
+  // No manual "Run assessment" step — when the view opens without a report yet
+  // (fresh creation, or a reopened unfinished run) we begin the pre-assessment
+  // interview, which reviews the docs, asks about gaps, then runs the assessment.
+  if (willAutoRun) runInterview(block);
 
   block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
     switchTab(block, 'assessment');
