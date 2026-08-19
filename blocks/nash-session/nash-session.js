@@ -403,6 +403,33 @@ function archToHtml(arch) {
 
 /* Render report markdown, swapping any NASH_ARCH block (or mermaid fence) for a
    rendered Spectrum diagram. */
+/* Replace each NASH_ARCH block with a rendered-diagram token, tolerating a
+   missing NASH_ARCH_END (the model often omits it): from a `NASH_ARCH:` line,
+   consume the following layers/group/node/edge lines until a non-matching line. */
+function stripArchBlocks(src, tokenFor) {
+  const lines = src.split('\n');
+  const out = [];
+  const isArchLine = (l) => /^\s*(layers?|group|node|edge)\s*:/i.test(l);
+  let i = 0;
+  while (i < lines.length) {
+    if (/^\s*NASH_ARCH\b/i.test(lines[i]) && !/^\s*NASH_ARCH_END/i.test(lines[i])) {
+      i += 1;
+      const body = [];
+      while (i < lines.length) {
+        if (/^\s*NASH_ARCH_END/i.test(lines[i])) { i += 1; break; }
+        if (!isArchLine(lines[i]) && !/^\s*$/.test(lines[i])) break;
+        body.push(lines[i]);
+        i += 1;
+      }
+      out.push(tokenFor(archToHtml(parseArch(body.join('\n')))));
+    } else {
+      out.push(lines[i]);
+      i += 1;
+    }
+  }
+  return out.join('\n');
+}
+
 function renderReportMarkdown(src, opts) {
   const diagrams = [];
   const tokenFor = (html) => {
@@ -411,8 +438,7 @@ function renderReportMarkdown(src, opts) {
     diagrams.push({ tok, html });
     return `\n\n${tok}\n\n`;
   };
-  const cleaned = (src || '')
-    .replace(/NASH_ARCH:\s*([\s\S]*?)NASH_ARCH_END/gi, (m, inner) => tokenFor(archToHtml(parseArch(inner))))
+  const cleaned = stripArchBlocks(src || '', tokenFor)
     .replace(/```mermaid\s*([\s\S]*?)```/gi, (m, code) => tokenFor(archToHtml(parseMermaidFlow(code))));
   let html = renderMarkdown(cleaned, opts);
   diagrams.forEach(({ tok, html: d }) => {
