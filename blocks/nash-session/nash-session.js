@@ -30,6 +30,8 @@ const ICONS = {
   clipboard: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>',
   cloud: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
   briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  sales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  postsales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>',
   plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
 
@@ -37,7 +39,18 @@ const TABS = [
   { tab: 'assessment', icon: 'clipboard', label: 'Assessment' },
   { tab: 'da', icon: 'cloud', label: 'DA content' },
   { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
+  // Audience-targeted outputs — placeholders for now, no generation logic yet.
+  { tab: 'sales', icon: 'sales', label: 'Sales content' },
+  { tab: 'postsales', icon: 'postsales', label: 'Post-sales content' },
 ];
+
+// Placeholder panel for an audience tab that has no generation logic yet.
+function audiencePlaceholder(label) {
+  return `<div class="nash-session-placeholder">
+      <p class="nash-session-placeholder-title">${escapeHtml(label)}</p>
+      <p class="nash-session-placeholder-note">Coming soon — this view will generate ${escapeHtml(label.toLowerCase())} tailored to its audience.</p>
+    </div>`;
+}
 
 const LAUNCH = [
   {
@@ -1105,6 +1118,8 @@ export function renderAssessment(block, a, autoRun = false) {
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">${renderOppPanel(a, getUserInfo()?.name || '')}</div>
+        <div class="nash-session-panel" data-panel="sales">${audiencePlaceholder('Sales content')}</div>
+        <div class="nash-session-panel" data-panel="postsales">${audiencePlaceholder('Post-sales content')}</div>
       </div>
     </div>
   `;

@@ -451,8 +451,34 @@
 }
 
 .nash-session .nash-session-panel[data-panel='da'].active,
-.nash-session .nash-session-panel[data-panel='opp'].active {
+.nash-session .nash-session-panel[data-panel='opp'].active,
+.nash-session .nash-session-panel[data-panel='sales'].active,
+.nash-session .nash-session-panel[data-panel='postsales'].active {
   overflow-y: auto;
+}
+
+/* Placeholder shown in audience tabs that have no generation logic yet. */
+.nash-session .nash-session-placeholder {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.nash-session .nash-session-placeholder-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.nash-session .nash-session-placeholder-note {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--nash-muted, #6b7280);
 }
 
 /* Single scrollable column: report at top, conversation below it. */
