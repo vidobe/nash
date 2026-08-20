@@ -843,85 +843,107 @@
   color: var(--ink, #111318);
 }
 
-/* Report-style content cards for the DA-document preview. */
+/* DA-document preview: open, airy content with tinted accent panels. */
 .nash-session .nash-session-qcard {
-  padding: 20px 22px;
-  margin-bottom: 14px;
-  background: #fff;
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  margin: 0 0 32px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .nash-session .nash-session-qcard .nash-session-qpanel-title {
-  margin-top: 0;
+  margin: 0 0 18px;
+}
+
+/* "What Nash sees" — soft green panel for a bit of colour. */
+.nash-session .nash-session-summary {
+  padding: 24px 28px;
+  margin-bottom: 26px;
+  background: var(--green-lt, #edf7f2);
+  border: 0;
+  border-left: 4px solid var(--green, #0d7a45);
+  border-radius: 14px;
+  box-shadow: none;
 }
 
 .nash-session .nash-session-summary-title {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 400;
   color: var(--ink, #111318);
 }
 
 .nash-session .nash-session-summary p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--ink-70, #4a4d55);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ink, #111318);
 }
 
 .nash-session .nash-session-topics {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .nash-session .nash-session-topic {
-  padding: 4px 11px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-70, #4a4d55);
-  background: var(--surface, #f8f8fa);
-  border: 1px solid var(--ink-15, #e8e9ec);
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--green, #0d7a45);
+  background: #fff;
+  border: 1px solid #cfe6da;
   border-radius: 100px;
 }
 
 .nash-session .nash-session-qc-stack {
-  margin: 12px 0 0;
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #cfe6da;
   font-size: 13px;
+  line-height: 1.6;
   color: var(--ink-70, #4a4d55);
 }
 
 .nash-session .nash-session-callouts {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .nash-session .nash-session-callout {
-  padding: 16px 18px;
-  background: #fff;
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 12px;
+  padding: 20px 22px;
+  border: 0;
+  border-radius: 14px;
 }
 
 .nash-session .nash-session-callout.is-good {
-  border-top: 3px solid var(--green, #0d7a45);
+  background: var(--green-lt, #edf7f2);
 }
 
 .nash-session .nash-session-callout.is-warn {
-  border-top: 3px solid var(--amber, #b45309);
+  background: var(--amber-lt, #fef3c7);
 }
 
 .nash-session .nash-session-callout h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
+  margin: 0 0 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--ink, #111318);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nash-session .nash-session-callout.is-good h4 {
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-session-callout.is-warn h4 {
+  color: var(--amber, #b45309);
 }
 
 .nash-session .nash-session-callout ul {
@@ -930,9 +952,9 @@
 }
 
 .nash-session .nash-session-callout li {
-  margin-bottom: 4px;
-  font-size: 13px;
-  line-height: 1.55;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
   color: var(--ink-70, #4a4d55);
 }
 
@@ -951,10 +973,10 @@
 }
 
 .nash-session .nash-session-sc-card {
-  padding: 14px 16px;
-  border: 1px solid var(--ink-08, #f4f4f6);
+  padding: 16px 18px;
+  border: 0;
   border-radius: 12px;
-  background: var(--white, #fff);
+  background: var(--surface, #f8f8fa);
 }
 
 .nash-session .nash-session-sc-top {
