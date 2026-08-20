@@ -62,6 +62,20 @@ function toTitleCase(str) {
   return str.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/* Resolve a numeric fit score, tolerating a string score or a missing one by
+   summing the scored dimensions (which sum to the overall score). */
+function coerceScore(a) {
+  if (typeof a.score === 'number' && Number.isFinite(a.score)) return a.score;
+  if (typeof a.score === 'string' && a.score.trim() !== '' && Number.isFinite(Number(a.score))) {
+    return Number(a.score);
+  }
+  if (Array.isArray(a.dimensions) && a.dimensions.length) {
+    const sum = a.dimensions.reduce((t, d) => t + (parseInt(d.scored, 10) || 0), 0);
+    if (sum > 0) return sum;
+  }
+  return null;
+}
+
 function mapQueryRow(row, idx) {
   const score = parseInt(row.score, 10) || null;
   const status = (row.status || '').toLowerCase() === 'generating' ? 'generating' : 'done';
@@ -83,6 +97,7 @@ function mapQueryRow(row, idx) {
     time: relativeTime(row.lastmodified || row.lastModified),
     ts: Number(row.lastmodified || row.lastModified) || 0,
     score: status === 'done' ? score : null,
+    verdict: row.verdict || '',
     path: row.path || null,
   };
 }
@@ -103,7 +118,8 @@ function mapLocalAssessment(a, idx) {
     solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
     time: relativeTime(ts),
     ts,
-    score: a.status === 'done' && typeof a.score === 'number' ? a.score : null,
+    score: a.status === 'done' ? coerceScore(a) : null,
+    verdict: a.verdict || '',
     path: `/indextest?a=${encodeURIComponent(a.id)}`,
   };
 }
@@ -124,6 +140,16 @@ function verdictStyle(s) {
   if (s >= 70) return 'background:var(--green-lt,#edf7f2);color:var(--green,#0d7a45);';
   if (s >= 50) return 'background:var(--amber-lt,#fef3c7);color:var(--amber,#b45309);';
   return 'background:var(--red-lt,#fff0ef);color:var(--red,#eb1000);';
+}
+
+/* Verdict chip label + style — prefer the stored verdict, fall back to score. */
+function verdictInfo(r) {
+  if (typeof r.score === 'number') return { label: verdictLabel(r.score), style: verdictStyle(r.score) };
+  const v = (r.verdict || '').toLowerCase();
+  if (/no.?go/.test(v)) return { label: 'No-go', style: verdictStyle(0) };
+  if (/condition/.test(v)) return { label: 'Conditional', style: verdictStyle(60) };
+  if (/\bgo\b/.test(v)) return { label: 'Go', style: verdictStyle(80) };
+  return { label: '', style: '' };
 }
 
 function buildCard(r) {
@@ -155,9 +181,9 @@ function buildCard(r) {
        </div>`
     : `<div class="nash-overview-card-status">Qualification complete.</div>
        <div class="nash-overview-score-row">
-         <span class="nash-overview-score" style="color:${scoreColor(r.score)}">${r.score}</span>
+         <span class="nash-overview-score" style="color:${r.score == null ? 'var(--ink-40,#9a9da6)' : scoreColor(r.score)}">${r.score == null ? '—' : r.score}</span>
          <span class="nash-overview-score-of">/ 100 fit score</span>
-         <span class="nash-overview-verdict" style="${verdictStyle(r.score)}">${verdictLabel(r.score)}</span>
+         ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>` : ''; })()}
        </div>`;
 
   card.innerHTML = `
@@ -222,12 +248,18 @@ function esc(s) {
 
 /* Clean, borderless table for the list view. */
 function tableRow(r) {
-  const scoreCell = r.status === 'generating'
-    ? `<span class="nash-overview-t-gen">Generating ${r.pct}%</span>`
-    : `<span class="nash-overview-t-score" style="color:${scoreColor(r.score)}">${r.score}</span><span class="nash-overview-t-of"> / 100</span>`;
-  const verdictCell = r.status === 'generating'
+  let scoreCell;
+  if (r.status === 'generating') {
+    scoreCell = `<span class="nash-overview-t-gen">Generating ${r.pct}%</span>`;
+  } else if (r.score == null) {
+    scoreCell = '<span class="nash-overview-t-muted">—</span>';
+  } else {
+    scoreCell = `<span class="nash-overview-t-score" style="color:${scoreColor(r.score)}">${r.score}</span><span class="nash-overview-t-of"> / 100</span>`;
+  }
+  const v = verdictInfo(r);
+  const verdictCell = r.status === 'generating' || !v.label
     ? '<span class="nash-overview-t-muted">—</span>'
-    : `<span class="nash-overview-verdict" style="${verdictStyle(r.score)}">${verdictLabel(r.score)}</span>`;
+    : `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>`;
   return `<tr class="nash-overview-trow" data-id="${esc(r.id)}" data-status="${esc(r.status)}" data-company="${esc(r.company.toLowerCase())}"${r.path ? ` data-path="${esc(r.path)}"` : ''}>
     <td class="nash-overview-t-name">
       <span class="nash-overview-favicon" aria-hidden="true">${esc(r.company.charAt(0))}</span>
