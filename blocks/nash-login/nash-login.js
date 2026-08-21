@@ -68,17 +68,12 @@ export default async function decorate(block) {
           ${logoSvg(28)}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <p class="nash-login-eyebrow">Assessment agent</p>
         <h1 class="nash-login-title">Understand the opportunity.<br>Shape the solution. Share it.</h1>
-        <p class="nash-login-tagline">Nash helps you assess an opportunity, build the Adobe solution, and share it with your team.</p>
       </div>
       <div class="nash-login-card">
         <h2 class="nash-login-heading">Sign in</h2>
         <p class="nash-login-subhead">Use your Adobe account to continue.</p>
-        <button class="nash-login-sso" type="button">
-          ${logoSvg(18)}
-          Sign in with Adobe
-        </button>
+        <button class="nash-login-sso" type="button">Sign in with Adobe</button>
         <p class="nash-login-help">Access is limited to Adobe employees.</p>
       </div>
     </div>
