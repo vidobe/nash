@@ -369,7 +369,8 @@ export default async function decorate(block) {
   block.innerHTML = `
     <div class="nash-overview-head">
       <h1 class="nash-overview-title">Qualifications</h1>
-      <p class="nash-overview-subtitle">Every opportunity your team has qualified with Nash.</p>
+      <p class="nash-overview-subtitle">Every opportunity your team has assessed with Nash.</p>
+      <p class="nash-overview-intro">Fit scores, verdicts and win rate across all completed assessments. Search or filter to find a deal, switch between grid and list, or open one to dive in.</p>
     </div>
     <div class="nash-overview-stats">
       ${statsStrip({

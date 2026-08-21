@@ -48,28 +48,43 @@
 }
 
 .nash-overview .nash-overview-subtitle {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 14px;
+  font-size: 15px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-overview .nash-overview-intro {
+  max-width: 68ch;
+  margin: 6px 0 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.55;
   color: var(--ink-40, #9a9da6);
 }
 
+/* One consolidated KPI panel (distinct from the assessment cards below). */
 .nash-overview .nash-overview-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  padding: 18px 32px 4px;
-}
-
-.nash-overview .nash-overview-stat {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 18px 20px;
+  margin: 18px 32px 4px;
   border: 1px solid var(--ink-15, #e8e9ec);
   border-radius: 14px;
   background: var(--white, #fff);
   box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+  overflow: hidden;
+}
+
+.nash-overview .nash-overview-stat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 22px;
+  border-left: 1px solid var(--ink-15, #e8e9ec);
+}
+
+.nash-overview .nash-overview-stat:first-child {
+  border-left: 0;
 }
 
 .nash-overview .nash-overview-stat-num {
@@ -142,7 +157,16 @@
 
 @media (width <= 900px) {
   .nash-overview .nash-overview-stats {
-    grid-template-columns: repeat(2, 1fr);
+    flex-direction: column;
+  }
+
+  .nash-overview .nash-overview-stat {
+    border-left: 0;
+    border-top: 1px solid var(--ink-15, #e8e9ec);
+  }
+
+  .nash-overview .nash-overview-stat:first-child {
+    border-top: 0;
   }
 }
 
