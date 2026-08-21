@@ -38,9 +38,9 @@ export default async function decorate(block) {
       <div class="nash-login-brand">
         <div class="nash-login-logo-row">
           <span class="nash-login-mark" aria-hidden="true">
-            <svg width="38" height="38" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
-              <rect width="20" height="20" rx="2" fill="#eb1000"/>
-              <polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="#fff"/>
+            <svg width="38" height="38" viewBox="0 0 240 234" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
+              <rect height="234" rx="42.5" width="240" fill="#fa0f00"/>
+              <path fill="#fff" d="M186.617 175.95h-28.506a6.243 6.243 0 0 1-5.847-3.769l-30.947-72.359a1.364 1.364 0 0 0-2.611-.034L99.42 145.731a1.635 1.635 0 0 0 1.506 2.269h21.2a3.27 3.27 0 0 1 3.01 1.994l9.281 20.655a3.812 3.812 0 0 1-3.507 5.301H53.734a3.518 3.518 0 0 1-3.213-4.904l49.09-116.902A6.639 6.639 0 0 1 105.843 50h28.314a6.628 6.628 0 0 1 6.232 4.144l49.43 116.902a3.517 3.517 0 0 1-3.202 4.904z"/>
             </svg>
           </span>
           <span class="nash-login-wordmark">Nash</span>
