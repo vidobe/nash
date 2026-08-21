@@ -1,21 +1,15 @@
 /**
- * nash-login block — Adobe SSO (Okta) sign-in only.
- * Two-column layout: sign-in card (left) + rotating quote panel (right).
- * Sign-in runs the PKCE flow in scripts/nash-auth.js; the token is the session.
+ * nash-login block — Adobe SSO (Okta) sign-in.
+ * Split layout: branded panel with a rotating background image + logo, name and
+ * title (left) and the sign-in box (right). Sign-in runs the PKCE flow in
+ * scripts/nash-auth.js; the token is the session.
  * @param {Element} block
  */
 
 import { login as oktaLogin } from '../../scripts/nash-auth.js';
 
-const DEFAULT_SENTENCES = [
-  'Qualify faster. Win smarter.',
-  'Know your AEM fit score before the meeting.',
-  'Turn RFPs into structured intelligence.',
-  'Stop guessing on competitive positioning.',
-  'Your team\'s AEM expertise, one click away.',
-  'Better assessments. Fewer surprises.',
-  'From RFP to recommendation, in minutes.',
-];
+const BG_COUNT = 7;
+const ROTATE_MS = 7000;
 
 function logoSvg(size) {
   const attrs = `width="${size}" height="${size}" viewBox="0 0 20 20" `
@@ -26,19 +20,30 @@ function logoSvg(size) {
     + '</svg>';
 }
 
-function makeRotator(el, sentences) {
+/* Crossfade the two background layers through a shuffled list of images. */
+function startBackground(block) {
+  const base = `${window.hlx.codeBasePath}/blocks/nash-login`;
+  const urls = [];
+  for (let i = 1; i <= BG_COUNT; i += 1) urls.push(`${base}/login-bg-${i}.jpg`);
+  for (let i = urls.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [urls[i], urls[j]] = [urls[j], urls[i]];
+  }
+  const layers = [...block.querySelectorAll('.nash-login-bg')];
+  if (!layers.length) return;
   let idx = 0;
-  const show = (text) => {
-    el.classList.add('nash-login-quote-out');
-    setTimeout(() => {
-      el.textContent = text;
-      el.classList.remove('nash-login-quote-out');
-    }, 380);
-  };
+  let active = 0;
+  layers[0].style.backgroundImage = `url("${urls[0]}")`;
+  layers[0].classList.add('is-active');
+  if (urls.length < 2) return;
   setInterval(() => {
-    idx = (idx + 1) % sentences.length;
-    show(sentences[idx]);
-  }, 4000);
+    idx = (idx + 1) % urls.length;
+    const next = layers[1 - active];
+    next.style.backgroundImage = `url("${urls[idx]}")`;
+    next.classList.add('is-active');
+    layers[active].classList.remove('is-active');
+    active = 1 - active;
+  }, ROTATE_MS);
 }
 
 export default async function decorate(block) {
@@ -54,29 +59,35 @@ export default async function decorate(block) {
   });
 
   block.innerHTML = `
-    <div class="nash-login-left">
-      <div class="nash-login-card">
+    <div class="nash-login-brand">
+      <div class="nash-login-bg"></div>
+      <div class="nash-login-bg"></div>
+      <div class="nash-login-scrim" aria-hidden="true"></div>
+      <div class="nash-login-brand-inner">
         <div class="nash-login-logo-row">
-          ${logoSvg(26)}
+          ${logoSvg(30)}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <h1 class="nash-login-heading">Sign in to Nash</h1>
+        <div class="nash-login-brand-copy">
+          <p class="nash-login-eyebrow">Assessment agent</p>
+          <h1 class="nash-login-title">Understand the opportunity.<br>Shape the solution. Share it.</h1>
+          <p class="nash-login-tagline">Nash helps you assess an opportunity, build the Adobe solution, and share it with your team.</p>
+        </div>
+      </div>
+    </div>
+    <div class="nash-login-panel">
+      <div class="nash-login-card">
+        <h2 class="nash-login-heading">Sign in</h2>
         <p class="nash-login-subhead">Use your Adobe account to continue.</p>
         <button class="nash-login-sso" type="button">
           ${logoSvg(18)}
           Sign in with Adobe
         </button>
-      </div>
-    </div>
-    <div class="nash-login-right" aria-hidden="true">
-      <div class="nash-login-stage">
-        <div class="nash-login-quote-mark">&ldquo;</div>
-        <p class="nash-login-quote">${DEFAULT_SENTENCES[0]}</p>
-        <p class="nash-login-quote-label">Nash &middot; Solution Qualifier</p>
+        <p class="nash-login-help">Access is limited to Adobe employees.</p>
       </div>
     </div>
   `;
 
-  makeRotator(block.querySelector('.nash-login-quote'), DEFAULT_SENTENCES);
   block.querySelector('.nash-login-sso').addEventListener('click', () => oktaLogin());
+  startBackground(block);
 }
