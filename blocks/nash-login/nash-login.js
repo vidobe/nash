@@ -46,7 +46,7 @@ export default async function decorate(block) {
     <div class="nash-login-content">
       <div class="nash-login-brand">
         <div class="nash-login-logo-row">
-          ${logoSvg(28)}
+          ${logoSvg(36)}
           <span class="nash-login-wordmark">Nash</span>
         </div>
         <h1 class="nash-login-title"><span>Understand the opportunity.</span><span>Shape the solution. Share it.</span></h1>
