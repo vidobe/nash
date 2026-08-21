@@ -8,7 +8,7 @@
 
 import { login as oktaLogin } from '../../scripts/nash-auth.js';
 
-const BG_COUNT = 7;
+const BG_COUNT = 6;
 
 /* Pick one background per calendar day (stable for the whole day). */
 function setBackground(block) {
