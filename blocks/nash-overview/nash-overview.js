@@ -291,6 +291,37 @@ function renderTable(block, reports) {
   });
 }
 
+/* Richer stats strip: total, avg score (with bar), win rate, and a verdict mix. */
+function statsStrip(s) {
+  const avgColor = s.avg == null ? 'var(--ink-40, #9a9da6)' : scoreColor(s.avg);
+  const seg = (n, cls) => (n > 0 ? `<span class="nash-overview-seg ${cls}" style="flex:${n}"></span>` : '');
+  return `
+    <div class="nash-overview-stat">
+      <div class="nash-overview-stat-num">${s.total}</div>
+      <div class="nash-overview-stat-label">Assessments</div>
+      <div class="nash-overview-stat-sub">${s.done} complete &middot; ${s.gen} in progress</div>
+    </div>
+    <div class="nash-overview-stat">
+      <div class="nash-overview-stat-num" style="color:${avgColor}">${s.avg == null ? '—' : s.avg}<span class="nash-overview-stat-unit">/100</span></div>
+      <div class="nash-overview-stat-label">Avg fit score</div>
+      <div class="nash-overview-stat-bar"><div style="width:${s.avg == null ? 0 : s.avg}%;background:${avgColor}"></div></div>
+    </div>
+    <div class="nash-overview-stat">
+      <div class="nash-overview-stat-num">${s.winRate == null ? '—' : `${s.winRate}%`}</div>
+      <div class="nash-overview-stat-label">Win rate</div>
+      <div class="nash-overview-stat-sub">${s.go} of ${s.scoredCount} rated Go</div>
+    </div>
+    <div class="nash-overview-stat nash-overview-stat-wide">
+      <div class="nash-overview-stat-label">Verdict mix</div>
+      <div class="nash-overview-mixbar">${seg(s.go, 'go')}${seg(s.cond, 'cond')}${seg(s.nogo, 'nogo')}</div>
+      <div class="nash-overview-mixlegend">
+        <span class="go">${s.go} Go</span>
+        <span class="cond">${s.cond} Conditional</span>
+        <span class="nogo">${s.nogo} No-go</span>
+      </div>
+    </div>`;
+}
+
 export default async function decorate(block) {
   let reports = [];
   let usingMock = false;
@@ -332,10 +363,8 @@ export default async function decorate(block) {
   const goCount = scored.filter((r) => r.score >= 70).length;
   const condCount = scored.filter((r) => r.score >= 50 && r.score < 70).length;
   const nogoCount = scored.filter((r) => r.score < 50).length;
-  const stat = (label, value, style = '') => `<div class="nash-overview-stat">
-      <span class="nash-overview-stat-value"${style ? ` style="${style}"` : ''}>${value}</span>
-      <span class="nash-overview-stat-label">${label}</span>
-    </div>`;
+  const scoredCount = scored.length;
+  const winRate = scoredCount ? Math.round((goCount / scoredCount) * 100) : null;
 
   block.innerHTML = `
     <div class="nash-overview-head">
@@ -343,13 +372,17 @@ export default async function decorate(block) {
       <p class="nash-overview-subtitle">Every opportunity your team has qualified with Nash.</p>
     </div>
     <div class="nash-overview-stats">
-      ${stat('Total', reports.length)}
-      ${stat('Completed', doneCount)}
-      ${stat('In progress', genCount)}
-      ${stat('Avg fit score', avgScore == null ? '—' : avgScore, avgScore == null ? '' : `color:${scoreColor(avgScore)}`)}
-      ${stat('Go', goCount, 'color:var(--green,#0d7a45)')}
-      ${stat('Conditional', condCount, 'color:var(--amber,#b45309)')}
-      ${stat('No-go', nogoCount, 'color:var(--red,#eb1000)')}
+      ${statsStrip({
+    total: reports.length,
+    done: doneCount,
+    gen: genCount,
+    avg: avgScore,
+    winRate,
+    go: goCount,
+    cond: condCount,
+    nogo: nogoCount,
+    scoredCount,
+  })}
     </div>
     <div class="nash-overview-toolbar">
       <div class="nash-overview-search-wrap">
@@ -364,7 +397,7 @@ export default async function decorate(block) {
       <div class="nash-overview-toolbar-right">
         <button class="nash-overview-sort-btn" type="button">
           <svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
-          Last updated
+          <span class="nash-overview-sort-label">Last updated</span>
         </button>
         <div class="nash-overview-view-toggle" role="group" aria-label="View layout">
           <button class="nash-overview-vt-btn active" data-layout="grid" type="button" aria-pressed="true" aria-label="Grid view">
@@ -379,6 +412,8 @@ export default async function decorate(block) {
     <div class="nash-overview-area" data-layout="grid">
       <div class="nash-overview-grid" aria-label="Qualification reports" role="list"></div>
       <div class="nash-overview-listwrap"></div>
+      <div class="nash-overview-noresults" hidden>No qualifications match your search.</div>
+      <div class="nash-overview-pagination"></div>
       ${reports.length === 0 ? `<div class="nash-overview-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <p>No qualifications yet. Start a new analysis to get going.</p>
@@ -387,23 +422,70 @@ export default async function decorate(block) {
     </div>
   `;
 
-  renderCards(block, reports);
-  renderTable(block, reports);
+  // Client-side view model: filter + sort + paginate (20 per page).
+  const PAGE_SIZE = 20;
+  const state = {
+    q: '', status: 'all', sort: 'updated', page: 1,
+  };
 
-  // Search (applies to both card and table rows)
+  const view = () => {
+    let list = reports.filter((r) => state.status === 'all' || r.status === state.status);
+    if (state.q) {
+      list = list.filter((r) => r.company.toLowerCase().includes(state.q)
+        || (r.solutions || '').toLowerCase().includes(state.q));
+    }
+    const by = state.sort === 'score'
+      ? (a, b) => (b.score || 0) - (a.score || 0)
+      : (a, b) => (b.ts || 0) - (a.ts || 0);
+    return [...list].sort(by);
+  };
+
+  function renderPage() {
+    const list = view();
+    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    state.page = Math.min(Math.max(1, state.page), pages);
+    const startIdx = (state.page - 1) * PAGE_SIZE;
+    const pageItems = list.slice(startIdx, startIdx + PAGE_SIZE);
+    renderCards(block, pageItems);
+    renderTable(block, pageItems);
+    const noRes = block.querySelector('.nash-overview-noresults');
+    if (noRes) noRes.hidden = list.length !== 0;
+
+    const pag = block.querySelector('.nash-overview-pagination');
+    if (!pag) return;
+    if (pages <= 1) { pag.innerHTML = ''; return; }
+    const to = Math.min(state.page * PAGE_SIZE, list.length);
+    pag.innerHTML = `
+      <span class="nash-overview-page-info">${startIdx + 1}–${to} of ${list.length}</span>
+      <div class="nash-overview-page-btns">
+        <button class="nash-overview-page-btn" data-nav="prev" type="button"${state.page <= 1 ? ' disabled' : ''}>&lsaquo; Prev</button>
+        <span class="nash-overview-page-cur">Page ${state.page} of ${pages}</span>
+        <button class="nash-overview-page-btn" data-nav="next" type="button"${state.page >= pages ? ' disabled' : ''}>Next &rsaquo;</button>
+      </div>`;
+    pag.querySelector('[data-nav="prev"]')?.addEventListener('click', () => { state.page -= 1; renderPage(); });
+    pag.querySelector('[data-nav="next"]')?.addEventListener('click', () => { state.page += 1; renderPage(); });
+  }
+
+  renderPage();
+
   block.querySelector('.nash-overview-search').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    block.querySelectorAll('.nash-overview-card, .nash-overview-trow').forEach((el) => {
-      el.hidden = q && !el.dataset.company.includes(q);
-    });
+    state.q = e.target.value.toLowerCase();
+    state.page = 1;
+    renderPage();
   });
 
-  // Filter
   block.querySelector('.nash-overview-filter').addEventListener('change', (e) => {
-    const val = e.target.value;
-    block.querySelectorAll('.nash-overview-card, .nash-overview-trow').forEach((el) => {
-      el.hidden = val !== 'all' && el.dataset.status !== val;
-    });
+    state.status = e.target.value;
+    state.page = 1;
+    renderPage();
+  });
+
+  block.querySelector('.nash-overview-sort-btn')?.addEventListener('click', () => {
+    state.sort = state.sort === 'updated' ? 'score' : 'updated';
+    const label = block.querySelector('.nash-overview-sort-label');
+    if (label) label.textContent = state.sort === 'score' ? 'Fit score' : 'Last updated';
+    state.page = 1;
+    renderPage();
   });
 
   // View toggle (grid ⇄ list table)
