@@ -19,9 +19,9 @@
   --link-color: #3b63fb;
   --link-hover-color: #1d3ecf;
 
-  /* fonts — Adobe Clean everywhere (Source Sans 3 fallback until a kit is added) */
-  --body-font-family: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
-  --heading-font-family: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
+  /* fonts — self-hosted Adobe Clean everywhere */
+  --body-font-family: adobe-clean, system-ui, sans-serif;
+  --heading-font-family: adobe-clean, system-ui, sans-serif;
 
   /* Spectrum tokens */
   --spectrum-accent: #1473e6;
@@ -51,8 +51,8 @@
   --blue: #1d4ed8;
   --blue-lt: #eff6ff;
   --border: #e5e6ea;
-  --sans: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
-  --serif: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
+  --sans: adobe-clean, system-ui, sans-serif;
+  --serif: adobe-clean, system-ui, sans-serif;
 
   /* nav height — matches nash-topbar */
   --nav-height: 52px;

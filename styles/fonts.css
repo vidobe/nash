@@ -1,7 +1,29 @@
 /* stylelint-disable max-line-length */
 
-/* Nash type — Adobe Clean when a kit is present, else Source Sans 3 (very close). */
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+/* Nash type — self-hosted Adobe Clean (Latin subset). */
+@font-face {
+  font-family: adobe-clean;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/adobe-clean-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: adobe-clean;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/adobe-clean-bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: adobe-clean;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('../fonts/adobe-clean-extrabold.woff2') format('woff2');
+}
 
 /* DM Sans fallback for CLS prevention */
 @font-face {
