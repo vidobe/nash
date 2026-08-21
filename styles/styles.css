@@ -19,9 +19,18 @@
   --link-color: #3b63fb;
   --link-hover-color: #1d3ecf;
 
-  /* fonts */
-  --body-font-family: roboto, roboto-fallback, sans-serif;
-  --heading-font-family: roboto-condensed, roboto-condensed-fallback, sans-serif;
+  /* fonts — Adobe Clean everywhere (Source Sans 3 fallback until a kit is added) */
+  --body-font-family: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
+  --heading-font-family: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
+
+  /* Spectrum tokens */
+  --spectrum-accent: #1473e6;
+  --spectrum-accent-hover: #0d66d0;
+  --spectrum-accent-down: #095aba;
+  --spectrum-radius-s: 4px;
+  --spectrum-radius-m: 8px;
+  --spectrum-radius-pill: 22px;
+  --spectrum-focus: #1473e6;
 
   /* nash design tokens */
   --red: #eb1000;
@@ -42,8 +51,8 @@
   --blue: #1d4ed8;
   --blue-lt: #eff6ff;
   --border: #e5e6ea;
-  --sans: 'DM Sans', system-ui, sans-serif;
-  --serif: 'DM Serif Display', georgia, serif;
+  --sans: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
+  --serif: adobe-clean, 'Source Sans 3', system-ui, sans-serif;
 
   /* nav height — matches nash-topbar */
   --nav-height: 52px;

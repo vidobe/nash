@@ -106,9 +106,9 @@
   height: 44px;
   padding: 0 20px;
   border: none;
-  border-radius: 22px;
-  background: #1473e6;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  border-radius: var(--spectrum-radius-pill, 22px);
+  background: var(--spectrum-accent, #1473e6);
+  font-family: var(--sans, system-ui, sans-serif);
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -117,11 +117,11 @@
 }
 
 .nash-login .nash-login-sso:hover {
-  background: #0d66d0;
+  background: var(--spectrum-accent-hover, #0d66d0);
 }
 
 .nash-login .nash-login-sso:active {
-  background: #095aba;
+  background: var(--spectrum-accent-down, #095aba);
 }
 
 .nash-login .nash-login-help {
