@@ -9,7 +9,6 @@
 import { login as oktaLogin } from '../../scripts/nash-auth.js';
 
 const BG_COUNT = 7;
-const ROTATE_MS = 7000;
 
 function logoSvg(size) {
   const attrs = `width="${size}" height="${size}" viewBox="0 0 20 20" `
@@ -20,30 +19,13 @@ function logoSvg(size) {
     + '</svg>';
 }
 
-/* Crossfade the two background layers through a shuffled list of images. */
-function startBackground(block) {
-  const base = `${window.hlx.codeBasePath}/blocks/nash-login`;
-  const urls = [];
-  for (let i = 1; i <= BG_COUNT; i += 1) urls.push(`${base}/login-bg-${i}.jpg`);
-  for (let i = urls.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [urls[i], urls[j]] = [urls[j], urls[i]];
-  }
-  const layers = [...block.querySelectorAll('.nash-login-bg')];
-  if (!layers.length) return;
-  let idx = 0;
-  let active = 0;
-  layers[0].style.backgroundImage = `url("${urls[0]}")`;
-  layers[0].classList.add('is-active');
-  if (urls.length < 2) return;
-  setInterval(() => {
-    idx = (idx + 1) % urls.length;
-    const next = layers[1 - active];
-    next.style.backgroundImage = `url("${urls[idx]}")`;
-    next.classList.add('is-active');
-    layers[active].classList.remove('is-active');
-    active = 1 - active;
-  }, ROTATE_MS);
+/* Pick one background per calendar day (stable for the whole day). */
+function setBackground(block) {
+  const bg = block.querySelector('.nash-login-bg');
+  if (!bg) return;
+  const day = Math.floor(Date.now() / 86400000);
+  const n = (day % BG_COUNT) + 1;
+  bg.style.backgroundImage = `url("${window.hlx.codeBasePath}/blocks/nash-login/login-bg-${n}.jpg")`;
 }
 
 export default async function decorate(block) {
@@ -60,7 +42,6 @@ export default async function decorate(block) {
 
   block.innerHTML = `
     <div class="nash-login-bg"></div>
-    <div class="nash-login-bg"></div>
     <div class="nash-login-scrim" aria-hidden="true"></div>
     <div class="nash-login-content">
       <div class="nash-login-brand">
@@ -68,7 +49,7 @@ export default async function decorate(block) {
           ${logoSvg(28)}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <h1 class="nash-login-title">Understand the opportunity.<br>Shape the solution. Share it.</h1>
+        <h1 class="nash-login-title"><span>Understand the opportunity.</span><span>Shape the solution. Share it.</span></h1>
       </div>
       <div class="nash-login-card">
         <h2 class="nash-login-heading">Sign in</h2>
@@ -80,5 +61,5 @@ export default async function decorate(block) {
   `;
 
   block.querySelector('.nash-login-sso').addEventListener('click', () => oktaLogin());
-  startBackground(block);
+  setBackground(block);
 }
