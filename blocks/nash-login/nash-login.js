@@ -10,15 +10,6 @@ import { login as oktaLogin } from '../../scripts/nash-auth.js';
 
 const BG_COUNT = 7;
 
-function logoSvg(size) {
-  const attrs = `width="${size}" height="${size}" viewBox="0 0 20 20" `
-    + 'xmlns="http://www.w3.org/2000/svg" aria-hidden="true"';
-  return `<svg ${attrs}>`
-    + '<rect width="20" height="20" rx="3" fill="#eb1000"/>'
-    + '<polygon points="10,3.5 16.5,16.5 10,12.5 3.5,16.5" fill="white"/>'
-    + '</svg>';
-}
-
 /* Pick one background per calendar day (stable for the whole day). */
 function setBackground(block) {
   const bg = block.querySelector('.nash-login-bg');
@@ -46,7 +37,7 @@ export default async function decorate(block) {
     <div class="nash-login-content">
       <div class="nash-login-brand">
         <div class="nash-login-logo-row">
-          ${logoSvg(36)}
+          <img class="nash-login-adobe" src="${window.hlx.codeBasePath}/icons/adobe-wordmark.svg" alt="Adobe" width="104" height="25"/>
           <span class="nash-login-wordmark">Nash</span>
         </div>
         <h1 class="nash-login-title"><span>Understand the opportunity.</span><span>Shape the solution. Share it.</span></h1>
