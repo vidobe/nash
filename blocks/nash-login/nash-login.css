@@ -1,17 +1,13 @@
 .nash-login {
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  min-height: 100vh;
-  min-height: 100svh;
-}
-
-/* ── Branded panel (left) with rotating background ─────────────── */
-.nash-login .nash-login-brand {
   position: relative;
   display: flex;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
   overflow: hidden;
 }
 
+/* Full-bleed rotating background */
 .nash-login .nash-login-bg {
   position: absolute;
   inset: 0;
@@ -28,18 +24,25 @@
 .nash-login .nash-login-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(160deg, rgb(12 14 20 / 42%) 0%, rgb(12 14 20 / 60%) 55%, rgb(12 14 20 / 82%) 100%);
+  background: linear-gradient(90deg, rgb(10 12 18 / 78%) 0%, rgb(10 12 18 / 45%) 42%, rgb(10 12 18 / 18%) 100%);
 }
 
-.nash-login .nash-login-brand-inner {
+.nash-login .nash-login-content {
   position: relative;
   z-index: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: space-between;
   gap: 40px;
   width: 100%;
-  padding: 44px 48px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 6vw;
+}
+
+/* Compact, vertically-centred branding */
+.nash-login .nash-login-brand {
+  max-width: 32ch;
   color: #fff;
 }
 
@@ -47,6 +50,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
 .nash-login .nash-login-wordmark {
@@ -56,12 +60,8 @@
   color: #fff;
 }
 
-.nash-login .nash-login-brand-copy {
-  max-width: 34ch;
-}
-
 .nash-login .nash-login-eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -70,47 +70,46 @@
 }
 
 .nash-login .nash-login-title {
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
   font-weight: 400;
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1.15;
   color: #fff;
 }
 
 .nash-login .nash-login-tagline {
-  max-width: 44ch;
+  max-width: 40ch;
   margin: 0;
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.6;
   color: rgb(255 255 255 / 82%);
 }
 
-/* ── Sign-in panel (right) ─────────────────────────────────────── */
-.nash-login .nash-login-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: var(--white, #fff);
-}
-
+/* Compact floating sign-in card */
 .nash-login .nash-login-card {
+  flex: 0 0 auto;
   width: 100%;
   max-width: 340px;
+  padding: 30px 30px 26px;
+  background: var(--white, #fff);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 6%),
+    0 14px 44px rgb(0 0 0 / 24%);
 }
 
 .nash-login .nash-login-heading {
   margin: 0 0 6px;
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
   font-weight: 400;
-  font-size: 30px;
+  font-size: 28px;
   color: var(--ink, #111318);
 }
 
 .nash-login .nash-login-subhead {
-  margin: 0 0 24px;
-  font-size: 15px;
+  margin: 0 0 22px;
+  font-size: 14.5px;
   line-height: 1.5;
   color: var(--ink-70, #4a4d55);
 }
@@ -121,7 +120,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 48px;
+  height: 46px;
   border: none;
   border-radius: 10px;
   background: #16181d;
@@ -142,25 +141,28 @@
 }
 
 .nash-login .nash-login-help {
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   font-size: 12.5px;
   color: var(--ink-40, #9a9da6);
 }
 
-@media (width <= 800px) {
-  .nash-login {
-    grid-template-columns: 1fr;
+@media (width <= 820px) {
+  .nash-login .nash-login-content {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 28px;
   }
 
   .nash-login .nash-login-brand {
-    min-height: 260px;
-  }
-
-  .nash-login .nash-login-brand-inner {
-    padding: 28px;
+    max-width: none;
   }
 
   .nash-login .nash-login-title {
-    font-size: 27px;
+    font-size: 26px;
+  }
+
+  .nash-login .nash-login-card {
+    max-width: none;
   }
 }

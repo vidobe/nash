@@ -59,23 +59,19 @@ export default async function decorate(block) {
   });
 
   block.innerHTML = `
-    <div class="nash-login-brand">
-      <div class="nash-login-bg"></div>
-      <div class="nash-login-bg"></div>
-      <div class="nash-login-scrim" aria-hidden="true"></div>
-      <div class="nash-login-brand-inner">
+    <div class="nash-login-bg"></div>
+    <div class="nash-login-bg"></div>
+    <div class="nash-login-scrim" aria-hidden="true"></div>
+    <div class="nash-login-content">
+      <div class="nash-login-brand">
         <div class="nash-login-logo-row">
-          ${logoSvg(30)}
+          ${logoSvg(28)}
           <span class="nash-login-wordmark">Nash</span>
         </div>
-        <div class="nash-login-brand-copy">
-          <p class="nash-login-eyebrow">Assessment agent</p>
-          <h1 class="nash-login-title">Understand the opportunity.<br>Shape the solution. Share it.</h1>
-          <p class="nash-login-tagline">Nash helps you assess an opportunity, build the Adobe solution, and share it with your team.</p>
-        </div>
+        <p class="nash-login-eyebrow">Assessment agent</p>
+        <h1 class="nash-login-title">Understand the opportunity.<br>Shape the solution. Share it.</h1>
+        <p class="nash-login-tagline">Nash helps you assess an opportunity, build the Adobe solution, and share it with your team.</p>
       </div>
-    </div>
-    <div class="nash-login-panel">
       <div class="nash-login-card">
         <h2 class="nash-login-heading">Sign in</h2>
         <p class="nash-login-subhead">Use your Adobe account to continue.</p>
