@@ -43,20 +43,16 @@
 .nash-login .nash-login-logo-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 11px;
   margin-bottom: 14px;
 }
 
-.nash-login .nash-login-adobe {
-  display: block;
-  width: auto;
-  height: 26px;
+.nash-login .nash-login-mark {
+  display: flex;
 }
 
 .nash-login .nash-login-wordmark {
-  padding-left: 14px;
-  border-left: 1px solid rgb(255 255 255 / 35%);
-  font-size: 27px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
