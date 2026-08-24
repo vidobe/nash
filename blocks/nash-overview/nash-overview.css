@@ -2,8 +2,11 @@
 
 .nash-overview {
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* ── Notification banner ─────────────────────────────── */
@@ -286,7 +289,7 @@
 
 .nash-overview .nash-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
