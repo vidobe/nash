@@ -2097,6 +2097,33 @@
   color: var(--ink, #111318);
 }
 
+/* Intake "Start assessment" lives inside the chat bar (the send button is
+   hidden while collecting the intake — see the intake-mode rule below). */
+.nash-session .nash-session-intake-start {
+  align-self: center;
+  flex-shrink: 0;
+  padding: 6px 13px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: var(--surface, #f8f8fa);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nash-session .nash-session-intake-start:hover {
+  border-color: color-mix(in srgb, var(--spectrum-accent, #1473e6) 55%, transparent);
+  box-shadow: 0 1px 8px rgb(20 115 230 / 16%);
+}
+
+.nash-session .nash-session-intake-start:active {
+  transform: scale(0.97);
+}
+
 .nash-session .nash-session-send {
   display: grid;
   place-items: center;
@@ -2123,6 +2150,11 @@
 .nash-session .nash-session-send svg {
   width: 17px;
   height: 17px;
+}
+
+/* Hide the send button while the intake step owns the chat bar. */
+.nash-session .nash-session-composer.intake-mode .nash-session-send {
+  display: none;
 }
 
 /* ── Report panel + run CTA ──────────────────────────── */
