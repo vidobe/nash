@@ -483,7 +483,7 @@ function renderReportMarkdown(src, opts) {
 
 /* ── Launcher ────────────────────────────────────────── */
 
-function renderLauncher(block, name, solutions = []) {
+function renderLauncher(block, name) {
   block.classList.remove('wide');
   block.innerHTML = `
     <div class="nash-session-hero">
@@ -509,77 +509,112 @@ function renderLauncher(block, name, solutions = []) {
     : '<button class="nash-session-conn-btn" type="button">Connect to FluffyJaws to run live assessments</button>'}
       </div>
     </div>
-
-    <div class="nash-session-modal" hidden>
-      <div class="nash-session-modal-backdrop" data-close></div>
-      <div class="nash-session-modal-card" role="dialog" aria-modal="true" aria-label="Create a new analysis">
-        <div class="nash-session-modal-head">
-          <div>
-            <h2 class="nash-session-modal-title">New analysis</h2>
-            <p class="nash-session-modal-sub">Set up a new opportunity assessment.</p>
-          </div>
-          <button class="nash-session-modal-close" type="button" data-close aria-label="Close">${ICONS.close}</button>
-        </div>
-        <form class="nash-session-modal-form">
-          <div class="nash-session-field-row">
-            <div class="nash-session-field">
-              <label class="nash-session-flabel" for="na-company">Customer name</label>
-              <input class="nash-session-finput" id="na-company" name="company" type="text" placeholder="e.g. Ministry of Defence" required/>
-            </div>
-            <div class="nash-session-field">
-              <label class="nash-session-flabel" for="na-dr">Deal Registration (DR)</label>
-              <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
-            </div>
-          </div>
-          <div class="nash-session-field">
-            <label class="nash-session-flabel">Documents (PDF, Word, Excel — you can add several)</label>
-            <label class="nash-session-drop" for="na-file">
-              <span class="nash-session-drop-icon" aria-hidden="true">${ICONS.upload}</span>
-              <span class="nash-session-drop-text">Click to upload <span class="nash-session-drop-sub">or drag files here</span></span>
-              <input id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" multiple hidden/>
-            </label>
-          </div>
-          <div class="nash-session-field">
-            <label class="nash-session-flabel">Solutions in scope</label>
-            ${solutions.length ? `<div class="nash-session-solgrid">
-              ${solutions.map((s) => `
-                <label class="nash-session-solchip">
-                  <input type="checkbox" name="solutions" value="${s.slug}" data-name="${escapeHtml(s.name)}"/>
-                  <span>${escapeHtml(s.name)}</span>
-                </label>
-              `).join('')}
-            </div>` : '<p class="nash-session-flabel" style="font-weight:400">No solution files found.</p>'}
-          </div>
-          <div class="nash-session-modal-actions">
-            <button class="nash-session-btn-ghost" type="button" data-close>Cancel</button>
-            <button class="nash-session-btn-primary" type="submit">Create assessment</button>
-          </div>
-        </form>
-      </div>
-    </div>
   `;
-
-  const modal = block.querySelector('.nash-session-modal');
-  const openModal = () => { modal.hidden = false; block.querySelector('#na-company').focus(); };
-  const closeModal = () => { modal.hidden = true; };
 
   block.querySelectorAll('.nash-session-launch-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const { action } = btn.dataset;
-      if (action === 'new') openModal();
+      if (action === 'new') startNewAnalysis(block);
       else if (action === 'find') window.location.href = '/';
       else if (action === 'skills') window.location.href = '/solutions/';
     });
   });
 
   block.querySelector('.nash-session-conn-btn')?.addEventListener('click', () => login());
+}
 
-  modal.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+/* Read every uploaded file: parse spreadsheets/CSV to text in the browser
+   (FluffyJaws doesn't reliably mount uploads), else keep the raw bytes. */
+async function processFiles(fileList) {
+  const files = [];
+  // eslint-disable-next-line no-restricted-syntax
+  for (const f of fileList) {
+    const mime = f.type || '';
+    // eslint-disable-next-line no-await-in-loop
+    const text = await extractFileText(f);
+    let data = '';
+    if (!text && f.size <= 4 * 1024 * 1024) {
+      // eslint-disable-next-line no-await-in-loop
+      data = await new Promise((resolve) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = () => resolve('');
+        fr.readAsDataURL(f);
+      });
+    }
+    files.push({
+      name: f.name, mime, text, data,
+    });
+  }
+  return files;
+}
 
-  // Modern file upload: reflect the chosen file + drag-and-drop.
-  const drop = block.querySelector('.nash-session-drop');
-  const fileInput = block.querySelector('#na-file');
+/* Start a brand-new analysis: open a fresh session and collect the intake
+   (customer, DR, documents, solutions) as the first card of the questionnaire,
+   rather than in a separate modal. Not persisted until intake is submitted. */
+function startNewAnalysis(block) {
+  const assessment = {
+    id: newAssessmentId(),
+    company: '',
+    status: 'draft',
+    createdAt: Date.now(),
+    solutions: [],
+    files: [],
+    messages: [],
+  };
+  current = assessment;
+  previousResponseId = null;
+  window.history.pushState({}, '', `/indextest?a=${encodeURIComponent(assessment.id)}`);
+  renderAssessment(block, assessment, true);
+}
+
+/* The intake form, shown as the first card of the in-chat questionnaire. */
+function renderIntake(solutions) {
+  return `<form class="nash-session-intake">
+      <p class="nash-session-interview-lead">A few details to set up the assessment.</p>
+      <div class="nash-session-field-row">
+        <div class="nash-session-field">
+          <label class="nash-session-flabel" for="na-company">Customer name</label>
+          <input class="nash-session-finput" id="na-company" name="company" type="text" placeholder="e.g. Ministry of Defence" required/>
+        </div>
+        <div class="nash-session-field">
+          <label class="nash-session-flabel" for="na-dr">Deal Registration (DR)</label>
+          <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
+        </div>
+      </div>
+      <div class="nash-session-field">
+        <label class="nash-session-flabel">Documents (PDF, Word, Excel — you can add several)</label>
+        <label class="nash-session-drop" for="na-file">
+          <span class="nash-session-drop-icon" aria-hidden="true">${ICONS.upload}</span>
+          <span class="nash-session-drop-text">Click to upload <span class="nash-session-drop-sub">or drag files here</span></span>
+          <input id="na-file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" multiple hidden/>
+        </label>
+      </div>
+      <div class="nash-session-field">
+        <label class="nash-session-flabel">Solutions in scope</label>
+        ${solutions.length ? `<div class="nash-session-solgrid">
+          ${solutions.map((s) => `
+            <label class="nash-session-solchip">
+              <input type="checkbox" name="solutions" value="${s.slug}" data-name="${escapeHtml(s.name)}"/>
+              <span>${escapeHtml(s.name)}</span>
+            </label>
+          `).join('')}
+        </div>` : '<p class="nash-session-flabel" style="font-weight:400">No solution files found.</p>'}
+      </div>
+    </form>`;
+}
+
+/* First step of the questionnaire: collect intake in-chat, then flow into the
+   gap interview and the run. */
+async function runIntake(block) {
+  const thread = block.querySelector('.nash-session-thread');
+  const solutions = await loadSolutions();
+  const bubble = addMessage(thread, 'assistant-cont', renderIntake(solutions));
+  const form = bubble.querySelector('.nash-session-intake');
+
+  // File upload: reflect the chosen file + drag-and-drop.
+  const drop = form.querySelector('.nash-session-drop');
+  const fileInput = form.querySelector('#na-file');
   const showFile = () => {
     const fs = [...fileInput.files];
     const textEl = drop.querySelector('.nash-session-drop-text');
@@ -599,65 +634,38 @@ function renderLauncher(block, name, solutions = []) {
     if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFile(); }
   });
 
-  block.querySelector('.nash-session-modal-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
+  // The action rides on the chat bar, like the interview.
+  const composer = block.querySelector('.nash-session-composer');
+  const bar = document.createElement('div');
+  bar.className = 'nash-session-interview-bar';
+  bar.innerHTML = '<button type="button" class="nash-session-interview-run">Start assessment</button>';
+  composer.parentNode.insertBefore(bar, composer);
+
+  bar.querySelector('.nash-session-interview-run').addEventListener('click', async () => {
     const company = form.company.value.trim();
-    if (!company) return;
-    const submitBtn = form.querySelector('.nash-session-btn-primary');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating…';
+    if (!company) { form.company.focus(); return; }
+    const runBtn = bar.querySelector('.nash-session-interview-run');
+    runBtn.disabled = true;
+    runBtn.textContent = 'Setting up…';
 
     const sols = [...form.querySelectorAll('input[name="solutions"]:checked')]
       .map((c) => ({ slug: c.value, name: c.dataset.name }));
-
-    // Process every uploaded file: parse spreadsheets/CSV to text in the browser
-    // (FluffyJaws doesn't reliably mount uploads), else keep the raw bytes.
-    const files = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const f of [...form.file.files]) {
-      const mime = f.type || '';
-      // eslint-disable-next-line no-await-in-loop
-      const text = await extractFileText(f);
-      let data = '';
-      if (!text && f.size <= 4 * 1024 * 1024) {
-        // eslint-disable-next-line no-await-in-loop
-        data = await new Promise((resolve) => {
-          const fr = new FileReader();
-          fr.onload = () => resolve(fr.result);
-          fr.onerror = () => resolve('');
-          fr.readAsDataURL(f);
-        });
-      }
-      files.push({
-        name: f.name, mime, text, data,
-      });
-    }
+    const files = await processFiles([...form.file.files]);
     let fileName = '';
     if (files.length === 1) fileName = files[0].name;
     else if (files.length) fileName = `${files.length} files`;
 
-    const assessment = {
-      id: newAssessmentId(),
-      company,
-      dr: form.dr.value.trim(),
-      fileName,
-      files,
-      solutions: sols,
-      status: 'draft',
-      createdAt: Date.now(),
-      messages: [],
-    };
-    // Persist metadata only (keep large file bytes/text out of localStorage); render
-    // in place so the in-memory documents survive for the immediate run.
-    const stored = { ...assessment, files: files.map((f) => ({ name: f.name, mime: f.mime })) };
-    saveAssessment(stored);
-    current = assessment;
-    previousResponseId = null;
-    window.history.pushState({}, '', `/indextest?a=${encodeURIComponent(assessment.id)}`);
-    // Freshly created with docs still in memory — kick off the assessment
-    // immediately instead of waiting for a manual "Run assessment" click.
-    renderAssessment(block, assessment, true);
+    Object.assign(current, {
+      company, dr: form.dr.value.trim(), fileName, files, solutions: sols,
+    });
+    persist(current);
+    // Now that we know the customer, fill in the session header.
+    const title = block.querySelector('.nash-session-assess-title');
+    if (title) title.textContent = company;
+
+    bar.remove();
+    form.closest('.nash-session-msg')?.remove();
+    runInterview(block);
   });
 }
 
@@ -1639,7 +1647,7 @@ export function renderAssessment(block, a, autoRun = false) {
     <div class="nash-session-assess">
       <div class="nash-session-assess-head">
         <div>
-          <h1 class="nash-session-assess-title">${escapeHtml(a.company)}</h1>
+          <h1 class="nash-session-assess-title">${escapeHtml(a.company || 'New analysis')}</h1>
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
         <div class="nash-session-tabs" role="tablist">
@@ -1700,9 +1708,13 @@ export function renderAssessment(block, a, autoRun = false) {
   // An interrupted run (status 'running', no report yet) resumes straight into the
   // assessment; a fresh draft starts with the pre-assessment interview.
   const willResume = willAutoRun && a.status === 'running';
+  // A brand-new analysis (no customer yet) opens straight into the intake step.
+  const willIntake = willAutoRun && !a.company;
   let openingMsg;
   if (hasReport) {
     openingMsg = `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`;
+  } else if (willIntake) {
+    openingMsg = 'Let\'s set up a new opportunity assessment. Add the details below and I\'ll review your documents, ask about anything that\'s missing, then run the full assessment.';
   } else if (willResume) {
     openingMsg = `Picking your <strong>${escapeHtml(a.company)}</strong> assessment back up — it was still running when you left, so I'm continuing it now.`;
   } else if (willAutoRun) {
@@ -1752,7 +1764,8 @@ export function renderAssessment(block, a, autoRun = false) {
   // No manual "Run assessment" step — when the view opens without a report yet
   // (fresh creation, or a reopened unfinished run) we begin the pre-assessment
   // interview, which reviews the docs, asks about gaps, then runs the assessment.
-  if (willResume) runAssessment(block, 1, '');
+  if (willIntake) runIntake(block);
+  else if (willResume) runAssessment(block, 1, '');
   else if (willAutoRun) runInterview(block);
 
   block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
@@ -1933,17 +1946,17 @@ export default async function decorate(block) {
     // assessment just re-opens, while an unfinished one restarts automatically.
     renderAssessment(block, assessment, true);
   } else {
-    renderLauncher(block, name, await loadSolutions());
+    renderLauncher(block, name);
   }
 
   // "New Session" in the sidebar returns to the launcher.
-  document.addEventListener('nash:new-session', async () => {
+  document.addEventListener('nash:new-session', () => {
     if (new URLSearchParams(window.location.search).get('a')) {
       window.location.href = '/indextest';
     } else {
       current = null;
       previousResponseId = null;
-      renderLauncher(block, name, await loadSolutions());
+      renderLauncher(block, name);
     }
   });
 }
