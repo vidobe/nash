@@ -10,6 +10,10 @@ import { renderOppPanel, wireOppPanel } from '../../scripts/nash-opp.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
+// True while an assessment is actively streaming from FluffyJaws. Used to warn
+// before navigating away (the stream can't survive a full page load) and to
+// resume an interrupted run when the session is re-opened.
+let isRunning = false;
 // Whether FluffyJaws already has this assessment's context in the current thread.
 // Reset on every (re)open so the first follow-up re-sends the report — FluffyJaws
 // response IDs expire server-side, so we can't rely on a stored previousResponseId.
@@ -1475,12 +1479,26 @@ async function runAssessment(block, attempt = 1, insights = '') {
   const userContent = attachments.length
     ? [{ type: 'input_text', text: finalPrompt }, ...attachments]
     : finalPrompt;
+
+  // Mark the run in-flight and persist, so re-opening the session mid-run resumes
+  // (rather than restarting the interview) and navigating away warns the user.
+  isRunning = true;
+  current.status = 'running';
+  current.runStartedAt = Date.now();
+  persist(current);
+
   let answer = '';
   let thinking = '';
   let errMsg = '';
 
   const scroll = () => { if (inThread) scrollToBottom(thread); };
   const failMsg = (msg) => {
+    // A terminal failure — the run is no longer in flight. Roll the status back so
+    // re-opening offers a fresh run rather than trying to resume a dead stream.
+    isRunning = false;
+    current.status = 'draft';
+    delete current.runStartedAt;
+    persist(current);
     if (inThread) { host.innerHTML = renderMarkdown(msg); scroll(); return; }
     area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
     block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
@@ -1541,6 +1559,8 @@ async function runAssessment(block, attempt = 1, insights = '') {
         chatGrounded = true;
       }
       current.status = 'done';
+      delete current.runStartedAt;
+      isRunning = false;
       area.innerHTML = renderDossier(current);
       persist(current);
       setStatusDone(block);
@@ -1630,9 +1650,14 @@ export function renderAssessment(block, a, autoRun = false) {
   // the results. Past messages are still kept for re-run context.
   const hasReport = a.reportMarkdown || a.report || a.reportHtml;
   const willAutoRun = autoRun && !hasReport;
+  // An interrupted run (status 'running', no report yet) resumes straight into the
+  // assessment; a fresh draft starts with the pre-assessment interview.
+  const willResume = willAutoRun && a.status === 'running';
   let openingMsg;
   if (hasReport) {
     openingMsg = `Ask me anything about the <strong>${escapeHtml(a.company)}</strong> assessment above — scope, risks, competitors, next steps.`;
+  } else if (willResume) {
+    openingMsg = `Picking your <strong>${escapeHtml(a.company)}</strong> assessment back up — it was still running when you left, so I'm continuing it now.`;
   } else if (willAutoRun) {
     openingMsg = `Let's get started on <strong>${escapeHtml(a.company)}</strong>. I'll review your documents first and ask about anything that's missing, then run the full assessment.`;
   } else {
@@ -1680,7 +1705,8 @@ export function renderAssessment(block, a, autoRun = false) {
   // No manual "Run assessment" step — when the view opens without a report yet
   // (fresh creation, or a reopened unfinished run) we begin the pre-assessment
   // interview, which reviews the docs, asks about gaps, then runs the assessment.
-  if (willAutoRun) runInterview(block);
+  if (willResume) runAssessment(block, 1, '');
+  else if (willAutoRun) runInterview(block);
 
   block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
     switchTab(block, 'assessment');
@@ -1847,6 +1873,13 @@ export default async function decorate(block) {
   const name = 'Vitor';
   const id = new URLSearchParams(window.location.search).get('a');
   const assessment = id ? getAssessment(id) : null;
+
+  // A live FluffyJaws stream can't survive a full page load, so warn before the
+  // user navigates away mid-run. If they leave anyway, re-opening the session
+  // resumes the run (see willResume in renderAssessment).
+  window.addEventListener('beforeunload', (e) => {
+    if (isRunning) { e.preventDefault(); e.returnValue = ''; }
+  });
 
   if (assessment) {
     // autoRun only takes effect when there's no report yet, so a finished
