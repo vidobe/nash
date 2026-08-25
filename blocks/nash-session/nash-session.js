@@ -1257,6 +1257,11 @@ function pixelGrid() {
   }</div>`;
 }
 
+/* Small 3×3 pixel cluster in the chat bar; animates while the AI is thinking. */
+function pixelDots() {
+  return Array.from({ length: 9 }).map(() => '<i></i>').join('');
+}
+
 /* Ask FluffyJaws which checklist items the uploaded docs already answer, so we
    interview the analyst only about the gaps. Returns an array of item keys to ask. */
 /* Pull solution-authored interview questions from each in-scope solution's DA
@@ -1582,6 +1587,7 @@ export function renderAssessment(block, a, autoRun = false) {
           </div>
           <div class="nash-session-attachments" hidden></div>
           <form class="nash-session-composer" autocomplete="off">
+            <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
             <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
             <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
           </form>
@@ -1759,6 +1765,8 @@ async function send(block, text) {
     ? `${buildChatContext(current)}${docsText}\n\n---\n\nMy question: ${question}`
     : `${question}${docsText}`;
 
+  const composer = block.querySelector('.nash-session-composer');
+  composer?.classList.add('is-thinking');
   const typing = typingIndicator(thread);
   let bubble = null;
   let answer = '';
@@ -1808,6 +1816,7 @@ async function send(block, text) {
       addMessage(thread, 'assistant', escapeHtml(`Something went wrong reaching FluffyJaws: ${err.message}`));
     },
   });
+  composer?.classList.remove('is-thinking');
 }
 
 /**
