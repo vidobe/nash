@@ -517,13 +517,15 @@ function renderLauncher(block, name, solutions = []) {
           <button class="nash-session-modal-close" type="button" data-close aria-label="Close">${ICONS.close}</button>
         </div>
         <form class="nash-session-modal-form">
-          <div class="nash-session-field">
-            <label class="nash-session-flabel" for="na-company">Customer name</label>
-            <input class="nash-session-finput" id="na-company" name="company" type="text" placeholder="e.g. Ministry of Defence" required/>
-          </div>
-          <div class="nash-session-field">
-            <label class="nash-session-flabel" for="na-dr">Deal Registration (DR)</label>
-            <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
+          <div class="nash-session-field-row">
+            <div class="nash-session-field">
+              <label class="nash-session-flabel" for="na-company">Customer name</label>
+              <input class="nash-session-finput" id="na-company" name="company" type="text" placeholder="e.g. Ministry of Defence" required/>
+            </div>
+            <div class="nash-session-field">
+              <label class="nash-session-flabel" for="na-dr">Deal Registration (DR)</label>
+              <input class="nash-session-finput" id="na-dr" name="dr" type="text" placeholder="DR3513652"/>
+            </div>
           </div>
           <div class="nash-session-field">
             <label class="nash-session-flabel">Documents (PDF, Word, Excel — you can add several)</label>

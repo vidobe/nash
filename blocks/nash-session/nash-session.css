@@ -173,7 +173,7 @@
 .nash-session .nash-session-modal-card {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 640px;
   max-height: 88vh;
   padding: 26px 28px 28px;
   overflow-y: auto;
@@ -231,6 +231,16 @@
 
 .nash-session .nash-session-field {
   margin-bottom: 18px;
+}
+
+.nash-session .nash-session-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.nash-session .nash-session-field-row .nash-session-field {
+  min-width: 0;
 }
 
 .nash-session .nash-session-flabel {
@@ -325,7 +335,7 @@
 
 .nash-session .nash-session-solgrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
@@ -2374,6 +2384,14 @@
 
   .nash-session .nash-opp-typegrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nash-session .nash-session-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .nash-session .nash-session-solgrid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .nash-session .nash-session-qual-layout {
