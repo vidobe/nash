@@ -1076,16 +1076,34 @@ function splitReportSections(md) {
 }
 
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
-function scorecardCards(dims) {
+// Each scored dimension links to the narrative section that justifies it, so a
+// low score is traceable to its reasoning. Keyed by lower-cased dimension name;
+// value is a section nav label (see sectionLabel).
+const DIM_SECTION = {
+  'strategic fit': 'Overview',
+  'technical fit': 'Tech Fit',
+  'functional coverage': 'Rationale',
+  'commercial viability': 'Business',
+  'competitive position': 'Competition',
+  'delivery risk': 'Recommendation',
+};
+
+function scorecardCards(dims, availableLabels) {
   if (!dims || !dims.length) return '';
+  const labels = availableLabels || new Set();
   return `<div class="nash-session-scorecard">${dims.map((d) => {
     const pct = d.max ? Math.round((d.scored / d.max) * 100) : 0;
-    return `<div class="nash-session-sc-card">
+    const target = DIM_SECTION[(d.dimension || '').toLowerCase()];
+    const linked = target && labels.has(target);
+    const inner = `
       <div class="nash-session-sc-top"><span>${escapeHtml(d.dimension)}</span><span class="nash-session-sc-weight">${escapeHtml(d.weight)}</span></div>
       <div class="nash-session-sc-score">${d.scored}<span> / ${d.max}</span></div>
       <div class="nash-session-sc-bar"><div style="width:${pct}%;background:${dimColor(pct)}"></div></div>
       ${d.notes ? `<p>${escapeHtml(d.notes)}</p>` : ''}
-    </div>`;
+      ${linked ? `<span class="nash-session-sc-link">See ${escapeHtml(target)} &rarr;</span>` : ''}`;
+    return linked
+      ? `<button type="button" class="nash-session-sc-card is-linked" data-qsection="${escapeHtml(target)}">${inner}</button>`
+      : `<div class="nash-session-sc-card">${inner}</div>`;
   }).join('')}</div>`;
 }
 
@@ -1097,12 +1115,13 @@ function daPreviewHtml(a) {
     .filter(Boolean).map((b) => `<span>${escapeHtml(b)}</span>`).join('');
   const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
+  const sectionLabels = new Set(sections.map((s) => sectionLabel(s.title)));
   const nav = sections.map((s, i) => {
     const label = sectionLabel(s.title);
     return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${sectionIcon(label)}<span>${label}</span></button>`;
   }).join('');
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
-    ${i === 0 ? scorecardCards(a.dimensions) : ''}
+    ${i === 0 ? scorecardCards(a.dimensions, sectionLabels) : ''}
     <div class="nash-session-qcard">
       <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
       <div class="nash-md">${renderReportMarkdown(s.md)}</div>
@@ -1159,6 +1178,15 @@ function wireDaPanel(block) {
     tab.addEventListener('click', () => {
       panel.querySelectorAll('.nash-session-qtab').forEach((b) => b.classList.toggle('active', b === tab));
       panel.querySelectorAll('.nash-session-qpanel').forEach((p) => p.classList.toggle('active', p.dataset.qidx === tab.dataset.qidx));
+    });
+  });
+  // A scored dimension card jumps to the nav section that justifies its score.
+  panel?.querySelectorAll('.nash-session-sc-card[data-qsection]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const label = card.dataset.qsection;
+      const tab = [...panel.querySelectorAll('.nash-session-qtab')]
+        .find((b) => b.querySelector('span')?.textContent === label);
+      tab?.click();
     });
   });
 }

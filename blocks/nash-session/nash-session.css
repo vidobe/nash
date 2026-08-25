@@ -960,10 +960,44 @@
 }
 
 .nash-session .nash-session-sc-card {
+  display: block;
+  width: 100%;
   padding: 16px 18px;
   border: 0;
   border-radius: 12px;
   background: var(--surface, #f8f8fa);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.nash-session .nash-session-sc-card.is-linked {
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.nash-session .nash-session-sc-card.is-linked:hover {
+  background: var(--blue-lt, #eff6ff);
+  box-shadow: 0 4px 14px rgb(20 115 230 / 12%);
+}
+
+.nash-session .nash-session-sc-card.is-linked:active {
+  transform: scale(0.99);
+}
+
+.nash-session .nash-session-sc-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--spectrum-accent, #1473e6);
+  opacity: 0.85;
+}
+
+.nash-session .nash-session-sc-card.is-linked:hover .nash-session-sc-link {
+  opacity: 1;
 }
 
 .nash-session .nash-session-sc-top {
