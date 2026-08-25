@@ -1334,7 +1334,7 @@ function renderInterview(items) {
       ${items.map((it) => `
         <div class="nash-session-interview-item">
           <label class="nash-session-interview-q" for="iv-${it.key}">${escapeHtml(it.q)}</label>
-          <textarea class="nash-session-interview-a" id="iv-${it.key}" rows="2" data-key="${it.key}" placeholder="Type your answer, or leave blank"></textarea>
+          <textarea class="nash-session-interview-a" id="iv-${it.key}" rows="1" data-key="${it.key}" placeholder="Type your answer, or leave blank"></textarea>
         </div>`).join('')}
       <div class="nash-session-interview-actions">
         <button type="button" class="nash-session-btn-ghost nash-session-interview-skip">Skip &amp; run now</button>
