@@ -634,19 +634,28 @@ async function runIntake(block) {
     if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFile(); }
   });
 
-  // The action rides on the chat bar, like the interview.
+  // The action lives inside the chat bar and only appears once a customer name
+  // is entered.
   const composer = block.querySelector('.nash-session-composer');
-  const bar = document.createElement('div');
-  bar.className = 'nash-session-interview-bar';
-  bar.innerHTML = '<button type="button" class="nash-session-interview-run">Start assessment</button>';
-  composer.parentNode.insertBefore(bar, composer);
+  const sendBtn = composer.querySelector('.nash-session-send');
+  const companyInput = form.company;
+  const startBtn = document.createElement('button');
+  startBtn.type = 'button';
+  startBtn.className = 'nash-session-intake-start';
+  startBtn.textContent = 'Start assessment';
+  startBtn.hidden = true;
+  composer.classList.add('intake-mode');
+  composer.insertBefore(startBtn, sendBtn);
 
-  bar.querySelector('.nash-session-interview-run').addEventListener('click', async () => {
-    const company = form.company.value.trim();
-    if (!company) { form.company.focus(); return; }
-    const runBtn = bar.querySelector('.nash-session-interview-run');
-    runBtn.disabled = true;
-    runBtn.textContent = 'Setting up…';
+  const syncStart = () => { startBtn.hidden = companyInput.value.trim().length === 0; };
+  companyInput.addEventListener('input', syncStart);
+  syncStart();
+
+  startBtn.addEventListener('click', async () => {
+    const company = companyInput.value.trim();
+    if (!company) { companyInput.focus(); return; }
+    startBtn.disabled = true;
+    startBtn.textContent = 'Setting up…';
 
     const sols = [...form.querySelectorAll('input[name="solutions"]:checked')]
       .map((c) => ({ slug: c.value, name: c.dataset.name }));
@@ -663,7 +672,8 @@ async function runIntake(block) {
     const title = block.querySelector('.nash-session-assess-title');
     if (title) title.textContent = company;
 
-    bar.remove();
+    composer.classList.remove('intake-mode');
+    startBtn.remove();
     form.closest('.nash-session-msg')?.remove();
     runInterview(block);
   });
@@ -697,7 +707,7 @@ function typingIndicator(thread) {
   return msg;
 }
 
-const DIMENSIONS = ['Strategic Fit', 'Technical Fit', 'Functional Coverage', 'Commercial Viability', 'Competitive Position', 'Delivery Risk'];
+const DIMENSIONS = ['Strategic Fit', 'Technical Fit', 'Functional Coverage', 'Commercial Viability', 'Competitive Position', 'Delivery Risk', 'AI & Agentic Fit'];
 
 function dimColor(s) {
   if (s >= 70) return 'var(--green, #0d7a45)';
@@ -929,7 +939,7 @@ NASH_DIMS:
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
 NASH_DIMS_END
-Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). The weighted scores must sum to the overall score.
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Section 8 must explain this row's reasoning.
 NASH_CONTEXT:
 objectives: <top business objective>; <objective>; <objective>
 challenges: <top pain or challenge>; <challenge>; <challenge>
@@ -947,8 +957,9 @@ Produce the report in markdown with exactly these sections:
 # 5. Qualification & Discovery Questions
 # 6. Competitive Positioning & Win Sentiment
 # 7. Final Recommendation and Adobe Solution Scope
-# 8. Solution Rationale
-# 9. Deal Accelerators & References
+# 8. AI, Agents & Coworker Opportunity
+# 9. Solution Rationale
+# 10. Deal Accelerators & References
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe. Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists (grounded in the attached document), plus current tech stack and what success looks like. Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge. Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
 Section 4 (Technical & Architectural Evaluation) must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences for it. Use this EXACT format, with short labels, and place it inline where the diagram belongs:
@@ -960,8 +971,15 @@ edge: <fromId> | <toId> | <flow type> | <optional short label>
 NASH_ARCH_END
 group lines are optional and draw a labelled red container around related nodes (use them for sub-systems such as Data Ingestion or Real-Time Profile; put the node into a group via its 4th field). Flow type is one of ingress (external data coming in), intra (movement inside the platform) or egress (data or activation going out) — it sets the arrow colour and a legend. Lay out ~4-7 layers left-to-right following the data flow, keep labels concise, and make sure every edge's ids match declared nodes.
 Draw the TARGET architecture implied by THIS customer's requirements and chosen approach — include only the components they will actually use, not a generic template. For example: for a headless commerce build, show a custom / API-driven storefront (GraphQL/REST) and OMIT the Edge Delivery storefront; for a traditional build, show the EDS or PWA storefront instead. Reflect their deployment choice (PaaS vs SaaS/ACCS vs on-prem) and only the integrations actually named (ERP, PIM, OMS, payments, DAM, CDP, analytics, etc.). If a requirement is unstated, make a conservative choice and keep the node set minimal.
-Section 8 (Solution Rationale) is a defensible, RFP-ready synthesis with these subsections, in this order: (1) Customer Context — organisation (who / structure / selection scope), objectives, challenges/bottlenecks, maturity, and the existing stack noting what to integrate vs replace; (2) Core Capability Needs — a markdown table with columns | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |; (3) Solution Fit Comparison — name two viable scenarios (A and B) and a markdown table | Criterion | Scenario A | Scenario B | across ~8-10 decision criteria; (4) Budget Indication — a markdown table | Cost category | Basis / driver | Indication | using placeholders such as "€ TBD" where figures are not provided; (5) Recommendation Summary — the preferred scenario with justification, honest points of attention, and next steps. Ground every point in the attached document and the analyst interview; keep table cells concise.
-Section 9 (Deal Accelerators & References) must cover, as clear subsections with bullets:
+Section 8 (AI, Agents & Coworker Opportunity) is a first-class, customer-specific assessment of Adobe's agentic value for THIS opportunity — always include it regardless of the solutions in scope, and ground every point in the customer's objectives, challenges and stack (never a generic AI pitch). Cover these subsections with bullets:
+- **Adobe Coworker fit** — how Adobe Coworker (the agentic experience for Adobe practitioners) would serve this customer's teams and day-to-day workflows, tied to their objectives and pains.
+- **Product agents** — the relevant purpose-built agents across the in-scope Adobe products (and closely adjacent ones), what each agent would do for this customer, and the outcome it drives. Name only real Adobe agents; mark any you are unsure about.
+- **Product MCPs** — the Model Context Protocol (MCP) servers/endpoints the in-scope Adobe products expose, and how they would connect the customer's own stack, data, and other agents/LLMs to Adobe actions and content.
+- **Prioritised agentic use cases** — a short prioritised list (HIGH/MEDIUM) of concrete use cases for this customer, each with the trigger, the agent(s)/MCP involved, and the business benefit/outcome.
+- **Benefits & business value** — the efficiency, speed-to-market, personalisation, quality and cost benefits of adopting Coworker/agents/MCP here, quantified or ranged where possible.
+- **Readiness & prerequisites** — the data, governance, integration and skills prerequisites, plus honest risks or gaps for this customer adopting agents/MCP.
+Section 9 (Solution Rationale) is a defensible, RFP-ready synthesis with these subsections, in this order: (1) Customer Context — organisation (who / structure / selection scope), objectives, challenges/bottlenecks, maturity, and the existing stack noting what to integrate vs replace; (2) Core Capability Needs — a markdown table with columns | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |; (3) Solution Fit Comparison — name two viable scenarios (A and B) and a markdown table | Criterion | Scenario A | Scenario B | across ~8-10 decision criteria; (4) Budget Indication — a markdown table | Cost category | Basis / driver | Indication | using placeholders such as "€ TBD" where figures are not provided; (5) Recommendation Summary — the preferred scenario with justification, honest points of attention, and next steps. Ground every point in the attached document and the analyst interview; keep table cells concise.
+Section 10 (Deal Accelerators & References) must cover, as clear subsections with bullets:
 - **Ideas to win the deal** — concrete plays and next best actions tailored to this opportunity's objectives and gaps.
 - **VIP / early-access products** — relevant Adobe VIP, limited-availability, or newly launched products that strengthen the offer (only real ones; note if uncertain).
 - **Beta features** — relevant Adobe beta / pre-release / private-beta capabilities that could differentiate, with a note that they are beta.
@@ -1046,6 +1064,7 @@ const SECTION_ICONS = {
   Recommendation: SVG('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
   Rationale: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>'),
   Accelerators: SVG('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
+  'AI & Agents': SVG('<path d="M12 3l1.8 4.4L18.2 9.2 13.8 11 12 15.4 10.2 11 5.8 9.2 10.2 7.4z"/><path d="M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>'),
 };
 function sectionIcon(label) {
   return SECTION_ICONS[label] || SECTION_ICONS.Overview;
@@ -1054,6 +1073,7 @@ function sectionIcon(label) {
 /* Short nav label for a section, matched from its heading text. */
 function sectionLabel(title) {
   const t = title.toLowerCase();
+  if (/coworker|agentic|agents?\b/.test(t)) return 'AI & Agents';
   if (/executive|overview/.test(t)) return 'Overview';
   if (/market|financial|intelligence/.test(t)) return 'Market';
   if (/business/.test(t)) return 'Business';
@@ -1094,6 +1114,7 @@ const DIM_SECTION = {
   'commercial viability': 'Business',
   'competitive position': 'Competition',
   'delivery risk': 'Tech Fit',
+  'ai & agentic fit': 'AI & Agents',
 };
 
 function scorecardCards(dims, availableLabels) {
