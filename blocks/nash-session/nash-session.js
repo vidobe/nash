@@ -510,7 +510,10 @@ function renderLauncher(block, name, solutions = []) {
       <div class="nash-session-modal-backdrop" data-close></div>
       <div class="nash-session-modal-card" role="dialog" aria-modal="true" aria-label="Create a new analysis">
         <div class="nash-session-modal-head">
-          <h2 class="nash-session-modal-title">New analysis</h2>
+          <div>
+            <h2 class="nash-session-modal-title">New analysis</h2>
+            <p class="nash-session-modal-sub">Set up a new opportunity assessment.</p>
+          </div>
           <button class="nash-session-modal-close" type="button" data-close aria-label="Close">${ICONS.close}</button>
         </div>
         <form class="nash-session-modal-form">
