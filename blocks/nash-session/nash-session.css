@@ -636,14 +636,14 @@
   min-height: 40px;
   padding: 8px 2px;
   border: 0;
-  border-bottom: 1.5px solid var(--ink-15, #e8e9ec);
   border-radius: 0;
   font: inherit;
   color: var(--ink, #111318);
   background: transparent;
+  box-shadow: 0 2px 6px -4px color-mix(in srgb, var(--ink) 45%, transparent);
   resize: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
 
 .nash-session .nash-session-interview-a::placeholder {
@@ -652,8 +652,7 @@
 
 .nash-session .nash-session-interview-a:focus {
   outline: none;
-  border-bottom-color: var(--spectrum-accent, #1473e6);
-  box-shadow: 0 3px 8px -4px var(--spectrum-accent, #1473e6);
+  box-shadow: 0 6px 12px -6px var(--spectrum-accent, #1473e6);
 }
 
 .nash-session .nash-session-interview-actions {
