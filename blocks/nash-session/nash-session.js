@@ -1336,10 +1336,6 @@ function renderInterview(items) {
           <label class="nash-session-interview-q" for="iv-${it.key}">${escapeHtml(it.q)}</label>
           <textarea class="nash-session-interview-a" id="iv-${it.key}" rows="1" data-key="${it.key}" placeholder="Type your answer, or leave blank"></textarea>
         </div>`).join('')}
-      <div class="nash-session-interview-actions">
-        <button type="button" class="nash-session-btn-ghost nash-session-interview-skip">Skip &amp; run now</button>
-        <button type="submit" class="nash-session-btn-primary">Run assessment</button>
-      </div>
     </form>`;
 }
 
@@ -1390,10 +1386,25 @@ async function runInterview(block) {
   const bubble = addMessage(thread, 'assistant-cont', renderInterview(items));
   const form = bubble.querySelector('.nash-session-interview');
   form.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => autoResize(t)));
-  form.addEventListener('submit', (e) => { e.preventDefault(); submitInterview(block, items, form); });
-  form.querySelector('.nash-session-interview-skip')?.addEventListener('click', () => {
+
+  // The actions ride on top of the chat bar (right-aligned) rather than inside the
+  // interview bubble, so they're always reachable next to the composer.
+  const composer = block.querySelector('.nash-session-composer');
+  const bar = document.createElement('div');
+  bar.className = 'nash-session-interview-bar';
+  bar.innerHTML = `
+    <button type="button" class="nash-session-interview-skip">Skip &amp; run now</button>
+    <button type="button" class="nash-session-interview-run">Run assessment</button>`;
+  composer.parentNode.insertBefore(bar, composer);
+
+  bar.querySelector('.nash-session-interview-run').addEventListener('click', () => {
+    bar.remove();
+    submitInterview(block, items, form);
+  });
+  bar.querySelector('.nash-session-interview-skip').addEventListener('click', () => {
     const asked = items.map(({ key, q }) => ({ key, q }));
     current.interview = { answers: {}, items: asked, skipped: true };
+    bar.remove();
     form.closest('.nash-session-msg')?.remove();
     runAssessment(block);
   });
