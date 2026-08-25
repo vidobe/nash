@@ -1642,7 +1642,7 @@ export function renderAssessment(block, a, autoRun = false) {
               ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
               <div class="nash-session-belowbar"></div>
             </div>
-            <span class="nash-session-model">FluffyJaws</span>
+            <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
           </div>
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>

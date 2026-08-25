@@ -2039,6 +2039,9 @@
 }
 
 .nash-session .nash-session-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
   font-weight: 500;
