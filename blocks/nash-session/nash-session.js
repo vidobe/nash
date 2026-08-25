@@ -1354,6 +1354,7 @@ function submitInterview(block, items, form) {
     answers, items: items.map(({ key, q }) => ({ key, q })), at: Date.now(),
   };
   persist(current);
+  form.closest('.nash-session-msg')?.remove();
   runAssessment(block);
 }
 
@@ -1361,6 +1362,7 @@ function submitInterview(block, items, form) {
    Candidate questions = base (code) + solution-authored (DA). */
 async function runInterview(block) {
   const area = block.querySelector('.nash-session-report-area');
+  const thread = block.querySelector('.nash-session-thread');
   const files = assessmentFiles(current);
   const docText = files.filter((f) => f.text).map((f) => f.text).join('\n\n');
   const solItems = await fetchSolutionQuestions((current.solutions || []).map((s) => s.slug));
@@ -1372,21 +1374,27 @@ async function runInterview(block) {
     // plus every solution-authored question.
     keys = [...MANDATORY_INTERVIEW_KEYS, ...solItems.map((it) => it.key)];
   } else {
-    area.innerHTML = '<div class="nash-session-run"><span class="nash-session-typing"><i></i><i></i><i></i></span><p class="nash-session-run-text">Reviewing your documents…</p></div>';
+    // Show the "reviewing" beat as the assistant thinking in the chat thread.
+    const pending = typingIndicator(thread);
     keys = await analyseInterviewGaps(candidates, docText);
+    pending.remove();
   }
 
   // Docs already cover everything → straight to the assessment.
   if (!keys.length) { runAssessment(block); return; }
 
+  // The interview reads as a continuation of the assistant's opening turn: it
+  // lives in the chat thread (no second N avatar), not the report area.
   const items = candidates.filter((it) => keys.includes(it.key));
-  area.innerHTML = renderInterview(items);
-  const form = area.querySelector('.nash-session-interview');
+  area.innerHTML = '';
+  const bubble = addMessage(thread, 'assistant-cont', renderInterview(items));
+  const form = bubble.querySelector('.nash-session-interview');
   form.querySelectorAll('textarea').forEach((t) => t.addEventListener('input', () => autoResize(t)));
   form.addEventListener('submit', (e) => { e.preventDefault(); submitInterview(block, items, form); });
   form.querySelector('.nash-session-interview-skip')?.addEventListener('click', () => {
     const asked = items.map(({ key, q }) => ({ key, q }));
     current.interview = { answers: {}, items: asked, skipped: true };
+    form.closest('.nash-session-msg')?.remove();
     runAssessment(block);
   });
 }
