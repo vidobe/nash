@@ -1085,7 +1085,7 @@ const DIM_SECTION = {
   'functional coverage': 'Rationale',
   'commercial viability': 'Business',
   'competitive position': 'Competition',
-  'delivery risk': 'Recommendation',
+  'delivery risk': 'Tech Fit',
 };
 
 function scorecardCards(dims, availableLabels) {
