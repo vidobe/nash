@@ -1070,8 +1070,10 @@ function sectionIcon(label) {
   return SECTION_ICONS[label] || SECTION_ICONS.Overview;
 }
 
-/* Short nav label for a section, matched from its heading text. */
-function sectionLabel(title) {
+/* Map a heading to one of the ten canonical section labels, or null if it isn't
+   one (so sub-headings like "Customer Context" or "Budget Indication" don't
+   become nav sections). */
+function canonicalSectionLabel(title) {
   const t = title.toLowerCase();
   if (/coworker|agentic|agents?\b/.test(t)) return 'AI & Agents';
   if (/executive|overview/.test(t)) return 'Overview';
@@ -1083,31 +1085,49 @@ function sectionLabel(title) {
   if (/accelerat|reference/.test(t)) return 'Accelerators';
   if (/competitive|win|position/.test(t)) return 'Competition';
   if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
-  return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
+  return null;
 }
 
-/* Split into the canonical report sections only. Only TOP-LEVEL (#) headings
-   count — deeper headings (##, ###…) and numbered sub-points (e.g. a "1. …"
-   risk under Tech Fit) stay in the body, so the nav can't explode. */
+/* Short nav label for a section, matched from its heading text. */
+function sectionLabel(title) {
+  return canonicalSectionLabel(title) || title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
+}
+
+/* Split into the ten canonical report sections. Only a top-level (#) heading
+   that maps to a canonical label starts a section, and each label is taken once
+   (first occurrence) — so Rationale sub-headings (Customer Context, Budget
+   Indication, a second "Recommendation Summary", …) and deeper headings stay in
+   the body instead of exploding or duplicating the nav. */
 function splitReportSections(md) {
   if (!md) return [];
   const lines = md.split('\n');
+  const canonical = [];
+  const seen = new Set();
+  let cur = null;
+  lines.forEach((line) => {
+    const h = line.match(/^#(?!#)\s+(.+)$/);
+    const label = h ? canonicalSectionLabel(h[1].trim()) : null;
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      cur = { title: h[1].trim(), md: '' };
+      canonical.push(cur);
+    } else if (cur) {
+      cur.md += `${line}\n`;
+    }
+  });
+  if (canonical.length >= 2) return canonical;
+  // Fallback for reports that don't use canonical "# " section headings.
   const scan = (re) => {
     const out = [];
-    let cur = null;
+    let c = null;
     lines.forEach((line) => {
       const m = line.match(re);
-      if (m) { cur = { title: m[1].trim(), md: '' }; out.push(cur); } else if (cur) cur.md += `${line}\n`;
+      if (m) { c = { title: m[1].trim(), md: '' }; out.push(c); } else if (c) c.md += `${line}\n`;
     });
     return out;
   };
-  // Preferred: the "# N. Title" sections defined by the prompt.
-  const numberedH1 = scan(/^#(?!#)\s*(\d+[.)]\s+.+)$/);
-  if (numberedH1.length >= 2) return numberedH1;
-  // Fallbacks for reports that don't follow the numbering.
   const h1 = scan(/^#(?!#)\s+(.+)$/);
-  if (h1.length >= 2) return h1;
-  return scan(/^#{1,2}(?!#)\s+(.+)$/);
+  return h1.length >= 2 ? h1 : scan(/^#{1,2}(?!#)\s+(.+)$/);
 }
 
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
