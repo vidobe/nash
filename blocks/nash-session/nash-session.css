@@ -960,8 +960,10 @@
 }
 
 .nash-session .nash-session-sc-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
   padding: 16px 18px;
   border: 0;
   border-radius: 12px;
@@ -988,7 +990,8 @@
 .nash-session .nash-session-sc-link {
   display: inline-flex;
   align-items: center;
-  margin-top: 10px;
+  margin-top: auto;
+  padding-top: 12px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 11.5px;
   font-weight: 600;

@@ -949,7 +949,7 @@ use_cases: <primary use case>; <use case>; <use case>
 NASH_CONTEXT_END
 For NASH_CONTEXT, uncover the customer's business objectives and their pains/challenges FIRST from the attached document, then from public evidence; base tech_stack, success, and use_cases on the same. If something isn't stated, infer conservatively and keep it short. Then continue with the dossier.
 
-Produce the report in markdown with exactly these sections:
+Produce the report in markdown with EXACTLY these ten top-level sections and NO OTHERS. Use a single "# " heading only for these ten (keep the numbers); every sub-heading, risk, or topic inside a section MUST use "## " or "### " (or bold/bullets) — never a top-level "# " heading, or it will be mistaken for a new section:
 # 1. Executive Overview
 # 2. Market, Competitor & Financial Intelligence
 # 3. Business Analysis
@@ -1086,21 +1086,28 @@ function sectionLabel(title) {
   return title.replace(/^\d+[.)]\s*/, '').slice(0, 24);
 }
 
-/* Split into the numbered top-level report sections only (subsections stay in
-   the body). Falls back to H1/H2 splitting if nothing is numbered. */
+/* Split into the canonical report sections only. Only TOP-LEVEL (#) headings
+   count — deeper headings (##, ###…) and numbered sub-points (e.g. a "1. …"
+   risk under Tech Fit) stay in the body, so the nav can't explode. */
 function splitReportSections(md) {
   if (!md) return [];
-  const numbered = [];
-  const anyHeading = [];
-  let curN = null;
-  let curH = null;
-  md.split('\n').forEach((line) => {
-    const num = line.match(/^#{1,4}\s*\d+[.)]\s+(.*)/);
-    const head = line.match(/^#{1,2}\s+(.*)/);
-    if (num) { curN = { title: num[1].trim(), md: '' }; numbered.push(curN); } else if (curN) curN.md += `${line}\n`;
-    if (head) { curH = { title: head[1].trim(), md: '' }; anyHeading.push(curH); } else if (curH) curH.md += `${line}\n`;
-  });
-  return numbered.length >= 2 ? numbered : anyHeading;
+  const lines = md.split('\n');
+  const scan = (re) => {
+    const out = [];
+    let cur = null;
+    lines.forEach((line) => {
+      const m = line.match(re);
+      if (m) { cur = { title: m[1].trim(), md: '' }; out.push(cur); } else if (cur) cur.md += `${line}\n`;
+    });
+    return out;
+  };
+  // Preferred: the "# N. Title" sections defined by the prompt.
+  const numberedH1 = scan(/^#(?!#)\s*(\d+[.)]\s+.+)$/);
+  if (numberedH1.length >= 2) return numberedH1;
+  // Fallbacks for reports that don't follow the numbering.
+  const h1 = scan(/^#(?!#)\s+(.+)$/);
+  if (h1.length >= 2) return h1;
+  return scan(/^#{1,2}(?!#)\s+(.+)$/);
 }
 
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
