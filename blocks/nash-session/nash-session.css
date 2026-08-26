@@ -845,25 +845,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
+  margin-right: 28px;
 }
 
 .nash-session .nash-session-qual-ring {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 84px;
   height: 84px;
+  border: 3px solid transparent;
   border-radius: 50%;
-  border: 3px solid currentcolor;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, #ff6fb0, #a78bfa 48%, #5b9dff) border-box;
+  box-shadow: 0 2px 14px rgb(17 19 24 / 6%), 0 0 20px 1px rgb(167 139 250 / 18%);
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
   font-size: 30px;
   line-height: 1;
 }
 
 .nash-session .nash-session-qual-ring span {
+  display: block;
+  margin-top: 3px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 10px;
+  line-height: 1;
   color: var(--ink-40, #9a9da6);
 }
 
