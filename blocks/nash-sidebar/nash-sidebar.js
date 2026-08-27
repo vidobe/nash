@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 
-import { listAssessments, deleteAssessment } from '../../scripts/nash-assessments.js';
+import { listAssessments, isHidden, hideFromList } from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { slugify } from '../../scripts/da-doc.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
@@ -34,6 +34,8 @@ const USER_MENU = [
 ];
 
 const SORT_KEY = 'nash-sidebar-sort';
+const SORT_DIR_KEY = 'nash-sidebar-sort-dir';
+const defaultDir = (sort) => (sort === 'alpha' ? 'asc' : 'desc');
 
 const ICONS = {
   sort: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h10M11 9h7M11 13h4M3 7l3-3 3 3M6 4v16"/></svg>',
@@ -51,6 +53,8 @@ const ICONS = {
   panel: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',
   logout: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
   moon: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  arrowDown: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+  arrowUp: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
 };
 
 function cleanTitle(t) {
@@ -105,44 +109,51 @@ function buildAssessItems(reports) {
       isLocal: false,
     }));
 
-  return [...local, ...pub];
+  // Items the user removed from the sidebar (keyed by href) stay hidden here but
+  // are NOT deleted — they remain available in the Overview.
+  return [...local, ...pub].filter((it) => !isHidden(it.href));
 }
 
-function sortAssessItems(items, sort) {
+function sortAssessItems(items, sort, dir) {
   const arr = [...items];
-  if (sort === 'alpha') return arr.sort((a, b) => a.name.localeCompare(b.name));
-  if (sort === 'solutions') return arr.sort((a, b) => (a.solutions || '').localeCompare(b.solutions || '') || a.name.localeCompare(b.name));
-  return arr.sort((a, b) => b.date - a.date);
+  if (sort === 'alpha') arr.sort((a, b) => a.name.localeCompare(b.name));
+  else arr.sort((a, b) => a.date - b.date);
+  if (dir === 'desc') arr.reverse();
+  return arr;
 }
 
 function assessmentsHtml(reports) {
   const sort = localStorage.getItem(SORT_KEY) || 'date';
-  const items = sortAssessItems(buildAssessItems(reports), sort).slice(0, 16);
+  const dir = localStorage.getItem(SORT_DIR_KEY) || defaultDir(sort);
+  const items = sortAssessItems(buildAssessItems(reports), sort, dir).slice(0, 16);
   if (!items.length) return '';
 
   const SORT_OPTS = [
     { key: 'date', label: 'Date' },
     { key: 'alpha', label: 'A to Z' },
-    { key: 'solutions', label: 'Solutions' },
   ];
 
-  const rows = items.map((item) => (item.isLocal ? `
+  const rows = items.map((item) => `
     <div class="nash-sidebar-recent-item">
       <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
-      <button class="nash-sidebar-recent-del" type="button" data-assess="${esc(item.id)}" aria-label="Delete assessment">
+      <button class="nash-sidebar-recent-del" type="button" data-hide="${esc(item.href)}" aria-label="Remove from list" title="Remove from list (keeps the assessment)">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-    </div>` : `
-    <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>`)).join('');
+    </div>`).join('');
 
   return `
     <div class="nash-sidebar-section nash-sidebar-recent-section">
       <div class="nash-sidebar-assess-head">
         <span class="nash-sidebar-label">Assessments</span>
         <div class="nash-sidebar-sort-wrap">
-          <button class="nash-sidebar-sort-btn" type="button" title="Sort assessments" aria-label="Sort assessments">${ICONS.sort}</button>
+          <button class="nash-sidebar-sort-btn" type="button" title="Sort assessments" aria-label="Sort assessments">${dir === 'asc' ? ICONS.arrowUp : ICONS.arrowDown}</button>
           <div class="nash-sidebar-sort-menu" hidden>
-            ${SORT_OPTS.map((o) => `<button class="nash-sidebar-sort-opt${sort === o.key ? ' active' : ''}" type="button" data-sort-by="${o.key}">${o.label}</button>`).join('')}
+            ${SORT_OPTS.map((o) => {
+    const active = sort === o.key;
+    let arrow = '';
+    if (active) arrow = dir === 'asc' ? ICONS.arrowUp : ICONS.arrowDown;
+    return `<button class="nash-sidebar-sort-opt${active ? ' active' : ''}" type="button" data-sort-by="${o.key}"><span>${o.label}</span>${arrow}</button>`;
+  }).join('')}
           </div>
         </div>
       </div>
@@ -422,7 +433,7 @@ export default async function decorate(block) {
     if (del) {
       e.preventDefault();
       e.stopPropagation();
-      deleteAssessment(del.dataset.assess);
+      hideFromList(del.dataset.hide);
       return;
     }
 
@@ -436,7 +447,16 @@ export default async function decorate(block) {
 
     const sortOpt = e.target.closest('.nash-sidebar-sort-opt');
     if (sortOpt) {
-      localStorage.setItem(SORT_KEY, sortOpt.dataset.sortBy);
+      // Same option again flips direction; a new option resets to its default dir.
+      const key = sortOpt.dataset.sortBy;
+      const curSort = localStorage.getItem(SORT_KEY) || 'date';
+      const curDir = localStorage.getItem(SORT_DIR_KEY) || defaultDir(curSort);
+      if (key === curSort) {
+        localStorage.setItem(SORT_DIR_KEY, curDir === 'asc' ? 'desc' : 'asc');
+      } else {
+        localStorage.setItem(SORT_KEY, key);
+        localStorage.setItem(SORT_DIR_KEY, defaultDir(key));
+      }
       refreshAssess();
       return;
     }

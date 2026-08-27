@@ -7,8 +7,13 @@
  * @param {Element} block The block element
  */
 
-import { listAssessments } from '../../scripts/nash-assessments.js';
+import {
+  listAssessments, deleteAssessment, toggleBookmark, isBookmarked,
+} from '../../scripts/nash-assessments.js';
 import { slugify } from '../../scripts/da-doc.js';
+import { canDelete } from '../../scripts/nash-perms.js';
+import { getUserInfo } from '../../scripts/nash-auth.js';
+import { unpublishAssessment } from '../../scripts/da-publish.js';
 
 const MOCK_REPORTS = [
   {
@@ -99,12 +104,16 @@ function mapQueryRow(row, idx) {
     score: status === 'done' ? score : null,
     verdict: row.verdict || '',
     path: row.path || null,
+    isLocal: false,
+    slug: (row.path || '').split('/').pop(),
+    key: row.path || `pub-${idx}`,
   };
 }
 
 /* Map a locally-created assessment (localStorage) to the card model. */
 function mapLocalAssessment(a, idx) {
   const ts = Math.floor((a.updatedAt || a.createdAt || Date.now()) / 1000);
+  const path = `/indextest?a=${encodeURIComponent(a.id)}`;
   return {
     id: `local-${idx}`,
     company: a.company || 'Untitled',
@@ -114,13 +123,17 @@ function mapLocalAssessment(a, idx) {
     steps: 0,
     total: 23,
     task: 'Draft',
-    user: 'vgabriel@adobe.com',
+    user: a.user || (getUserInfo()?.email || ''),
     solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
     time: relativeTime(ts),
     ts,
     score: a.status === 'done' ? coerceScore(a) : null,
     verdict: a.verdict || '',
-    path: `/indextest?a=${encodeURIComponent(a.id)}`,
+    path,
+    isLocal: true,
+    localId: a.id,
+    slug: a.publishedSlug || '',
+    key: path,
   };
 }
 
@@ -152,12 +165,39 @@ function verdictInfo(r) {
   return { label: '', style: '' };
 }
 
+const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+/* Delete an assessment: local ones from localStorage, published ones by
+   unpublishing them from DA. Permission is enforced by canDelete (client) and
+   again server-side for published reports. */
+async function deleteReport(r) {
+  // eslint-disable-next-line no-alert, no-restricted-globals
+  if (!window.confirm(`Delete the assessment for ${r.company}? This can’t be undone.`)) return;
+  const card = document.querySelector(`.nash-overview-card[data-id="${CSS.escape(String(r.id))}"]`);
+  try {
+    if (r.isLocal) {
+      deleteAssessment(r.localId);
+      if (r.slug) await unpublishAssessment(r.slug); // also remove any published copy
+    } else if (r.slug) {
+      await unpublishAssessment(r.slug);
+    }
+    card?.remove();
+    document.dispatchEvent(new CustomEvent('nash:overview-remove', { detail: { id: r.id }, bubbles: true }));
+  } catch (err) {
+    // eslint-disable-next-line no-alert
+    window.alert(err.message || 'Couldn’t delete the assessment.');
+  }
+}
+
 function buildCard(r) {
   const card = document.createElement('div');
   card.className = `nash-overview-card${r.status === 'generating' ? ' generating' : ''}`;
   card.dataset.id = r.id;
   card.dataset.status = r.status;
   card.dataset.company = r.company.toLowerCase();
+  const bookmarked = isBookmarked(r.key);
+  const allowDelete = canDelete(r.user);
+  if (bookmarked) card.classList.add('is-bookmarked');
 
   const badge = r.status === 'generating'
     ? `<span class="nash-overview-badge gen">
@@ -191,7 +231,7 @@ function buildCard(r) {
       <div class="nash-overview-card-left">
         <div class="nash-overview-favicon" aria-hidden="true">${r.company.charAt(0)}</div>
         <div>
-          <div class="nash-overview-company">${r.company}</div>
+          <div class="nash-overview-company">${r.company}<span class="nash-overview-star" aria-label="Bookmarked"${bookmarked ? '' : ' hidden'}>${STAR}</span></div>
           <div class="nash-overview-domain">
             <svg width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
             ${r.domain}
@@ -215,14 +255,45 @@ function buildCard(r) {
           ${r.solutions || '—'}
         </span>
       </div>
-      <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button">
-        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-      </button>
+      <div class="nash-overview-menuwrap">
+        <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button" aria-haspopup="true" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <div class="nash-overview-cardmenu" role="menu" hidden>
+          <button type="button" role="menuitem" data-act="bookmark">${bookmarked ? 'Remove bookmark' : 'Bookmark'}</button>
+          ${allowDelete ? '<button type="button" role="menuitem" class="danger" data-act="delete">Delete</button>' : ''}
+        </div>
+      </div>
     </div>
   `;
 
+  const menu = card.querySelector('.nash-overview-cardmenu');
+  const menuBtn = card.querySelector('.nash-overview-menu-btn');
+
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    // Close any other open card menus first.
+    document.querySelectorAll('.nash-overview-cardmenu').forEach((m) => { m.hidden = true; });
+    menu.hidden = !open;
+    menuBtn.setAttribute('aria-expanded', String(open));
+  });
+
+  menu.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (!act) return;
+    e.stopPropagation();
+    menu.hidden = true;
+    if (act === 'bookmark') {
+      toggleBookmark(r.key);
+      document.dispatchEvent(new CustomEvent('nash:overview-refresh', { bubbles: true }));
+    } else if (act === 'delete') {
+      deleteReport(r);
+    }
+  });
+
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.nash-overview-menu-btn')) return;
+    if (e.target.closest('.nash-overview-menuwrap')) return;
     if (r.path) {
       window.location.href = r.path;
     } else {
@@ -500,5 +571,20 @@ export default async function decorate(block) {
       btn.setAttribute('aria-pressed', 'true');
       block.querySelector('.nash-overview-area').dataset.layout = btn.dataset.layout;
     });
+  });
+
+  // Close any open card menu when clicking elsewhere.
+  document.addEventListener('click', () => {
+    block.querySelectorAll('.nash-overview-cardmenu').forEach((m) => { m.hidden = true; });
+  });
+
+  // Re-render after a bookmark toggle (updates the star).
+  document.addEventListener('nash:overview-refresh', () => renderPage());
+
+  // Drop a deleted card from the in-memory list and re-render.
+  document.addEventListener('nash:overview-remove', (e) => {
+    const i = reports.findIndex((x) => String(x.id) === String(e.detail.id));
+    if (i >= 0) reports.splice(i, 1);
+    renderPage();
   });
 }

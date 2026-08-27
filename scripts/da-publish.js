@@ -80,3 +80,26 @@ export async function publishAssessment(a, bodyHtml, user = '') {
   const data = await res.json();
   return { ...data, slug };
 }
+
+/**
+ * Deletes a published assessment from DA (unpublishes source + preview + live).
+ * The action enforces owner/admin permission server-side.
+ * @param {string} slug the qualification slug
+ * @returns {Promise<object>}
+ */
+export async function unpublishAssessment(slug) {
+  if (!isPublishConfigured()) throw new Error('Publishing isn’t set up yet.');
+  const token = await ensureFreshToken();
+  if (!token) throw new Error('Sign in to Nash before deleting.');
+  const res = await fetch(PUBLISH_ENDPOINT, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ delete: true, folder: 'qualifications', slug }),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error || ''; } catch { detail = await res.text().catch(() => ''); }
+    throw new Error(`Delete failed (${res.status})${detail ? `: ${detail}` : ''}`);
+  }
+  return res.json();
+}

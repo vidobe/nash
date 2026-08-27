@@ -164,7 +164,10 @@ html[data-theme="dark"] .nash-sidebar {
 }
 
 .nash-sidebar .nash-sidebar-sort-opt {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   padding: 6px 10px;
   border: none;
@@ -176,6 +179,12 @@ html[data-theme="dark"] .nash-sidebar {
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.1s;
+}
+
+.nash-sidebar .nash-sidebar-sort-opt svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 .nash-sidebar .nash-sidebar-sort-opt:hover {

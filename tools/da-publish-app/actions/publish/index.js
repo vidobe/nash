@@ -117,6 +117,30 @@ async function main(params) {
       'x-content-source-authorization': `Bearer ${token}`,
     };
 
+    // Delete mode: remove a published doc from DA (source + preview + live).
+    // Permission: the ADMIN may delete anything; anyone else only their own,
+    // verified against the doc's `user` metadata read back from DA.
+    if (params.delete === true) {
+      const path = `${folder}/${slug}`;
+      const adminEmail = (params.ADMIN_EMAIL || 'vgabriel@adobe.com').toLowerCase();
+      if (user.toLowerCase() !== adminEmail) {
+        const srcRes = await fetch(`https://admin.da.live/source/${org}/${repo}/${path}.html`, { headers: daHdr });
+        const srcHtml = srcRes.ok ? await srcRes.text() : '';
+        const m = srcHtml.match(/>\s*user\s*<\/div>\s*<div>\s*([^<]*?)\s*<\/div>/i);
+        const owner = (m ? m[1] : '').toLowerCase();
+        if (owner && owner !== user.toLowerCase()) {
+          return reply(403, { error: 'You can only delete assessments you created.' });
+        }
+      }
+      await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${path}`, { method: 'DELETE', headers: aemHdr });
+      await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'DELETE', headers: aemHdr });
+      const daDel = await fetch(`https://admin.da.live/source/${org}/${repo}/${path}.html`, { method: 'DELETE', headers: daHdr });
+      if (!daDel.ok && daDel.status !== 404) {
+        return reply(502, { error: `DA delete failed (${daDel.status})`, detail: await daDel.text() });
+      }
+      return reply(200, { ok: true, deleted: `/${path}` });
+    }
+
     // 0) Unpublish a stale doc if this opportunity moved to a new slug.
     const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (doPublish && old && old !== slug) {
