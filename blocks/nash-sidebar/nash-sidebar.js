@@ -125,15 +125,14 @@ function assessmentsHtml(reports) {
     { key: 'solutions', label: 'Solutions' },
   ];
 
-  const rows = items.map((item) => item.isLocal ? `
+  const rows = items.map((item) => (item.isLocal ? `
     <div class="nash-sidebar-recent-item">
       <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
       <button class="nash-sidebar-recent-del" type="button" data-assess="${esc(item.id)}" aria-label="Delete assessment">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>` : `
-    <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>`
-  ).join('');
+    <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>`)).join('');
 
   return `
     <div class="nash-sidebar-section nash-sidebar-recent-section">
