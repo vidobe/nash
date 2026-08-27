@@ -202,20 +202,21 @@
 .nash-overview .nash-overview-search {
   width: 100%;
   padding: 9px 12px 9px 34px;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 10px;
-  background: var(--white, #fff);
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 10px -5px rgb(167 139 250 / 16%);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13.5px;
   color: var(--ink, #111318);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: box-shadow 0.15s;
 }
 
 .nash-overview .nash-overview-search:focus {
-  border-color: var(--ink-40, #9a9da6);
-  background: var(--white, #fff);
-  box-shadow: 0 0 0 3px rgb(0 0 0 / 4%);
+  box-shadow: 0 0 0 3px rgb(20 115 230 / 12%), 0 0 12px -4px rgb(167 139 250 / 26%);
 }
 
 .nash-overview .nash-overview-search::placeholder {
@@ -224,18 +225,19 @@
 
 .nash-overview .nash-overview-filter {
   padding: 8px 28px 8px 11px;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 10px;
-  background: var(--white, #fff);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239a9da6' d='M5 6L0 0h10z'/%3E%3C/svg%3E") no-repeat right 9px center,
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 10px -5px rgb(167 139 250 / 16%);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
   color: var(--ink-70, #4a4d55);
   outline: none;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239a9da6' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 9px center;
 }
 
 .nash-overview .nash-overview-toolbar-right {
@@ -250,9 +252,12 @@
   align-items: center;
   gap: 5px;
   padding: 8px 12px;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 10px;
-  background: none;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 10px -5px rgb(167 139 250 / 16%);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 12.5px;
   color: var(--ink-70, #4a4d55);
@@ -261,8 +266,12 @@
 
 .nash-overview .nash-overview-view-toggle {
   display: flex;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 10px;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 10px -5px rgb(167 139 250 / 16%);
   overflow: hidden;
 }
 
