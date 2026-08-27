@@ -70,10 +70,12 @@
 .nash-overview .nash-overview-stats {
   display: flex;
   margin: 18px 32px 4px;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 14px;
-  background: var(--white, #fff);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 24%), rgb(167 139 250 / 24%) 50%, rgb(91 157 255 / 24%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 14px -5px rgb(167 139 250 / 20%);
   overflow: hidden;
 }
 
@@ -371,21 +373,28 @@
 .nash-overview .nash-overview-card {
   position: relative;
   overflow: hidden;
-  background: var(--white, #fff);
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 16px;
   padding: 20px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 24%), rgb(167 139 250 / 24%) 50%, rgb(91 157 255 / 24%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 18%);
   cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  transition: box-shadow 0.18s ease, background 0.18s ease;
 }
 
 .nash-overview .nash-overview-card:hover {
-  border-color: var(--ink-40, #9a9da6);
-  background: var(--surface, #f8f8fa);
+  background:
+    linear-gradient(var(--surface, #f8f8fa), var(--surface, #f8f8fa)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 48%), rgb(167 139 250 / 48%) 50%, rgb(91 157 255 / 48%)) border-box;
+  box-shadow: 0 4px 16px rgb(17 19 24 / 7%), 0 0 18px -3px rgb(167 139 250 / 30%);
 }
 
 .nash-overview .nash-overview-card.generating {
-  border-color: #fde0de;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(235 16 0 / 32%), rgb(255 111 176 / 32%)) border-box;
 }
 
 .nash-overview .nash-overview-card.generating::before {

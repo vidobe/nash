@@ -66,17 +66,22 @@
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  border: 1px solid var(--ink-15, #e8e9ec);
+  border: 1px solid transparent;
   border-radius: 14px;
-  background: var(--white, #fff);
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 28%), rgb(167 139 250 / 28%) 50%, rgb(91 157 255 / 28%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 22%);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.12s ease, background 0.12s ease;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .nash-session .nash-session-launch-btn:hover {
-  border-color: var(--ink-40, #9a9da6);
-  background: var(--surface, #f8f8fa);
+  background:
+    linear-gradient(var(--surface, #f8f8fa), var(--surface, #f8f8fa)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 50%), rgb(167 139 250 / 50%) 50%, rgb(91 157 255 / 50%)) border-box;
+  box-shadow: 0 4px 16px rgb(17 19 24 / 6%), 0 0 18px -3px rgb(167 139 250 / 34%);
 }
 
 .nash-session .nash-session-launch-icon {
