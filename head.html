@@ -4,21 +4,6 @@
   move-to-http-header="true"
 >
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<script nonce="aem">
-  // Keep everyone on the published (live) site so nobody sees previewed content
-  // by accident. Only the production preview host redirects; localhost and
-  // feature-branch previews are left alone for development. Append ?preview=1 to
-  // stay on preview (for authoring / checking unpublished content).
-  try {
-    if (window.location.hostname === 'main--nash--vidobe.aem.page'
-      && !/[?&]preview(=|&|$)/.test(window.location.search)) {
-      window.location.replace(
-        'https://main--nash--vidobe.aem.live'
-        + window.location.pathname + window.location.search + window.location.hash,
-      );
-    }
-  } catch (e) { /* ignore */ }
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
 <script nonce="aem">

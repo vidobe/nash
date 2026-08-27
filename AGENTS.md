@@ -190,15 +190,13 @@ Local preview: http://localhost:3000
 The AEM Sidekick hot-reloads on file save.
 Content is served from SharePoint or Google Drive depending on config.
 
-## Environments & the preview→live redirect
-- Live (published): https://main--nash--vidobe.aem.live/
+## Environments
 - Preview (previewed content): https://main--nash--vidobe.aem.page/
-- head.html redirects the PRODUCTION preview host (main--nash--vidobe.aem.page)
-  to live, so end users never see previewed content by accident. localhost and
-  feature-branch previews (<branch>--nash--vidobe.aem.page) are NOT redirected.
-- To preview UNPUBLISHED main content (e.g. an authored DA page not yet
-  published), append `?preview=1` to bypass the redirect — the Sidekick's
-  Preview button does NOT add this automatically.
+- Live (published): https://main--nash--vidobe.aem.live/
+- IMPORTANT: the app pages (e.g. /indextest, overview, insights) live in
+  PREVIEW and are not all published to live — so users run the app on the
+  .aem.page (preview) host. Do NOT add a preview→live redirect: it 404s the
+  unpublished app pages. (Tried and reverted 2026-08-27.)
 
 ## Build order
 Build blocks in this sequence — each depends on the previous:
