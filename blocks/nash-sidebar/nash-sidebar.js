@@ -29,7 +29,6 @@ const MOCK_RECENT = [
 
 const USER_MENU = [
   { text: 'About Nash', icon: 'info', href: '/about-nash' },
-  { text: 'How to read the insights', icon: 'book', href: '/insights-guide' },
   { text: 'Solution Skills', icon: 'layers', href: '/solutions/' },
 ];
 
