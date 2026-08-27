@@ -96,6 +96,12 @@ async function main(params) {
     const slug = String(params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80);
     if (!slug) return reply(400, { error: 'Missing or invalid slug.' });
 
+    // Target folder (default qualifications). `publish:false` writes the DA source
+    // only and skips preview/publish — used for private content such as feedback,
+    // which must never reach the public .aem.live site.
+    const folder = String(params.folder || 'qualifications').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'qualifications';
+    const doPublish = params.publish !== false;
+
     const html = params.html || buildPage(params, user);
     const token = await serviceToken(params);
     const org = params.ORG;
@@ -113,8 +119,8 @@ async function main(params) {
 
     // 0) Unpublish a stale doc if this opportunity moved to a new slug.
     const old = String(params.unpublish || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (old && old !== slug) {
-      const oldPath = `qualifications/${old}`;
+    if (doPublish && old && old !== slug) {
+      const oldPath = `${folder}/${old}`;
       await fetch(`https://admin.hlx.page/live/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: aemHdr });
       await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${oldPath}`, { method: 'DELETE', headers: aemHdr });
       await fetch(`https://admin.da.live/source/${org}/${repo}/${oldPath}.html`, { method: 'DELETE', headers: daHdr });
@@ -124,16 +130,21 @@ async function main(params) {
     const fd = new FormData();
     fd.append('data', new Blob([html], { type: 'text/html' }), `${slug}.html`);
     const daRes = await fetch(
-      `https://admin.da.live/source/${org}/${repo}/qualifications/${slug}.html`,
+      `https://admin.da.live/source/${org}/${repo}/${folder}/${slug}.html`,
       { method: 'PUT', headers: daHdr, body: fd },
     );
     if (!daRes.ok) {
       return reply(502, { error: `DA write failed (${daRes.status})`, detail: await daRes.text() });
     }
 
+    // Private content (e.g. feedback): stored in DA source only, never published.
+    if (!doPublish) {
+      return reply(200, { ok: true, slug, path: `/${folder}/${slug}`, published: false });
+    }
+
     // 2) Preview, then publish. Both must succeed — a failed preview means the
     //    page never rendered, so we surface it instead of reporting false success.
-    const path = `qualifications/${slug}`;
+    const path = `${folder}/${slug}`;
     const prev = await fetch(`https://admin.hlx.page/preview/${org}/${repo}/main/${path}`, { method: 'POST', headers: aemHdr });
     if (!prev.ok) {
       return reply(502, {

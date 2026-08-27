@@ -12,7 +12,7 @@ import { ensureFreshToken } from './nash-auth.js';
 import { buildDaDocument, slugify } from './da-doc.js';
 
 // Adobe App Builder action (tools/da-publish-app/), Stage workspace.
-const PUBLISH_ENDPOINT = 'https://97154-nashdapublish-stage.adobeioruntime.net/api/v1/web/nash-da-publish/publish';
+export const PUBLISH_ENDPOINT = 'https://97154-nashdapublish-stage.adobeioruntime.net/api/v1/web/nash-da-publish/publish';
 
 export { slugify };
 

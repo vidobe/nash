@@ -3,6 +3,7 @@
 import { listAssessments, deleteAssessment } from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { slugify } from '../../scripts/da-doc.js';
+import { submitFeedback } from '../../scripts/da-feedback.js';
 
 /* Stable per-opportunity key (matches the DA publish slug). */
 const oppSlug = (a) => slugify(a.dr || a.company);
@@ -210,6 +211,20 @@ function renderNav(block, reportCount) {
           Log out
         </button>
       </div>
+      <div class="nash-sidebar-feedback">
+        <button class="nash-sidebar-feedback-btn" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Send feedback</span>
+        </button>
+        <form class="nash-sidebar-feedback-form" hidden>
+          <textarea class="nash-sidebar-feedback-input" rows="3" placeholder="Share a comment, idea, or bug…" aria-label="Your feedback"></textarea>
+          <div class="nash-sidebar-feedback-actions">
+            <button type="button" class="nash-sidebar-feedback-cancel">Cancel</button>
+            <button type="submit" class="nash-sidebar-feedback-send">Send</button>
+          </div>
+          <p class="nash-sidebar-feedback-msg" hidden></p>
+        </form>
+      </div>
       <div class="nash-sidebar-user" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
         <div class="nash-sidebar-user-av" aria-hidden="true">${esc(u.initials)}</div>
         <div>
@@ -304,6 +319,51 @@ function setupUserMenu(block) {
   });
 }
 
+function setupFeedback(block) {
+  const wrap = block.querySelector('.nash-sidebar-feedback');
+  if (!wrap) return;
+  const btn = wrap.querySelector('.nash-sidebar-feedback-btn');
+  const form = wrap.querySelector('.nash-sidebar-feedback-form');
+  const input = wrap.querySelector('.nash-sidebar-feedback-input');
+  const cancel = wrap.querySelector('.nash-sidebar-feedback-cancel');
+  const send = wrap.querySelector('.nash-sidebar-feedback-send');
+  const msg = wrap.querySelector('.nash-sidebar-feedback-msg');
+
+  const setMsg = (text, ok) => {
+    msg.textContent = text;
+    msg.hidden = !text;
+    msg.classList.toggle('is-error', !ok && !!text);
+  };
+  const open = (show) => {
+    form.hidden = !show;
+    btn.setAttribute('aria-expanded', String(show));
+    if (show) input.focus();
+  };
+
+  btn.addEventListener('click', () => open(form.hidden));
+  cancel.addEventListener('click', () => { open(false); setMsg('', true); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const comment = input.value.trim();
+    if (!comment) { input.focus(); return; }
+    send.disabled = true;
+    send.textContent = 'Sending…';
+    setMsg('', true);
+    try {
+      await submitFeedback({ comment, email: getUserInfo()?.email || '' });
+      input.value = '';
+      setMsg('Thanks — your feedback was sent.', true);
+      window.setTimeout(() => { open(false); setMsg('', true); }, 1600);
+    } catch (err) {
+      setMsg(err.message || 'Couldn’t send feedback.', false);
+    } finally {
+      send.disabled = false;
+      send.textContent = 'Send';
+    }
+  });
+}
+
 /**
  * loads and decorates the nash-sidebar block
  * No authored content needed — navigation is programmatic.
@@ -341,6 +401,7 @@ export default async function decorate(block) {
   setupCollapse(block);
   setupUserMenu(block);
   setupThemeToggle(block);
+  setupFeedback(block);
 
   // Detect active item from current URL
   const path = window.location.pathname.replace(/\/$/, '') || '/';
