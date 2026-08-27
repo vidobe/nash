@@ -33,7 +33,10 @@ const USER_MENU = [
   { text: 'Solution Skills', icon: 'layers', href: '/solutions/' },
 ];
 
+const SORT_KEY = 'nash-sidebar-sort';
+
 const ICONS = {
+  sort: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h10M11 9h7M11 13h4M3 7l3-3 3 3M6 4v16"/></svg>',
   grid: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
   plus: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
   activity: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
@@ -67,44 +70,84 @@ function statusClass(s) {
 }
 
 /* Assessments — locally-created (in-progress) merged with published qualifications. */
-function assessmentsHtml(reports) {
-  // Dedupe: one row per opportunity. Keep the local (editable) copy and drop any
-  // published doc for the same opp.
+function buildAssessItems(reports) {
   const currentUser = (getUserInfo()?.email || '').toLowerCase();
   const seen = new Set();
-  const local = listAssessments().filter((a) => {
-    if (a.user && a.user.toLowerCase() !== currentUser) return false;
-    const slug = oppSlug(a);
-    if (seen.has(slug)) return false;
-    seen.add(slug);
-    return true;
-  }).slice(0, 10);
-  const published = [...reports]
+
+  const local = listAssessments()
+    .filter((a) => {
+      if (a.user && a.user.toLowerCase() !== currentUser) return false;
+      const slug = oppSlug(a);
+      if (seen.has(slug)) return false;
+      seen.add(slug);
+      return true;
+    })
+    .map((a) => ({
+      name: a.company || '',
+      href: `/indextest?a=${encodeURIComponent(a.id)}`,
+      status: a.status,
+      date: a.updatedAt || a.createdAt || 0,
+      solutions: Array.isArray(a.solutions) ? a.solutions.join(', ') : (a.solutions || ''),
+      isLocal: true,
+      id: a.id,
+    }));
+
+  const pub = [...reports]
     .filter((r) => cleanTitle(r.title))
     .filter((r) => !currentUser || (r.user || '').toLowerCase() === currentUser)
     .filter((r) => !seen.has((r.path || '').split('/').pop()))
-    .sort((a, b) => Number(b.lastModified || 0) - Number(a.lastModified || 0))
-    .slice(0, 6);
-  if (!local.length && !published.length) return '';
+    .map((r) => ({
+      name: cleanTitle(r.title),
+      href: r.path || '#',
+      status: r.status,
+      date: Number(r.lastModified || 0),
+      solutions: r.solutions || '',
+      isLocal: false,
+    }));
 
-  const localItems = local.map((a) => `
+  return [...local, ...pub];
+}
+
+function sortAssessItems(items, sort) {
+  const arr = [...items];
+  if (sort === 'alpha') return arr.sort((a, b) => a.name.localeCompare(b.name));
+  if (sort === 'solutions') return arr.sort((a, b) => (a.solutions || '').localeCompare(b.solutions || '') || a.name.localeCompare(b.name));
+  return arr.sort((a, b) => b.date - a.date);
+}
+
+function assessmentsHtml(reports) {
+  const sort = localStorage.getItem(SORT_KEY) || 'date';
+  const items = sortAssessItems(buildAssessItems(reports), sort).slice(0, 16);
+  if (!items.length) return '';
+
+  const SORT_OPTS = [
+    { key: 'date', label: 'Date' },
+    { key: 'alpha', label: 'A to Z' },
+    { key: 'solutions', label: 'Solutions' },
+  ];
+
+  const rows = items.map((item) => item.isLocal ? `
     <div class="nash-sidebar-recent-item">
-      <a class="nash-sidebar-recent ${statusClass(a.status)}" href="/indextest?a=${encodeURIComponent(a.id)}" title="${esc(a.company)}">${esc(a.company)}</a>
-      <button class="nash-sidebar-recent-del" type="button" data-assess="${esc(a.id)}" aria-label="Delete assessment">
+      <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
+      <button class="nash-sidebar-recent-del" type="button" data-assess="${esc(item.id)}" aria-label="Delete assessment">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-    </div>
-  `).join('');
-
-  const pubItems = published.map((r) => `
-    <a class="nash-sidebar-recent ${statusClass(r.status)}" href="${r.path || '#'}" title="${esc(cleanTitle(r.title))}">${esc(cleanTitle(r.title))}</a>
-  `).join('');
+    </div>` : `
+    <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>`
+  ).join('');
 
   return `
     <div class="nash-sidebar-section nash-sidebar-recent-section">
-      <span class="nash-sidebar-label">Assessments</span>
-      ${localItems}
-      ${pubItems}
+      <div class="nash-sidebar-assess-head">
+        <span class="nash-sidebar-label">Assessments</span>
+        <div class="nash-sidebar-sort-wrap">
+          <button class="nash-sidebar-sort-btn" type="button" title="Sort assessments" aria-label="Sort assessments">${ICONS.sort}</button>
+          <div class="nash-sidebar-sort-menu" hidden>
+            ${SORT_OPTS.map((o) => `<button class="nash-sidebar-sort-opt${sort === o.key ? ' active' : ''}" type="button" data-sort-by="${o.key}">${o.label}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      ${rows}
     </div>
   `;
 }
@@ -291,6 +334,12 @@ export default async function decorate(block) {
   refreshAssess();
   document.addEventListener('nash:assessments-changed', refreshAssess);
 
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nash-sidebar-sort-wrap')) {
+      block.querySelectorAll('.nash-sidebar-sort-menu').forEach((m) => { m.hidden = true; });
+    }
+  });
+
   setupCollapse(block);
   setupUserMenu(block);
   setupThemeToggle(block);
@@ -317,6 +366,22 @@ export default async function decorate(block) {
       deleteAssessment(del.dataset.assess);
       return;
     }
+
+    const sortBtn = e.target.closest('.nash-sidebar-sort-btn');
+    if (sortBtn) {
+      e.stopPropagation();
+      const menu = sortBtn.closest('.nash-sidebar-sort-wrap')?.querySelector('.nash-sidebar-sort-menu');
+      if (menu) menu.hidden = !menu.hidden;
+      return;
+    }
+
+    const sortOpt = e.target.closest('.nash-sidebar-sort-opt');
+    if (sortOpt) {
+      localStorage.setItem(SORT_KEY, sortOpt.dataset.sortBy);
+      refreshAssess();
+      return;
+    }
+
     const btn = e.target.closest('.nash-sidebar-item');
     if (!btn) return;
     const { view, href } = btn.dataset;
