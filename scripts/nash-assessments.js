@@ -22,9 +22,10 @@ export function getAssessment(id) {
   return listAssessments().find((a) => a.id === id) || null;
 }
 
-export function saveAssessment(assessment) {
+export function saveAssessment(assessment, userEmail = '') {
   const others = listAssessments().filter((a) => a.id !== assessment.id);
-  const next = [{ ...assessment, updatedAt: Date.now() }, ...others].slice(0, MAX);
+  const user = assessment.user || userEmail || '';
+  const next = [{ ...assessment, user, updatedAt: Date.now() }, ...others].slice(0, MAX);
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {

@@ -1341,7 +1341,7 @@ function persist(a) {
   if (Array.isArray(copy.files)) {
     copy.files = copy.files.map((f) => ({ name: f.name, mime: f.mime }));
   }
-  saveAssessment(copy);
+  saveAssessment(copy, getUserInfo()?.email || '');
 }
 
 function pixelGrid() {
@@ -1720,13 +1720,16 @@ export function renderAssessment(block, a, autoRun = false) {
             <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
           </form>
           <div class="nash-session-footer">
-            <div class="nash-session-footer-left">
-              <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
-              <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
-              ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
-              <div class="nash-session-belowbar"></div>
+            <div class="nash-session-footer-row">
+              <div class="nash-session-footer-left">
+                <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
+                <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
+                ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
+                <div class="nash-session-belowbar"></div>
+              </div>
+              <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
             </div>
-            <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
+            <p class="nash-session-disclaimer">AI generated answers · FluffyJaws can make mistakes. Please verify important information.</p>
           </div>
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>

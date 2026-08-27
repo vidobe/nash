@@ -15,7 +15,7 @@ function setBackground(block) {
   const bg = block.querySelector('.nash-login-bg');
   if (!bg) return;
   const day = Math.floor(Date.now() / 86400000);
-  const n = (day % BG_COUNT) + 1;
+  const n = ((day + 1) % BG_COUNT) + 1;
   bg.style.backgroundImage = `url("${window.hlx.codeBasePath}/blocks/nash-login/login-bg-${n}.jpg")`;
 }
 

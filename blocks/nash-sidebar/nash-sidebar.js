@@ -70,8 +70,10 @@ function statusClass(s) {
 function assessmentsHtml(reports) {
   // Dedupe: one row per opportunity. Keep the local (editable) copy and drop any
   // published doc for the same opp.
+  const currentUser = (getUserInfo()?.email || '').toLowerCase();
   const seen = new Set();
   const local = listAssessments().filter((a) => {
+    if (a.user && a.user.toLowerCase() !== currentUser) return false;
     const slug = oppSlug(a);
     if (seen.has(slug)) return false;
     seen.add(slug);
@@ -79,6 +81,7 @@ function assessmentsHtml(reports) {
   }).slice(0, 10);
   const published = [...reports]
     .filter((r) => cleanTitle(r.title))
+    .filter((r) => !currentUser || (r.user || '').toLowerCase() === currentUser)
     .filter((r) => !seen.has((r.path || '').split('/').pop()))
     .sort((a, b) => Number(b.lastModified || 0) - Number(a.lastModified || 0))
     .slice(0, 6);

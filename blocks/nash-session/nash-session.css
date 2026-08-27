@@ -2030,11 +2030,10 @@
 /* Claude-style footer row below the input: controls left, model right. */
 .nash-session .nash-session-footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0;
   flex-shrink: 0;
-  padding: 8px 6px 20px;
+  padding: 8px 6px 12px;
 }
 
 .nash-session .nash-session-footer-left {
@@ -2092,6 +2091,21 @@
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
   font-weight: 500;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nash-session .nash-session-disclaimer {
+  margin: 0;
+  padding: 4px 0 2px;
+  text-align: center;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11px;
   color: var(--ink-40, #9a9da6);
 }
 
