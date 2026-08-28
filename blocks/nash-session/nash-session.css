@@ -2970,12 +2970,44 @@
 }
 
 .nash-session .nash-sales-tl-item {
+  display: block;
   position: relative;
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--ink-15, #e8e9ec);
   border-left: 3px solid var(--ink-40, #9a9da6);
   border-radius: 10px;
   background: var(--surface, #f8f8fa);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.nash-session .nash-sales-tl-item:hover {
+  box-shadow: 0 3px 12px rgb(17 19 24 / 10%);
+}
+
+.nash-session .nash-sales-tlcard-title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-sales-tlcard-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-tl-item .nash-sales-tp-status {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .nash-session .nash-sales-tl-item.biz { border-left-color: var(--amber, #b45309); }
@@ -3072,12 +3104,6 @@
   min-width: 60px;
 }
 
-.nash-session .nash-sales-tp-status {
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 11px;
-}
-
 .nash-session .nash-sales-tl-item.planned .nash-sales-tp-status { color: var(--ink-40, #9a9da6); }
 .nash-session .nash-sales-tl-item.prog .nash-sales-tp-status { color: var(--spectrum-accent, #1473e6); }
 .nash-session .nash-sales-tl-item.done .nash-sales-tp-status { color: var(--green, #0d7a45); }
@@ -3085,4 +3111,138 @@
 /* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-sales-tp-when .nash-sales-in {
   color: var(--ink-70, #4a4d55);
+}
+
+/* Touchpoint add/edit popup. */
+.nash-session .nash-sales-tpmodal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.nash-session .nash-sales-tpmodal[hidden] {
+  display: none;
+}
+
+.nash-session .nash-sales-tpmodal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(17 19 24 / 45%);
+}
+
+.nash-session .nash-sales-tpmodal-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 22px 24px 24px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 16px;
+  background: var(--white, #fff);
+  box-shadow: 0 24px 64px rgb(17 19 24 / 24%);
+}
+
+.nash-session .nash-sales-tpmodal-title {
+  margin: 0 0 16px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-sales-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.nash-session .nash-sales-field span {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.nash-session .nash-sales-min,
+.nash-session .nash-sales-msel {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 9px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink, #111318);
+  outline: none;
+}
+
+.nash-session .nash-sales-min:focus,
+.nash-session .nash-sales-msel:focus {
+  border-color: var(--spectrum-accent, #1473e6);
+  box-shadow: 0 0 0 3px rgb(20 115 230 / 14%);
+}
+
+.nash-session .nash-sales-tpmodal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.nash-session .nash-sales-tpmodal-spacer {
+  flex: 1;
+}
+
+.nash-session .nash-sales-btn-ghost {
+  padding: 9px 16px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session .nash-sales-tpsave {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--spectrum-accent, #1473e6);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.nash-session .nash-sales-tpsave:hover {
+  background: var(--spectrum-accent-hover, #0d66d0);
+}
+
+.nash-session .nash-sales-tpdel {
+  padding: 9px 14px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--red, #eb1000);
+  cursor: pointer;
+}
+
+.nash-session .nash-sales-tpdel[hidden] {
+  display: none;
 }

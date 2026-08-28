@@ -1301,23 +1301,44 @@ function salesStakeholderRow(st, i) {
   </div>`;
 }
 
-/* A single touchpoint card that sits inside a timeline column. */
+/* A read-only touchpoint record on the timeline; click it to edit in the popup. */
 function salesActionRow(act) {
   const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || 'na';
   const statusCls = { 'In progress': 'prog', Done: 'done' }[act.status] || 'planned';
   const icon = ACTION_TYPE_ICON[act.type] || ACTION_TYPE_ICON['—'];
-  return `<div class="nash-sales-tl-item ${typeCls} ${statusCls}" data-id="${escapeHtml(act.id)}">
-    <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
+  const sub = [act.who, act.type && act.type !== '—' ? act.type : ''].filter(Boolean).map(escapeHtml).join(' · ');
+  return `<button type="button" class="nash-sales-tl-item ${typeCls} ${statusCls}" data-edit="${escapeHtml(act.id)}">
     <div class="nash-sales-tlcard-top">
       <span class="nash-sales-tlcard-ico" aria-hidden="true">${icon}</span>
-      <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint…" value="${escapeHtml(act.title || '')}"/>
+      <span class="nash-sales-tlcard-title">${escapeHtml(act.title || 'Untitled touchpoint')}</span>
     </div>
-    <div class="nash-sales-tp-meta">
-      <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
-      <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
-      <select class="nash-sales-sel nash-sales-tp-status" data-field="status">${ACTION_STATUSES.map((st) => `<option${(act.status || 'Planned') === st ? ' selected' : ''}>${st}</option>`).join('')}</select>
+    ${sub ? `<div class="nash-sales-tlcard-sub">${sub}</div>` : ''}
+    <span class="nash-sales-tp-status">${escapeHtml(act.status || 'Planned')}</span>
+  </button>`;
+}
+
+/* The add/edit touchpoint popup markup (hidden until opened). */
+function salesTpModalHtml() {
+  return `<div class="nash-sales-tpmodal" hidden>
+    <div class="nash-sales-tpmodal-backdrop" data-tpclose></div>
+    <div class="nash-sales-tpmodal-card" role="dialog" aria-modal="true" aria-label="Touchpoint">
+      <h3 class="nash-sales-tpmodal-title">Touchpoint</h3>
+      <label class="nash-sales-field"><span>Title</span><input class="nash-sales-min" data-f="title" placeholder="What's the touchpoint?"/></label>
+      <div class="nash-sales-field-row">
+        <label class="nash-sales-field"><span>Who</span><input class="nash-sales-min" data-f="who" placeholder="Stakeholder(s)"/></label>
+        <label class="nash-sales-field"><span>Type</span><select class="nash-sales-msel" data-f="type">${ACTION_TYPES.map((t) => `<option value="${t}">${t}</option>`).join('')}</select></label>
+      </div>
+      <div class="nash-sales-field-row">
+        <label class="nash-sales-field"><span>When</span><input class="nash-sales-min" data-f="date" placeholder="e.g. Aug, Q3"/></label>
+        <label class="nash-sales-field"><span>Status</span><select class="nash-sales-msel" data-f="status">${ACTION_STATUSES.map((st) => `<option value="${st}">${st}</option>`).join('')}</select></label>
+      </div>
+      <div class="nash-sales-tpmodal-actions">
+        <button type="button" class="nash-sales-tpdel" hidden>Delete</button>
+        <span class="nash-sales-tpmodal-spacer"></span>
+        <button type="button" class="nash-sales-btn-ghost" data-tpclose>Cancel</button>
+        <button type="button" class="nash-sales-tpsave">Save</button>
+      </div>
     </div>
-    <label class="nash-sales-tp-when"><span>When</span><input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="e.g. Aug" value="${escapeHtml(act.date || '')}"/></label>
   </div>`;
 }
 
@@ -1432,25 +1453,19 @@ function salesPanelHtml(a) {
       <nav class="nash-session-qual-nav">${nav}</nav>
       <div class="nash-session-qual-panels">${panels}</div>
     </div>
+    ${salesTpModalHtml()}
   </div>`;
 }
 
-/* Read the editable stakeholder + action rows back into a.sales. */
+/* Read the editable stakeholder rows back into a.sales (touchpoints are edited
+   through the popup, not inline). */
 function collectSales(panel) {
   const stakeholders = [...panel.querySelectorAll('.nash-sales-stk')].map((row) => ({
     name: row.querySelector('[data-field="name"]').value.trim(),
     role: row.querySelector('[data-field="role"]').value.trim(),
     message: row.querySelector('[data-field="message"]').value.trim(),
   })).filter((st) => st.name || st.role || st.message);
-  const nextActions = [...panel.querySelectorAll('.nash-sales-tl-item')].map((row) => ({
-    id: row.dataset.id,
-    title: row.querySelector('[data-field="title"]').value.trim(),
-    who: row.querySelector('[data-field="who"]').value.trim(),
-    type: row.querySelector('[data-field="type"]').value,
-    date: row.querySelector('[data-field="date"]').value.trim(),
-    status: row.querySelector('[data-field="status"]').value,
-  }));
-  current.sales = { ...(current.sales || {}), stakeholders, nextActions };
+  current.sales = { ...(current.sales || {}), stakeholders };
   persist(current);
 }
 
@@ -1486,41 +1501,86 @@ function wireSalesPanel(block) {
     renderSalesContent(block);
   });
 
+  // Add stakeholder (inline); add touchpoint opens the popup.
   panel.querySelectorAll('[data-add]').forEach((btn) => btn.addEventListener('click', () => {
     current.sales = current.sales || {};
     if (btn.dataset.add === 'stk') {
       current.sales.stakeholders = [...(current.sales.stakeholders || []), { name: '', role: '', message: '' }];
+      persist(current);
+      renderSalesContent(block);
     } else {
-      current.sales.nextActions = [...(current.sales.nextActions || []), {
-        id: newActionId(), title: '', who: '', type: '—', date: '', status: 'Planned',
-      }];
+      openTpModal(panel, null);
     }
-    persist(current);
-    renderSalesContent(block);
   }));
 
-  panel.querySelectorAll('[data-del-stk], [data-del-act]').forEach((btn) => btn.addEventListener('click', () => {
+  panel.querySelectorAll('[data-del-stk]').forEach((btn) => btn.addEventListener('click', () => {
     collectSales(panel);
-    const { delStk, delAct } = btn.dataset;
-    if (delStk != null) {
-      current.sales.stakeholders.splice(Number(delStk), 1);
-    } else {
-      current.sales.nextActions = current.sales.nextActions.filter((a) => a.id !== delAct);
-    }
+    current.sales.stakeholders.splice(Number(btn.dataset.delStk), 1);
     persist(current);
     renderSalesContent(block);
   }));
 
-  panel.querySelectorAll('.nash-sales-in, .nash-sales-sel').forEach((el) => {
+  // Click a timeline record to edit it in the popup.
+  panel.querySelectorAll('.nash-sales-tl-item[data-edit]').forEach((card) => card.addEventListener('click', () => {
+    const act = (current.sales?.nextActions || []).find((a) => a.id === card.dataset.edit);
+    if (act) openTpModal(panel, act);
+  }));
+
+  wireTpModal(block, panel);
+
+  panel.querySelectorAll('.nash-sales-stk .nash-sales-in').forEach((el) => {
     el.addEventListener('blur', () => collectSales(panel));
-    el.addEventListener('change', () => {
-      collectSales(panel);
-      // Type drives the record icon/colour; "When" moves it to its timeline
-      // column — re-render for either.
-      if (el.matches('.nash-sales-tl-item [data-field="type"], .nash-sales-tl-item [data-field="date"]')) {
-        renderSalesContent(block);
-      }
-    });
+    el.addEventListener('change', () => collectSales(panel));
+  });
+}
+
+/* Open the touchpoint popup; act === null adds a new one. */
+function openTpModal(panel, act) {
+  const modal = panel.querySelector('.nash-sales-tpmodal');
+  if (!modal) return;
+  modal.dataset.editing = act?.id || '';
+  modal.querySelector('[data-f="title"]').value = act?.title || '';
+  modal.querySelector('[data-f="who"]').value = act?.who || '';
+  modal.querySelector('[data-f="type"]').value = act?.type || '—';
+  modal.querySelector('[data-f="date"]').value = act?.date || '';
+  modal.querySelector('[data-f="status"]').value = act?.status || 'Planned';
+  modal.querySelector('.nash-sales-tpmodal-title').textContent = act ? 'Edit touchpoint' : 'New touchpoint';
+  modal.querySelector('.nash-sales-tpdel').hidden = !act;
+  modal.hidden = false;
+  modal.querySelector('[data-f="title"]').focus();
+}
+
+function wireTpModal(block, panel) {
+  const modal = panel.querySelector('.nash-sales-tpmodal');
+  if (!modal) return;
+  const close = () => { modal.hidden = true; };
+
+  modal.querySelectorAll('[data-tpclose]').forEach((el) => el.addEventListener('click', close));
+
+  modal.querySelector('.nash-sales-tpsave').addEventListener('click', () => {
+    const val = (f) => modal.querySelector(`[data-f="${f}"]`).value.trim();
+    const { editing } = modal.dataset;
+    const data = {
+      title: val('title'), who: val('who'), type: val('type'), date: val('date'), status: val('status'),
+    };
+    current.sales = current.sales || {};
+    const list = current.sales.nextActions || [];
+    if (editing) {
+      current.sales.nextActions = list.map((a) => (a.id === editing ? { ...a, ...data } : a));
+    } else {
+      current.sales.nextActions = [...list, { id: newActionId(), ...data }];
+    }
+    persist(current);
+    close();
+    renderSalesContent(block);
+  });
+
+  modal.querySelector('.nash-sales-tpdel').addEventListener('click', () => {
+    const { editing } = modal.dataset;
+    current.sales.nextActions = (current.sales.nextActions || []).filter((a) => a.id !== editing);
+    persist(current);
+    close();
+    renderSalesContent(block);
   });
 }
 
