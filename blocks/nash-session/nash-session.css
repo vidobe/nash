@@ -2645,11 +2645,6 @@
   box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 18%);
 }
 
-.nash-session .nash-sales-overview .nash-sales-lead {
-  font-size: 15px;
-  line-height: 1.65;
-}
-
 .nash-session .nash-sales-lbl {
   display: block;
   margin-bottom: 2px;
@@ -2758,29 +2753,6 @@
   padding-right: 30px;
 }
 
-.nash-session .nash-sales-tp {
-  border-left: 3px solid var(--ink-15, #e8e9ec);
-}
-
-.nash-session .nash-sales-tp.biz {
-  border-left-color: var(--amber, #b45309);
-}
-
-.nash-session .nash-sales-tp.it {
-  border-left-color: var(--spectrum-accent, #1473e6);
-}
-
-.nash-session .nash-sales-tp.partner {
-  border-left-color: #a78bfa;
-}
-
-.nash-session .nash-sales-tp-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
 .nash-session .nash-sales-in,
 .nash-session .nash-sales-sel {
   padding: 6px 8px;
@@ -2797,18 +2769,6 @@
 .nash-session .nash-sales-sel:focus {
   border-color: var(--spectrum-accent, #1473e6);
   box-shadow: 0 0 0 3px rgb(20 115 230 / 12%);
-}
-
-.nash-session .nash-sales-tp-title {
-  width: 100%;
-  box-sizing: border-box;
-  font-weight: 600;
-}
-
-.nash-session .nash-sales-tp-who,
-.nash-session .nash-sales-tp-date {
-  flex: 1;
-  min-width: 80px;
 }
 
 .nash-session .nash-sales-rowdel {
@@ -2895,67 +2855,185 @@
   white-space: nowrap;
 }
 
-/* Next-actions timeline: a node per touchpoint on a vertical rail. */
+/* Overview — no box, larger, with a highlights strip. */
+.nash-session .nash-sales-overview .nash-sales-theme {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 23px;
+  line-height: 1.3;
+  color: var(--ink, #111318);
+  margin: 0 0 14px;
+}
+
+.nash-session .nash-sales-overview .nash-sales-lead {
+  max-width: 74ch;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-hl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.nash-session .nash-sales-hl-score {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-session .nash-sales-hl-score i {
+  margin-left: 3px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-style: normal;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-hl-tag {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--surface, #f8f8fa);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-ovsub {
+  margin-top: 20px;
+}
+
+/* Rationale — no box; a subheading before the assessment content. */
+.nash-session .nash-sales-subh {
+  margin: 22px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ink-15, #e8e9ec);
+}
+
+/* Next-actions timeline. */
 .nash-session .nash-sales-timeline {
   position: relative;
-  margin-left: 4px;
-  padding-left: 26px;
+  margin-top: 4px;
+  padding-left: 44px;
 }
 
 .nash-session .nash-sales-timeline::before {
   content: "";
   position: absolute;
-  top: 6px;
-  bottom: 6px;
-  left: 12px;
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
   width: 2px;
   background: var(--ink-15, #e8e9ec);
 }
 
 .nash-session .nash-sales-tl-item {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .nash-session .nash-sales-tl-node {
   position: absolute;
-  left: -26px;
-  top: 10px;
+  left: -44px;
+  top: 50%;
+  transform: translateY(-50%);
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 33px;
+  height: 33px;
   border-radius: 50%;
-  background: var(--white, #fff);
-  border: 2px solid var(--ink-40, #9a9da6);
-  color: var(--ink-40, #9a9da6);
+  background: var(--ink-40, #9a9da6);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--white, #fff);
 }
 
 .nash-session .nash-sales-tl-node svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
 }
 
-.nash-session .nash-sales-tl-item.biz .nash-sales-tl-node {
-  border-color: var(--amber, #b45309);
-  color: var(--amber, #b45309);
-}
-
-.nash-session .nash-sales-tl-item.it .nash-sales-tl-node {
-  border-color: var(--spectrum-accent, #1473e6);
-  color: var(--spectrum-accent, #1473e6);
-}
-
-.nash-session .nash-sales-tl-item.partner .nash-sales-tl-node {
-  border-color: #a78bfa;
-  color: #a78bfa;
-}
+.nash-session .nash-sales-tl-item.biz .nash-sales-tl-node { background: var(--amber, #b45309); }
+.nash-session .nash-sales-tl-item.it .nash-sales-tl-node { background: var(--spectrum-accent, #1473e6); }
+.nash-session .nash-sales-tl-item.partner .nash-sales-tl-node { background: #a78bfa; }
 
 .nash-session .nash-sales-tl-item .nash-sales-tp {
   margin: 0;
-  border-left-width: 3px;
+  padding: 11px 14px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
 }
 
-.nash-session .nash-sales-tl-item.biz .nash-sales-tp { border-left-color: var(--amber, #b45309); }
-.nash-session .nash-sales-tl-item.it .nash-sales-tp { border-left-color: var(--spectrum-accent, #1473e6); }
-.nash-session .nash-sales-tl-item.partner .nash-sales-tp { border-left-color: #a78bfa; }
+.nash-session .nash-sales-tp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nash-session .nash-sales-tp-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.nash-session .nash-sales-tp-sep {
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Borderless fields inside a touchpoint — read as text until focused. */
+.nash-session .nash-sales-tp .nash-sales-in,
+.nash-session .nash-sales-tp .nash-sales-sel {
+  padding: 3px 5px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+  color: var(--ink, #111318);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+}
+
+.nash-session .nash-sales-tp .nash-sales-in:focus,
+.nash-session .nash-sales-tp .nash-sales-sel:focus {
+  background: var(--ink-08, #f4f4f6);
+  box-shadow: none;
+}
+
+.nash-session .nash-sales-tp-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* stylelint-disable no-descending-specificity */
+.nash-session .nash-sales-tp-meta .nash-sales-in,
+.nash-session .nash-sales-tp-meta .nash-sales-sel {
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
+}
+/* stylelint-enable no-descending-specificity */
+
+.nash-session .nash-sales-tp-who { width: 130px; }
+.nash-session .nash-sales-tp-date { width: 96px; }
+
+.nash-session .nash-sales-tp-status {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.nash-session .nash-sales-tp-status.planned { color: var(--ink-40, #9a9da6); }
+.nash-session .nash-sales-tp-status.prog { color: var(--spectrum-accent, #1473e6); }
+.nash-session .nash-sales-tp-status.done { color: var(--green, #0d7a45); }
+
+.nash-session .nash-sales-tp-row .nash-sales-rowdel {
+  position: static;
+  flex-shrink: 0;
+}

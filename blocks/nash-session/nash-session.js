@@ -1303,17 +1303,22 @@ function salesStakeholderRow(st, i) {
 
 function salesActionRow(act) {
   const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || 'na';
+  const statusCls = { 'In progress': 'prog', Done: 'done' }[act.status] || 'planned';
   const icon = ACTION_TYPE_ICON[act.type] || ACTION_TYPE_ICON['—'];
   return `<div class="nash-sales-tl-item ${typeCls}" data-id="${escapeHtml(act.id)}">
     <span class="nash-sales-tl-node" aria-hidden="true">${icon}</span>
     <div class="nash-sales-tp">
-      <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
-      <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action" value="${escapeHtml(act.title || '')}"/>
+      <div class="nash-sales-tp-row">
+        <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action…" value="${escapeHtml(act.title || '')}"/>
+        <select class="nash-sales-sel nash-sales-tp-status ${statusCls}" data-field="status">${ACTION_STATUSES.map((st) => `<option${(act.status || 'Planned') === st ? ' selected' : ''}>${st}</option>`).join('')}</select>
+        <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
+      </div>
       <div class="nash-sales-tp-meta">
         <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
+        <span class="nash-sales-tp-sep">·</span>
         <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
+        <span class="nash-sales-tp-sep">·</span>
         <input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="When" value="${escapeHtml(act.date || '')}"/>
-        <select class="nash-sales-sel" data-field="status">${ACTION_STATUSES.map((s) => `<option${(act.status || 'Planned') === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
       </div>
     </div>
   </div>`;
@@ -1334,9 +1339,18 @@ function salesPanelHtml(a) {
   const overviewLead = s.summary
     ? escapeHtml(s.summary)
     : 'Generate the sales brief for a plain-English summary of the opportunity — why Adobe fits, the pillars, tracks and plays. Attach the account plan first to make it richer.';
-  const overview = `<div class="nash-sales-card nash-sales-overview">
+  const v = verdictFor(a.score);
+  const highlights = has ? `<div class="nash-sales-hl">
+    ${typeof a.score === 'number' ? `<span class="nash-sales-hl-score" style="color:${dimColor(a.score)}">${a.score}<i>/100 fit</i></span>` : ''}
+    ${a.verdict || v.label ? `<span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>` : ''}
+    ${(s.pillars || []).map((p) => `<span class="nash-sales-hl-tag">${escapeHtml(p.name || '')}</span>`).join('')}
+  </div>` : '';
+  const allPlays = has ? [...new Set((s.tracks || []).flatMap((t) => t.plays || []))] : [];
+  const overview = `<div class="nash-sales-overview">
     ${s.theme ? `<p class="nash-sales-theme">${escapeHtml(s.theme)}</p>` : ''}
     <p class="nash-sales-lead">${overviewLead}</p>
+    ${highlights}
+    ${allPlays.length ? `<div class="nash-sales-ovsub"><span class="nash-sales-lbl">Adobe solutions in play</span><div class="nash-sales-plays">${allPlays.map(chip).join('')}</div></div>` : ''}
   </div>`;
 
   const pillars = has && s.pillars?.length
@@ -1361,9 +1375,19 @@ function salesPanelHtml(a) {
   const stakeholders = `<div class="nash-sales-stk-list">${(s.stakeholders || []).map(salesStakeholderRow).join('')}</div>
     <button class="nash-sales-add" type="button" data-add="stk">+ Add stakeholder</button>`;
 
-  const rationale = has && s.rationale
-    ? `<div class="nash-sales-card nash-md">${renderMarkdown(s.rationale)}</div>`
-    : empty('the exec summary, proposed solutions and why they fit');
+  const reportSecs = splitReportSections(a.reportMarkdown || '');
+  const reportRat = reportSecs.find((sec) => sectionLabel(sec.title) === 'Rationale');
+  const reportRatHtml = reportRat ? renderReportMarkdown(reportRat.md) : '';
+  let rationale;
+  if (has && s.rationale) {
+    rationale = `<div class="nash-md nash-sales-rationale">${renderMarkdown(s.rationale)}
+      ${reportRatHtml ? `<div class="nash-sales-subh"><span class="nash-sales-lbl">From the assessment — Solution Rationale</span></div>${reportRatHtml}` : ''}
+    </div>`;
+  } else if (reportRatHtml) {
+    rationale = `<div class="nash-md nash-sales-rationale">${reportRatHtml}</div>`;
+  } else {
+    rationale = empty('the exec summary, proposed solutions and why they fit');
+  }
 
   const actions = `<div class="nash-sales-timeline">${(s.nextActions || []).map(salesActionRow).join('')}</div>
     <button class="nash-sales-add" type="button" data-add="act">+ Add touchpoint</button>`;
