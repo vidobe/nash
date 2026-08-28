@@ -1254,6 +1254,265 @@ function renderDaPanelContent(block) {
   wireDaPanel(block);
 }
 
+/* ── Sales content tab ─────────────────────────────────────────────
+   A sales-facing view: Fluffy drafts pillars, tracks, plays and a
+   sales rationale from the assessment; the analyst fills in stakeholders
+   and a Next-actions card list. Everything is stored on a.sales. */
+
+const SALES_ICONS = {
+  overview: SVG('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'),
+  pillars: SVG('<path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.8 5.8 21.2l1.6-7L2 9.5l7.1-.6z"/>'),
+  tracks: SVG('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/>'),
+  plays: SVG('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'),
+  stakeholders: SVG('<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2"/><path d="M16 20a5 5 0 0 1 5-5"/>'),
+  rationale: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>'),
+  actions: SVG('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+};
+
+const SALES_SECTIONS = [
+  ['overview', 'Overview'],
+  ['pillars', 'Strategic pillars'],
+  ['tracks', 'Sales tracks'],
+  ['plays', 'Adobe plays'],
+  ['stakeholders', 'Stakeholders'],
+  ['rationale', 'Rationale'],
+  ['actions', 'Next actions'],
+];
+
+const ACTION_TYPES = ['—', 'Business', 'IT', 'Partner'];
+const ACTION_STATUSES = ['Planned', 'In progress', 'Done'];
+
+function newActionId() {
+  return `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function salesStakeholderRow(st, i) {
+  return `<div class="nash-sales-stk" data-i="${i}">
+    <input class="nash-sales-in nash-sales-stk-name" data-field="name" placeholder="Name" value="${escapeHtml(st.name || '')}"/>
+    <input class="nash-sales-in nash-sales-stk-role" data-field="role" placeholder="Role" value="${escapeHtml(st.role || '')}"/>
+    <input class="nash-sales-in nash-sales-stk-msg" data-field="message" placeholder="What resonates for them…" value="${escapeHtml(st.message || '')}"/>
+    <button class="nash-sales-rowdel" type="button" data-del-stk="${i}" aria-label="Remove">${ICONS.close}</button>
+  </div>`;
+}
+
+function salesActionRow(act) {
+  const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || '';
+  return `<div class="nash-sales-tp ${typeCls}" data-id="${escapeHtml(act.id)}">
+    <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
+    <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action" value="${escapeHtml(act.title || '')}"/>
+    <div class="nash-sales-tp-meta">
+      <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
+      <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
+      <input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="When" value="${escapeHtml(act.date || '')}"/>
+      <select class="nash-sales-sel" data-field="status">${ACTION_STATUSES.map((s) => `<option${(act.status || 'Planned') === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+    </div>
+  </div>`;
+}
+
+function salesPanelHtml(a) {
+  if (!a.reportMarkdown && !a.report) {
+    return `<div class="nash-session-comingsoon">${SALES_ICONS.overview}
+      <p>Run the assessment first — the sales brief is generated from it.</p></div>`;
+  }
+  const s = a.sales || {};
+  const has = !!s.generatedAt;
+  const nav = SALES_SECTIONS.map(([key, label], i) => `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${label}">${SALES_ICONS[key]}<span>${label}</span></button>`).join('');
+
+  const empty = (what) => `<p class="nash-sales-empty">Generate the sales brief to draft ${what} from the assessment.</p>`;
+  const chip = (t) => `<span class="nash-sales-play">${escapeHtml(t)}</span>`;
+
+  const overview = `<div class="nash-sales-card">
+    ${s.theme ? `<p class="nash-sales-theme">${escapeHtml(s.theme)}</p>` : ''}
+    <p class="nash-sales-lead">${escapeHtml(s.rationale || 'A sales-facing summary of the opportunity — pillars, tracks and the Adobe plays that fit best.')}</p>
+  </div>`;
+
+  const pillars = has && s.pillars?.length
+    ? `<div class="nash-sales-pillars">${s.pillars.map((p) => `<div class="nash-sales-pillar"><b>${escapeHtml(p.name || '')}</b><p>${escapeHtml(p.goal || '')}</p></div>`).join('')}</div>`
+    : empty('the customer’s strategic pillars');
+
+  const tracks = has && s.tracks?.length
+    ? s.tracks.map((t, i) => `<div class="nash-sales-track">
+        <div class="nash-sales-track-top"><span class="nash-sales-tnum">${i + 1}</span>
+          <div><div class="nash-sales-tname">${escapeHtml(t.name || '')}</div><div class="nash-sales-tpos">${escapeHtml(t.positioning || '')}</div></div></div>
+        ${(t.plays || []).length ? `<div class="nash-sales-plays">${t.plays.map(chip).join('')}</div>` : ''}
+        ${(t.goals || []).length ? `<ul class="nash-sales-goals">${t.goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>` : ''}
+        ${t.status ? `<div class="nash-sales-tstatus">${escapeHtml(t.status)}</div>` : ''}
+      </div>`).join('')
+    : empty('the sales tracks');
+
+  const plays = has && s.plays?.length
+    ? `<div class="nash-sales-plays">${s.plays.map(chip).join('')}</div>`
+    : empty('the Adobe plays to position');
+
+  const stakeholders = `<div class="nash-sales-stk-list">${(s.stakeholders || []).map(salesStakeholderRow).join('')}</div>
+    <button class="nash-sales-add" type="button" data-add="stk">+ Add stakeholder</button>`;
+
+  const rationale = has && s.rationale
+    ? `<div class="nash-md">${renderMarkdown(s.rationale)}</div>`
+    : empty('a sales rationale');
+
+  const actions = `<div class="nash-sales-tp-list">${(s.nextActions || []).map(salesActionRow).join('')}</div>
+    <button class="nash-sales-add" type="button" data-add="act">+ Add touchpoint</button>`;
+
+  const panels = [overview, pillars, tracks, plays, stakeholders, rationale, actions]
+    .map((html, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
+      <div class="nash-session-qcard"><h3 class="nash-session-qpanel-title">${SALES_SECTIONS[i][1]}</h3>${html}</div></div>`).join('');
+
+  return `<div class="nash-session-qual nash-sales">
+    <div class="nash-session-qual-head">
+      <div>
+        <div class="nash-session-qual-account">${escapeHtml(a.company || 'Sales content')}</div>
+        <div class="nash-session-qual-solution">Sales content · drafted from the assessment</div>
+      </div>
+      <button class="nash-sales-gen" type="button">${has ? '↻ Regenerate brief' : '✦ Generate sales brief'}</button>
+    </div>
+    <div class="nash-session-qual-layout">
+      <nav class="nash-session-qual-nav">${nav}</nav>
+      <div class="nash-session-qual-panels">${panels}</div>
+    </div>
+  </div>`;
+}
+
+/* Read the editable stakeholder + action rows back into a.sales. */
+function collectSales(panel) {
+  const stakeholders = [...panel.querySelectorAll('.nash-sales-stk')].map((row) => ({
+    name: row.querySelector('[data-field="name"]').value.trim(),
+    role: row.querySelector('[data-field="role"]').value.trim(),
+    message: row.querySelector('[data-field="message"]').value.trim(),
+  })).filter((st) => st.name || st.role || st.message);
+  const nextActions = [...panel.querySelectorAll('.nash-sales-tp')].map((row) => ({
+    id: row.dataset.id,
+    title: row.querySelector('[data-field="title"]').value.trim(),
+    who: row.querySelector('[data-field="who"]').value.trim(),
+    type: row.querySelector('[data-field="type"]').value,
+    date: row.querySelector('[data-field="date"]').value.trim(),
+    status: row.querySelector('[data-field="status"]').value,
+  }));
+  current.sales = { ...(current.sales || {}), stakeholders, nextActions };
+  persist(current);
+}
+
+function renderSalesContent(block) {
+  const panel = block.querySelector('.nash-session-panel[data-panel="sales"]');
+  if (!panel || !current) return;
+  const active = panel.querySelector('.nash-session-qtab.active')?.dataset.qidx;
+  panel.innerHTML = salesPanelHtml(current);
+  wireSalesPanel(block);
+  if (active) panel.querySelector(`.nash-session-qtab[data-qidx="${active}"]`)?.click();
+}
+
+function wireSalesPanel(block) {
+  const panel = block.querySelector('.nash-session-panel[data-panel="sales"]');
+  if (!panel) return;
+
+  panel.querySelectorAll('.nash-session-qtab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      panel.querySelectorAll('.nash-session-qtab').forEach((b) => b.classList.toggle('active', b === tab));
+      panel.querySelectorAll('.nash-session-qpanel').forEach((p) => p.classList.toggle('active', p.dataset.qidx === tab.dataset.qidx));
+    });
+  });
+
+  panel.querySelector('.nash-sales-gen')?.addEventListener('click', () => generateSalesBrief(block));
+
+  panel.querySelectorAll('[data-add]').forEach((btn) => btn.addEventListener('click', () => {
+    current.sales = current.sales || {};
+    if (btn.dataset.add === 'stk') {
+      current.sales.stakeholders = [...(current.sales.stakeholders || []), { name: '', role: '', message: '' }];
+    } else {
+      current.sales.nextActions = [...(current.sales.nextActions || []), {
+        id: newActionId(), title: '', who: '', type: '—', date: '', status: 'Planned',
+      }];
+    }
+    persist(current);
+    renderSalesContent(block);
+  }));
+
+  panel.querySelectorAll('[data-del-stk], [data-del-act]').forEach((btn) => btn.addEventListener('click', () => {
+    collectSales(panel);
+    const { delStk, delAct } = btn.dataset;
+    if (delStk != null) {
+      current.sales.stakeholders.splice(Number(delStk), 1);
+    } else {
+      current.sales.nextActions = current.sales.nextActions.filter((a) => a.id !== delAct);
+    }
+    persist(current);
+    renderSalesContent(block);
+  }));
+
+  panel.querySelectorAll('.nash-sales-in, .nash-sales-sel').forEach((el) => {
+    el.addEventListener('change', () => collectSales(panel));
+    el.addEventListener('blur', () => collectSales(panel));
+  });
+}
+
+function buildSalesPrompt(a) {
+  return `You are an Adobe sales strategist preparing an account plan. From the qualification dossier below for "${a.company}", produce a concise, SALES-facing brief (value and outcomes, NOT technical detail).
+
+Return ONLY a JSON object between the markers, no prose, no code fences, shaped EXACTLY like:
+NASH_SALES:
+{
+  "theme": "<one-line north-star opportunity theme, in the customer's language if present>",
+  "pillars": [{"name": "<pillar>", "goal": "<measurable goal or outcome>"}],
+  "tracks": [{"name": "<sales track>", "positioning": "<one line>", "plays": ["<Adobe product/play>"], "goals": ["<short goal>"], "status": "<current status in a short phrase>"}],
+  "plays": ["<key Adobe plays/products to position, deduped>"],
+  "rationale": "<3-4 sentence why-Adobe / why-now, sales-friendly and non-technical>"
+}
+NASH_SALES_END
+
+Rules: 2-3 pillars; 2-4 tracks each grounded in the dossier's recommendation and scope; name real Adobe products; keep every string concise and outcome-oriented.
+
+=== DOSSIER ===
+${(a.reportMarkdown || '').slice(0, MAX_DOC_CHARS)}`;
+}
+
+function parseSales(text) {
+  const block = text.match(/NASH_SALES:\s*([\s\S]*?)NASH_SALES_END/i);
+  let raw = block ? block[1] : text;
+  const brace = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (brace >= 0 && end > brace) raw = raw.slice(brace, end + 1);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function generateSalesBrief(block) {
+  const panel = block.querySelector('.nash-session-panel[data-panel="sales"]');
+  const btn = panel?.querySelector('.nash-sales-gen');
+  if (!current?.reportMarkdown) return;
+  // Preserve the analyst-entered stakeholders/actions across a regenerate.
+  if (panel) collectSales(panel);
+  if (btn) { btn.disabled = true; btn.textContent = 'Drafting…'; }
+
+  let answer = '';
+  await streamQualification({
+    messages: [{ role: 'user', content: buildSalesPrompt(current) }],
+    reasoningEffort: 'low',
+    onDelta: (d) => { answer += d; },
+    onError: () => {},
+    onDone: () => {},
+  });
+
+  const parsed = parseSales(answer);
+  if (parsed) {
+    current.sales = {
+      ...(current.sales || {}),
+      theme: parsed.theme || '',
+      pillars: Array.isArray(parsed.pillars) ? parsed.pillars : [],
+      tracks: Array.isArray(parsed.tracks) ? parsed.tracks : [],
+      plays: Array.isArray(parsed.plays) ? parsed.plays : [],
+      rationale: parsed.rationale || '',
+      generatedAt: Date.now(),
+    };
+    persist(current);
+  } else if (btn) {
+    btn.textContent = 'Couldn’t draft — try again';
+  }
+  renderSalesContent(block);
+}
+
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
 function parseMeta(text) {
   const m = text.match(/NASH_META:\s*score=(\d+)\s*\|\s*verdict=([^|]+?)\s*\|\s*cms=([^\n]*)/i);
@@ -1734,7 +1993,7 @@ export function renderAssessment(block, a, autoRun = false) {
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">${renderOppPanel(a, getUserInfo()?.name || '')}</div>
-        <div class="nash-session-panel" data-panel="sales">${audiencePlaceholder('Sales content')}</div>
+        <div class="nash-session-panel" data-panel="sales">${salesPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="postsales">${audiencePlaceholder('Post-sales content')}</div>
       </div>
     </div>
@@ -1746,6 +2005,7 @@ export function renderAssessment(block, a, autoRun = false) {
   wireDaPanel(block);
   renderBelowBar(block);
   wireOppPanel(block, current, (data) => { current.opp = data; persist(current); }, getUserInfo()?.name || '');
+  wireSalesPanel(block);
 
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');

@@ -2579,3 +2579,253 @@
     width: 100%;
   }
 }
+
+/* ── Sales content tab ─────────────────────────────────── */
+.nash-session .nash-sales-gen {
+  align-self: flex-start;
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, #ff6fb0, #a78bfa 48%, #5b9dff) border-box;
+  box-shadow: 0 1px 8px -4px rgb(167 139 250 / 30%);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #111318);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.nash-session .nash-sales-gen:hover {
+  box-shadow: 0 2px 14px -3px rgb(167 139 250 / 45%);
+}
+
+.nash-session .nash-sales-gen:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.nash-session .nash-sales-empty {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-theme {
+  margin: 0 0 8px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 18px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-sales-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.nash-session .nash-sales-pillar {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
+}
+
+.nash-session .nash-sales-pillar b {
+  font-size: 14px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-session .nash-sales-pillar p {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-track {
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
+}
+
+.nash-session .nash-sales-track-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nash-session .nash-sales-tnum {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: var(--spectrum-accent, #1473e6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.nash-session .nash-sales-tname {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-sales-tpos {
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-plays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.nash-session .nash-sales-play {
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--blue-lt, #eff6ff);
+  color: var(--spectrum-accent, #1473e6);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.nash-session .nash-sales-goals {
+  margin: 8px 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-tstatus {
+  font-size: 12.5px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-stk,
+.nash-session .nash-sales-tp {
+  position: relative;
+  margin-bottom: 8px;
+  padding: 12px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-sales-stk {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 8px;
+  padding-right: 30px;
+}
+
+.nash-session .nash-sales-tp {
+  border-left: 3px solid var(--ink-15, #e8e9ec);
+}
+
+.nash-session .nash-sales-tp.biz {
+  border-left-color: var(--amber, #b45309);
+}
+
+.nash-session .nash-sales-tp.it {
+  border-left-color: var(--spectrum-accent, #1473e6);
+}
+
+.nash-session .nash-sales-tp.partner {
+  border-left-color: #a78bfa;
+}
+
+.nash-session .nash-sales-tp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.nash-session .nash-sales-in,
+.nash-session .nash-sales-sel {
+  padding: 6px 8px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 7px;
+  background: var(--white, #fff);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink, #111318);
+  outline: none;
+}
+
+.nash-session .nash-sales-in:focus,
+.nash-session .nash-sales-sel:focus {
+  border-color: var(--spectrum-accent, #1473e6);
+  box-shadow: 0 0 0 3px rgb(20 115 230 / 12%);
+}
+
+.nash-session .nash-sales-tp-title {
+  width: 100%;
+  box-sizing: border-box;
+  font-weight: 600;
+}
+
+.nash-session .nash-sales-tp-who,
+.nash-session .nash-sales-tp-date {
+  flex: 1;
+  min-width: 80px;
+}
+
+.nash-session .nash-sales-rowdel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+}
+
+.nash-session .nash-sales-rowdel:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-sales-rowdel svg {
+  width: 13px;
+  height: 13px;
+}
+
+.nash-session .nash-sales-add {
+  margin-top: 4px;
+  padding: 9px 12px;
+  width: 100%;
+  border: 1.5px dashed var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  background: none;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.nash-session .nash-sales-add:hover {
+  border-color: var(--spectrum-accent, #1473e6);
+  color: var(--spectrum-accent, #1473e6);
+}
