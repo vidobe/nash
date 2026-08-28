@@ -48,6 +48,13 @@ const TABS = [
   { tab: 'postsales', icon: 'postsales', label: 'Post-sales content' },
 ];
 
+// Small banner marking a tab whose content is still being built.
+function constructionNote() {
+  return '<div class="nash-session-wip" role="note">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+    + '<span>This section is still in construction — content and layout may change.</span></div>';
+}
+
 // Placeholder panel for an audience tab that has no generation logic yet.
 function audiencePlaceholder(label) {
   return `<div class="nash-session-placeholder">
@@ -1436,6 +1443,7 @@ function salesPanelHtml(a) {
 
   const planName = s.planName ? escapeHtml(s.planName) : '';
   return `<div class="nash-session-qual nash-sales">
+    ${constructionNote()}
     <div class="nash-session-qual-head">
       <div>
         <div class="nash-session-qual-account">${escapeHtml(a.company || 'Sales content')}</div>
@@ -2170,9 +2178,9 @@ export function renderAssessment(block, a, autoRun = false) {
           </div>
         </div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="opp">${renderOppPanel(a, getUserInfo()?.name || '')}</div>
+        <div class="nash-session-panel" data-panel="opp">${constructionNote()}${renderOppPanel(a, getUserInfo()?.name || '')}</div>
         <div class="nash-session-panel" data-panel="sales">${salesPanelHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="postsales">${audiencePlaceholder('Post-sales content')}</div>
+        <div class="nash-session-panel" data-panel="postsales">${constructionNote()}${audiencePlaceholder('Post-sales content')}</div>
       </div>
     </div>
   `;

@@ -3246,3 +3246,24 @@
 .nash-session .nash-sales-tpdel[hidden] {
   display: none;
 }
+
+/* "In construction" banner on WIP tabs. */
+.nash-session .nash-session-wip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 9px 14px;
+  border: 1px solid color-mix(in srgb, var(--amber, #b45309) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--amber, #b45309) 10%, transparent);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-session-wip svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
