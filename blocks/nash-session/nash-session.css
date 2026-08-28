@@ -2630,12 +2630,12 @@
 
 .nash-session .nash-sales-pillars {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
 }
 
 .nash-session .nash-sales-pillar {
-  padding: 14px 16px;
+  padding: 15px 17px;
   border-radius: 12px;
   background: var(--surface, #f8f8fa);
 }
@@ -2644,11 +2644,28 @@
   font-size: 14px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
-.nash-session .nash-sales-pillar p {
-  margin: 6px 0 0;
+.nash-session .nash-sales-pillar-obj {
+  margin: 8px 0 0;
   font-size: 12.5px;
-  color: var(--ink-40, #9a9da6);
+  line-height: 1.5;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-sales-pillar-benefit {
+  position: relative;
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+
+.nash-session .nash-sales-pillar-benefit::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--spectrum-accent, #1473e6);
 }
 
 .nash-session .nash-sales-track {

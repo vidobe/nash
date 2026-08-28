@@ -1327,7 +1327,12 @@ function salesPanelHtml(a) {
   </div>`;
 
   const pillars = has && s.pillars?.length
-    ? `<div class="nash-sales-pillars">${s.pillars.map((p) => `<div class="nash-sales-pillar"><b>${escapeHtml(p.name || '')}</b><p>${escapeHtml(p.goal || '')}</p></div>`).join('')}</div>`
+    ? `<div class="nash-sales-pillars">${s.pillars.map((p) => `<div class="nash-sales-pillar">
+        <b>${escapeHtml(p.name || '')}</b>
+        ${p.objective ? `<p class="nash-sales-pillar-obj">${escapeHtml(p.objective)}</p>` : ''}
+        ${(p.benefit || p.goal) ? `<p class="nash-sales-pillar-benefit">${escapeHtml(p.benefit || p.goal)}</p>` : ''}
+        ${(p.offerings || []).length ? `<div class="nash-sales-plays">${p.offerings.map(chip).join('')}</div>` : ''}
+      </div>`).join('')}</div>`
     : empty('the customer’s strategic pillars');
 
   const tracks = has && s.tracks?.length
@@ -1446,20 +1451,51 @@ function wireSalesPanel(block) {
 }
 
 function buildSalesPrompt(a) {
-  return `You are an Adobe sales strategist preparing an account plan. From the qualification dossier below for "${a.company}", produce a concise, SALES-facing brief (value and outcomes, NOT technical detail).
+  const ctx = a.context || {};
+  const ctxBlock = [
+    ctx.objectives ? `Objectives: ${ctx.objectives}` : '',
+    ctx.challenges ? `Challenges: ${ctx.challenges}` : '',
+    ctx.success ? `Success looks like: ${ctx.success}` : '',
+    ctx.use_cases ? `Use cases: ${ctx.use_cases}` : '',
+    ctx.tech_stack ? `Current stack: ${ctx.tech_stack}` : '',
+  ].filter(Boolean).join('\n');
+
+  return `You are an Adobe sales strategist preparing an account plan for "${a.company}". Produce a rich, SALES-facing brief (value and outcomes, not deep technical detail) that is CONSISTENT WITH and BUILDS ON the qualification dossier below — especially its "Solution Rationale" and "Final Recommendation" sections. Do not contradict the dossier; reuse its named Adobe products and recommended scope.
 
 Return ONLY a JSON object between the markers, no prose, no code fences, shaped EXACTLY like:
 NASH_SALES:
 {
   "theme": "<one-line north-star opportunity theme, in the customer's language if present>",
-  "pillars": [{"name": "<pillar>", "goal": "<measurable goal or outcome>"}],
-  "tracks": [{"name": "<sales track>", "positioning": "<one line>", "plays": ["<Adobe product/play>"], "goals": ["<short goal>"], "status": "<current status in a short phrase>"}],
-  "plays": ["<key Adobe plays/products to position, deduped>"],
-  "rationale": "<3-4 sentence why-Adobe / why-now, sales-friendly and non-technical>"
+  "pillars": [
+    {
+      "name": "<strategic pillar / ambition>",
+      "objective": "<the customer objective or challenge this pillar addresses — grounded in the dossier>",
+      "benefit": "<the concrete business benefit/outcome Adobe delivers against that objective>",
+      "offerings": ["<official Adobe product name>"]
+    }
+  ],
+  "tracks": [
+    {
+      "name": "<sales track>",
+      "positioning": "<one-line sales positioning>",
+      "plays": ["<official Adobe product name>"],
+      "goals": ["<short goal grounded in the dossier>"],
+      "status": "<current status in a short phrase>"
+    }
+  ],
+  "plays": ["<official Adobe product names to position, deduped>"],
+  "rationale": "<4-6 sentences: why Adobe, why now — a sales-friendly synthesis of the dossier's Solution Rationale and Recommendation. Reference the customer's objectives and the Adobe value against each. Non-technical.>"
 }
 NASH_SALES_END
 
-Rules: 2-3 pillars; 2-4 tracks each grounded in the dossier's recommendation and scope; name real Adobe products; keep every string concise and outcome-oriented.
+Rules:
+- PILLARS (2-3): each MUST explicitly LINK a customer objective/challenge to the Adobe benefit AND the Adobe offering(s) that deliver it. Draw the objectives/challenges from the dossier and the context below.
+- TRACKS (2-4): ground each in the dossier's recommended scope and Solution Rationale; give real goals and an honest status.
+- ADOBE NAMING: use FULL, OFFICIAL Adobe product names — e.g. "Adobe Experience Manager Sites", "Adobe Experience Manager Assets", "Adobe Journey Optimizer", "Adobe Customer Journey Analytics", "Adobe Real-Time CDP", "Adobe Analytics", "Adobe Target", "Adobe Workfront", "Adobe Firefly", "Adobe GenStudio for Performance Marketing", "Adobe Commerce", "Adobe Experience Platform Agent Orchestrator". Do NOT use internal shorthand or acronyms (no "AEM", "AJO", "CJA", "AA", "AT", "LLMO", "aaC"). Expand every one.
+- Be specific and substantive; avoid generic filler.
+
+=== CUSTOMER CONTEXT (from the assessment) ===
+${ctxBlock || 'n/a'}
 
 === DOSSIER ===
 ${(a.reportMarkdown || '').slice(0, MAX_DOC_CHARS)}`;
@@ -1489,7 +1525,7 @@ async function generateSalesBrief(block) {
   let answer = '';
   await streamQualification({
     messages: [{ role: 'user', content: buildSalesPrompt(current) }],
-    reasoningEffort: 'low',
+    reasoningEffort: 'medium',
     onDelta: (d) => { answer += d; },
     onError: () => {},
     onDone: () => {},
