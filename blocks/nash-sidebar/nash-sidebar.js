@@ -394,7 +394,17 @@ export default async function decorate(block) {
   }
   if (!reports.length) reports = MOCK_RECENT; // dev fallback
 
-  renderNav(block, reports.length);
+  // Badge = the same total the Qualifications overview shows: locally-created
+  // assessments (deduped) + published ones not already covered by a local copy.
+  const seenSlugs = new Set();
+  const localCount = listAssessments().filter((a) => {
+    const slug = slugify(a.dr || a.company);
+    if (seenSlugs.has(slug)) return false;
+    seenSlugs.add(slug);
+    return true;
+  }).length;
+  const pubCount = reports.filter((r) => !seenSlugs.has((r.path || '').split('/').pop())).length;
+  renderNav(block, localCount + pubCount);
 
   const refreshAssess = () => {
     const container = block.querySelector('.nash-sidebar-assess');
