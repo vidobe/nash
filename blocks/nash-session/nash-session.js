@@ -1301,27 +1301,44 @@ function salesStakeholderRow(st, i) {
   </div>`;
 }
 
+/* A single touchpoint card that sits inside a timeline column. */
 function salesActionRow(act) {
   const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || 'na';
   const statusCls = { 'In progress': 'prog', Done: 'done' }[act.status] || 'planned';
   const icon = ACTION_TYPE_ICON[act.type] || ACTION_TYPE_ICON['—'];
-  return `<div class="nash-sales-tl-item ${typeCls}" data-id="${escapeHtml(act.id)}">
-    <span class="nash-sales-tl-node" aria-hidden="true">${icon}</span>
-    <div class="nash-sales-tp">
-      <div class="nash-sales-tp-row">
-        <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action…" value="${escapeHtml(act.title || '')}"/>
-        <select class="nash-sales-sel nash-sales-tp-status ${statusCls}" data-field="status">${ACTION_STATUSES.map((st) => `<option${(act.status || 'Planned') === st ? ' selected' : ''}>${st}</option>`).join('')}</select>
-        <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
-      </div>
-      <div class="nash-sales-tp-meta">
-        <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
-        <span class="nash-sales-tp-sep">·</span>
-        <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
-        <span class="nash-sales-tp-sep">·</span>
-        <input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="When" value="${escapeHtml(act.date || '')}"/>
-      </div>
+  return `<div class="nash-sales-tl-item ${typeCls} ${statusCls}" data-id="${escapeHtml(act.id)}">
+    <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
+    <div class="nash-sales-tlcard-top">
+      <span class="nash-sales-tlcard-ico" aria-hidden="true">${icon}</span>
+      <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint…" value="${escapeHtml(act.title || '')}"/>
     </div>
+    <div class="nash-sales-tp-meta">
+      <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
+      <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
+      <select class="nash-sales-sel nash-sales-tp-status" data-field="status">${ACTION_STATUSES.map((st) => `<option${(act.status || 'Planned') === st ? ' selected' : ''}>${st}</option>`).join('')}</select>
+    </div>
+    <label class="nash-sales-tp-when"><span>When</span><input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="e.g. Aug" value="${escapeHtml(act.date || '')}"/></label>
   </div>`;
+}
+
+/* Horizontal timeline: one column per distinct "When", touchpoints stack in
+   their column. Adding a touchpoint drops a record onto the timeline. */
+function salesTimelineBoard(actions) {
+  if (!actions.length) {
+    return '<div class="nash-sales-board nash-sales-board-empty"><p class="nash-sales-empty">No touchpoints yet — add one below and set its “When” to place it on the timeline.</p></div>';
+  }
+  const order = [];
+  const buckets = new Map();
+  actions.forEach((act) => {
+    const key = (act.date || '').trim() || 'Unscheduled';
+    if (!buckets.has(key)) { buckets.set(key, []); order.push(key); }
+    buckets.get(key).push(act);
+  });
+  const cols = order.map((label) => `<div class="nash-sales-tlcol">
+      <div class="nash-sales-tlcol-h"><span class="nash-sales-tlcol-dot"></span>${escapeHtml(label)}</div>
+      <div class="nash-sales-tlcol-body">${buckets.get(label).map(salesActionRow).join('')}</div>
+    </div>`).join('');
+  return `<div class="nash-sales-board"><div class="nash-sales-board-track">${cols}</div></div>`;
 }
 
 function salesPanelHtml(a) {
@@ -1389,7 +1406,7 @@ function salesPanelHtml(a) {
     rationale = empty('the exec summary, proposed solutions and why they fit');
   }
 
-  const actions = `<div class="nash-sales-timeline">${(s.nextActions || []).map(salesActionRow).join('')}</div>
+  const actions = `${salesTimelineBoard(s.nextActions || [])}
     <button class="nash-sales-add" type="button" data-add="act">+ Add touchpoint</button>`;
 
   const panels = [overview, pillars, tracks, stakeholders, rationale, actions]
@@ -1498,8 +1515,11 @@ function wireSalesPanel(block) {
     el.addEventListener('blur', () => collectSales(panel));
     el.addEventListener('change', () => {
       collectSales(panel);
-      // Touchpoint type drives the timeline node icon/colour — re-render for it.
-      if (el.matches('.nash-sales-tl-item [data-field="type"]')) renderSalesContent(block);
+      // Type drives the record icon/colour; "When" moves it to its timeline
+      // column — re-render for either.
+      if (el.matches('.nash-sales-tl-item [data-field="type"], .nash-sales-tl-item [data-field="date"]')) {
+        renderSalesContent(block);
+      }
     });
   });
 }
