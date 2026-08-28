@@ -1272,8 +1272,7 @@ const SALES_ICONS = {
 const SALES_SECTIONS = [
   ['overview', 'Overview'],
   ['pillars', 'Strategic pillars'],
-  ['tracks', 'Sales tracks'],
-  ['plays', 'Adobe plays'],
+  ['tracks', 'Sales tracks & plays'],
   ['stakeholders', 'Stakeholders'],
   ['rationale', 'Rationale'],
   ['actions', 'Next actions'],
@@ -1281,6 +1280,13 @@ const SALES_SECTIONS = [
 
 const ACTION_TYPES = ['—', 'Business', 'IT', 'Partner'];
 const ACTION_STATUSES = ['Planned', 'In progress', 'Done'];
+
+const ACTION_TYPE_ICON = {
+  Business: SVG('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
+  IT: SVG('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>'),
+  Partner: SVG('<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2"/>'),
+  '—': SVG('<circle cx="12" cy="12" r="3"/>'),
+};
 
 function newActionId() {
   return `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -1296,15 +1302,19 @@ function salesStakeholderRow(st, i) {
 }
 
 function salesActionRow(act) {
-  const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || '';
-  return `<div class="nash-sales-tp ${typeCls}" data-id="${escapeHtml(act.id)}">
-    <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
-    <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action" value="${escapeHtml(act.title || '')}"/>
-    <div class="nash-sales-tp-meta">
-      <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
-      <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
-      <input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="When" value="${escapeHtml(act.date || '')}"/>
-      <select class="nash-sales-sel" data-field="status">${ACTION_STATUSES.map((s) => `<option${(act.status || 'Planned') === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+  const typeCls = { Business: 'biz', IT: 'it', Partner: 'partner' }[act.type] || 'na';
+  const icon = ACTION_TYPE_ICON[act.type] || ACTION_TYPE_ICON['—'];
+  return `<div class="nash-sales-tl-item ${typeCls}" data-id="${escapeHtml(act.id)}">
+    <span class="nash-sales-tl-node" aria-hidden="true">${icon}</span>
+    <div class="nash-sales-tp">
+      <button class="nash-sales-rowdel" type="button" data-del-act="${escapeHtml(act.id)}" aria-label="Remove">${ICONS.close}</button>
+      <input class="nash-sales-in nash-sales-tp-title" data-field="title" placeholder="Touchpoint / action" value="${escapeHtml(act.title || '')}"/>
+      <div class="nash-sales-tp-meta">
+        <input class="nash-sales-in nash-sales-tp-who" data-field="who" placeholder="Who" value="${escapeHtml(act.who || '')}"/>
+        <select class="nash-sales-sel" data-field="type">${ACTION_TYPES.map((t) => `<option${(act.type || '—') === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
+        <input class="nash-sales-in nash-sales-tp-date" data-field="date" placeholder="When" value="${escapeHtml(act.date || '')}"/>
+        <select class="nash-sales-sel" data-field="status">${ACTION_STATUSES.map((s) => `<option${(act.status || 'Planned') === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+      </div>
     </div>
   </div>`;
 }
@@ -1321,55 +1331,61 @@ function salesPanelHtml(a) {
   const empty = (what) => `<p class="nash-sales-empty">Generate the sales brief to draft ${what} from the assessment.</p>`;
   const chip = (t) => `<span class="nash-sales-play">${escapeHtml(t)}</span>`;
 
-  const overview = `<div class="nash-sales-card">
+  const overviewLead = s.summary
+    ? escapeHtml(s.summary)
+    : 'Generate the sales brief for a plain-English summary of the opportunity — why Adobe fits, the pillars, tracks and plays. Attach the account plan first to make it richer.';
+  const overview = `<div class="nash-sales-card nash-sales-overview">
     ${s.theme ? `<p class="nash-sales-theme">${escapeHtml(s.theme)}</p>` : ''}
-    <p class="nash-sales-lead">${escapeHtml(s.rationale || 'A sales-facing summary of the opportunity — pillars, tracks and the Adobe plays that fit best.')}</p>
+    <p class="nash-sales-lead">${overviewLead}</p>
   </div>`;
 
   const pillars = has && s.pillars?.length
-    ? `<div class="nash-sales-pillars">${s.pillars.map((p) => `<div class="nash-sales-pillar">
+    ? `<div class="nash-sales-pillars">${s.pillars.map((p) => `<div class="nash-sales-card nash-sales-pillar">
         <b>${escapeHtml(p.name || '')}</b>
-        ${p.objective ? `<p class="nash-sales-pillar-obj">${escapeHtml(p.objective)}</p>` : ''}
-        ${(p.benefit || p.goal) ? `<p class="nash-sales-pillar-benefit">${escapeHtml(p.benefit || p.goal)}</p>` : ''}
+        ${p.objective ? `<p class="nash-sales-pillar-obj"><span class="nash-sales-lbl">Objective / challenge</span>${escapeHtml(p.objective)}</p>` : ''}
+        ${(p.benefit || p.goal) ? `<p class="nash-sales-pillar-benefit"><span class="nash-sales-lbl accent">Adobe benefit</span>${escapeHtml(p.benefit || p.goal)}</p>` : ''}
         ${(p.offerings || []).length ? `<div class="nash-sales-plays">${p.offerings.map(chip).join('')}</div>` : ''}
       </div>`).join('')}</div>`
     : empty('the customer’s strategic pillars');
 
   const tracks = has && s.tracks?.length
-    ? s.tracks.map((t, i) => `<div class="nash-sales-track">
+    ? s.tracks.map((t, i) => `<div class="nash-sales-card nash-sales-track">
         <div class="nash-sales-track-top"><span class="nash-sales-tnum">${i + 1}</span>
           <div><div class="nash-sales-tname">${escapeHtml(t.name || '')}</div><div class="nash-sales-tpos">${escapeHtml(t.positioning || '')}</div></div></div>
         ${(t.plays || []).length ? `<div class="nash-sales-plays">${t.plays.map(chip).join('')}</div>` : ''}
         ${(t.goals || []).length ? `<ul class="nash-sales-goals">${t.goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>` : ''}
         ${t.status ? `<div class="nash-sales-tstatus">${escapeHtml(t.status)}</div>` : ''}
       </div>`).join('')
-    : empty('the sales tracks');
-
-  const plays = has && s.plays?.length
-    ? `<div class="nash-sales-plays">${s.plays.map(chip).join('')}</div>`
-    : empty('the Adobe plays to position');
+    : empty('the sales tracks and the Adobe plays for each');
 
   const stakeholders = `<div class="nash-sales-stk-list">${(s.stakeholders || []).map(salesStakeholderRow).join('')}</div>
     <button class="nash-sales-add" type="button" data-add="stk">+ Add stakeholder</button>`;
 
   const rationale = has && s.rationale
-    ? `<div class="nash-md">${renderMarkdown(s.rationale)}</div>`
-    : empty('a sales rationale');
+    ? `<div class="nash-sales-card nash-md">${renderMarkdown(s.rationale)}</div>`
+    : empty('the exec summary, proposed solutions and why they fit');
 
-  const actions = `<div class="nash-sales-tp-list">${(s.nextActions || []).map(salesActionRow).join('')}</div>
+  const actions = `<div class="nash-sales-timeline">${(s.nextActions || []).map(salesActionRow).join('')}</div>
     <button class="nash-sales-add" type="button" data-add="act">+ Add touchpoint</button>`;
 
-  const panels = [overview, pillars, tracks, plays, stakeholders, rationale, actions]
+  const panels = [overview, pillars, tracks, stakeholders, rationale, actions]
     .map((html, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
       <div class="nash-session-qcard"><h3 class="nash-session-qpanel-title">${SALES_SECTIONS[i][1]}</h3>${html}</div></div>`).join('');
 
+  const planName = s.planName ? escapeHtml(s.planName) : '';
   return `<div class="nash-session-qual nash-sales">
     <div class="nash-session-qual-head">
       <div>
         <div class="nash-session-qual-account">${escapeHtml(a.company || 'Sales content')}</div>
-        <div class="nash-session-qual-solution">Sales content · drafted from the assessment</div>
+        <div class="nash-session-qual-solution">Sales content · drafted from the assessment${planName ? ` + ${planName}` : ''}</div>
       </div>
-      <button class="nash-sales-gen" type="button">${has ? '↻ Regenerate brief' : '✦ Generate sales brief'}</button>
+      <div class="nash-sales-genwrap">
+        <label class="nash-sales-attach" title="Attach an account plan to enrich the brief">
+          <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt" hidden/>
+          ${ICONS.plusadd || ICONS.plus || '+'}<span>${planName || 'Attach account plan'}</span>
+        </label>
+        <button class="nash-sales-gen" type="button">${has ? '↻ Regenerate brief' : '✦ Generate sales brief'}</button>
+      </div>
     </div>
     <div class="nash-session-qual-layout">
       <nav class="nash-session-qual-nav">${nav}</nav>
@@ -1385,7 +1401,7 @@ function collectSales(panel) {
     role: row.querySelector('[data-field="role"]').value.trim(),
     message: row.querySelector('[data-field="message"]').value.trim(),
   })).filter((st) => st.name || st.role || st.message);
-  const nextActions = [...panel.querySelectorAll('.nash-sales-tp')].map((row) => ({
+  const nextActions = [...panel.querySelectorAll('.nash-sales-tl-item')].map((row) => ({
     id: row.dataset.id,
     title: row.querySelector('[data-field="title"]').value.trim(),
     who: row.querySelector('[data-field="who"]').value.trim(),
@@ -1419,6 +1435,16 @@ function wireSalesPanel(block) {
 
   panel.querySelector('.nash-sales-gen')?.addEventListener('click', () => generateSalesBrief(block));
 
+  // Attach an account plan — its text enriches the generated brief.
+  panel.querySelector('.nash-sales-attach input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await extractFileText(file);
+    current.sales = { ...(current.sales || {}), planName: file.name, planText: text };
+    persist(current);
+    renderSalesContent(block);
+  });
+
   panel.querySelectorAll('[data-add]').forEach((btn) => btn.addEventListener('click', () => {
     current.sales = current.sales || {};
     if (btn.dataset.add === 'stk') {
@@ -1445,8 +1471,12 @@ function wireSalesPanel(block) {
   }));
 
   panel.querySelectorAll('.nash-sales-in, .nash-sales-sel').forEach((el) => {
-    el.addEventListener('change', () => collectSales(panel));
     el.addEventListener('blur', () => collectSales(panel));
+    el.addEventListener('change', () => {
+      collectSales(panel);
+      // Touchpoint type drives the timeline node icon/colour — re-render for it.
+      if (el.matches('.nash-sales-tl-item [data-field="type"]')) renderSalesContent(block);
+    });
   });
 }
 
@@ -1466,11 +1496,12 @@ Return ONLY a JSON object between the markers, no prose, no code fences, shaped 
 NASH_SALES:
 {
   "theme": "<one-line north-star opportunity theme, in the customer's language if present>",
+  "summary": "<2-3 sentence plain-English hook: the opportunity and why Adobe, for the Overview>",
   "pillars": [
     {
       "name": "<strategic pillar / ambition>",
       "objective": "<the customer objective or challenge this pillar addresses — grounded in the dossier>",
-      "benefit": "<the concrete business benefit/outcome Adobe delivers against that objective>",
+      "benefit": "<the concrete, ideally quantified, business benefit/outcome Adobe delivers against that objective>",
       "offerings": ["<official Adobe product name>"]
     }
   ],
@@ -1483,20 +1514,21 @@ NASH_SALES:
       "status": "<current status in a short phrase>"
     }
   ],
-  "plays": ["<official Adobe product names to position, deduped>"],
-  "rationale": "<4-6 sentences: why Adobe, why now — a sales-friendly synthesis of the dossier's Solution Rationale and Recommendation. Reference the customer's objectives and the Adobe value against each. Non-technical.>"
+  "rationale": "<MARKDOWN, 250-400 words, with EXACTLY these subsections and headings:\n### Why Adobe is a strong fit\n<executive summary: 3-4 sentences on why Adobe fits this opportunity>\n### Proposed solutions & why\n- **<official Adobe product>** — what it does for this customer and WHICH objective/challenge it addresses\n(one bullet per key product in the recommended scope)\n### How it maps to their objectives\n<2-3 sentences tying the solutions back to the customer's objectives and expected outcomes>>"
 }
 NASH_SALES_END
 
 Rules:
-- PILLARS (2-3): each MUST explicitly LINK a customer objective/challenge to the Adobe benefit AND the Adobe offering(s) that deliver it. Draw the objectives/challenges from the dossier and the context below.
-- TRACKS (2-4): ground each in the dossier's recommended scope and Solution Rationale; give real goals and an honest status.
+- SUMMARY: a punchy 2-3 sentence hook for the Overview.
+- PILLARS (2-3): each MUST explicitly LINK a customer objective/challenge to a concrete Adobe benefit (quantify where the dossier supports it) AND the Adobe offering(s) that deliver it.
+- TRACKS (2-4): ground each in the dossier's recommended scope and Solution Rationale; give real goals and an honest status; list the Adobe products (plays) for each.
+- RATIONALE: substantial and structured as specified — an exec summary, the proposed solutions and why (per product, tied to a challenge/objective), and how it maps to objectives. This is the centrepiece; make it complete, not short.
 - ADOBE NAMING: use FULL, OFFICIAL Adobe product names — e.g. "Adobe Experience Manager Sites", "Adobe Experience Manager Assets", "Adobe Journey Optimizer", "Adobe Customer Journey Analytics", "Adobe Real-Time CDP", "Adobe Analytics", "Adobe Target", "Adobe Workfront", "Adobe Firefly", "Adobe GenStudio for Performance Marketing", "Adobe Commerce", "Adobe Experience Platform Agent Orchestrator". Do NOT use internal shorthand or acronyms (no "AEM", "AJO", "CJA", "AA", "AT", "LLMO", "aaC"). Expand every one.
 - Be specific and substantive; avoid generic filler.
 
 === CUSTOMER CONTEXT (from the assessment) ===
 ${ctxBlock || 'n/a'}
-
+${a.sales?.planText ? `\n=== ACCOUNT PLAN (analyst-provided — weave in its strategic pillars, sales tracks, plays, stakeholders and status) ===\n${a.sales.planText.slice(0, MAX_DOC_CHARS)}\n` : ''}
 === DOSSIER ===
 ${(a.reportMarkdown || '').slice(0, MAX_DOC_CHARS)}`;
 }
@@ -1536,9 +1568,9 @@ async function generateSalesBrief(block) {
     current.sales = {
       ...(current.sales || {}),
       theme: parsed.theme || '',
+      summary: parsed.summary || '',
       pillars: Array.isArray(parsed.pillars) ? parsed.pillars : [],
       tracks: Array.isArray(parsed.tracks) ? parsed.tracks : [],
-      plays: Array.isArray(parsed.plays) ? parsed.plays : [],
       rationale: parsed.rationale || '',
       generatedAt: Date.now(),
     };
@@ -1635,6 +1667,12 @@ function persist(a) {
   delete copy.fileText;
   if (Array.isArray(copy.files)) {
     copy.files = copy.files.map((f) => ({ name: f.name, mime: f.mime }));
+  }
+  // Keep the attached account-plan text out of localStorage (size); its name is
+  // kept so the UI still shows what's attached.
+  if (copy.sales && copy.sales.planText) {
+    copy.sales = { ...copy.sales };
+    delete copy.sales.planText;
   }
   saveAssessment(copy, getUserInfo()?.email || '');
 }

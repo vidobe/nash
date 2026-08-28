@@ -2634,45 +2634,53 @@
   gap: 12px;
 }
 
-.nash-session .nash-sales-pillar {
-  padding: 15px 17px;
+/* Sales boxes share the subtle chat-bar glow used across the app. */
+.nash-session .nash-sales-card {
+  padding: 16px 18px;
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: var(--surface, #f8f8fa);
+  background:
+    linear-gradient(var(--surface, #f8f8fa), var(--surface, #f8f8fa)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 18%);
 }
 
-.nash-session .nash-sales-pillar b {
-  font-size: 14px;
+.nash-session .nash-sales-overview .nash-sales-lead {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.nash-session .nash-sales-lbl {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-lbl.accent {
+  color: var(--spectrum-accent, #1473e6);
 }
 
 .nash-session .nash-sales-pillar-obj {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--ink-70, #4a4d55);
 }
 
 .nash-session .nash-sales-pillar-benefit {
-  position: relative;
-  margin: 8px 0 0;
-  padding-left: 16px;
-  font-size: 12.5px;
+  margin: 10px 0 0;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--ink, #111318);
   font-weight: 600;
 }
 
-.nash-session .nash-sales-pillar-benefit::before {
-  content: "→";
-  position: absolute;
-  left: 0;
-  color: var(--spectrum-accent, #1473e6);
-}
-
 .nash-session .nash-sales-track {
-  padding: 16px 18px;
   margin-bottom: 12px;
-  border-radius: 12px;
-  background: var(--surface, #f8f8fa);
 }
 
 .nash-session .nash-sales-track-top {
@@ -2846,3 +2854,108 @@
   border-color: var(--spectrum-accent, #1473e6);
   color: var(--spectrum-accent, #1473e6);
 }
+
+/* Attach account plan + generate, side by side. */
+.nash-session .nash-sales-genwrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-sales-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 8px 12px;
+  border: 1px dashed var(--ink-15, #e8e9ec);
+  border-radius: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.nash-session .nash-sales-attach:hover {
+  border-color: var(--spectrum-accent, #1473e6);
+  color: var(--spectrum-accent, #1473e6);
+}
+
+.nash-session .nash-sales-attach svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-sales-attach span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Next-actions timeline: a node per touchpoint on a vertical rail. */
+.nash-session .nash-sales-timeline {
+  position: relative;
+  margin-left: 4px;
+  padding-left: 26px;
+}
+
+.nash-session .nash-sales-timeline::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 12px;
+  width: 2px;
+  background: var(--ink-15, #e8e9ec);
+}
+
+.nash-session .nash-sales-tl-item {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.nash-session .nash-sales-tl-node {
+  position: absolute;
+  left: -26px;
+  top: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--white, #fff);
+  border: 2px solid var(--ink-40, #9a9da6);
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-sales-tl-node svg {
+  width: 13px;
+  height: 13px;
+}
+
+.nash-session .nash-sales-tl-item.biz .nash-sales-tl-node {
+  border-color: var(--amber, #b45309);
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-sales-tl-item.it .nash-sales-tl-node {
+  border-color: var(--spectrum-accent, #1473e6);
+  color: var(--spectrum-accent, #1473e6);
+}
+
+.nash-session .nash-sales-tl-item.partner .nash-sales-tl-node {
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+.nash-session .nash-sales-tl-item .nash-sales-tp {
+  margin: 0;
+  border-left-width: 3px;
+}
+
+.nash-session .nash-sales-tl-item.biz .nash-sales-tp { border-left-color: var(--amber, #b45309); }
+.nash-session .nash-sales-tl-item.it .nash-sales-tp { border-left-color: var(--spectrum-accent, #1473e6); }
+.nash-session .nash-sales-tl-item.partner .nash-sales-tp { border-left-color: #a78bfa; }
