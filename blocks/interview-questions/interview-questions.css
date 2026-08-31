@@ -1,5 +1,6 @@
 .interview-questions {
-  margin: 24px 0;
+  max-width: 880px;
+  margin: 24px auto;
   background: var(--white, #fff);
   border: 1px solid var(--border, #e5e6ea);
   border-radius: 10px;
