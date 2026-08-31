@@ -93,6 +93,43 @@ async function main(params) {
     const user = await validateUser(headers.authorization, params);
     if (!user) return reply(401, { error: 'Unauthorized — sign in to Nash first.' });
 
+    // Activity tracking. A single private summary doc (activity/summary.json) holds
+    // per-user login/assessment counts. `activity:'log'` increments; `activity:'read'`
+    // (admin only) returns the summary for the admin page. No slug needed.
+    if (params.activity === 'log' || params.activity === 'read') {
+      const token = await serviceToken(params);
+      const org = params.ORG;
+      const repo = params.REPO;
+      const daHdr = { Authorization: `Bearer ${token}` };
+      const summaryUrl = `https://admin.da.live/source/${org}/${repo}/activity/summary.json`;
+      const load = async () => {
+        const r = await fetch(summaryUrl, { headers: daHdr });
+        if (!r.ok) return { users: {} };
+        try { return JSON.parse(await r.text()) || { users: {} }; } catch { return { users: {} }; }
+      };
+      const adminEmail = (params.ADMIN_EMAIL || 'vgabriel@adobe.com').toLowerCase();
+      if (params.activity === 'read') {
+        if (user.toLowerCase() !== adminEmail) return reply(403, { error: 'Admins only.' });
+        return reply(200, { ok: true, summary: await load() });
+      }
+      const field = params.type === 'assessment' ? 'assessments' : 'logins';
+      const summary = await load();
+      summary.users = summary.users || {};
+      const key = user.toLowerCase();
+      const now = new Date().toISOString();
+      const u = summary.users[key] || { email: user, logins: 0, assessments: 0, firstSeen: now };
+      u[field] = (u[field] || 0) + 1;
+      u.lastSeen = now;
+      u.email = user;
+      summary.users[key] = u;
+      summary.updatedAt = now;
+      const fd = new FormData();
+      fd.append('data', new Blob([JSON.stringify(summary)], { type: 'application/json' }), 'summary.json');
+      const w = await fetch(summaryUrl, { method: 'PUT', headers: daHdr, body: fd });
+      if (!w.ok) return reply(502, { error: `Activity write failed (${w.status})`, detail: await w.text() });
+      return reply(200, { ok: true });
+    }
+
     const slug = String(params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80);
     if (!slug) return reply(400, { error: 'Missing or invalid slug.' });
 

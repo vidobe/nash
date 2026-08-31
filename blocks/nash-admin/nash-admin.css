@@ -1,0 +1,102 @@
+.nash-admin {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-admin-denied,
+.nash-admin-loading {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 24px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
+  color: var(--ink-70, #4a4d55);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-admin-title {
+  margin: 0;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 28px;
+  color: var(--ink, #111318);
+}
+
+.nash-admin-sub {
+  margin: 4px 0 20px;
+  font-size: 14px;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-admin-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.nash-admin-tile {
+  padding: 18px 20px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, rgb(255 111 176 / 22%), rgb(167 139 250 / 22%) 50%, rgb(91 157 255 / 22%)) border-box;
+  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 18%);
+}
+
+.nash-admin-num {
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink, #111318);
+}
+
+.nash-admin-lbl {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.nash-admin-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-40, #9a9da6);
+  border-bottom: 1px solid var(--ink-15, #e8e9ec);
+}
+
+.nash-admin-table td {
+  padding: 11px 12px;
+  color: var(--ink-70, #4a4d55);
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-admin-user {
+  font-weight: 600;
+  color: var(--ink, #111318);
+}
+
+.nash-admin-muted {
+  color: var(--ink-40, #9a9da6);
+}
+
+@media (width < 600px) {
+  .nash-admin-tiles {
+    grid-template-columns: 1fr;
+  }
+}

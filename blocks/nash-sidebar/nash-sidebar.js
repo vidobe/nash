@@ -4,6 +4,7 @@ import { listAssessments, isHidden, hideFromList } from '../../scripts/nash-asse
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { slugify } from '../../scripts/da-doc.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
+import { logActivity } from '../../scripts/nash-activity.js';
 
 /* Stable per-opportunity key (matches the DA publish slug). */
 const oppSlug = (a) => slugify(a.dr || a.company);
@@ -216,6 +217,12 @@ function renderNav(block, reportCount) {
             ${m.text}
           </a>
         `).join('')}
+        ${(u.email || '').toLowerCase() === 'vgabriel@adobe.com' ? `
+          <a class="nash-sidebar-menuitem" href="/admin" role="menuitem">
+            ${ICONS.activity}
+            Usage
+          </a>
+        ` : ''}
         <hr class="nash-sidebar-menudivider"/>
         <button class="nash-sidebar-menuitem nash-sidebar-logout" type="button" role="menuitem">
           ${ICONS.logout}
@@ -405,6 +412,9 @@ export default async function decorate(block) {
   }).length;
   const pubCount = reports.filter((r) => !seenSlugs.has((r.path || '').split('/').pop())).length;
   renderNav(block, localCount + pubCount);
+
+  // Record a login once per browser session (best-effort, admin analytics).
+  if (getUserInfo()?.email) logActivity('login');
 
   const refreshAssess = () => {
     const container = block.querySelector('.nash-sidebar-assess');

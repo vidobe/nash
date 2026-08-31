@@ -7,6 +7,7 @@ import {
 import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js';
 import { publishAssessment } from '../../scripts/da-publish.js';
 import { renderOppPanel, wireOppPanel } from '../../scripts/nash-opp.js';
+import { logActivity } from '../../scripts/nash-activity.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -2112,6 +2113,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       area.innerHTML = renderDossier(current);
       persist(current);
       setStatusDone(block);
+      logActivity('assessment'); // best-effort usage tracking
       // Replace the in-chat progress bubble with a short confirmation.
       if (inThread) {
         const s = typeof current.score === 'number'
