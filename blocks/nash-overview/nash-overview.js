@@ -534,18 +534,18 @@ export default async function decorate(block) {
   function refreshStats() {
     const gen = reports.filter((r) => r.status === 'generating').length;
     const done = reports.filter((r) => r.status === 'done').length;
-    const scored = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
-    const avg = scored.length
-      ? Math.round(scored.reduce((sum, r) => sum + r.score, 0) / scored.length) : null;
-    const go = scored.filter((r) => r.score >= 70).length;
-    const cond = scored.filter((r) => r.score >= 50 && r.score < 70).length;
-    const nogo = scored.filter((r) => r.score < 50).length;
-    const scoredCount = scored.length;
-    const winRate = scoredCount ? Math.round((go / scoredCount) * 100) : null;
+    const scoredList = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
+    const avg = scoredList.length
+      ? Math.round(scoredList.reduce((sum, r) => sum + r.score, 0) / scoredList.length) : null;
+    const go = scoredList.filter((r) => r.score >= 70).length;
+    const cond = scoredList.filter((r) => r.score >= 50 && r.score < 70).length;
+    const nogo = scoredList.filter((r) => r.score < 50).length;
+    const nScored = scoredList.length;
+    const wr = nScored ? Math.round((go / nScored) * 100) : null;
     const strip = block.querySelector('.nash-overview-stats');
     if (strip) {
       strip.innerHTML = statsStrip({
-        total: reports.length, done, gen, avg, winRate, go, cond, nogo, scoredCount,
+        total: reports.length, done, gen, avg, winRate: wr, go, cond, nogo, scoredCount: nScored,
       });
     }
     const optAll = block.querySelector('.nash-overview-filter option[value="all"]');
