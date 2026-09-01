@@ -529,7 +529,35 @@ export default async function decorate(block) {
     return [...list].sort(by);
   };
 
+  // Recompute the KPI strip + filter counts from the current `reports` set, so a
+  // delete (or any change to the set) updates the totals — not just the grid.
+  function refreshStats() {
+    const gen = reports.filter((r) => r.status === 'generating').length;
+    const done = reports.filter((r) => r.status === 'done').length;
+    const scored = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
+    const avg = scored.length
+      ? Math.round(scored.reduce((sum, r) => sum + r.score, 0) / scored.length) : null;
+    const go = scored.filter((r) => r.score >= 70).length;
+    const cond = scored.filter((r) => r.score >= 50 && r.score < 70).length;
+    const nogo = scored.filter((r) => r.score < 50).length;
+    const scoredCount = scored.length;
+    const winRate = scoredCount ? Math.round((go / scoredCount) * 100) : null;
+    const strip = block.querySelector('.nash-overview-stats');
+    if (strip) {
+      strip.innerHTML = statsStrip({
+        total: reports.length, done, gen, avg, winRate, go, cond, nogo, scoredCount,
+      });
+    }
+    const optAll = block.querySelector('.nash-overview-filter option[value="all"]');
+    const optGen = block.querySelector('.nash-overview-filter option[value="generating"]');
+    const optDone = block.querySelector('.nash-overview-filter option[value="done"]');
+    if (optAll) optAll.textContent = `Status: All (${reports.length})`;
+    if (optGen) optGen.textContent = `Generating (${gen})`;
+    if (optDone) optDone.textContent = `Complete (${done})`;
+  }
+
   function renderPage() {
+    refreshStats();
     const list = view();
     const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
     state.page = Math.min(Math.max(1, state.page), pages);
