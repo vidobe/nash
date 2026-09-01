@@ -9,6 +9,7 @@
 
 import {
   listAssessments, deleteAssessment, toggleBookmark, isBookmarked,
+  hideFromList, isHidden,
 } from '../../scripts/nash-assessments.js';
 import { slugify } from '../../scripts/da-doc.js';
 import { canDelete } from '../../scripts/nash-perms.js';
@@ -181,9 +182,14 @@ async function deleteReport(r) {
     } else if (r.slug) {
       await unpublishAssessment(r.slug);
     }
+    // Persist the deletion locally so it sticks across reloads even while the
+    // published query index is still catching up (it lags a publish/unpublish).
+    if (r.key) hideFromList(r.key);
     card?.remove();
     document.dispatchEvent(new CustomEvent('nash:overview-remove', { detail: { id: r.id }, bubbles: true }));
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Nash delete failed', err);
     // eslint-disable-next-line no-alert
     window.alert(err.message || 'Couldn’t delete the assessment.');
   }
@@ -427,7 +433,12 @@ export default async function decorate(block) {
     return true;
   });
   const local = localRaw.map(mapLocalAssessment);
-  const publishedDeduped = reports.filter((r) => !seen.has((r.path || '').split('/').pop()));
+  // Drop published docs that are duplicates of a local copy, or that the user has
+  // deleted/removed locally (so a lagging query index can't resurrect them).
+  const publishedDeduped = reports.filter((r) => {
+    const slug = (r.path || '').split('/').pop();
+    return !seen.has(slug) && !isHidden(r.key) && !isHidden(r.path);
+  });
   reports = [...local, ...publishedDeduped];
 
   const genCount = reports.filter((r) => r.status === 'generating').length;
