@@ -1732,6 +1732,11 @@
   font-weight: 500;
   color: var(--green, #15803d);
   text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+a.nash-session-published:hover {
+  background: var(--green-lt-hover, #bbf7d0);
 }
 
 .nash-session .nash-session-publish-error {

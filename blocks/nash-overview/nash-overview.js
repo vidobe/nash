@@ -295,7 +295,11 @@ function buildCard(r) {
   card.addEventListener('click', (e) => {
     if (e.target.closest('.nash-overview-menuwrap')) return;
     if (r.path) {
-      window.location.href = r.path;
+      // Cache-bust navigation to a published live page so a fresh re-publish
+      // isn't hidden by the live host's 2h browser cache.
+      const bust = r.path.startsWith('/qualifications/')
+        ? `${r.path.includes('?') ? '&' : '?'}v=${Date.now()}` : '';
+      window.location.href = `${r.path}${bust}`;
     } else {
       document.dispatchEvent(new CustomEvent('nash:open-detail', { detail: { report: r }, bubbles: true }));
     }
@@ -397,7 +401,9 @@ export default async function decorate(block) {
   let reports = [];
   let usingMock = false;
   try {
-    const resp = await fetch('/qualifications/query.json');
+    // Cache-bust: the listing must reflect a just-published/re-run assessment,
+    // so bypass the browser cache on the query index.
+    const resp = await fetch(`/qualifications/query.json?ts=${Date.now()}`, { cache: 'no-store' });
     if (resp.ok) {
       const json = await resp.json();
       reports = (json.data || []).map(mapQueryRow);

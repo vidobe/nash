@@ -1031,6 +1031,10 @@ async function publishCurrent(block, trigger) {
     const res = await publishAssessment(current, reportHtmlForPublish(current), getUserInfo()?.email || '');
     current.publishedUrl = res.url;
     current.publishedSlug = res.slug;
+    // Stamp each publish so the "Published to DA" link is cache-busted — the live
+    // host serves pages with a 2h browser cache, which would otherwise mask a
+    // fresh re-publish (e.g. after a re-run) until the cache expired.
+    current.publishedAt = Date.now();
     persist(current);
     renderBelowBar(block);
     renderDaPanelContent(block);
@@ -1044,13 +1048,24 @@ async function publishCurrent(block, trigger) {
   }
 }
 
+/* Live published-page link, cache-busted per publish. The live host serves pages
+   with a 2h browser cache, so without the ?v token a fresh re-publish (after a
+   re-run) would keep showing the old report until the cache expired. */
+function publishedLink(a) {
+  const url = a.publishedUrl || '';
+  const href = a.publishedAt
+    ? `${url}${url.includes('?') ? '&' : '?'}v=${a.publishedAt}`
+    : url;
+  return `<a class="nash-session-published" href="${href.replace(/"/g, '%22')}" target="_blank" rel="noopener">Published to DA ↗</a>`;
+}
+
 /* The area below the chat bar: Publish to DA (or the published link + re-publish). */
 function renderBelowBar(block) {
   const el = block.querySelector('.nash-session-belowbar');
   if (!el || !current) return;
   if (!(current.reportMarkdown || current.report)) { el.innerHTML = ''; return; }
   if (current.publishedUrl) {
-    el.innerHTML = `<span class="nash-session-published">Published to DA</span>
+    el.innerHTML = `${publishedLink(current)}
       <button type="button" class="nash-session-publish subtle">Re-publish</button>`;
   } else {
     el.innerHTML = '<button type="button" class="nash-session-publish">Publish to DA</button>';
@@ -1221,7 +1236,7 @@ function daPanelHtml(a) {
   }
   const bar = a.publishedUrl
     ? `<div class="nash-session-da-bar">
-        <span class="nash-session-published">Published to DA</span>
+        ${publishedLink(a)}
         ${a.published ? '' : '<button type="button" class="nash-session-publish subtle" data-da-publish>Re-publish</button>'}
       </div>`
     : `<div class="nash-session-da-bar">
