@@ -1737,6 +1737,7 @@
 
 .nash-session .nash-session-published {
   padding: 6px 14px;
+  border: none;
   border-radius: 20px;
   background: var(--green-lt, #dcfce7);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
@@ -1744,10 +1745,11 @@
   font-weight: 500;
   color: var(--green, #15803d);
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s ease;
 }
 
-a.nash-session-published:hover {
+.nash-session .nash-session-published:hover {
   background: var(--green-lt-hover, #bbf7d0);
 }
 

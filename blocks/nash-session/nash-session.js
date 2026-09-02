@@ -1093,16 +1093,12 @@ async function publishCurrent(block, trigger) {
   }
 }
 
-/* Live published-page link, cache-busted per publish + a freshness stamp. The
-   live host serves pages with a 2h browser cache, so without the ?v token a
-   fresh re-publish would keep showing the old report until the cache expired. */
+/* "Published" chip with a freshness stamp. Clicking it opens the DA content tab
+   in-app (which renders the published document from current data) rather than the
+   gated live page in a new tab — no re-auth, and never a stale cached copy. */
 function publishedLink(a) {
-  const url = a.publishedUrl || '';
-  const href = a.publishedAt
-    ? `${url}${url.includes('?') ? '&' : '?'}v=${a.publishedAt}`
-    : url;
   const when = a.publishedAt ? ` · ${relTimeShort(a.publishedAt)}` : '';
-  return `<a class="nash-session-published" href="${href.replace(/"/g, '%22')}" target="_blank" rel="noopener" title="Open the published page in a new tab">Published${when} ↗</a>`;
+  return `<button type="button" class="nash-session-published" data-goto-da title="View the published document">Published${when}</button>`;
 }
 
 /* The area below the chat bar: Publish to DA (or the published link + re-publish).
@@ -1121,6 +1117,7 @@ function renderBelowBar(block) {
     el.innerHTML = '<button type="button" class="nash-session-publish">Publish to DA</button>';
   }
   el.querySelector('.nash-session-publish')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
+  el.querySelector('[data-goto-da]')?.addEventListener('click', () => switchTab(block, 'da'));
 }
 
 /* DA content tab body — the published page (rendered) + live link, or a CTA. */
@@ -1303,6 +1300,7 @@ function daPanelHtml(a) {
 function wireDaPanel(block) {
   block.querySelector('[data-da-publish]')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
   const panel = block.querySelector('.nash-session-panel[data-panel="da"]');
+  panel?.querySelector('[data-goto-da]')?.addEventListener('click', () => switchTab(block, 'da'));
   panel?.querySelectorAll('.nash-session-qtab').forEach((tab) => {
     tab.addEventListener('click', () => {
       panel.querySelectorAll('.nash-session-qtab').forEach((b) => b.classList.toggle('active', b === tab));
