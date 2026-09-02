@@ -1021,6 +1021,49 @@ function reportHtmlForPublish(a) {
   return header + body;
 }
 
+/* Short relative time for the "Published … ago" label. */
+function relTimeShort(ts) {
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+
+/* True when the report has been re-generated since the last publish, so the
+   published page is behind the current report. */
+function hasUnpublishedChanges(a) {
+  return !!a.publishedUrl && !!a.reportRev && a.reportRev !== a.publishedRev;
+}
+
+/* Transient "✓ Published" confirmation so a (re)publish has a clear result. */
+function flashPublished(block, message = '✓ Published to DA') {
+  const footer = block.querySelector('.nash-session-footer');
+  if (!footer) return;
+  footer.querySelector('.nash-session-toast')?.remove();
+  const toast = document.createElement('span');
+  toast.className = 'nash-session-toast';
+  toast.textContent = message;
+  footer.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('in'));
+  setTimeout(() => { toast.classList.remove('in'); }, 2400);
+  setTimeout(() => { toast.remove(); }, 2800);
+}
+
+/* Reflect on the Re-run button whether chat notes still need folding in. */
+function renderRerunState(block) {
+  const btn = block?.querySelector('.nash-session-rerun');
+  if (!btn || !current) return;
+  const pending = !!current.notesSinceRun;
+  btn.classList.toggle('has-notes', pending);
+  btn.innerHTML = pending ? '↻ Re-run to update' : '↻ Re-run';
+  btn.title = pending
+    ? 'You added notes in chat — re-run to fold them into the report'
+    : 'Re-run the assessment, folding in your chat with Fluffy';
+}
+
 /* Shared publish action — drives the below-bar button and the DA-tab button. */
 async function publishCurrent(block, trigger) {
   const original = trigger.textContent;
@@ -1031,13 +1074,15 @@ async function publishCurrent(block, trigger) {
     const res = await publishAssessment(current, reportHtmlForPublish(current), getUserInfo()?.email || '');
     current.publishedUrl = res.url;
     current.publishedSlug = res.slug;
-    // Stamp each publish so the "Published to DA" link is cache-busted — the live
-    // host serves pages with a 2h browser cache, which would otherwise mask a
-    // fresh re-publish (e.g. after a re-run) until the cache expired.
+    // Stamp each publish so the "Published" link is cache-busted (the live host
+    // caches pages for 2h) and record which report version is now live, so the
+    // button can show when a later re-run has moved ahead of the published copy.
     current.publishedAt = Date.now();
+    current.publishedRev = current.reportRev || current.publishedRev || current.publishedAt;
     persist(current);
     renderBelowBar(block);
     renderDaPanelContent(block);
+    flashPublished(block);
   } catch (e) {
     trigger.disabled = false;
     trigger.textContent = original;
@@ -1048,25 +1093,30 @@ async function publishCurrent(block, trigger) {
   }
 }
 
-/* Live published-page link, cache-busted per publish. The live host serves pages
-   with a 2h browser cache, so without the ?v token a fresh re-publish (after a
-   re-run) would keep showing the old report until the cache expired. */
+/* Live published-page link, cache-busted per publish + a freshness stamp. The
+   live host serves pages with a 2h browser cache, so without the ?v token a
+   fresh re-publish would keep showing the old report until the cache expired. */
 function publishedLink(a) {
   const url = a.publishedUrl || '';
   const href = a.publishedAt
     ? `${url}${url.includes('?') ? '&' : '?'}v=${a.publishedAt}`
     : url;
-  return `<a class="nash-session-published" href="${href.replace(/"/g, '%22')}" target="_blank" rel="noopener">Published to DA ↗</a>`;
+  const when = a.publishedAt ? ` · ${relTimeShort(a.publishedAt)}` : '';
+  return `<a class="nash-session-published" href="${href.replace(/"/g, '%22')}" target="_blank" rel="noopener" title="Open the published page in a new tab">Published${when} ↗</a>`;
 }
 
-/* The area below the chat bar: Publish to DA (or the published link + re-publish). */
+/* The area below the chat bar: Publish to DA (or the published link + re-publish).
+   When a re-run has moved the report ahead of what's published, the button turns
+   into an emphasised "Publish changes" so it's clear a re-publish is meaningful. */
 function renderBelowBar(block) {
   const el = block.querySelector('.nash-session-belowbar');
   if (!el || !current) return;
   if (!(current.reportMarkdown || current.report)) { el.innerHTML = ''; return; }
   if (current.publishedUrl) {
-    el.innerHTML = `${publishedLink(current)}
-      <button type="button" class="nash-session-publish subtle">Re-publish</button>`;
+    const btn = hasUnpublishedChanges(current)
+      ? '<button type="button" class="nash-session-publish changes">Publish changes</button>'
+      : '<button type="button" class="nash-session-publish subtle">Re-publish</button>';
+    el.innerHTML = `${publishedLink(current)}${btn}`;
   } else {
     el.innerHTML = '<button type="button" class="nash-session-publish">Publish to DA</button>';
   }
@@ -2108,6 +2158,11 @@ async function runAssessment(block, attempt = 1, insights = '') {
         meta, body, dimensions, context,
       } = parseMeta(answer);
       current.reportMarkdown = body;
+      // Version the report so the publish button can tell when the published
+      // copy is behind, and clear the "notes added in chat" flag now that this
+      // run has folded any discussion into the report.
+      current.reportRev = Date.now();
+      current.notesSinceRun = false;
       if (dimensions.length) current.dimensions = dimensions;
       if (context && Object.keys(context).length) current.context = context;
       if (meta) {
@@ -2128,6 +2183,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       area.innerHTML = renderDossier(current);
       persist(current);
       setStatusDone(block);
+      renderRerunState(block);
       logActivity('assessment'); // best-effort usage tracking
       // Replace the in-chat progress bubble with a short confirmation.
       if (inThread) {
@@ -2207,6 +2263,7 @@ export function renderAssessment(block, a, autoRun = false) {
   });
   wireDaPanel(block);
   renderBelowBar(block);
+  renderRerunState(block);
   wireOppPanel(block, current, (data) => { current.opp = data; persist(current); }, getUserInfo()?.name || '');
   wireSalesPanel(block);
 
@@ -2350,6 +2407,12 @@ async function send(block, text) {
   block.querySelector('.nash-session-send').disabled = true;
 
   current.messages.push({ role: 'user', content: question });
+  // Chat notes only reach the report on a re-run — flag it so the Re-run button
+  // shows it's needed (the published/report copy is now behind the discussion).
+  if (current.reportMarkdown || current.report) {
+    current.notesSinceRun = true;
+    renderRerunState(block);
+  }
   // Fold attached docs into current.files so a later re-run includes them too.
   docs.filter((d) => d.text).forEach((d) => {
     current.files = [...(current.files || []), {
