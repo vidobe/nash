@@ -971,6 +971,10 @@ E1 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source
 E2 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source title> | <page, section, topic, or URL> | <concise paraphrased evidence>
 NASH_EVIDENCE_END
 Create a compact evidence register containing only evidence actually used in the assessment. Never invent a page, section, URL, or source title; use "Document-wide" when a precise location is unavailable. Prefer customer-document and analyst-context evidence for scoring. Use adobe-knowledge for scoring criteria and public-source for externally verified claims. Reference evidence inline as [[E1]] after key claims, especially red flags and the final recommendation. Each evidence ID must exist in NASH_EVIDENCE, and every NASH_DIMS evidence ID must also appear inline in the dossier where its reasoning is explained.
+NASH_CONFIDENCE:
+<exact dimension name> | <High|Medium|Low> | <plausible score swing, e.g. ±3> | <fact evidence IDs, comma-separated> | <key assumption or none> | <critical unknown or none> | <specific validation that would change the score>
+NASH_CONFIDENCE_END
+Add one NASH_CONFIDENCE row for every NASH_DIMS row. Confidence reflects the quality and completeness of available evidence, not whether the score is high or low. Facts must reference IDs from NASH_EVIDENCE. Keep assumptions and unknowns distinct: an assumption is a provisional interpretation; an unknown is information not yet available. The score swing is the plausible change to the overall 0-100 score if the assumption or unknown proves materially favorable or unfavorable. The final field must state the single highest-impact question, document, or proof point to validate next.
 
 Produce the report in markdown with EXACTLY these ten top-level sections and NO OTHERS. Use a single "# " heading only for these ten (keep the numbers); every sub-heading, risk, or topic inside a section MUST use "## " or "### " (or bold/bullets) — never a top-level "# " heading, or it will be mistaken for a new section:
 # 1. Executive Overview
@@ -1229,15 +1233,22 @@ const DIM_SECTION = {
   'ai & agentic fit': 'AI & Agents',
 };
 
-function scorecardCards(dims, availableLabels) {
+function scorecardCards(dims, availableLabels, confidence = []) {
   if (!dims || !dims.length) return '';
   const labels = availableLabels || new Set();
   return `<div class="nash-session-scorecard">${dims.map((d) => {
     const pct = d.max ? Math.round((d.scored / d.max) * 100) : 0;
     const target = DIM_SECTION[(d.dimension || '').toLowerCase()];
     const linked = target && labels.has(target);
+    const confidenceItem = confidence.find(
+      (item) => item.dimension.toLowerCase() === d.dimension.toLowerCase(),
+    );
     const inner = `
       <div class="nash-session-sc-top"><span>${escapeHtml(d.dimension)}</span><span class="nash-session-sc-weight">${escapeHtml(d.weight)}</span></div>
+      ${confidenceItem ? `<div class="nash-session-sc-confidence">
+        <span class="is-${escapeHtml(confidenceItem.level.toLowerCase())}">${escapeHtml(confidenceItem.level)} confidence</span>
+        ${confidenceItem.swing ? `<span>${escapeHtml(confidenceItem.swing)} potential</span>` : ''}
+      </div>` : ''}
       <div class="nash-session-sc-score">${d.scored}<span> / ${d.max}</span></div>
       <div class="nash-session-sc-bar"><div style="width:${pct}%;background:${dimColor(pct)}"></div></div>
       ${d.notes ? `<p>${escapeHtml(d.notes)}</p>` : ''}
@@ -1247,6 +1258,56 @@ function scorecardCards(dims, availableLabels) {
       ? `<button type="button" class="nash-session-sc-card is-linked" data-qsection="${escapeHtml(target)}">${inner}</button>`
       : `<div class="nash-session-sc-card">${inner}</div>`;
   }).join('')}</div>`;
+}
+
+function confidencePanelHtml(confidence, evidence) {
+  if (!Array.isArray(confidence) || !confidence.length) return '';
+  const evidenceById = new Map((evidence || []).map((item) => [item.id.toLowerCase(), item]));
+  const renderList = (value, emptyLabel) => {
+    const values = String(value || '').split(';').map((item) => item.trim())
+      .filter((item) => item && item.toLowerCase() !== 'none');
+    if (!values.length) return `<p class="nash-session-confidence-empty">${escapeHtml(emptyLabel)}</p>`;
+    return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+  };
+  return `<section class="nash-session-confidence" aria-label="Score confidence and open questions">
+    <div class="nash-session-confidence-head">
+      <div>
+        <span class="nash-session-evidence-eyebrow">Decision quality</span>
+        <h2>Confidence and open questions</h2>
+      </div>
+      <p>See what is known, assumed, and still capable of moving the score.</p>
+    </div>
+    <div class="nash-session-confidence-list">${confidence.map((item, index) => {
+    const facts = item.factRefs.map((id) => evidenceById.get(id.toLowerCase())).filter(Boolean);
+    return `<details class="nash-session-confidence-item"${index === 0 ? ' open' : ''}>
+        <summary>
+          <span class="nash-session-confidence-dimension">${escapeHtml(item.dimension)}</span>
+          <span class="nash-session-confidence-summary">
+            <span class="nash-session-confidence-level is-${escapeHtml(item.level.toLowerCase())}">${escapeHtml(item.level)}</span>
+            ${item.swing ? `<span class="nash-session-confidence-swing">${escapeHtml(item.swing)}</span>` : ''}
+          </span>
+        </summary>
+        <div class="nash-session-confidence-body">
+          <div>
+            <h3>Verified facts</h3>
+            ${facts.length ? `<ul>${facts.map((fact) => `<li><strong>${escapeHtml(fact.id)}</strong> ${escapeHtml(fact.claim)}</li>`).join('')}</ul>` : '<p class="nash-session-confidence-empty">No verified fact linked.</p>'}
+          </div>
+          <div>
+            <h3>Assumptions</h3>
+            ${renderList(item.assumptions, 'No material assumption recorded.')}
+          </div>
+          <div>
+            <h3>Unknowns</h3>
+            ${renderList(item.unknowns, 'No critical unknown recorded.')}
+          </div>
+          <div class="nash-session-confidence-change">
+            <h3>What would change this score?</h3>
+            <p>${escapeHtml(item.scoreChanger)}</p>
+          </div>
+        </div>
+      </details>`;
+  }).join('')}</div>
+  </section>`;
 }
 
 const EVIDENCE_TYPE_LABELS = {
@@ -1298,7 +1359,7 @@ function daPreviewHtml(a) {
     return `<button type="button" class="nash-session-qtab${i === 0 ? ' active' : ''}" data-qidx="${i}" title="${escapeHtml(s.title)}">${sectionIcon(label)}<span>${label}</span></button>`;
   }).join('');
   const panels = sections.map((s, i) => `<div class="nash-session-qpanel${i === 0 ? ' active' : ''}" data-qidx="${i}">
-    ${i === 0 ? scorecardCards(a.dimensions, sectionLabels) : ''}
+    ${i === 0 ? `${scorecardCards(a.dimensions, sectionLabels, a.confidence)}${confidencePanelHtml(a.confidence, a.evidence)}` : ''}
     <div class="nash-session-qcard">
       <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
       <div class="nash-md">${renderReportMarkdown(s.md, {}, a.evidence || [])}</div>
@@ -1864,14 +1925,34 @@ function parseMeta(text) {
     });
   }
 
+  const confidence = [];
+  const confBlock = text.match(/NASH_CONFIDENCE:\s*([\s\S]*?)NASH_CONFIDENCE_END/i);
+  if (confBlock) {
+    confBlock[1].split('\n').forEach((line) => {
+      const parts = line.split('|').map((part) => part.trim());
+      if (parts.length >= 7 && parts[0] && /^(high|medium|low)$/i.test(parts[1])) {
+        confidence.push({
+          dimension: parts[0],
+          level: parts[1][0].toUpperCase() + parts[1].slice(1).toLowerCase(),
+          swing: parts[2],
+          factRefs: parts[3].split(',').map((id) => id.trim()).filter(Boolean),
+          assumptions: parts[4],
+          unknowns: parts[5],
+          scoreChanger: parts.slice(6).join(' | '),
+        });
+      }
+    });
+  }
+
   const body = text
     .replace(/NASH_META:[^\n]*\n?/i, '')
     .replace(/NASH_DIMS:[\s\S]*?NASH_DIMS_END\n?/i, '')
     .replace(/NASH_CONTEXT:[\s\S]*?NASH_CONTEXT_END\n?/i, '')
     .replace(/NASH_EVIDENCE:[\s\S]*?NASH_EVIDENCE_END\n?/i, '')
+    .replace(/NASH_CONFIDENCE:[\s\S]*?NASH_CONFIDENCE_END\n?/i, '')
     .trimStart();
   return {
-    meta, body, dimensions, context, evidence,
+    meta, body, dimensions, context, evidence, confidence,
   };
 }
 
@@ -1906,7 +1987,7 @@ function renderDossier(a) {
   const body = a.reportMarkdown
     ? renderReportMarkdown(a.reportMarkdown, {}, a.evidence || [])
     : (a.reportHtml || '');
-  return `<div class="nash-session-report nash-md">${head}${evidencePanelHtml(a.evidence)}${body}</div>`;
+  return `<div class="nash-session-report nash-md">${head}${confidencePanelHtml(a.confidence, a.evidence)}${evidencePanelHtml(a.evidence)}${body}</div>`;
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -2240,7 +2321,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
         return;
       }
       const {
-        meta, body, dimensions, context, evidence,
+        meta, body, dimensions, context, evidence, confidence,
       } = parseMeta(answer);
       current.reportMarkdown = body;
       // Version the report so the publish button can tell when the published
@@ -2251,6 +2332,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       if (dimensions.length) current.dimensions = dimensions;
       if (context && Object.keys(context).length) current.context = context;
       current.evidence = evidence;
+      current.confidence = confidence;
       if (meta) {
         current.score = meta.score;
         current.verdict = meta.verdict;
