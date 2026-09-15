@@ -3699,25 +3699,24 @@
 .nash-session .nash-session-decision .nash-session-evidence {
   padding: 0 0 32px;
   border: 0;
-  border-bottom: 1px solid var(--border, #e5e6ea);
   border-radius: 0;
   background: transparent;
 }
 
 .nash-session .nash-session-decision .nash-session-evidence {
-  padding-top: 6px;
-  border-bottom: 0;
+  padding-top: 20px;
 }
 
 .nash-session .nash-session-decision .nash-session-confidence-item {
+  margin-bottom: 4px;
   border: 0;
-  border-top: 1px solid var(--border, #e5e6ea);
   border-radius: 0;
   background: transparent;
 }
 
-.nash-session .nash-session-decision .nash-session-confidence-item:last-child {
-  border-bottom: 1px solid var(--border, #e5e6ea);
+.nash-session .nash-session-decision .nash-session-confidence-item summary {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .nash-session .nash-session-decision .nash-session-confidence-body > div {
@@ -3726,7 +3725,8 @@
 }
 
 .nash-session .nash-session-decision .nash-session-confidence-change {
-  padding-left: 12px;
+  border-left: 0;
+  padding-left: 0;
 }
 
 .nash-session .nash-session-decision .nash-session-evidence-list {
@@ -3741,17 +3741,16 @@
   align-items: start;
   padding: 14px 0;
   border: 0;
-  border-top: 1px solid var(--border, #e5e6ea);
   border-radius: 0;
   background: transparent;
 }
 
-.nash-session .nash-session-decision .nash-session-evidence-item:last-child {
-  border-bottom: 1px solid var(--border, #e5e6ea);
-}
-
 .nash-session .nash-session-decision .nash-session-evidence-meta {
   margin: 0;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-id {
+  border: 0;
 }
 
 .nash-session .nash-session-decision .nash-session-evidence-item h3 {
