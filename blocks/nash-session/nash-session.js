@@ -33,6 +33,7 @@ const ICONS = {
   upload: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
   doc: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   clipboard: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>',
+  quality: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-3z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>',
   cloud: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
   briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
   sales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
@@ -42,6 +43,7 @@ const ICONS = {
 
 const TABS = [
   { tab: 'assessment', icon: 'clipboard', label: 'Assessment' },
+  { tab: 'decision', icon: 'quality', label: 'Decision quality' },
   { tab: 'da', icon: 'cloud', label: 'DA content' },
   { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
   // Audience-targeted outputs — placeholders for now, no generation logic yet.
@@ -1021,6 +1023,7 @@ ${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it
 function setStatusDone(block) {
   current.status = 'done';
   renderBelowBar(block);
+  renderDecisionPanelContent(block);
   renderDaPanelContent(block);
 }
 
@@ -1377,7 +1380,6 @@ function daPreviewHtml(a) {
         <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
       </div>` : ''}
     </div>
-    ${evidencePanelHtml(a.evidence)}
     <div class="nash-session-qual-layout">
       <nav class="nash-session-qual-nav">${nav}</nav>
       <div class="nash-session-qual-panels">${panels}</div>
@@ -1437,6 +1439,33 @@ function renderDaPanelContent(block) {
   if (!panel || !current) return;
   panel.innerHTML = daPanelHtml(current);
   wireDaPanel(block);
+}
+
+function decisionQualityHtml(a) {
+  const hasQuality = a.confidence?.length || a.evidence?.length;
+  if (!hasQuality) {
+    return `<div class="nash-session-comingsoon">
+      ${ICONS.quality}
+      <h2>No decision-quality analysis yet</h2>
+      <p>Run or re-run the assessment to identify facts, assumptions, unknowns, and score sensitivity.</p>
+    </div>`;
+  }
+  return `<div class="nash-session-decision">
+    <header class="nash-session-decision-head">
+      <span class="nash-session-evidence-eyebrow">Assessment transparency</span>
+      <h2>Decision quality</h2>
+      <p>Understand how reliable the score is and what to validate before committing to the opportunity.</p>
+    </header>
+    ${confidencePanelHtml(a.confidence, a.evidence)}
+    ${evidencePanelHtml(a.evidence)}
+  </div>`;
+}
+
+function renderDecisionPanelContent(block) {
+  const panel = block.querySelector('.nash-session-panel[data-panel="decision"]');
+  if (!panel || !current) return;
+  panel.innerHTML = decisionQualityHtml(current);
+  wireEvidence(panel);
 }
 
 /* ── Sales content tab ─────────────────────────────────────────────
@@ -1987,7 +2016,7 @@ function renderDossier(a) {
   const body = a.reportMarkdown
     ? renderReportMarkdown(a.reportMarkdown, {}, a.evidence || [])
     : (a.reportHtml || '');
-  return `<div class="nash-session-report nash-md">${head}${confidencePanelHtml(a.confidence, a.evidence)}${evidencePanelHtml(a.evidence)}${body}</div>`;
+  return `<div class="nash-session-report nash-md">${head}${body}</div>`;
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -2419,6 +2448,7 @@ export function renderAssessment(block, a, autoRun = false) {
             <p class="nash-session-disclaimer">AI generated answers · FluffyJaws can make mistakes. Please verify important information.</p>
           </div>
         </div>
+        <div class="nash-session-panel" data-panel="decision">${decisionQualityHtml(a)}</div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">${constructionNote()}${renderOppPanel(a, getUserInfo()?.name || '')}</div>
         <div class="nash-session-panel" data-panel="sales">${salesPanelHtml(a)}</div>
@@ -2431,6 +2461,7 @@ export function renderAssessment(block, a, autoRun = false) {
     t.addEventListener('click', () => switchTab(block, t.dataset.tab));
   });
   wireDaPanel(block);
+  wireEvidence(block.querySelector('.nash-session-panel[data-panel="decision"]'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="assessment"]'));
   renderBelowBar(block);
   renderRerunState(block);

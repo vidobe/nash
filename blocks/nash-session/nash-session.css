@@ -484,6 +484,7 @@
 }
 
 .nash-session .nash-session-panel[data-panel='da'].active,
+.nash-session .nash-session-panel[data-panel='decision'].active,
 .nash-session .nash-session-panel[data-panel='opp'].active,
 .nash-session .nash-session-panel[data-panel='sales'].active,
 .nash-session .nash-session-panel[data-panel='postsales'].active {
@@ -2974,6 +2975,7 @@
   .nash-session .nash-session-confidence-change {
     grid-column: auto;
   }
+
 }
 
 /* ── Sales content tab ─────────────────────────────────── */
@@ -3662,4 +3664,122 @@
   width: 15px;
   height: 15px;
   flex-shrink: 0;
+}
+
+/* Decision Quality intentionally flattens the shared confidence/evidence cards. */
+.nash-session .nash-session-decision {
+  width: min(100%, 900px);
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.nash-session .nash-session-decision-head {
+  max-width: 620px;
+  margin-bottom: 36px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-session .nash-session-decision-head h2 {
+  margin: 2px 0 8px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-session .nash-session-decision-head p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-decision .nash-session-confidence,
+.nash-session .nash-session-decision .nash-session-evidence {
+  padding: 0 0 32px;
+  border: 0;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+  border-radius: 0;
+  background: transparent;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence {
+  padding-top: 6px;
+  border-bottom: 0;
+}
+
+.nash-session .nash-session-decision .nash-session-confidence-item {
+  border: 0;
+  border-top: 1px solid var(--border, #e5e6ea);
+  border-radius: 0;
+  background: transparent;
+}
+
+.nash-session .nash-session-decision .nash-session-confidence-item:last-child {
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-session .nash-session-decision .nash-session-confidence-body > div {
+  padding: 8px 0;
+  background: transparent;
+}
+
+.nash-session .nash-session-decision .nash-session-confidence-change {
+  padding-left: 12px;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-list {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-item {
+  display: grid;
+  grid-template-columns: 140px minmax(140px, 0.65fr) 1.5fr;
+  gap: 16px;
+  align-items: start;
+  padding: 14px 0;
+  border: 0;
+  border-top: 1px solid var(--border, #e5e6ea);
+  border-radius: 0;
+  background: transparent;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-item:last-child {
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-meta {
+  margin: 0;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-item h3 {
+  margin: 2px 0 0;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-locator {
+  grid-column: 2;
+  margin: -10px 0 0;
+}
+
+.nash-session .nash-session-decision .nash-session-evidence-item p {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+@media (width < 700px) {
+  .nash-session .nash-session-decision {
+    padding: 24px 16px 40px;
+  }
+
+  .nash-session .nash-session-decision .nash-session-evidence-item {
+    display: block;
+  }
+
+  .nash-session .nash-session-decision .nash-session-evidence-item h3,
+  .nash-session .nash-session-decision .nash-session-evidence-locator,
+  .nash-session .nash-session-decision .nash-session-evidence-item p {
+    margin-top: 7px !important;
+  }
 }
