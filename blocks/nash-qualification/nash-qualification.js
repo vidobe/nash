@@ -63,6 +63,7 @@ export default async function decorate(block) {
     cms: payload.cms,
     context: payload.context || {},
     dimensions: payload.dimensions || [],
+    evidence: payload.evidence || [],
     reportMarkdown: payload.reportMarkdown || '',
     reportHtml,
     opp: payload.opp || {},

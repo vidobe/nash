@@ -472,7 +472,14 @@ function stripArchBlocks(src, tokenFor) {
   return out.join('\n');
 }
 
-function renderReportMarkdown(src, opts) {
+function evidenceMarkerHtml(id, evidence) {
+  const item = evidence.find((entry) => entry.id.toLowerCase() === id.toLowerCase());
+  if (!item) return `[[${escapeHtml(id)}]]`;
+  const label = [item.source, item.locator].filter(Boolean).join(', ');
+  return `<button type="button" class="nash-session-citation" data-evidence-ref="${escapeHtml(item.id)}" aria-label="View evidence ${escapeHtml(item.id)}${label ? `: ${escapeHtml(label)}` : ''}">${escapeHtml(item.id)}</button>`;
+}
+
+function renderReportMarkdown(src, opts = {}, evidence = []) {
   const diagrams = [];
   const tokenFor = (html) => {
     if (!html) return '';
@@ -486,6 +493,9 @@ function renderReportMarkdown(src, opts) {
   diagrams.forEach(({ tok, html: d }) => {
     html = html.split(`<p>${tok}</p>`).join(d).split(tok).join(d);
   });
+  if (evidence.length) {
+    html = html.replace(/\[\[([a-z0-9_-]+)\]\]/gi, (match, id) => evidenceMarkerHtml(id, evidence));
+  }
   return html;
 }
 
@@ -944,10 +954,10 @@ ${docLine}
 Begin your response with these machine-readable lines EXACTLY in this format (the tool parses them and strips them from display):
 NASH_META: score=<integer 0-100> | verdict=<Go|Conditional-Go|No-go> | cms=<detected current platform or n/a>
 NASH_DIMS:
-<dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
-<dimension name> | <weight %> | <scored> | <max> | <one-line rationale>
+<dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
+<dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
 NASH_DIMS_END
-Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Section 8 must explain this row's reasoning.
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Section 8 must explain this row's reasoning. Every dimension MUST reference at least one evidence ID from NASH_EVIDENCE.
 NASH_CONTEXT:
 objectives: <top business objective>; <objective>; <objective>
 challenges: <top pain or challenge>; <challenge>; <challenge>
@@ -956,6 +966,11 @@ success: <what success looks like for the customer in one or two sentences>
 use_cases: <primary use case>; <use case>; <use case>
 NASH_CONTEXT_END
 For NASH_CONTEXT, uncover the customer's business objectives and their pains/challenges FIRST from the attached document, then from public evidence; base tech_stack, success, and use_cases on the same. If something isn't stated, infer conservatively and keep it short. Then continue with the dossier.
+NASH_EVIDENCE:
+E1 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source title> | <page, section, topic, or URL> | <concise paraphrased evidence>
+E2 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source title> | <page, section, topic, or URL> | <concise paraphrased evidence>
+NASH_EVIDENCE_END
+Create a compact evidence register containing only evidence actually used in the assessment. Never invent a page, section, URL, or source title; use "Document-wide" when a precise location is unavailable. Prefer customer-document and analyst-context evidence for scoring. Use adobe-knowledge for scoring criteria and public-source for externally verified claims. Reference evidence inline as [[E1]] after key claims, especially red flags and the final recommendation. Each evidence ID must exist in NASH_EVIDENCE, and every NASH_DIMS evidence ID must also appear inline in the dossier where its reasoning is explained.
 
 Produce the report in markdown with EXACTLY these ten top-level sections and NO OTHERS. Use a single "# " heading only for these ten (keep the numbers); every sub-heading, risk, or topic inside a section MUST use "## " or "### " (or bold/bullets) — never a top-level "# " heading, or it will be mistaken for a new section:
 # 1. Executive Overview
@@ -1015,7 +1030,7 @@ function reportHtmlForPublish(a) {
     header += `<p><strong>Fit score:</strong> ${a.score} / 100 — ${escapeHtml(label)}${platform}</p>`;
   }
   let body = '';
-  if (a.reportMarkdown) body = renderReportMarkdown(a.reportMarkdown, { headings: 'real' });
+  if (a.reportMarkdown) body = renderReportMarkdown(a.reportMarkdown, { headings: 'real' }, a.evidence || []);
   else if (a.report) body = reportPanel(a.report, a.company);
   else if (a.reportHtml) body = a.reportHtml;
   return header + body;
@@ -1226,11 +1241,47 @@ function scorecardCards(dims, availableLabels) {
       <div class="nash-session-sc-score">${d.scored}<span> / ${d.max}</span></div>
       <div class="nash-session-sc-bar"><div style="width:${pct}%;background:${dimColor(pct)}"></div></div>
       ${d.notes ? `<p>${escapeHtml(d.notes)}</p>` : ''}
+      ${d.evidenceRefs?.length ? `<div class="nash-session-sc-evidence" aria-label="Supporting evidence">${d.evidenceRefs.map((id) => `<span>${escapeHtml(id)}</span>`).join('')}</div>` : ''}
       ${linked ? `<span class="nash-session-sc-link">See ${escapeHtml(target)} &rarr;</span>` : ''}`;
     return linked
       ? `<button type="button" class="nash-session-sc-card is-linked" data-qsection="${escapeHtml(target)}">${inner}</button>`
       : `<div class="nash-session-sc-card">${inner}</div>`;
   }).join('')}</div>`;
+}
+
+const EVIDENCE_TYPE_LABELS = {
+  'customer-document': 'Customer document',
+  'analyst-context': 'Analyst context',
+  'adobe-knowledge': 'Adobe knowledge',
+  'public-source': 'Public source',
+};
+
+function evidencePanelHtml(evidence) {
+  if (!Array.isArray(evidence) || !evidence.length) return '';
+  return `<section class="nash-session-evidence" aria-label="Evidence used">
+    <div class="nash-session-evidence-head">
+      <div>
+        <span class="nash-session-evidence-eyebrow">Traceable assessment</span>
+        <h2>Evidence used</h2>
+      </div>
+      <span class="nash-session-evidence-count">${evidence.length} ${evidence.length === 1 ? 'source' : 'sources'}</span>
+    </div>
+    <div class="nash-session-evidence-list">${evidence.map((item) => {
+    const type = EVIDENCE_TYPE_LABELS[item.type] || 'Supporting evidence';
+    const locator = /^https?:\/\//i.test(item.locator)
+      ? `<a href="${escapeHtml(item.locator)}" target="_blank" rel="noopener">Open source</a>`
+      : escapeHtml(item.locator);
+    return `<article class="nash-session-evidence-item" data-evidence-id="${escapeHtml(item.id)}" tabindex="-1">
+        <div class="nash-session-evidence-meta">
+          <span class="nash-session-evidence-id">${escapeHtml(item.id)}</span>
+          <span class="nash-session-evidence-type">${escapeHtml(type)}</span>
+        </div>
+        <h3>${escapeHtml(item.source)}</h3>
+        ${locator ? `<div class="nash-session-evidence-locator">${locator}</div>` : ''}
+        <p>${escapeHtml(item.claim)}</p>
+      </article>`;
+  }).join('')}</div>
+  </section>`;
 }
 
 /* Rich, tabbed preview of the DA document — shown inside the assessment. */
@@ -1250,7 +1301,7 @@ function daPreviewHtml(a) {
     ${i === 0 ? scorecardCards(a.dimensions, sectionLabels) : ''}
     <div class="nash-session-qcard">
       <h3 class="nash-session-qpanel-title">${escapeHtml(s.title)}</h3>
-      <div class="nash-md">${renderReportMarkdown(s.md)}</div>
+      <div class="nash-md">${renderReportMarkdown(s.md, {}, a.evidence || [])}</div>
     </div>
   </div>`).join('');
   return `<div class="nash-session-qual">
@@ -1265,6 +1316,7 @@ function daPreviewHtml(a) {
         <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
       </div>` : ''}
     </div>
+    ${evidencePanelHtml(a.evidence)}
     <div class="nash-session-qual-layout">
       <nav class="nash-session-qual-nav">${nav}</nav>
       <div class="nash-session-qual-panels">${panels}</div>
@@ -1316,6 +1368,7 @@ function wireDaPanel(block) {
       tab?.click();
     });
   });
+  wireEvidence(panel);
 }
 
 function renderDaPanelContent(block) {
@@ -1760,12 +1813,9 @@ async function generateSalesBrief(block) {
 /* Pull the NASH_META header out of a dossier; returns { meta, body }. */
 function parseMeta(text) {
   const m = text.match(/NASH_META:\s*score=(\d+)\s*\|\s*verdict=([^|]+?)\s*\|\s*cms=([^\n]*)/i);
-  if (!m) {
-    return {
-      meta: null, body: text, dimensions: [], context: {},
-    };
-  }
-  const meta = { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() };
+  const meta = m
+    ? { score: parseInt(m[1], 10), verdict: m[2].trim(), cms: m[3].trim() }
+    : null;
 
   // Optional structured scorecard between NASH_DIMS: and NASH_DIMS_END.
   const dimensions = [];
@@ -1780,6 +1830,7 @@ function parseMeta(text) {
           scored: parseInt(parts[2], 10) || 0,
           max: parseInt(parts[3], 10) || 0,
           notes: parts[4] || '',
+          evidenceRefs: (parts[5] || '').split(',').map((id) => id.trim()).filter(Boolean),
         });
       }
     });
@@ -1795,14 +1846,48 @@ function parseMeta(text) {
     });
   }
 
+  const evidence = [];
+  const eblock = text.match(/NASH_EVIDENCE:\s*([\s\S]*?)NASH_EVIDENCE_END/i);
+  if (eblock) {
+    eblock[1].split('\n').forEach((line) => {
+      const parts = line.split('|').map((part) => part.trim());
+      const id = parts[0] || '';
+      if (/^[a-z0-9_-]+$/i.test(id) && parts.length >= 5) {
+        evidence.push({
+          id,
+          type: parts[1].toLowerCase(),
+          source: parts[2],
+          locator: parts[3],
+          claim: parts.slice(4).join(' | '),
+        });
+      }
+    });
+  }
+
   const body = text
     .replace(/NASH_META:[^\n]*\n?/i, '')
     .replace(/NASH_DIMS:[\s\S]*?NASH_DIMS_END\n?/i, '')
     .replace(/NASH_CONTEXT:[\s\S]*?NASH_CONTEXT_END\n?/i, '')
+    .replace(/NASH_EVIDENCE:[\s\S]*?NASH_EVIDENCE_END\n?/i, '')
     .trimStart();
   return {
-    meta, body, dimensions, context,
+    meta, body, dimensions, context, evidence,
   };
+}
+
+function wireEvidence(root) {
+  root?.querySelectorAll('[data-evidence-ref]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const scope = trigger.closest('.nash-session-panel') || root;
+      const target = [...scope.querySelectorAll('[data-evidence-id]')]
+        .find((item) => item.dataset.evidenceId === trigger.dataset.evidenceRef);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.focus({ preventScroll: true });
+      target.classList.add('is-highlighted');
+      window.setTimeout(() => target.classList.remove('is-highlighted'), 1600);
+    });
+  });
 }
 
 /* Renders a completed dossier: score/verdict header + markdown body. */
@@ -1818,8 +1903,10 @@ function renderDossier(a) {
   }
   // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a
   // published page reconstructed without the original markdown).
-  const body = a.reportMarkdown ? renderReportMarkdown(a.reportMarkdown) : (a.reportHtml || '');
-  return `<div class="nash-session-report nash-md">${head}${body}</div>`;
+  const body = a.reportMarkdown
+    ? renderReportMarkdown(a.reportMarkdown, {}, a.evidence || [])
+    : (a.reportHtml || '');
+  return `<div class="nash-session-report nash-md">${head}${evidencePanelHtml(a.evidence)}${body}</div>`;
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -2153,7 +2240,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
         return;
       }
       const {
-        meta, body, dimensions, context,
+        meta, body, dimensions, context, evidence,
       } = parseMeta(answer);
       current.reportMarkdown = body;
       // Version the report so the publish button can tell when the published
@@ -2163,6 +2250,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       current.notesSinceRun = false;
       if (dimensions.length) current.dimensions = dimensions;
       if (context && Object.keys(context).length) current.context = context;
+      current.evidence = evidence;
       if (meta) {
         current.score = meta.score;
         current.verdict = meta.verdict;
@@ -2179,6 +2267,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       delete current.runStartedAt;
       isRunning = false;
       area.innerHTML = renderDossier(current);
+      wireEvidence(area);
       persist(current);
       setStatusDone(block);
       renderRerunState(block);
@@ -2260,6 +2349,7 @@ export function renderAssessment(block, a, autoRun = false) {
     t.addEventListener('click', () => switchTab(block, t.dataset.tab));
   });
   wireDaPanel(block);
+  wireEvidence(block.querySelector('.nash-session-panel[data-panel="assessment"]'));
   renderBelowBar(block);
   renderRerunState(block);
   wireOppPanel(block, current, (data) => { current.opp = data; persist(current); }, getUserInfo()?.name || '');
