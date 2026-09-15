@@ -972,7 +972,7 @@ NASH_EVIDENCE:
 E1 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source title> | <page, section, topic, or URL> | <concise paraphrased evidence>
 E2 | <customer-document|analyst-context|adobe-knowledge|public-source> | <source title> | <page, section, topic, or URL> | <concise paraphrased evidence>
 NASH_EVIDENCE_END
-Create a compact evidence register containing only evidence actually used in the assessment. Never invent a page, section, URL, or source title; use "Document-wide" when a precise location is unavailable. Prefer customer-document and analyst-context evidence for scoring. Use adobe-knowledge for scoring criteria and public-source for externally verified claims. Reference evidence inline as [[E1]] after key claims, especially red flags and the final recommendation. Each evidence ID must exist in NASH_EVIDENCE, and every NASH_DIMS evidence ID must also appear inline in the dossier where its reasoning is explained.
+Create a compact evidence register containing only evidence actually used in the assessment. Never invent a page, section, URL, or source title; use "Document-wide" when a precise location is unavailable. Prefer customer-document and analyst-context evidence for scoring. Use adobe-knowledge for scoring criteria and public-source for externally verified claims. EVERY public link cited anywhere in the dossier must have a matching public-source row whose locator is the exact URL. Reference evidence inline as [[E1]] after key claims, especially red flags and the final recommendation. Each evidence ID must exist in NASH_EVIDENCE, and every NASH_DIMS evidence ID must also appear inline in the dossier where its reasoning is explained.
 NASH_CONFIDENCE:
 <exact dimension name> | <High|Medium|Low> | <plausible score swing, e.g. ±3> | <fact evidence IDs, comma-separated> | <key assumption or none> | <critical unknown or none> | <specific validation that would change the score>
 NASH_CONFIDENCE_END
@@ -1953,6 +1953,32 @@ function parseMeta(text) {
       }
     });
   }
+
+  const knownUrls = new Set(evidence
+    .filter((item) => /^https?:\/\//i.test(item.locator))
+    .map((item) => item.locator));
+  const knownIds = new Set(evidence.map((item) => item.id.toLowerCase()));
+  let publicIndex = 1;
+  [...text.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g)].forEach((match) => {
+    const source = match[1].trim();
+    const locator = match[2].trim();
+    if (knownUrls.has(locator)) return;
+    let id = `P${publicIndex}`;
+    while (knownIds.has(id.toLowerCase())) {
+      publicIndex += 1;
+      id = `P${publicIndex}`;
+    }
+    evidence.push({
+      id,
+      type: 'public-source',
+      source,
+      locator,
+      claim: 'Public reference cited in the assessment.',
+    });
+    knownUrls.add(locator);
+    knownIds.add(id.toLowerCase());
+    publicIndex += 1;
+  });
 
   const confidence = [];
   const confBlock = text.match(/NASH_CONFIDENCE:\s*([\s\S]*?)NASH_CONFIDENCE_END/i);
