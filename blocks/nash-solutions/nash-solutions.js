@@ -71,6 +71,50 @@ const SOLUTION_PILLARS = {
   'developer-app-builder': 'developer',
 };
 
+const SOLUTION_TILES = {
+  advertising: ['Ad', 1],
+  'brand-concierge': ['Bc', 2],
+  llmo: ['Bv', 3],
+  commerce: ['Co', 4],
+  'commerce-optimizer': ['Cm', 5],
+  'aem-forms': ['Fm', 6],
+  'aem-guides': ['Gd', 7],
+  aem: ['Si', 8],
+  'sites-optimizer': ['So', 9],
+  analytics: ['An', 12],
+  'audience-manager': ['Am', 13],
+  campaign: ['Ca', 14],
+  'content-analytics': ['Cn', 15],
+  cja: ['Cj', 16],
+  'experience-platform': ['Ep', 17],
+  'journey-optimizer': ['Jo', 18],
+  'journey-optimizer-b2b': ['Jb', 19],
+  'experimentation-accelerator': ['Ea', 20],
+  'marketing-campaign-analytics': ['Mc', 21],
+  marketo: ['Me', 22],
+  'marketo-measure': ['Mm', 23],
+  'marketo-optimizer': ['Mo', 24],
+  'marketo-qualifier': ['Mq', 25],
+  rtcdp: ['Rt', 26],
+  target: ['Ta', 27],
+  'aem-assets': ['As', 28],
+  'adobe-express': ['Ex', 29],
+  'firefly-creative-production': ['Fp', 30],
+  'firefly-custom-models': ['Fc', 31],
+  'firefly-foundry': ['Ff', 33],
+  'firefly-graph': ['Fg', 34],
+  'firefly-services': ['Fs', 35],
+  'frame-io': ['Fr', 36],
+  'learning-manager': ['Lm', 40],
+  'substance-3d': ['Sb', 41],
+  workfront: ['Wf', 42],
+};
+
+function fallbackSymbol(title) {
+  const words = title.replace(/^Adobe\s+/i, '').split(/[^a-z0-9]+/i).filter(Boolean);
+  return words.slice(0, 2).map((word) => word.charAt(0)).join('').slice(0, 2) || '?';
+}
+
 function statusIcon(status) {
   const normalized = (status || '').toLowerCase().replace(/[\s_-]+/g, '');
   if (normalized === 'beta') {
@@ -86,17 +130,16 @@ function buildCard(sol) {
   const card = document.createElement('a');
   card.className = 'nash-solutions-card';
   card.href = sol.path || '#';
+  const [symbol, number] = SOLUTION_TILES[sol.slug] || [fallbackSymbol(sol.title), 0];
+  const shortTitle = sol.title.replace(/^Adobe\s+/i, '');
 
   card.innerHTML = `
-    <div class="nash-solutions-logo" aria-hidden="true">${sol.logo || sol.title.charAt(0)}</div>
-    <div class="nash-solutions-card-body">
-      <div class="nash-solutions-card-title">
-        <h3 class="nash-solutions-title">${sol.title}</h3>
-        ${statusIcon(sol.status)}
-      </div>
-      <span class="nash-solutions-stat">${sol.signalcount || '0'} qualification signals</span>
-    </div>
-    <span class="nash-solutions-arrow" aria-hidden="true">→</span>
+    <span class="nash-solutions-card-top">
+      <span class="nash-solutions-number">${String(number).padStart(3, '0')}</span>
+      ${statusIcon(sol.status)}
+    </span>
+    <strong class="nash-solutions-symbol">${symbol}</strong>
+    <span class="nash-solutions-title">${shortTitle}</span>
   `;
 
   return card;
@@ -117,11 +160,8 @@ export default async function decorate(block) {
             path: row.path,
             slug,
             title: (row.title || '').replace(/\s*\|.*$/, '').trim() || slug,
-            description: row.description || '',
             status: row.status || 'active',
             signalcount: row.signalcount || '0',
-            productcount: row.productcount || '0',
-            logo: row.logo || '',
             pillar: row.pillar || SOLUTION_PILLARS[slug] || '',
           };
         });
