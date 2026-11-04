@@ -47,6 +47,7 @@ const SOLUTION_PILLARS = {
   commerce: 'brand-visibility',
   'commerce-optimizer': 'brand-visibility',
   llmo: 'brand-visibility',
+  'llm-apps': 'brand-visibility',
   'sites-optimizer': 'brand-visibility',
   analytics: 'customer-engagement',
   'audience-manager': 'customer-engagement',
@@ -78,6 +79,7 @@ const SOLUTION_PILLARS = {
   'agent-orchestrator': 'ai-orchestration',
   'brand-intelligence': 'ai-orchestration',
   'cx-enterprise-coworker': 'ai-orchestration',
+  'engagement-intelligence': 'ai-orchestration',
   'developer-app-builder': 'developer',
 };
 
@@ -91,6 +93,7 @@ const SOLUTION_TILES = {
   'aem-guides': ['Gd', 7],
   aem: ['Si', 8],
   'sites-optimizer': ['So', 9],
+  'llm-apps': ['La', 10],
   analytics: ['An', 12],
   'audience-manager': ['Am', 13],
   campaign: ['Ca', 14],
@@ -118,6 +121,10 @@ const SOLUTION_TILES = {
   'learning-manager': ['Lm', 40],
   'substance-3d': ['Sb', 41],
   workfront: ['Wf', 42],
+  'brand-intelligence': ['Bi', 43],
+  'cx-enterprise-coworker': ['Cw', 44],
+  'engagement-intelligence': ['Ei', 45],
+  'agent-orchestrator': ['Ao', 46],
 };
 
 function fallbackSymbol(title) {
