@@ -25,7 +25,41 @@
   max-width: 520px;
 }
 
-/* Grid */
+.nash-solutions .nash-solutions-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+}
+
+.nash-solutions .nash-solutions-group-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.nash-solutions .nash-solutions-group-title {
+  margin: 0 0 4px;
+  color: var(--ink, #111318);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.nash-solutions .nash-solutions-group-description {
+  max-width: 700px;
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.nash-solutions .nash-solutions-group-count {
+  flex-shrink: 0;
+  color: var(--ink-40, #9a9da6);
+  font-size: 12px;
+}
+
 .nash-solutions .nash-solutions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -37,18 +71,19 @@
   display: flex;
   flex-direction: column;
   background: var(--white, #fff);
-  border: 1px solid var(--border, #e5e6ea);
+  border: 1px solid transparent;
   border-radius: 10px;
   padding: 20px;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   cursor: pointer;
 }
 
 .nash-solutions .nash-solutions-card:hover {
-  border-color: var(--red, #eb1000);
-  box-shadow: 0 2px 12px rgb(0 0 0 / 7%);
+  border-color: var(--border, #e5e6ea);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 6%);
+  transform: translateY(-1px);
 }
 
 .nash-solutions .nash-solutions-card-header {
@@ -113,7 +148,23 @@
   gap: 14px;
   padding-top: 14px;
   margin-top: 14px;
-  border-top: 1px solid var(--border, #e5e6ea);
+  border-top: 1px solid var(--ink-08, #f4f4f6);
+}
+
+@media (width < 600px) {
+  .nash-solutions {
+    padding: 24px 20px;
+  }
+
+  .nash-solutions .nash-solutions-groups {
+    gap: 34px;
+  }
+
+  .nash-solutions .nash-solutions-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
 }
 
 .nash-solutions .nash-solutions-stat {

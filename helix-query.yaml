@@ -60,6 +60,9 @@ indices:
       productcount:
         select: head > meta[name="productcount"]
         value: attribute(el, "content")
+      pillar:
+        select: head > meta[name="pillar"]
+        value: attribute(el, "content")
     target: /solutions/query.json
   config:
     include:
