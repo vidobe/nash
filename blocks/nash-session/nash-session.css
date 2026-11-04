@@ -861,11 +861,32 @@
 }
 
 .nash-session .nash-session-panel[data-panel='da'].active,
+.nash-session .nash-session-panel[data-panel='experiment'].active,
 .nash-session .nash-session-panel[data-panel='decision'].active,
 .nash-session .nash-session-panel[data-panel='opp'].active,
 .nash-session .nash-session-panel[data-panel='sales'].active,
 .nash-session .nash-session-panel[data-panel='postsales'].active {
   overflow-y: auto;
+}
+
+.nash-session .nash-session-experiment-note {
+  width: fit-content;
+  margin: 4px 0 16px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f3efff;
+  color: #5b3fa3;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.nash-session .nash-session-experiment-empty {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  color: var(--ink-40, #9a9da6);
+  font-size: 14px;
 }
 
 /* Architecture diagram (Spectrum 2-styled, rendered from a NASH_ARCH block). */

@@ -42,11 +42,17 @@ const ICONS = {
   briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
   sales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
   postsales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>',
+  experiment: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10 3v6.2l-5.3 8.6A2.1 2.1 0 0 0 6.5 21h11a2.1 2.1 0 0 0 1.8-3.2L14 9.2V3"/><path d="M8 15h8"/></svg>',
   plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
 
+const EXPERIMENT_USER_EMAIL = 'vgabriel@adobe.com';
+
 const TABS = [
   { tab: 'assessment', icon: 'clipboard', label: 'Assessment' },
+  {
+    tab: 'experiment', icon: 'experiment', label: 'Experimental report', experiment: true,
+  },
   { tab: 'decision', icon: 'quality', label: 'Decision quality' },
   { tab: 'da', icon: 'cloud', label: 'DA content' },
   { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
@@ -54,6 +60,14 @@ const TABS = [
   { tab: 'sales', icon: 'sales', label: 'Sales content' },
   { tab: 'postsales', icon: 'postsales', label: 'Post-sales content' },
 ];
+
+function canViewReportExperiment() {
+  return getUserInfo()?.email?.trim().toLowerCase() === EXPERIMENT_USER_EMAIL;
+}
+
+function visibleTabs() {
+  return TABS.filter((tab) => !tab.experiment || canViewReportExperiment());
+}
 
 const SETUP_PROGRESS_MESSAGES = [
   'Reading the fine print so you do not have to…',
@@ -2328,23 +2342,53 @@ function wireResultTabs(root) {
   });
 }
 
-/* Renders a completed dossier as five concise result views. */
-function renderDossier(a) {
-  let head = '';
-  if (typeof a.score === 'number') {
-    const v = verdictFor(a.score);
-    head = `<div class="nash-session-report-top">
-      <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
-      <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
-      ${solutionsLabel(a) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(a))}</span>` : ''}
-    </div>`;
-  }
-  // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a
-  // published page reconstructed without the original markdown).
-  const body = a.reportMarkdown
+function dossierHeader(a) {
+  if (typeof a.score !== 'number') return '';
+  const v = verdictFor(a.score);
+  return `<div class="nash-session-report-top">
+    <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
+    <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
+    ${solutionsLabel(a) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(a))}</span>` : ''}
+  </div>`;
+}
+
+function dossierBody(a) {
+  return a.reportMarkdown
     ? renderReportMarkdown(a.reportMarkdown, {}, a.evidence || [])
     : (a.reportHtml || '');
-  return `<div class="nash-session-report nash-md">${resultTabsHtml(a, head, body)}</div>`;
+}
+
+/* The stable assessment keeps the original continuous report format. */
+function renderDossier(a) {
+  return `<div class="nash-session-report nash-md">${dossierHeader(a)}${dossierBody(a)}</div>`;
+}
+
+/* The five-view experiment is exposed only through Vitor's private lab tab. */
+function renderExperimentalDossier(a) {
+  const body = dossierBody(a);
+  if (!body) {
+    if (a.report) {
+      return `<div class="nash-session-experiment-note" role="note">Experimental report format · visible only to you</div>
+        ${reportPanel(a.report, a.company)}`;
+    }
+    return '<div class="nash-session-experiment-empty"><p>Run the assessment first to test the experimental report format.</p></div>';
+  }
+  return `<div class="nash-session-experiment-note" role="note">Experimental report format · visible only to you</div>
+    <div class="nash-session-report nash-md">${resultTabsHtml(a, dossierHeader(a), body)}</div>`;
+}
+
+function refreshExperimentPanel(block) {
+  const experiment = block.querySelector('.nash-session-experiment');
+  if (!experiment) return;
+  experiment.innerHTML = renderExperimentalDossier(current);
+  wireResultTabs(experiment);
+  wireEvidence(experiment);
+}
+
+function showExperimentRunning(block) {
+  const experiment = block.querySelector('.nash-session-experiment');
+  if (!experiment) return;
+  experiment.innerHTML = '<div class="nash-session-experiment-empty"><p>The experimental view will refresh when this assessment finishes.</p></div>';
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -2626,6 +2670,7 @@ function interviewText(a) {
 
 async function runAssessment(block, attempt = 1, insights = '') {
   const area = block.querySelector('.nash-session-report-area');
+  showExperimentRunning(block);
 
   // Not connected to FluffyJaws → simulated structured report.
   if (!isAuthenticated()) {
@@ -2635,6 +2680,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       current.status = 'done';
       persist(current);
       area.innerHTML = reportPanel(current.report, current.company);
+      refreshExperimentPanel(block);
       setSetupAvailability(block, false);
       setStatusDone(block);
     }, 1100);
@@ -2723,6 +2769,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     current.status = 'draft';
     delete current.runStartedAt;
     persist(current);
+    refreshExperimentPanel(block);
     setSetupAvailability(block, false);
     if (inThread) { host.innerHTML = renderMarkdown(msg); scroll(); return; }
     area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
@@ -2798,8 +2845,8 @@ async function runAssessment(block, attempt = 1, insights = '') {
       delete current.runStartedAt;
       isRunning = false;
       area.innerHTML = renderDossier(current);
-      wireResultTabs(area);
       wireEvidence(area);
+      refreshExperimentPanel(block);
       persist(current);
       setSetupAvailability(block, false);
       setStatusDone(block);
@@ -2829,6 +2876,10 @@ export function renderAssessment(block, a, autoRun = false) {
     a.dr ? `DR ${escapeHtml(a.dr)}` : '',
     a.fileName ? escapeHtml(a.fileName) : '',
   ].filter(Boolean).join(' · ');
+  const tabs = visibleTabs();
+  const experimentPanel = canViewReportExperiment()
+    ? `<div class="nash-session-panel nash-session-experiment" data-panel="experiment">${renderExperimentalDossier(a)}</div>`
+    : '';
 
   block.innerHTML = `
     <div class="nash-session-assess">
@@ -2838,7 +2889,7 @@ export function renderAssessment(block, a, autoRun = false) {
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
         <div class="nash-session-tabs" role="tablist">
-          ${TABS.map((t, i) => `
+          ${tabs.map((t, i) => `
             <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
               ${ICONS[t.icon]}
             </button>`).join('')}
@@ -2871,6 +2922,7 @@ export function renderAssessment(block, a, autoRun = false) {
             <p class="nash-session-disclaimer">AI generated answers · FluffyJaws can make mistakes. Please verify important information.</p>
           </div>
         </div>
+        ${experimentPanel}
         <div class="nash-session-panel" data-panel="decision">${decisionQualityHtml(a)}</div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">${constructionNote()}${renderOppPanel(a, getUserInfo()?.name || '')}</div>
@@ -2884,7 +2936,8 @@ export function renderAssessment(block, a, autoRun = false) {
     t.addEventListener('click', () => switchTab(block, t.dataset.tab));
   });
   wireDaPanel(block);
-  wireResultTabs(block.querySelector('.nash-session-report-area'));
+  wireResultTabs(block.querySelector('.nash-session-experiment'));
+  wireEvidence(block.querySelector('.nash-session-experiment'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="decision"]'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="assessment"]'));
   renderBelowBar(block);
