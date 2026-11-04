@@ -684,10 +684,11 @@ function startProductPixelAnimation(host, solutions) {
 
   const fitFont = (label) => {
     let size = 48;
-    mask.font = `600 ${size}px "DM Sans", system-ui, sans-serif`;
+    mask.font = `800 ${size}px adobe-clean, system-ui, sans-serif`;
+    mask.letterSpacing = '-1px';
     while (mask.measureText(label).width > width - 48 && size > 22) {
       size -= 2;
-      mask.font = `600 ${size}px "DM Sans", system-ui, sans-serif`;
+      mask.font = `800 ${size}px adobe-clean, system-ui, sans-serif`;
     }
     return size;
   };
@@ -697,13 +698,14 @@ function startProductPixelAnimation(host, solutions) {
     if (accessibleName) accessibleName.textContent = label;
     mask.clearRect(0, 0, width, height);
     const fontSize = fitFont(label);
-    mask.font = `600 ${fontSize}px "DM Sans", system-ui, sans-serif`;
+    mask.font = `800 ${fontSize}px adobe-clean, system-ui, sans-serif`;
+    mask.letterSpacing = '-1px';
     mask.textAlign = 'center';
     mask.textBaseline = 'middle';
     mask.fillStyle = '#fff';
     mask.fillText(label, width / 2, height / 2);
     const pixels = mask.getImageData(0, 0, width, height).data;
-    const step = fontSize < 30 ? 3 : 4;
+    const step = 3;
     particles = [];
     for (let y = 8; y < height - 8; y += step) {
       for (let x = 12; x < width - 12; x += step) {
@@ -715,7 +717,8 @@ function startProductPixelAnimation(host, solutions) {
             y: height / 2 - 70 - Math.random() * 55,
             drift: (Math.random() - 0.5) * 95,
             delay: Math.random() * 0.12,
-            size: Math.max(2, step - 1),
+            fallDelay: Math.random() * 0.045,
+            size: 2.4,
           });
         }
       }
@@ -726,7 +729,8 @@ function startProductPixelAnimation(host, solutions) {
     const { label } = items[itemIndex];
     context.clearRect(0, 0, width, height);
     const fontSize = fitFont(label);
-    context.font = `600 ${fontSize}px "DM Sans", system-ui, sans-serif`;
+    context.font = `800 ${fontSize}px adobe-clean, system-ui, sans-serif`;
+    context.letterSpacing = '-1px';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillStyle = currentColor();
@@ -743,9 +747,10 @@ function startProductPixelAnimation(host, solutions) {
     return () => window.clearInterval(reducedTimer);
   }
 
-  const easeOut = (value) => 1 - ((1 - value) ** 3);
   const clamp = (value) => Math.max(0, Math.min(1, value));
-  const cycleMs = 3600;
+  const smooth = (value) => value ** 3 * (value * (value * 6 - 15) + 10);
+  const easeOut = (value) => 1 - ((1 - value) ** 4);
+  const cycleMs = 5200;
 
   const draw = (now) => {
     if (!canvas.isConnected) return;
@@ -762,17 +767,20 @@ function startProductPixelAnimation(host, solutions) {
       let x = particle.tx;
       let y = particle.ty;
       let alpha = 1;
-      if (progress < 0.28) {
-        const formed = easeOut(clamp((progress - particle.delay) / 0.2));
+      if (progress < 0.3) {
+        const formed = easeOut(clamp((progress - particle.delay) / 0.22));
         x = particle.x + (particle.tx - particle.x) * formed;
         y = particle.y + (particle.ty - particle.y) * formed;
         alpha = formed;
-      } else if (progress > 0.62) {
-        const falling = clamp((progress - 0.62) / 0.38);
+      } else if (progress > 0.64) {
+        const falling = smooth(clamp(
+          (progress - 0.64 - particle.fallDelay) / 0.315,
+        ));
         x = particle.tx + particle.drift * falling
-          + Math.sin((particle.ty + falling * 30) * 0.08) * 4;
-        y = particle.ty + (falling ** 2) * 125;
-        alpha = 1 - (falling ** 1.4);
+          + Math.sin((particle.ty + falling * 40) * 0.08) * 4 * falling;
+        y = particle.ty + (falling ** 2) * 120;
+        const edgeFade = clamp((height - 5 - y) / 35);
+        alpha = ((1 - falling) ** 2.4) * smooth(edgeFade);
       }
       context.globalAlpha = alpha;
       context.fillRect(x, y, particle.size, particle.size);

@@ -449,6 +449,7 @@
   display: block;
   width: 100%;
   height: 132px;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 76%, transparent 100%);
 }
 
 .nash-session .nash-session-visually-hidden {
