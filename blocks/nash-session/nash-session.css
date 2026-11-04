@@ -446,26 +446,62 @@
   letter-spacing: -0.035em;
 }
 
-.nash-session .nash-session-progress-track {
-  width: min(420px, 80%);
-  height: 3px;
-  margin: 22px 0 12px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--ink-15, #e8e9ec);
-}
-
-.nash-session .nash-session-progress-track span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #ff6fb0, #a78bfa, #5b9dff);
-}
-
 .nash-session .nash-session-progress-message {
-  margin: 0;
+  margin: 10px 0 0;
   color: var(--ink-40, #9a9da6);
   font-size: 13px;
+}
+
+.nash-session .nash-session-evidence-steps {
+  width: min(540px, 100%);
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.nash-session .nash-session-evidence-step {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  color: var(--ink-40, #9a9da6);
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-evidence-step:last-child {
+  border-bottom: 0;
+}
+
+.nash-session .nash-session-evidence-dot {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+.nash-session .nash-session-evidence-step.done,
+.nash-session .nash-session-evidence-step.current {
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-evidence-step.done .nash-session-evidence-dot {
+  border-color: color-mix(in srgb, var(--green, #0d7a45) 35%, transparent);
+  background: color-mix(in srgb, var(--green, #0d7a45) 12%, transparent);
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-session-evidence-step.current .nash-session-evidence-dot {
+  border-color: color-mix(in srgb, var(--red, #eb1000) 35%, transparent);
+  background: color-mix(in srgb, var(--red, #eb1000) 10%, transparent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--red, #eb1000) 5%, transparent);
+}
+
+.nash-session .nash-session-evidence-state {
+  color: var(--ink-40, #9a9da6);
+  font-size: 11px;
 }
 
 .nash-session .nash-session-setup-review {
@@ -3019,6 +3055,15 @@
 .nash-session .nash-session-running {
   margin-top: 8px;
   text-align: center;
+}
+
+.nash-session .nash-session-running .nash-session-working {
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.nash-session .nash-session-running .nash-session-evidence-steps {
+  margin-bottom: 24px;
 }
 
 .nash-session .nash-session-working {

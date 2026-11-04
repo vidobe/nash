@@ -633,11 +633,62 @@ function renderIntake() {
     </form>`;
 }
 
+const SETUP_EVIDENCE_STEPS = [
+  'Customer documents loaded',
+  'Objectives and requirements identified',
+  'Likely Adobe solutions mapped',
+  'Summary and questions prepared',
+];
+
+const ASSESSMENT_EVIDENCE_STEPS = [
+  'Customer evidence collected',
+  'Requirements mapped to Adobe',
+  'Testing fit and competitive position',
+  'Preparing the recommendation',
+];
+
+function evidenceStepsHtml(steps, activeIndex = 0) {
+  return `<div class="nash-session-evidence-steps">
+    ${steps.map((step, index) => {
+    let state = '';
+    let stateLabel = 'Next';
+    if (index < activeIndex) {
+      state = 'done';
+      stateLabel = 'Done';
+    } else if (index === activeIndex) {
+      state = 'current';
+      stateLabel = 'Working';
+    }
+    return `<div class="nash-session-evidence-step ${state}" data-step="${index}">
+        <span class="nash-session-evidence-dot">${index < activeIndex ? '✓' : ''}</span>
+        <span>${escapeHtml(step)}</span>
+        <span class="nash-session-evidence-state">${stateLabel}</span>
+      </div>`;
+  }).join('')}
+  </div>`;
+}
+
+function setEvidenceStep(host, activeIndex) {
+  const steps = [...host.querySelectorAll('.nash-session-evidence-step')];
+  steps.forEach((step, index) => {
+    step.classList.toggle('done', index < activeIndex);
+    step.classList.toggle('current', index === activeIndex);
+    const dot = step.querySelector('.nash-session-evidence-dot');
+    const state = step.querySelector('.nash-session-evidence-state');
+    if (dot) dot.textContent = index < activeIndex ? '✓' : '';
+    if (state) {
+      state.textContent = 'Next';
+      if (index < activeIndex) state.textContent = 'Done';
+      else if (index === activeIndex) state.textContent = 'Working';
+    }
+  });
+}
+
 function setupProgressHtml() {
   return `<div class="nash-session-setup-progress" aria-live="polite">
       <p class="nash-session-progress-title">Reviewing the opportunity</p>
-      <div class="nash-session-progress-track"><span></span></div>
       <p class="nash-session-progress-message">${SETUP_PROGRESS_MESSAGES[0]}</p>
+      ${evidenceStepsHtml(SETUP_EVIDENCE_STEPS)}
     </div>`;
 }
 
@@ -645,12 +696,16 @@ function startSetupAnimation(host) {
   const message = host.querySelector('.nash-session-progress-message');
   let step = 0;
   const timer = window.setInterval(() => {
-    step += 1;
+    step = Math.min(step + 1, SETUP_EVIDENCE_STEPS.length - 2);
+    setEvidenceStep(host, step);
     if (message) {
       message.textContent = SETUP_PROGRESS_MESSAGES[step % SETUP_PROGRESS_MESSAGES.length];
     }
-  }, 1800);
-  return () => window.clearInterval(timer);
+  }, 2400);
+  return () => {
+    window.clearInterval(timer);
+    setEvidenceStep(host, SETUP_EVIDENCE_STEPS.length);
+  };
 }
 
 function parseJsonObject(text) {
@@ -2603,9 +2658,11 @@ async function runAssessment(block, attempt = 1, insights = '') {
   else if (attempt > 1) phase = 'Retrying';
   const runningHTML = `
     <div class="nash-session-running">
+      <p class="nash-session-progress-title">Building your recommendation</p>
       <div class="nash-session-working">
         <span class="nash-session-working-label">${phase} — this can take several minutes…</span>
       </div>
+      ${evidenceStepsHtml(ASSESSMENT_EVIDENCE_STEPS, 1)}
       <div class="nash-session-stream"></div>
     </div>`;
 
@@ -2619,6 +2676,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   const label = host.querySelector('.nash-session-working-label');
 
   const skills = await fetchSkillsText(sols.map((s) => s.slug));
+  setEvidenceStep(host, 2);
   // FluffyJaws chains an Azure response per tool iteration; long loops expire the
   // chain (previous_response_not_found). Fewer searches → higher completion rate.
   // The retry is tighter still, so it's more likely to finish than the first pass.
@@ -2681,12 +2739,16 @@ async function runAssessment(block, attempt = 1, insights = '') {
     messages: [{ role: 'user', content: userContent }],
     webSearch: true,
     reasoningEffort: 'medium',
-    onActivity: (text) => { if (!answer && label) label.textContent = text; },
+    onActivity: (text) => {
+      setEvidenceStep(host, 2);
+      if (!answer && label) label.textContent = text;
+    },
     onThinking: (d) => {
       thinking += d;
       if (!answer) { stream.textContent = thinking; scroll(); }
     },
     onDelta: (d) => {
+      setEvidenceStep(host, 3);
       if (!answer && label) label.textContent = `Writing the ${solutionNames} qualification…`;
       answer += d;
       stream.textContent = answer;
