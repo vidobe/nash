@@ -881,6 +881,53 @@
   letter-spacing: 0.02em;
 }
 
+.nash-session .nash-session-experiment-intro {
+  max-width: 640px;
+  margin: auto;
+  padding: 48px 24px;
+}
+
+.nash-session .nash-session-experiment-intro h2 {
+  margin: 0 0 10px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-experiment-intro > p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.nash-session .nash-session-experiment-error {
+  margin-top: 16px !important;
+  color: var(--red, #eb1000) !important;
+}
+
+.nash-session .nash-session-experiment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nash-session .nash-session-experiment-rerun {
+  border: 0;
+  background: none;
+  color: var(--ink-70, #4a4d55);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nash-session .nash-session-experiment-rerun:hover {
+  color: var(--red, #eb1000);
+}
+
 .nash-session .nash-session-experiment-empty {
   display: grid;
   flex: 1;
