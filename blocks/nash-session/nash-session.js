@@ -1104,9 +1104,9 @@ function buildQualPrompt({
 }) {
   let docLine;
   if (docText) {
-    docLine = `The full contents of the attached document(s) (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===" (each preceded by its filename). Read them there directly — no tool or code interpreter is needed. These are the PRIMARY input and the basis for Sections 3–5; ground the requirement analysis and scoring in them.`;
+    docLine = `The full contents of the attached document(s) (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===" (each preceded by its filename). Read them there directly — no tool or code interpreter is needed. These are the PRIMARY input for all five sections; ground the requirement analysis and scoring in them.`;
   } else if (fileName) {
-    docLine = `MANDATORY FIRST STEP: Document(s) are attached (${fileName}). Before any web/internal search, OPEN AND READ them (use the code interpreter if needed). They are the PRIMARY input for Sections 3–5 and do NOT count against the search budget below. If you genuinely cannot open them, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
+    docLine = `MANDATORY FIRST STEP: Document(s) are attached (${fileName}). Before any web/internal search, OPEN AND READ them (use the code interpreter if needed). They are the PRIMARY input for all five sections and do NOT count against the search budget below. If you genuinely cannot open them, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
   } else {
     docLine = 'No document is attached — use the customer name and public data.';
   }
@@ -1119,8 +1119,8 @@ Guidance:
 - Use Adobe internal sources and reputable, recent public sources for the market/news section; include dates and links next to each claim. Prefer Adobe sources first.
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
-- Tie market/news insights back into Win Sentiment and the Recommendation.
-${interview ? '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence: weave champions/blockers and whether we shaped the RFI/RFP into Section 6 (Win Sentiment) and Section 7 (Recommendation), and any meeting-note context into Sections 1 and 3.\n' : ''}- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
+- Tie market and competitor intelligence directly to the Decision and Evidence & Risks sections.
+${interview ? '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence. Use champions, blockers, RFP influence, and meeting context in the Decision, Use Cases, and Evidence & Risks sections.\n' : ''}- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
 - EFFICIENCY (critical): After reading the attachment, perform AT MOST ${maxSearches} EXTERNAL searches (web + internal docs) total, batching related queries into a single call where possible, then STOP searching and write the full dossier. Reading the attached file is required and is NOT one of these searches. Do NOT exhaustively search every source — prioritise completing the report. A complete report from a few good sources beats an unfinished one.
 
 ${docLine}
@@ -1131,7 +1131,7 @@ NASH_DIMS:
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
 NASH_DIMS_END
-Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Section 8 must explain this row's reasoning. Every dimension MUST reference at least one evidence ID from NASH_EVIDENCE.
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Sections 1–2 must explain this row's reasoning. Every dimension MUST reference at least one evidence ID from NASH_EVIDENCE.
 NASH_CONTEXT:
 objectives: <top business objective>; <objective>; <objective>
 challenges: <top pain or challenge>; <challenge>; <challenge>
@@ -2024,7 +2024,7 @@ function buildSalesPrompt(a) {
     ctx.tech_stack ? `Current stack: ${ctx.tech_stack}` : '',
   ].filter(Boolean).join('\n');
 
-  return `You are an Adobe sales strategist preparing an account plan for "${a.company}". Produce a rich, SALES-facing brief (value and outcomes, not deep technical detail) that is CONSISTENT WITH and BUILDS ON the qualification dossier below — especially its "Solution Rationale" and "Final Recommendation" sections. Do not contradict the dossier; reuse its named Adobe products and recommended scope.
+  return `You are an Adobe sales strategist preparing an account plan for "${a.company}". Produce a rich, SALES-facing brief (value and outcomes, not deep technical detail) that is CONSISTENT WITH and BUILDS ON the qualification dossier below — especially its "Decision" and "Use Cases" sections. Do not contradict the dossier; reuse its named Adobe products and recommended scope.
 
 Return ONLY a JSON object between the markers, no prose, no code fences, shaped EXACTLY like:
 NASH_SALES:
@@ -2055,7 +2055,7 @@ NASH_SALES_END
 Rules:
 - SUMMARY: a punchy 2-3 sentence hook for the Overview.
 - PILLARS (2-3): each MUST explicitly LINK a customer objective/challenge to a concrete Adobe benefit (quantify where the dossier supports it) AND the Adobe offering(s) that deliver it.
-- TRACKS (2-4): ground each in the dossier's recommended scope and Solution Rationale; give real goals and an honest status; list the Adobe products (plays) for each.
+- TRACKS (2-4): ground each in the dossier's recommended scope and customer use cases; give real goals and an honest status; list the Adobe products (plays) for each.
 - RATIONALE: substantial and structured as specified — an exec summary, the proposed solutions and why (per product, tied to a challenge/objective), and how it maps to objectives. This is the centrepiece; make it complete, not short.
 - ADOBE NAMING: use FULL, OFFICIAL Adobe product names — e.g. "Adobe Experience Manager Sites", "Adobe Experience Manager Assets", "Adobe Journey Optimizer", "Adobe Customer Journey Analytics", "Adobe Real-Time CDP", "Adobe Analytics", "Adobe Target", "Adobe Workfront", "Adobe Firefly", "Adobe GenStudio for Performance Marketing", "Adobe Commerce", "Adobe Experience Platform Agent Orchestrator". Do NOT use internal shorthand or acronyms (no "AEM", "AJO", "CJA", "AA", "AT", "LLMO", "aaC"). Expand every one.
 - Be specific and substantive; avoid generic filler.
