@@ -74,6 +74,8 @@ function encodePayload(a) {
     cms: a.cms || '',
     context: a.context || {},
     dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
+    evidence: Array.isArray(a.evidence) ? a.evidence : [],
+    confidence: Array.isArray(a.confidence) ? a.confidence : [],
     reportMarkdown: a.reportMarkdown || '',
     opp: a.opp || {},
   };

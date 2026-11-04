@@ -19,6 +19,7 @@ const SECTION_ICONS = {
   'Key Signals': `<svg ${SVG}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
   'Red Flags': `<svg ${SVG}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
   'Competitive Alternatives': `<svg ${SVG}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,
+  'Analyst Competitive Evidence': `<svg ${SVG}><path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-7"/></svg>`,
 };
 
 const DEFAULT_ICON = `<svg ${SVG}><circle cx="12" cy="12" r="10"/></svg>`;
