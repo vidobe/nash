@@ -42,11 +42,17 @@ const ICONS = {
   briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
   sales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
   postsales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>',
+  experiment: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10 3v6.2l-5.3 8.6A2.1 2.1 0 0 0 6.5 21h11a2.1 2.1 0 0 0 1.8-3.2L14 9.2V3"/><path d="M8 15h8"/></svg>',
   plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
 
+const EXPERIMENT_USER_EMAIL = 'vgabriel@adobe.com';
+
 const TABS = [
   { tab: 'assessment', icon: 'clipboard', label: 'Assessment' },
+  {
+    tab: 'experiment', icon: 'experiment', label: 'Experimental report', experiment: true,
+  },
   { tab: 'decision', icon: 'quality', label: 'Decision quality' },
   { tab: 'da', icon: 'cloud', label: 'DA content' },
   { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
@@ -54,6 +60,14 @@ const TABS = [
   { tab: 'sales', icon: 'sales', label: 'Sales content' },
   { tab: 'postsales', icon: 'postsales', label: 'Post-sales content' },
 ];
+
+function canViewReportExperiment() {
+  return getUserInfo()?.email?.trim().toLowerCase() === EXPERIMENT_USER_EMAIL;
+}
+
+function visibleTabs() {
+  return TABS.filter((tab) => !tab.experiment || canViewReportExperiment());
+}
 
 const SETUP_PROGRESS_MESSAGES = [
   'Reading the fine print so you do not have to…',
@@ -765,14 +779,44 @@ function solutionTileHtml(solution, inferred) {
     || [solution.name.replace(/^Adobe\s+/i, '').split(/\W+/)
       .map((word) => word[0]).join('')
       .slice(0, 2), 0];
-  const pillar = PILLARS.find((item) => item.id === SOLUTION_PILLARS[solution.slug]);
-  return `<label class="nash-session-solution-tile${recommendation ? ' is-recommended' : ''}" style="--tile-accent:${pillar?.accent || '#6b7280'}">
+  return `<label class="nash-session-solution-tile${recommendation ? ' is-recommended' : ''}">
       <input type="checkbox" name="solutions" value="${escapeHtml(solution.slug)}" data-name="${escapeHtml(solution.name)}"${recommendation ? ' checked' : ''}/>
       <span class="nash-session-solution-num">${String(number).padStart(3, '0')}</span>
       <strong>${escapeHtml(symbol)}</strong>
       <span>${escapeHtml(solution.name.replace(/^Adobe\s+/i, ''))}</span>
       ${recommendation ? `<small>${escapeHtml(recommendation.reason)}${recommendation.evidence ? ` · ${escapeHtml(recommendation.evidence)}` : ''}</small>` : ''}
     </label>`;
+}
+
+function solutionGroupHtml(pillar, solutions, inferred) {
+  if (!solutions.length) return '';
+  const accent = pillar?.accent || '#6b7280';
+  const darkAccent = pillar?.darkAccent || '#9a9da6';
+  const id = pillar?.id || 'other';
+  const name = pillar?.name || 'Other solutions';
+  return `<section class="nash-session-solution-group" aria-labelledby="nash-session-solutions-${escapeHtml(id)}" style="--solution-accent-light:${accent};--solution-accent-dark:${darkAccent}">
+    <div class="nash-session-solution-group-head">
+      <h3 id="nash-session-solutions-${escapeHtml(id)}">${escapeHtml(name)}</h3>
+      <span>${solutions.length} ${solutions.length === 1 ? 'solution' : 'solutions'}</span>
+    </div>
+    <div class="nash-session-periodic">${solutions.map((solution) => solutionTileHtml(solution, inferred)).join('')}</div>
+  </section>`;
+}
+
+function groupedSolutionsHtml(solutions, inferred) {
+  const groupedSlugs = new Set();
+  const groups = PILLARS.map((pillar) => {
+    const pillarSolutions = solutions
+      .filter((solution) => SOLUTION_PILLARS[solution.slug] === pillar.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    pillarSolutions.forEach((solution) => groupedSlugs.add(solution.slug));
+    return solutionGroupHtml(pillar, pillarSolutions, inferred);
+  }).filter(Boolean);
+  const uncategorized = solutions
+    .filter((solution) => !groupedSlugs.has(solution.slug))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (uncategorized.length) groups.push(solutionGroupHtml(null, uncategorized, inferred));
+  return groups.join('');
 }
 
 function summaryList(title, values) {
@@ -810,7 +854,7 @@ function renderSetupReview(inferred, solutions, fileNames) {
         <div><span class="nash-session-kicker">Recommended scope</span><h2>Confirm the Adobe solutions</h2></div>
         <p>Recommendations are tied to the customer evidence. Add or remove products freely.</p>
       </div>
-      <div class="nash-session-periodic">${solutions.map((solution) => solutionTileHtml(solution, inferred)).join('')}</div>
+      <div class="nash-session-solution-groups">${groupedSolutionsHtml(solutions, inferred)}</div>
       ${recommendationReasons ? `<ul class="nash-session-scope-reasons">${recommendationReasons}</ul>` : ''}
       <div class="nash-session-setup-actions">
         <button type="submit" class="nash-session-btn-primary">Continue to open questions</button>
@@ -1149,16 +1193,99 @@ async function extractFileText(file) {
   return '';
 }
 
+function legacyReportInstructions(solutionNames) {
+  return `Produce the report in markdown with EXACTLY these ten top-level sections and NO OTHERS. Use a single "# " heading only for these ten (keep the numbers); every sub-heading, risk, or topic inside a section MUST use "## " or "### " (or bold/bullets):
+# 1. Executive Overview
+# 2. Market, Competitor & Financial Intelligence
+# 3. Business Analysis
+# 4. Technical & Architectural Evaluation
+# 5. Qualification & Discovery Questions
+# 6. Competitive Positioning & Win Sentiment
+# 7. Final Recommendation and Adobe Solution Scope
+# 8. AI, Agents & Coworker Opportunity
+# 9. Solution Rationale
+# 10. Deal Accelerators & References
+
+Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe.
+Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists, plus current tech stack and what success looks like.
+Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge.
+Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+Section 4 must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences:
+NASH_ARCH:
+layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
+group: <groupId> | <Group label> | <layer name>
+node: <id> | <short label> | <layer name> | <groupId or blank>
+edge: <fromId> | <toId> | <flow type> | <optional short label>
+NASH_ARCH_END
+Group lines are optional and draw a labelled red container around related nodes. Flow type is ingress, intra, or egress. Use 4-7 layers, keep labels concise, and make sure every edge references declared nodes. Draw the TARGET architecture implied by this customer's requirements and chosen approach. Include only components they will actually use, reflect their deployment choice, include only named integrations, and label unstated requirements as assumptions.
+Section 5 must list the highest-value unanswered discovery questions, grouped by business, technical, commercial, competition, and delivery.
+Section 8 is a first-class, customer-specific assessment of Adobe's agentic value. Cover these subsections:
+- **Adobe Coworker fit** — how Adobe Coworker would serve this customer's teams and workflows.
+- **Product agents** — relevant real agents across the in-scope and closely adjacent Adobe products, what each would do, and its outcome. Mark anything uncertain.
+- **Product MCPs** — the MCP servers/endpoints exposed by in-scope products and how they connect the customer's stack, data, and agents to Adobe actions and content.
+- **Prioritised agentic use cases** — HIGH/MEDIUM use cases with trigger, agent/MCP, and business benefit.
+- **Benefits & business value** — efficiency, speed-to-market, personalisation, quality, and cost value, quantified where possible.
+- **Readiness & prerequisites** — data, governance, integration, and skills prerequisites plus honest risks.
+Section 9 must contain these subsections in order:
+1. Customer Context — organisation, objectives, challenges, maturity, and existing stack, noting what to integrate versus replace.
+2. Core Capability Needs — table: | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |
+3. Solution Fit Comparison — two viable scenarios and a table: | Criterion | Scenario A | Scenario B | across 8-10 decision criteria.
+4. Budget Indication — table: | Cost category | Basis / driver | Indication | using "TBD" where figures are unavailable.
+5. Recommendation Summary — preferred scenario, justification, points of attention, and next steps.
+Section 10 must cover these subsections:
+- **Ideas to win the deal** — concrete, tailored plays and next-best actions.
+- **VIP / early-access products** — relevant real limited-availability or newly launched products; note uncertainty.
+- **Beta features** — relevant pre-release capabilities, clearly labelled beta.
+- **Co-innovation opportunities** — suitable design-partner opportunities.
+- **Similar customer references** — sourced comparable Adobe customers with why each is relevant.
+
+Write for busy sales and solution leaders. Be concise: short bullets, compact tables, no repeated facts, no generic Adobe marketing language, and no paragraph longer than three sentences.`;
+}
+
+function experimentalReportInstructions() {
+  return `Write for busy sales and solution leaders. Be concise: short bullets, compact tables, no repeated facts, no generic Adobe marketing language, and no paragraph longer than three sentences. Use progressive disclosure: put the decision and most important evidence first.
+
+Produce markdown with EXACTLY these five top-level sections and NO OTHERS:
+# 1. Decision
+# 2. Use Cases
+# 3. Demo Storyline
+# 4. Architecture
+# 5. Evidence & Risks
+
+Section 1 must answer whether Adobe should pursue this opportunity and why. Include the recommendation, a 3-5 bullet Adobe-fit rationale tied to customer evidence, recommended Adobe scope, strongest reasons to win and lose, and 3 concrete next actions.
+Section 2 must organize the assessment around customer use cases in a compact table with columns:
+| Use case | Customer objective | Users | Current pain | Desired journey | Adobe product and specific features | Evidence | Business value | Gaps / validation |
+Use only features that genuinely exist. Make each use case customer-specific, cite evidence IDs, and distinguish confirmed facts from assumptions.
+Section 3 must turn the highest-value use cases into one coherent demo narrative with a persona, setup, 4-7 sequenced scenes, exact Adobe products/features, customer evidence, business payoff, and configuration or mock requirements.
+Section 4 must describe a customer-specific logical architecture with named customer systems, Adobe services, integrations, data flows, channels, security/governance considerations, and explicit assumptions. Include a machine-readable NASH_ARCH block:
+NASH_ARCH:
+layers: <left-to-right layer names, semicolon-separated>
+group: <groupId> | <Group label> | <layer name>
+node: <id> | <short label> | <layer name> | <groupId or blank>
+edge: <fromId> | <toId> | <flow type> | <optional short label>
+NASH_ARCH_END
+Flow type is ingress, intra, or egress. Use 4-7 layers and keep the node set minimal.
+Section 5 must consolidate evidence, uncertainty, competition, and delivery risk. Include objectives, challenges, current stack, decision context, competitor signals, disqualifiers, assumptions, unknowns, score sensitivity, and the evidence register. Unknown interview answers must remain visible as unknowns.`;
+}
+
 function buildQualPrompt({
   company, fileName, solutionNames, skills, maxSearches = 6, docText = '', interview = '',
+  format = 'legacy',
 }) {
+  const experimental = format === 'experimental';
   let docLine;
   if (docText) {
-    docLine = `The full contents of the attached document(s) (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===" (each preceded by its filename). Read them there directly — no tool or code interpreter is needed. These are the PRIMARY input for all five sections; ground the requirement analysis and scoring in them.`;
+    docLine = `The full contents of the attached document(s) (${fileName}) are included at the END of this prompt under "=== ATTACHED DOCUMENT ===" (each preceded by its filename). Read them there directly — no tool or code interpreter is needed. These are the PRIMARY input; ground the requirement analysis and scoring in them.`;
   } else if (fileName) {
-    docLine = `MANDATORY FIRST STEP: Document(s) are attached (${fileName}). Before any web/internal search, OPEN AND READ them (use the code interpreter if needed). They are the PRIMARY input for all five sections and do NOT count against the search budget below. If you genuinely cannot open them, say so explicitly at the top and mark scoring provisional — do not silently proceed as if no document exists.`;
+    docLine = `MANDATORY FIRST STEP: Document(s) are attached (${fileName}). Before any web/internal search, OPEN AND READ them (use the code interpreter if needed). They are the PRIMARY input and do NOT count against the search budget below. If you genuinely cannot open them, say so explicitly at the top and mark scoring provisional.`;
   } else {
     docLine = 'No document is attached — use the customer name and public data.';
+  }
+  let interviewGuidance = '';
+  if (interview) {
+    interviewGuidance = experimental
+      ? '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence throughout the report.\n'
+      : '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence: weave champions/blockers and whether we shaped the RFI/RFP into Section 6 (Win Sentiment) and Section 7 (Recommendation), and meeting context into Sections 1 and 3.\n';
   }
   return `You are an Adobe cross-functional deal team (Business Consultant + Solution Consultant + System Architect + Sales Strategist + Market Analyst).
 
@@ -1169,8 +1296,8 @@ Guidance:
 - Use Adobe internal sources and reputable, recent public sources for the market/news section; include dates and links next to each claim. Prefer Adobe sources first.
 - Be honest, objective and pragmatic — do NOT just say yes to please me.
 - Quantify where possible; if the company is private and data is sparse, state uncertainties and use ranges.
-- Tie market and competitor intelligence directly to the Decision and Evidence & Risks sections.
-${interview ? '- Treat the ANALYST-PROVIDED CONTEXT (below) as authoritative first-party intelligence. Use champions, blockers, RFP influence, and meeting context in the Decision, Use Cases, and Evidence & Risks sections.\n' : ''}- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
+- ${experimental ? 'Tie market and competitor intelligence directly to the Decision and Evidence & Risks sections.' : 'Tie market/news insights back into Win Sentiment and the Recommendation.'}
+${interviewGuidance}- CRITICAL — NO VERBATIM REPRODUCTION (a content filter will block the whole report otherwise): Write the entire dossier in your own words. Do NOT reproduce, echo, paste, or closely quote extended text from ANY source — not the attached document, and especially not analyst reports (Forrester Wave, Gartner, IDC) or other search results, which are copyrighted. When the code interpreter reads the spreadsheet, use the data for analysis but do NOT print or repeat raw rows in your answer. Do not copy competitor-comparison tables or analyst paragraphs verbatim — restate the finding in one original sentence and cite the source link. Any single quote must be under 15 words, in quotes, with attribution. Synthesise; never transcribe.
 - EFFICIENCY (critical): After reading the attachment, perform AT MOST ${maxSearches} EXTERNAL searches (web + internal docs) total, batching related queries into a single call where possible, then STOP searching and write the full dossier. Reading the attached file is required and is NOT one of these searches. Do NOT exhaustively search every source — prioritise completing the report. A complete report from a few good sources beats an unfinished one.
 
 ${docLine}
@@ -1181,7 +1308,7 @@ NASH_DIMS:
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
 <dimension name> | <weight %> | <scored> | <max> | <one-line rationale> | <evidence IDs, comma-separated>
 NASH_DIMS_END
-Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and Sections 1–2 must explain this row's reasoning. Every dimension MUST reference at least one evidence ID from NASH_EVIDENCE.
+Use the solution's ITS scoring dimensions for the NASH_DIMS rows (typically Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk — or whatever the solution knowledge defines). ALWAYS add one more row named EXACTLY "AI & Agentic Fit" (weight ~10-15%) that scores how well Adobe Coworker, the in-scope Adobe products' agents, and their MCPs address this opportunity, and how ready the customer is to adopt them — even if the solution knowledge does not list it. Re-balance the other weights so all rows sum to 100%. The weighted scores must sum to the overall score, and ${experimental ? 'Sections 1–2' : 'Section 8'} must explain this row's reasoning. Every dimension MUST reference at least one evidence ID from NASH_EVIDENCE.
 NASH_CONTEXT:
 objectives: <top business objective>; <objective>; <objective>
 challenges: <top pain or challenge>; <challenge>; <challenge>
@@ -1200,33 +1327,7 @@ NASH_CONFIDENCE:
 NASH_CONFIDENCE_END
 Add one NASH_CONFIDENCE row for every NASH_DIMS row. Confidence reflects the quality and completeness of available evidence, not whether the score is high or low. Facts must reference IDs from NASH_EVIDENCE. Keep assumptions and unknowns distinct: an assumption is a provisional interpretation; an unknown is information not yet available. The score swing is the plausible change to the overall 0-100 score if the assumption or unknown proves materially favorable or unfavorable. The final field must state the single highest-impact question, document, or proof point to validate next.
 
-Write for busy sales and solution leaders. Be concise: short bullets, compact tables, no repeated facts, no generic Adobe marketing language, and no paragraph longer than three sentences. Use progressive disclosure: put the decision and most important evidence first; place supporting detail under descriptive sub-headings.
-
-Produce markdown with EXACTLY these five top-level sections and NO OTHERS. Use a single "# " heading only for these five:
-# 1. Decision
-# 2. Use Cases
-# 3. Demo Storyline
-# 4. Architecture
-# 5. Evidence & Risks
-
-Section 1 must answer whether Adobe should pursue this opportunity and why. Include: recommendation (Pursue / Pursue with conditions / Do not pursue), a 3-5 bullet Adobe-fit rationale tied to customer evidence, the recommended Adobe scope, the strongest reasons to win, the largest reasons to lose, and 3 concrete next actions. Explain HOW the selected Adobe products and features solve the customer's objectives—not merely that they fit.
-
-Section 2 must organize the assessment around customer use cases. Create a compact markdown table with columns:
-| Use case | Customer objective | Users | Current pain | Desired journey | Adobe product and specific features | Evidence | Business value | Gaps / validation |
-Use only features that genuinely exist in the selected products. Each use case must be customer-specific, cite evidence IDs, and distinguish confirmed facts from assumptions. Prioritize the highest-value use cases first.
-
-Section 3 must turn the highest-value use cases into one coherent demo narrative. Include the demo persona, setup, 4-7 sequenced scenes, exact Adobe products/features shown in each scene, the customer evidence it answers, and the business payoff. End with what must be configured or mocked before the demo. Do not produce one disconnected demo per product.
-
-Section 4 must describe a customer-specific logical architecture: named customer systems, Adobe services, integrations, data flows, channels, security/governance considerations, and explicit assumptions requiring validation. Never invent a customer system. Unknown systems or flows must be labelled "Assumption — validate". Include the target architecture as a machine-readable NASH_ARCH block—never mermaid, ASCII art, or a code fence:
-NASH_ARCH:
-layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
-group: <groupId> | <Group label> | <layer name>
-node: <id> | <short label> | <layer name> | <groupId or blank>
-edge: <fromId> | <toId> | <flow type> | <optional short label>
-NASH_ARCH_END
-Flow type is ingress, intra, or egress. Use 4-7 layers and keep the node set minimal.
-
-Section 5 must consolidate evidence, uncertainty, competition, and delivery risk. Include the top customer objectives and challenges in their original priority order, current stack, decision context, competitor signals, disqualifiers, assumptions, unknowns, score sensitivity, and the evidence register. Cite every public claim and include every public URL used in NASH_EVIDENCE. Unknown interview answers must remain visible as unknowns rather than being silently filled in.
+${experimental ? experimentalReportInstructions() : legacyReportInstructions(solutionNames)}
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
 ${skills}
@@ -1487,18 +1588,25 @@ function splitReportSections(md) {
   return h1.length >= 2 ? h1 : scan(/^#{1,2}(?!#)\s+(.+)$/);
 }
 
+function hasExperimentalReportShape(markdown) {
+  const labels = splitReportSections(markdown).map((section) => sectionLabel(section.title));
+  const experimental = ['Decision', 'Use Cases', 'Demo Storyline', 'Architecture', 'Evidence & Risks'];
+  return labels.length === experimental.length
+    && experimental.every((label, index) => labels[index] === label);
+}
+
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
 // Each scored dimension links to the narrative section that justifies it, so a
 // low score is traceable to its reasoning. Keyed by lower-cased dimension name;
 // value is a section nav label (see sectionLabel).
 const DIM_SECTION = {
-  'strategic fit': 'Decision',
+  'strategic fit': 'Overview',
   'technical fit': 'Architecture',
-  'functional coverage': 'Use Cases',
-  'commercial viability': 'Decision',
-  'competitive position': 'Evidence & Risks',
-  'delivery risk': 'Evidence & Risks',
-  'ai & agentic fit': 'Use Cases',
+  'functional coverage': 'Rationale',
+  'commercial viability': 'Business',
+  'competitive position': 'Competition',
+  'delivery risk': 'Architecture',
+  'ai & agentic fit': 'AI & Agents',
 };
 
 function scorecardCards(dims, availableLabels, confidence = []) {
@@ -1681,6 +1789,10 @@ function wireDaPanel(block) {
   block.querySelector('[data-da-publish]')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
   const panel = block.querySelector('.nash-session-panel[data-panel="da"]');
   panel?.querySelector('[data-goto-da]')?.addEventListener('click', () => switchTab(block, 'da'));
+  wireQualificationPanel(panel);
+}
+
+function wireQualificationPanel(panel) {
   panel?.querySelectorAll('.nash-session-qtab').forEach((tab) => {
     tab.addEventListener('click', () => {
       panel.querySelectorAll('.nash-session-qtab').forEach((b) => b.classList.toggle('active', b === tab));
@@ -2074,7 +2186,7 @@ function buildSalesPrompt(a) {
     ctx.tech_stack ? `Current stack: ${ctx.tech_stack}` : '',
   ].filter(Boolean).join('\n');
 
-  return `You are an Adobe sales strategist preparing an account plan for "${a.company}". Produce a rich, SALES-facing brief (value and outcomes, not deep technical detail) that is CONSISTENT WITH and BUILDS ON the qualification dossier below — especially its "Decision" and "Use Cases" sections. Do not contradict the dossier; reuse its named Adobe products and recommended scope.
+  return `You are an Adobe sales strategist preparing an account plan for "${a.company}". Produce a rich, SALES-facing brief (value and outcomes, not deep technical detail) that is CONSISTENT WITH and BUILDS ON the qualification dossier below — especially its "Solution Rationale" and "Final Recommendation" sections. Do not contradict the dossier; reuse its named Adobe products and recommended scope.
 
 Return ONLY a JSON object between the markers, no prose, no code fences, shaped EXACTLY like:
 NASH_SALES:
@@ -2328,23 +2440,89 @@ function wireResultTabs(root) {
   });
 }
 
-/* Renders a completed dossier as five concise result views. */
-function renderDossier(a) {
-  let head = '';
-  if (typeof a.score === 'number') {
-    const v = verdictFor(a.score);
-    head = `<div class="nash-session-report-top">
-      <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
-      <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
-      ${solutionsLabel(a) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(a))}</span>` : ''}
-    </div>`;
-  }
-  // Prefer the markdown source; fall back to pre-rendered report HTML (e.g. a
-  // published page reconstructed without the original markdown).
-  const body = a.reportMarkdown
+function dossierHeader(a) {
+  if (typeof a.score !== 'number') return '';
+  const v = verdictFor(a.score);
+  return `<div class="nash-session-report-top">
+    <div class="nash-session-score" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
+    <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
+    ${solutionsLabel(a) ? `<span class="nash-session-report-cms">${escapeHtml(solutionsLabel(a))}</span>` : ''}
+  </div>`;
+}
+
+function dossierBody(a) {
+  return a.reportMarkdown
     ? renderReportMarkdown(a.reportMarkdown, {}, a.evidence || [])
     : (a.reportHtml || '');
-  return `<div class="nash-session-report nash-md">${resultTabsHtml(a, head, body)}</div>`;
+}
+
+/* Stable assessments use the original ten-section qualification view. */
+function renderDossier(a) {
+  if (hasExperimentalReportShape(a.reportMarkdown)) {
+    return `<div class="nash-session-legacy-required">
+      <span class="nash-session-kicker">Full assessment format restored</span>
+      <h2>Re-run this assessment once</h2>
+      <p>This result was created during the five-section report experiment and does not contain the full legacy sections. Use <strong>Re-run</strong> below to regenerate Overview, Market, Business, Architecture, Discovery, Competition, Recommendation, AI &amp; Agents, Rationale, and Accelerators with all score dimensions.</p>
+    </div>`;
+  }
+  if (a.reportMarkdown) return daPreviewHtml(a);
+  return `<div class="nash-session-report nash-md">${dossierHeader(a)}${dossierBody(a)}</div>`;
+}
+
+function experimentalDossier(a) {
+  return {
+    ...a,
+    reportMarkdown: a.experimentalReportMarkdown || '',
+    score: a.experimentalScore,
+    verdict: a.experimentalVerdict,
+    cms: a.experimentalCms,
+    dimensions: a.experimentalDimensions || [],
+    evidence: a.experimentalEvidence || [],
+    confidence: a.experimentalConfidence || [],
+  };
+}
+
+/* The five-section experiment has its own generation and never replaces the stable report. */
+function renderExperimentalDossier(a) {
+  if (a.experimentalStatus === 'running') {
+    return `<div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
+      <div class="nash-session-running">
+        <p class="nash-session-progress-title">Building the experimental report</p>
+        <div class="nash-session-working"><span class="nash-session-working-label">Preparing the five-section assessment…</span></div>
+        ${evidenceStepsHtml(ASSESSMENT_EVIDENCE_STEPS, 1)}
+        <div class="nash-session-stream"></div>
+      </div>`;
+  }
+  const experimental = experimentalDossier(a);
+  if (!experimental.reportMarkdown) {
+    const error = a.experimentalError
+      ? `<p class="nash-session-experiment-error">${escapeHtml(a.experimentalError)}</p>` : '';
+    return `<div class="nash-session-experiment-intro">
+      <div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
+      <h2>Five-section assessment experiment</h2>
+      <p>This creates a separate Decision, Use Cases, Demo Storyline, Architecture, and Evidence &amp; Risks report. It does not change or publish the stable assessment.</p>
+      ${error}
+      <button type="button" class="nash-session-run-final nash-session-run-experiment">Run experimental report</button>
+    </div>`;
+  }
+  const body = dossierBody(experimental);
+  return `<div class="nash-session-experiment-head">
+      <div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
+      <button type="button" class="nash-session-run-experiment nash-session-experiment-rerun">↻ Re-run experiment</button>
+    </div>
+    <div class="nash-session-report nash-md">${resultTabsHtml(experimental, dossierHeader(experimental), body)}</div>`;
+}
+
+function refreshExperimentPanel(block) {
+  const experiment = block.querySelector('.nash-session-experiment');
+  if (!experiment) return;
+  experiment.innerHTML = renderExperimentalDossier(current);
+  wireResultTabs(experiment);
+  wireEvidence(experiment);
+  experiment.querySelector('.nash-session-run-experiment')?.addEventListener(
+    'click',
+    () => runExperimentalAssessment(block),
+  );
 }
 
 /* Legacy single-file assessments → a uniform files array. */
@@ -2449,27 +2627,30 @@ ${docText.slice(0, MAX_DOC_CHARS)}`;
   }
 }
 
+function interviewDraftValue(answer) {
+  return answer === 'Unknown' ? '' : (answer || '');
+}
+
+function interviewSavedValue(answer) {
+  return answer.trim() || 'Unknown';
+}
+
 function renderInterviewForm(items, answers = {}) {
   return `<form class="nash-session-interview nash-session-interview-all">
       <header class="nash-session-interview-head">
         <span class="nash-session-kicker">${items.length} open question${items.length === 1 ? '' : 's'}</span>
         <h2>Complete what you know</h2>
-        <p>Answer everything in one go. Leave an answer blank or mark it unknown when the information is not available.</p>
+        <p>Add the context you have. Leave anything blank and Nash will treat it as unknown.</p>
       </header>
       <div class="nash-session-interview-list">
         ${items.map((item, index) => {
-    const answer = answers[item.key] || '';
-    const unknown = answer === 'Unknown';
+    const answer = interviewDraftValue(answers[item.key]);
     return `<section class="nash-session-interview-item" data-key="${escapeHtml(item.key)}">
             <div class="nash-session-interview-question">
               <span>${String(index + 1).padStart(2, '0')}</span>
               <label class="nash-session-interview-q" for="iv-${index}">${escapeHtml(item.q)}</label>
             </div>
-            <textarea class="nash-session-interview-a" id="iv-${index}" rows="3" placeholder="${unknown ? 'Marked as unknown' : 'Answer in your own words'}"${unknown ? ' disabled' : ''}>${unknown ? '' : escapeHtml(answer)}</textarea>
-            <label class="nash-session-interview-unknown">
-              <input type="checkbox"${unknown ? ' checked' : ''}/>
-              <span>I don’t know yet</span>
-            </label>
+            <textarea class="nash-session-interview-a" id="iv-${index}" rows="2" placeholder="Add context if known">${escapeHtml(answer)}</textarea>
           </section>`;
   }).join('')}
       </div>
@@ -2490,7 +2671,7 @@ function finalReviewHtml(a) {
         <div><small>Customer</small><strong>${escapeHtml(a.company)}</strong></div>
         <div><small>Documents</small><strong>${escapeHtml(a.fileName || 'No documents')}</strong></div>
         <div><small>Adobe scope</small><strong>${escapeHtml(solutionsLabel(a) || 'To be inferred')}</strong></div>
-        <div><small>Open questions</small><strong>${Object.keys(answers).length} answered${unknowns ? ` · ${unknowns} unknown` : ''}</strong></div>
+        <div><small>Open questions</small><strong>${Object.keys(answers).length} questions${unknowns ? ` · ${unknowns} unknown` : ''}</strong></div>
       </div>
       <p>Nash will now research public sources, score the opportunity, map customer use cases to specific Adobe features, build a demo storyline, and produce a customer-specific logical architecture.</p>
       <button type="button" class="nash-session-run-final">Run assessment</button>
@@ -2542,14 +2723,7 @@ function askInterviewQuestions(block, items, answers = {}) {
   const form = area.querySelector('.nash-session-interview');
   form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
     const textarea = item.querySelector('textarea');
-    const unknown = item.querySelector('input[type="checkbox"]');
     textarea.addEventListener('input', () => autoResize(textarea));
-    unknown.addEventListener('change', () => {
-      textarea.disabled = unknown.checked;
-      textarea.placeholder = unknown.checked ? 'Marked as unknown' : 'Answer in your own words';
-      if (unknown.checked) textarea.value = '';
-      if (!unknown.checked) textarea.focus();
-    });
   });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -2557,10 +2731,7 @@ function askInterviewQuestions(block, items, answers = {}) {
     form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
       const { key } = item.dataset;
       const textarea = item.querySelector('textarea');
-      const unknown = item.querySelector('input[type="checkbox"]');
-      nextAnswers[key] = unknown.checked || !textarea.value.trim()
-        ? 'Unknown'
-        : textarea.value.trim();
+      nextAnswers[key] = interviewSavedValue(textarea.value);
     });
     const priorItems = current.interview?.items || [];
     const allItems = new Map([...priorItems, ...items].map((item) => [item.key, item]));
@@ -2798,7 +2969,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       delete current.runStartedAt;
       isRunning = false;
       area.innerHTML = renderDossier(current);
-      wireResultTabs(area);
+      wireQualificationPanel(area);
       wireEvidence(area);
       persist(current);
       setSetupAvailability(block, false);
@@ -2817,8 +2988,130 @@ async function runAssessment(block, attempt = 1, insights = '') {
   });
 }
 
+async function runExperimentalAssessment(block, attempt = 1) {
+  if (!canViewReportExperiment() || !current) return;
+  current.experimentalStatus = 'running';
+  delete current.experimentalError;
+  persist(current);
+  refreshExperimentPanel(block);
+
+  const panel = block.querySelector('.nash-session-experiment');
+  const stream = panel?.querySelector('.nash-session-stream');
+  const label = panel?.querySelector('.nash-session-working-label');
+  const fail = (message) => {
+    current.experimentalStatus = 'error';
+    current.experimentalError = message;
+    persist(current);
+    refreshExperimentPanel(block);
+  };
+
+  if (!isAuthenticated()) {
+    fail('Connect to FluffyJaws to run the experimental report.');
+    return;
+  }
+
+  try {
+    const sols = current.solutions?.length
+      ? current.solutions
+      : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
+    const solutionNames = sols.map((solution) => solution.name).join(' and ');
+    const skills = await fetchSkillsText(sols.map((solution) => solution.slug));
+    setEvidenceStep(panel, 2);
+
+    const files = assessmentFiles(current);
+    const docText = files.filter((file) => file.text)
+      .map((file) => `--- ${file.name} ---\n${file.text}`).join('\n\n');
+    const attachments = files.filter((file) => file.data).map((file) => ({
+      type: 'input_file',
+      filename: file.name,
+      file_data: file.data,
+      ...(file.mime ? { mime_type: file.mime } : {}),
+    }));
+    const prompt = buildQualPrompt({
+      company: current.company,
+      fileName: files.map((file) => file.name).join(', '),
+      solutionNames,
+      skills,
+      maxSearches: attempt > 1 ? 3 : 6,
+      docText,
+      interview: interviewText(current),
+      format: 'experimental',
+    });
+    const userContent = attachments.length
+      ? [{ type: 'input_text', text: prompt }, ...attachments]
+      : prompt;
+    let answer = '';
+    let errorMessage = '';
+
+    await streamQualification({
+      messages: [{ role: 'user', content: userContent }],
+      webSearch: true,
+      reasoningEffort: 'medium',
+      onActivity: (text) => {
+        setEvidenceStep(panel, 2);
+        if (!answer && label) label.textContent = text;
+      },
+      onThinking: (delta) => {
+        if (!answer && stream) stream.textContent += delta;
+      },
+      onDelta: (delta) => {
+        setEvidenceStep(panel, 3);
+        answer += delta;
+        if (stream) stream.textContent = answer;
+      },
+      onError: (error) => { errorMessage = error.message; },
+      onDone: () => {
+        if (!answer) {
+          if (attempt < 2) {
+            runExperimentalAssessment(block, attempt + 1);
+            return;
+          }
+          fail(errorMessage || 'The experimental report did not finish. Try again.');
+          return;
+        }
+        const {
+          meta, body, dimensions, evidence, confidence,
+        } = parseMeta(answer);
+        current.experimentalReportMarkdown = body;
+        current.experimentalDimensions = dimensions;
+        current.experimentalEvidence = evidence;
+        current.experimentalConfidence = confidence;
+        current.experimentalScore = meta?.score;
+        current.experimentalVerdict = meta?.verdict;
+        current.experimentalCms = meta?.cms;
+        current.experimentalGeneratedAt = Date.now();
+        current.experimentalStatus = 'done';
+        delete current.experimentalError;
+        persist(current);
+        refreshExperimentPanel(block);
+        logActivity('experimental-assessment');
+      },
+    });
+  } catch (error) {
+    fail(error.message || 'The experimental report could not be generated.');
+  }
+}
+
 export function renderAssessment(block, a, autoRun = false) {
   current = a;
+  if (hasExperimentalReportShape(current.reportMarkdown)
+      && !current.experimentalReportMarkdown) {
+    current.experimentalReportMarkdown = current.reportMarkdown;
+    current.experimentalScore = current.score;
+    current.experimentalVerdict = current.verdict;
+    current.experimentalCms = current.cms;
+    current.experimentalDimensions = current.dimensions || [];
+    current.experimentalEvidence = current.evidence || [];
+    current.experimentalConfidence = current.confidence || [];
+    current.experimentalGeneratedAt = current.reportRev || current.createdAt || Date.now();
+    current.experimentalStatus = 'done';
+    persist(current);
+  }
+  if (current.experimentalStatus === 'running') {
+    current.experimentalStatus = 'error';
+    current.experimentalError = 'The previous experimental run was interrupted. Run it again.';
+    persist(current);
+  }
   // Start a fresh FluffyJaws thread on open; the first follow-up re-grounds it
   // with the report (stored response IDs expire, so we don't reuse them).
   previousResponseId = null;
@@ -2829,6 +3122,10 @@ export function renderAssessment(block, a, autoRun = false) {
     a.dr ? `DR ${escapeHtml(a.dr)}` : '',
     a.fileName ? escapeHtml(a.fileName) : '',
   ].filter(Boolean).join(' · ');
+  const tabs = visibleTabs();
+  const experimentPanel = canViewReportExperiment()
+    ? `<div class="nash-session-panel nash-session-experiment" data-panel="experiment">${renderExperimentalDossier(a)}</div>`
+    : '';
 
   block.innerHTML = `
     <div class="nash-session-assess">
@@ -2838,7 +3135,7 @@ export function renderAssessment(block, a, autoRun = false) {
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
         <div class="nash-session-tabs" role="tablist">
-          ${TABS.map((t, i) => `
+          ${tabs.map((t, i) => `
             <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
               ${ICONS[t.icon]}
             </button>`).join('')}
@@ -2871,6 +3168,7 @@ export function renderAssessment(block, a, autoRun = false) {
             <p class="nash-session-disclaimer">AI generated answers · FluffyJaws can make mistakes. Please verify important information.</p>
           </div>
         </div>
+        ${experimentPanel}
         <div class="nash-session-panel" data-panel="decision">${decisionQualityHtml(a)}</div>
         <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
         <div class="nash-session-panel" data-panel="opp">${constructionNote()}${renderOppPanel(a, getUserInfo()?.name || '')}</div>
@@ -2884,7 +3182,8 @@ export function renderAssessment(block, a, autoRun = false) {
     t.addEventListener('click', () => switchTab(block, t.dataset.tab));
   });
   wireDaPanel(block);
-  wireResultTabs(block.querySelector('.nash-session-report-area'));
+  refreshExperimentPanel(block);
+  wireQualificationPanel(block.querySelector('.nash-session-report-area'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="decision"]'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="assessment"]'));
   renderBelowBar(block);

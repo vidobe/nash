@@ -599,18 +599,57 @@
   font-size: 12.5px;
 }
 
+.nash-session .nash-session-solution-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.nash-session .nash-session-solution-group {
+  --solution-accent: var(--solution-accent-light);
+}
+
+html[data-theme='dark'] .nash-session .nash-session-solution-group {
+  --solution-accent: var(--solution-accent-dark);
+}
+
+.nash-session .nash-session-solution-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-left: 10px;
+  margin-bottom: 9px;
+  border-left: 4px solid var(--solution-accent, var(--red, #eb1000));
+}
+
+.nash-session .nash-session-solution-group-head h3 {
+  margin: 0;
+  color: var(--ink, #111318);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-solution-group-head span {
+  flex-shrink: 0;
+  color: var(--ink-40, #9a9da6);
+  font-size: 10px;
+}
+
 .nash-session .nash-session-periodic {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 7px;
 }
 
 .nash-session .nash-session-solution-tile {
+  --tile-accent: var(--solution-accent, #6b7280);
+
   position: relative;
   display: flex;
-  min-height: 100px;
+  min-height: 90px;
   flex-direction: column;
-  padding: 9px;
+  padding: 8px;
   border-top: 3px solid var(--tile-accent);
   border-radius: 4px;
   background: color-mix(in srgb, var(--tile-accent) 7%, var(--white, #fff));
@@ -639,7 +678,7 @@
 .nash-session .nash-session-solution-tile > strong {
   margin-top: 3px;
   color: var(--tile-accent);
-  font-size: 25px;
+  font-size: 23px;
   line-height: 1;
 }
 
@@ -861,11 +900,103 @@
 }
 
 .nash-session .nash-session-panel[data-panel='da'].active,
+.nash-session .nash-session-panel[data-panel='experiment'].active,
 .nash-session .nash-session-panel[data-panel='decision'].active,
 .nash-session .nash-session-panel[data-panel='opp'].active,
 .nash-session .nash-session-panel[data-panel='sales'].active,
 .nash-session .nash-session-panel[data-panel='postsales'].active {
   overflow-y: auto;
+}
+
+.nash-session .nash-session-experiment-note {
+  width: fit-content;
+  margin: 4px 0 16px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f3efff;
+  color: #5b3fa3;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.nash-session .nash-session-experiment-intro {
+  max-width: 640px;
+  margin: auto;
+  padding: 48px 24px;
+}
+
+.nash-session .nash-session-experiment-intro h2 {
+  margin: 0 0 10px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-experiment-intro > p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.nash-session .nash-session-experiment-error {
+  margin-top: 16px !important;
+  color: var(--red, #eb1000) !important;
+}
+
+.nash-session .nash-session-experiment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nash-session .nash-session-experiment-rerun {
+  border: 0;
+  background: none;
+  color: var(--ink-70, #4a4d55);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nash-session .nash-session-experiment-rerun:hover {
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-legacy-required {
+  max-width: 680px;
+  margin: 56px auto;
+  padding: 28px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 12px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-session-legacy-required h2 {
+  margin: 7px 0 10px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-legacy-required p {
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.nash-session .nash-session-experiment-empty {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  color: var(--ink-40, #9a9da6);
+  font-size: 14px;
 }
 
 /* Architecture diagram (Spectrum 2-styled, rendered from a NASH_ARCH block). */
@@ -992,14 +1123,14 @@
 .nash-session .nash-session-interview {
   display: flex;
   flex-direction: column;
-  width: min(780px, 100%);
+  width: min(980px, 100%);
   gap: 0;
   margin: 8px auto 40px;
   padding: 0;
 }
 
 .nash-session .nash-session-interview-head {
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .nash-session .nash-session-interview-head h2 {
@@ -1015,18 +1146,27 @@
   line-height: 1.55;
 }
 
+.nash-session .nash-session-interview-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .nash-session .nash-session-interview-item {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 22px 0;
-  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+  gap: 8px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--ink-15, #e8e9ec);
+  border-radius: 9px;
+  background: var(--white, #fff);
 }
 
 .nash-session .nash-session-interview-question {
   display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 8px;
+  grid-template-columns: 22px 1fr;
+  gap: 6px;
   align-items: start;
 }
 
@@ -1039,13 +1179,14 @@
 
 .nash-session .nash-session-interview-q {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12.5px;
+  line-height: 1.35;
 }
 
 .nash-session .nash-session-interview-a {
   width: 100%;
-  min-height: 76px;
-  padding: 10px 12px;
+  min-height: 56px;
+  padding: 9px 10px;
   border: 0;
   border-radius: 8px;
   font: inherit;
@@ -1053,11 +1194,9 @@
   background: var(--ink-08, #f4f4f6);
   resize: vertical;
   box-sizing: border-box;
-  transition: box-shadow 0.15s ease, opacity 0.15s ease;
-}
-
-.nash-session .nash-session-interview-a:disabled {
-  opacity: 0.5;
+  font-size: 12.5px;
+  line-height: 1.4;
+  transition: box-shadow 0.15s ease;
 }
 
 .nash-session .nash-session-question-actions {
@@ -1065,23 +1204,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 24px;
+  padding-top: 16px;
   color: var(--ink-40, #9a9da6);
   font-size: 11px;
-}
-
-.nash-session .nash-session-interview-unknown {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  width: fit-content;
-  color: var(--ink-40, #9a9da6);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.nash-session .nash-session-interview-unknown input {
-  accent-color: var(--red, #eb1000);
 }
 
 .nash-session .nash-session-question-actions .nash-session-interview-run {
@@ -3439,7 +3564,8 @@
   .nash-session .nash-session-identity-row,
   .nash-session .nash-session-extracted-summary,
   .nash-session .nash-session-final-grid,
-  .nash-session .nash-session-scope-reasons {
+  .nash-session .nash-session-scope-reasons,
+  .nash-session .nash-session-interview-list {
     grid-template-columns: 1fr;
   }
 
@@ -3450,6 +3576,15 @@
 
   .nash-session .nash-session-periodic {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .nash-session .nash-session-solution-groups {
+    gap: 22px;
+  }
+
+  .nash-session .nash-session-question-actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .nash-session .nash-session-result-tab span {
