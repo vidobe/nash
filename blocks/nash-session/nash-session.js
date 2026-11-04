@@ -2627,6 +2627,14 @@ ${docText.slice(0, MAX_DOC_CHARS)}`;
   }
 }
 
+function interviewDraftValue(answer) {
+  return answer === 'Unknown' ? '' : (answer || '');
+}
+
+function interviewSavedValue(answer) {
+  return answer.trim() || 'Unknown';
+}
+
 function renderInterviewForm(items, answers = {}) {
   return `<form class="nash-session-interview nash-session-interview-all">
       <header class="nash-session-interview-head">
@@ -2636,7 +2644,7 @@ function renderInterviewForm(items, answers = {}) {
       </header>
       <div class="nash-session-interview-list">
         ${items.map((item, index) => {
-    const answer = answers[item.key] === 'Unknown' ? '' : (answers[item.key] || '');
+    const answer = interviewDraftValue(answers[item.key]);
     return `<section class="nash-session-interview-item" data-key="${escapeHtml(item.key)}">
             <div class="nash-session-interview-question">
               <span>${String(index + 1).padStart(2, '0')}</span>
@@ -2723,7 +2731,7 @@ function askInterviewQuestions(block, items, answers = {}) {
     form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
       const { key } = item.dataset;
       const textarea = item.querySelector('textarea');
-      nextAnswers[key] = textarea.value.trim() || 'Unknown';
+      nextAnswers[key] = interviewSavedValue(textarea.value);
     });
     const priorItems = current.interview?.items || [];
     const allItems = new Map([...priorItems, ...items].map((item) => [item.key, item]));
