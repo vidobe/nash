@@ -9,27 +9,22 @@ const PILLARS = [
   {
     id: 'brand-visibility',
     name: 'Brand Visibility',
-    description: 'Build discoverable, relevant experiences across web, commerce, advertising, and AI-powered discovery.',
   },
   {
     id: 'customer-engagement',
     name: 'Customer Engagement',
-    description: 'Understand customers and orchestrate personalized journeys, campaigns, and experiences in real time.',
   },
   {
     id: 'content-supply-chain',
     name: 'Content Supply Chain',
-    description: 'Plan, create, manage, review, and activate content at enterprise scale.',
   },
   {
     id: 'ai-orchestration',
     name: 'AI Platform & Orchestration',
-    description: 'Coordinate intelligent agents, shared context, and governed automation across customer experience workflows.',
   },
   {
     id: 'developer',
     name: 'Developer & Extensibility',
-    description: 'Extend Adobe products with applications, APIs, events, and custom integrations.',
   },
 ];
 
@@ -76,11 +71,15 @@ const SOLUTION_PILLARS = {
   'developer-app-builder': 'developer',
 };
 
-function statusBadge(status) {
-  if ((status || '').toLowerCase() === 'active') {
-    return '<span class="nash-solutions-badge active">Active</span>';
+function statusIcon(status) {
+  const normalized = (status || '').toLowerCase().replace(/[\s_-]+/g, '');
+  if (normalized === 'beta') {
+    return '<span class="nash-solutions-status nash-solutions-status-beta" title="Beta" aria-label="Beta">◐</span>';
   }
-  return '<span class="nash-solutions-badge beta">Beta</span>';
+  if (normalized === 'earlyaccess' || normalized === 'preview') {
+    return '<span class="nash-solutions-status nash-solutions-status-early" title="Early access" aria-label="Early access">✦</span>';
+  }
+  return '<span class="nash-solutions-status nash-solutions-status-live" title="Live" aria-label="Live">●</span>';
 }
 
 function buildCard(sol) {
@@ -89,30 +88,15 @@ function buildCard(sol) {
   card.href = sol.path || '#';
 
   card.innerHTML = `
-    <div class="nash-solutions-card-header">
-      <div class="nash-solutions-logo" aria-hidden="true">${sol.logo || sol.title.charAt(0)}</div>
-      <div class="nash-solutions-card-meta">
-        ${statusBadge(sol.status)}
-      </div>
-    </div>
+    <div class="nash-solutions-logo" aria-hidden="true">${sol.logo || sol.title.charAt(0)}</div>
     <div class="nash-solutions-card-body">
-      <h3 class="nash-solutions-title">${sol.title}</h3>
-      <p class="nash-solutions-desc">${sol.description || ''}</p>
+      <div class="nash-solutions-card-title">
+        <h3 class="nash-solutions-title">${sol.title}</h3>
+        ${statusIcon(sol.status)}
+      </div>
+      <span class="nash-solutions-stat">${sol.signalcount || '0'} qualification signals</span>
     </div>
-    <div class="nash-solutions-card-footer">
-      <span class="nash-solutions-stat">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        ${sol.signalcount || '0'} signals
-      </span>
-      <span class="nash-solutions-stat">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        ${sol.productcount || '0'} products
-      </span>
-      <span class="nash-solutions-configure">
-        Configure
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-      </span>
-    </div>
+    <span class="nash-solutions-arrow" aria-hidden="true">→</span>
   `;
 
   return card;
@@ -150,8 +134,14 @@ export default async function decorate(block) {
     <div class="nash-solutions-header">
       <div>
         <h2 class="nash-solutions-heading">Solutions Files</h2>
-        <p class="nash-solutions-subhead">Manage the qualification knowledge base for each solution. Nash uses these files to score opportunities.</p>
+        <p class="nash-solutions-subhead">Qualification knowledge organized around Adobe CX Enterprise pillars.</p>
       </div>
+      <span class="nash-solutions-total">${solutions.length} solutions</span>
+    </div>
+    <div class="nash-solutions-legend" aria-label="Availability status">
+      <span><i class="nash-solutions-status nash-solutions-status-live">●</i>Live</span>
+      <span><i class="nash-solutions-status nash-solutions-status-beta">◐</i>Beta</span>
+      <span><i class="nash-solutions-status nash-solutions-status-early">✦</i>Early access</span>
     </div>
     <div class="nash-solutions-groups" id="nash-solutions-groups"></div>
     ${solutions.length === 0 ? `<div class="nash-solutions-empty">
@@ -172,10 +162,7 @@ export default async function decorate(block) {
     section.setAttribute('aria-labelledby', `nash-solutions-${pillar.id}`);
     section.innerHTML = `
       <div class="nash-solutions-group-header">
-        <div>
-          <h3 class="nash-solutions-group-title" id="nash-solutions-${pillar.id}">${pillar.name}</h3>
-          <p class="nash-solutions-group-description">${pillar.description}</p>
-        </div>
+        <h3 class="nash-solutions-group-title" id="nash-solutions-${pillar.id}">${pillar.name}</h3>
         <span class="nash-solutions-group-count">${pillarSolutions.length} solutions</span>
       </div>
       <div class="nash-solutions-grid"></div>
@@ -195,10 +182,7 @@ export default async function decorate(block) {
     section.setAttribute('aria-labelledby', 'nash-solutions-other');
     section.innerHTML = `
       <div class="nash-solutions-group-header">
-        <div>
-          <h3 class="nash-solutions-group-title" id="nash-solutions-other">Other solutions</h3>
-          <p class="nash-solutions-group-description">Solutions awaiting taxonomy assignment.</p>
-        </div>
+        <h3 class="nash-solutions-group-title" id="nash-solutions-other">Other solutions</h3>
         <span class="nash-solutions-group-count">${uncategorized.length} solutions</span>
       </div>
       <div class="nash-solutions-grid"></div>
