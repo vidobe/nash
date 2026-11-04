@@ -634,28 +634,183 @@ function renderIntake() {
 }
 
 function setupProgressHtml(solutions) {
-  const names = solutions.slice(0, 8).map((s) => s.name.replace(/^Adobe\s+/i, ''));
+  const first = solutions[0]?.name.replace(/^Adobe\s+/i, '') || 'Adobe';
   return `<div class="nash-session-setup-progress" aria-live="polite">
-      <div class="nash-session-product-pixels" aria-hidden="true">${pixelGrid()}</div>
-      <strong class="nash-session-product-name">${escapeHtml(names[0] || 'Adobe')}</strong>
+      ${productPixelStageHtml(first)}
       <div class="nash-session-progress-track"><span></span></div>
       <p class="nash-session-progress-message">${SETUP_PROGRESS_MESSAGES[0]}</p>
     </div>`;
 }
 
+function productAnimationItems(solutions) {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  return (solutions.length ? solutions : [{ name: 'Adobe', slug: '' }])
+    .slice(0, 12)
+    .map((solution) => {
+      const pillar = PILLARS.find((item) => item.id === SOLUTION_PILLARS[solution.slug]);
+      return {
+        label: solution.name.replace(/^Adobe\s+/i, ''),
+        color: isDark ? pillar?.darkAccent : pillar?.accent,
+      };
+    });
+}
+
+function productPixelStageHtml(label) {
+  return `<div class="nash-session-product-stage">
+      <canvas class="nash-session-product-canvas" width="700" height="132" aria-hidden="true"></canvas>
+      <span class="nash-session-visually-hidden">${escapeHtml(label)}</span>
+    </div>`;
+}
+
+function startProductPixelAnimation(host, solutions) {
+  const canvas = host.querySelector('.nash-session-product-canvas');
+  if (!canvas) return () => {};
+  const context = canvas.getContext('2d');
+  const items = productAnimationItems(solutions);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const { width, height } = canvas;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = width;
+  offscreen.height = height;
+  const mask = offscreen.getContext('2d', { willReadFrequently: true });
+  const accessibleName = host.querySelector('.nash-session-visually-hidden');
+  let particles = [];
+  let itemIndex = 0;
+  let startedAt = performance.now();
+  let frameId = 0;
+  let reducedTimer = 0;
+
+  const currentColor = () => items[itemIndex].color || '#eb1000';
+
+  const fitFont = (label) => {
+    let size = 48;
+    mask.font = `800 ${size}px adobe-clean, system-ui, sans-serif`;
+    mask.letterSpacing = '-1px';
+    while (mask.measureText(label).width > width - 48 && size > 22) {
+      size -= 2;
+      mask.font = `800 ${size}px adobe-clean, system-ui, sans-serif`;
+    }
+    return size;
+  };
+
+  const buildParticles = () => {
+    const { label } = items[itemIndex];
+    if (accessibleName) accessibleName.textContent = label;
+    mask.clearRect(0, 0, width, height);
+    const fontSize = fitFont(label);
+    mask.font = `800 ${fontSize}px adobe-clean, system-ui, sans-serif`;
+    mask.letterSpacing = '-1px';
+    mask.textAlign = 'center';
+    mask.textBaseline = 'middle';
+    mask.fillStyle = '#fff';
+    mask.fillText(label, width / 2, height / 2);
+    const pixels = mask.getImageData(0, 0, width, height).data;
+    const step = 3;
+    particles = [];
+    for (let y = 8; y < height - 8; y += step) {
+      for (let x = 12; x < width - 12; x += step) {
+        if (pixels[(y * width + x) * 4 + 3] >= 120) {
+          particles.push({
+            tx: x,
+            ty: y,
+            x: width / 2 + (Math.random() - 0.5) * 80,
+            y: height / 2 - 70 - Math.random() * 55,
+            drift: (Math.random() - 0.5) * 95,
+            delay: Math.random() * 0.12,
+            fallDelay: Math.random() * 0.045,
+            size: 2.4,
+          });
+        }
+      }
+    }
+  };
+
+  const drawStatic = () => {
+    const { label } = items[itemIndex];
+    context.clearRect(0, 0, width, height);
+    const fontSize = fitFont(label);
+    context.font = `800 ${fontSize}px adobe-clean, system-ui, sans-serif`;
+    context.letterSpacing = '-1px';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = currentColor();
+    context.fillText(label, width / 2, height / 2);
+    if (accessibleName) accessibleName.textContent = label;
+  };
+
+  if (reducedMotion) {
+    drawStatic();
+    reducedTimer = window.setInterval(() => {
+      itemIndex = (itemIndex + 1) % items.length;
+      drawStatic();
+    }, 2600);
+    return () => window.clearInterval(reducedTimer);
+  }
+
+  const clamp = (value) => Math.max(0, Math.min(1, value));
+  const smooth = (value) => value ** 3 * (value * (value * 6 - 15) + 10);
+  const easeOut = (value) => 1 - ((1 - value) ** 4);
+  const cycleMs = 5200;
+
+  const draw = (now) => {
+    if (!canvas.isConnected) return;
+    const elapsed = now - startedAt;
+    if (elapsed >= cycleMs) {
+      itemIndex = (itemIndex + 1) % items.length;
+      startedAt = now;
+      buildParticles();
+    }
+    const progress = (now - startedAt) / cycleMs;
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = currentColor();
+    particles.forEach((particle) => {
+      let x = particle.tx;
+      let y = particle.ty;
+      let alpha = 1;
+      if (progress < 0.3) {
+        const formed = easeOut(clamp((progress - particle.delay) / 0.22));
+        x = particle.x + (particle.tx - particle.x) * formed;
+        y = particle.y + (particle.ty - particle.y) * formed;
+        alpha = formed;
+      } else if (progress > 0.64) {
+        const falling = smooth(clamp(
+          (progress - 0.64 - particle.fallDelay) / 0.315,
+        ));
+        x = particle.tx + particle.drift * falling
+          + Math.sin((particle.ty + falling * 40) * 0.08) * 4 * falling;
+        y = particle.ty + (falling ** 2) * 120;
+        const edgeFade = clamp((height - 5 - y) / 35);
+        alpha = ((1 - falling) ** 2.4) * smooth(edgeFade);
+      }
+      context.globalAlpha = alpha;
+      context.fillRect(x, y, particle.size, particle.size);
+    });
+    context.globalAlpha = 1;
+    frameId = window.requestAnimationFrame(draw);
+  };
+
+  buildParticles();
+  frameId = window.requestAnimationFrame(draw);
+  return () => {
+    window.cancelAnimationFrame(frameId);
+    window.clearInterval(reducedTimer);
+  };
+}
+
 function startSetupAnimation(host, solutions) {
-  const names = solutions.slice(0, 10).map((s) => s.name.replace(/^Adobe\s+/i, ''));
-  const product = host.querySelector('.nash-session-product-name');
+  const stopProducts = startProductPixelAnimation(host, solutions);
   const message = host.querySelector('.nash-session-progress-message');
   let step = 0;
   const timer = window.setInterval(() => {
     step += 1;
-    if (product && names.length) product.textContent = names[step % names.length];
     if (message) {
       message.textContent = SETUP_PROGRESS_MESSAGES[step % SETUP_PROGRESS_MESSAGES.length];
     }
   }, 1800);
-  return () => window.clearInterval(timer);
+  return () => {
+    stopProducts();
+    window.clearInterval(timer);
+  };
 }
 
 function parseJsonObject(text) {
@@ -2337,12 +2492,6 @@ function persist(a) {
   saveAssessment(copy, getUserInfo()?.email || '');
 }
 
-function pixelGrid() {
-  return `<div class="nash-session-pixels" aria-hidden="true">${
-    Array.from({ length: 24 }).map((unused, i) => `<span style="animation-delay:${(i % 8) * 0.1 + Math.floor(i / 8) * 0.05}s"></span>`).join('')
-  }</div>`;
-}
-
 /* Small 3×3 pixel cluster in the chat bar; animates while the AI is thinking. */
 function pixelDots() {
   return Array.from({ length: 9 }).map(() => '<i></i>').join('');
@@ -2614,8 +2763,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   else if (attempt > 1) phase = 'Retrying';
   const runningHTML = `
     <div class="nash-session-running">
-      ${pixelGrid()}
-      <strong class="nash-session-running-product">${escapeHtml(sols[0].name.replace(/^Adobe\s+/i, ''))}</strong>
+      ${productPixelStageHtml(sols[0].name.replace(/^Adobe\s+/i, ''))}
       <div class="nash-session-working">
         <span class="nash-session-working-label">${phase} — this can take several minutes…</span>
       </div>
@@ -2630,16 +2778,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   if (!inThread) area.innerHTML = runningHTML;
   const stream = host.querySelector('.nash-session-stream');
   const label = host.querySelector('.nash-session-working-label');
-  const product = host.querySelector('.nash-session-running-product');
-  let productIndex = 0;
-  const productTimer = window.setInterval(() => {
-    productIndex += 1;
-    if (product) product.textContent = sols[productIndex % sols.length].name.replace(/^Adobe\s+/i, '');
-    if (!answer && label && productIndex % 2 === 0) {
-      label.textContent = SETUP_PROGRESS_MESSAGES[productIndex % SETUP_PROGRESS_MESSAGES.length];
-    }
-  }, 1900);
-  const stopProductAnimation = () => window.clearInterval(productTimer);
+  const stopProductAnimation = startProductPixelAnimation(host, sols);
 
   const skills = await fetchSkillsText(sols.map((s) => s.slug));
   // FluffyJaws chains an Azure response per tool iteration; long loops expire the
