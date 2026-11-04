@@ -2449,40 +2449,35 @@ ${docText.slice(0, MAX_DOC_CHARS)}`;
   }
 }
 
-function renderInterviewQuestion(item, index, total) {
-  return `<form class="nash-session-interview" data-key="${escapeHtml(item.key)}">
-      <span class="nash-session-kicker">Open question ${index + 1} of ${total}</span>
-      <label class="nash-session-interview-q" for="iv-${escapeHtml(item.key)}">${escapeHtml(item.q)}</label>
-      <textarea class="nash-session-interview-a" id="iv-${escapeHtml(item.key)}" rows="2" placeholder="Answer in your own words"></textarea>
+function renderInterviewForm(items, answers = {}) {
+  return `<form class="nash-session-interview nash-session-interview-all">
+      <header class="nash-session-interview-head">
+        <span class="nash-session-kicker">${items.length} open question${items.length === 1 ? '' : 's'}</span>
+        <h2>Complete what you know</h2>
+        <p>Answer everything in one go. Leave an answer blank or mark it unknown when the information is not available.</p>
+      </header>
+      <div class="nash-session-interview-list">
+        ${items.map((item, index) => {
+    const answer = answers[item.key] || '';
+    const unknown = answer === 'Unknown';
+    return `<section class="nash-session-interview-item" data-key="${escapeHtml(item.key)}">
+            <div class="nash-session-interview-question">
+              <span>${String(index + 1).padStart(2, '0')}</span>
+              <label class="nash-session-interview-q" for="iv-${index}">${escapeHtml(item.q)}</label>
+            </div>
+            <textarea class="nash-session-interview-a" id="iv-${index}" rows="3" placeholder="${unknown ? 'Marked as unknown' : 'Answer in your own words'}"${unknown ? ' disabled' : ''}>${unknown ? '' : escapeHtml(answer)}</textarea>
+            <label class="nash-session-interview-unknown">
+              <input type="checkbox"${unknown ? ' checked' : ''}/>
+              <span>I don’t know yet</span>
+            </label>
+          </section>`;
+  }).join('')}
+      </div>
       <div class="nash-session-question-actions">
-        <button type="button" class="nash-session-interview-unknown">I don’t know</button>
-        <button type="submit" class="nash-session-interview-run">Continue</button>
+        <span>Blank answers will be saved as unknown.</span>
+        <button type="submit" class="nash-session-interview-run">Continue to review</button>
       </div>
     </form>`;
-}
-
-async function chooseNextInterviewItem(remaining, answers, latest) {
-  if (!isAuthenticated() || remaining.length < 2) return remaining[0];
-  const prompt = `Choose the single most valuable next question for an Adobe opportunity qualification.
-Return ONLY {"key":"exact-key"}. Prioritise contradictions, deal-breakers, objectives, technical constraints, decision criteria, competitors, budget/timing, then lower-impact context. Do not repeat what the latest answer already resolved.
-
-LATEST ANSWER:
-${latest}
-
-ANSWERS SO FAR:
-${Object.entries(answers).map(([key, value]) => `${key}: ${value}`).join('\n')}
-
-CANDIDATES:
-${remaining.map((item) => `${item.key}: ${item.q}`).join('\n')}`;
-  let answer = '';
-  await streamQualification({
-    messages: [{ role: 'user', content: prompt }],
-    reasoningEffort: 'low',
-    onDelta: (delta) => { answer += delta; },
-    onError: () => {},
-  });
-  const selected = parseJsonObject(answer)?.key;
-  return remaining.find((item) => item.key === selected) || remaining[0];
 }
 
 function finalReviewHtml(a) {
@@ -2535,51 +2530,53 @@ async function showFinalReview(block) {
   });
 }
 
-async function askInterviewQuestions(block, items, ordered = [], answers = {}) {
-  const thread = block.querySelector('.nash-session-thread');
+function askInterviewQuestions(block, items, answers = {}) {
+  const area = block.querySelector('.nash-session-report-area');
   if (!items.length) {
-    current.interview = { answers, items: ordered, at: Date.now() };
+    current.interview = { answers, items: [], at: Date.now() };
     persist(current);
     showFinalReview(block);
     return;
   }
-  const item = ordered.length
-    ? await chooseNextInterviewItem(items, answers, answers[ordered.at(-1)?.key] || '')
-    : items[0];
-  const bubble = addMessage(
-    thread,
-    ordered.length ? 'assistant-cont' : 'assistant',
-    renderInterviewQuestion(item, ordered.length, ordered.length + items.length),
-  );
-  const form = bubble.querySelector('.nash-session-interview');
-  const textarea = form.querySelector('textarea');
-  textarea.addEventListener('input', () => autoResize(textarea));
-
-  const continueWith = (value) => {
-    answers[item.key] = value || 'Unknown';
-    const nextOrdered = [...ordered, { key: item.key, q: item.q }];
-    current.interview = { answers, items: nextOrdered, at: Date.now() };
-    persist(current);
-    form.closest('.nash-session-msg')?.remove();
-    askInterviewQuestions(
-      block,
-      items.filter((candidate) => candidate.key !== item.key),
-      nextOrdered,
-      answers,
-    );
-  };
+  area.innerHTML = renderInterviewForm(items, answers);
+  const form = area.querySelector('.nash-session-interview');
+  form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
+    const textarea = item.querySelector('textarea');
+    const unknown = item.querySelector('input[type="checkbox"]');
+    textarea.addEventListener('input', () => autoResize(textarea));
+    unknown.addEventListener('change', () => {
+      textarea.disabled = unknown.checked;
+      textarea.placeholder = unknown.checked ? 'Marked as unknown' : 'Answer in your own words';
+      if (unknown.checked) textarea.value = '';
+      if (!unknown.checked) textarea.focus();
+    });
+  });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    continueWith(textarea.value.trim());
+    const nextAnswers = { ...answers };
+    form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
+      const { key } = item.dataset;
+      const textarea = item.querySelector('textarea');
+      const unknown = item.querySelector('input[type="checkbox"]');
+      nextAnswers[key] = unknown.checked || !textarea.value.trim()
+        ? 'Unknown'
+        : textarea.value.trim();
+    });
+    const priorItems = current.interview?.items || [];
+    const allItems = new Map([...priorItems, ...items].map((item) => [item.key, item]));
+    current.interview = {
+      answers: nextAnswers,
+      items: [...allItems.values()],
+      at: Date.now(),
+    };
+    persist(current);
+    showFinalReview(block);
   });
-  form.querySelector('.nash-session-interview-unknown')
-    .addEventListener('click', () => continueWith('Unknown'));
 }
 
 /* The interview step: extract from docs, ask about the gaps, then run.
    Candidate questions = base (code) + solution-authored (DA). */
 async function runInterview(block) {
-  const area = block.querySelector('.nash-session-report-area');
   const thread = block.querySelector('.nash-session-thread');
   const files = assessmentFiles(current);
   const docText = files.filter((f) => f.text).map((f) => f.text).join('\n\n');
@@ -2610,12 +2607,9 @@ async function runInterview(block) {
   // Docs already cover everything → show the required final confirmation.
   if (!keys.length) { showFinalReview(block); return; }
 
-  // The interview reads as a continuation of the assistant's opening turn: it
-  // lives in the chat thread (no second N avatar), not the report area.
   const items = candidates.filter((it) => keys.includes(it.key));
-  area.innerHTML = '';
   thread.innerHTML = '';
-  askInterviewQuestions(block, items);
+  askInterviewQuestions(block, items, current.interview?.answers || {});
 }
 
 /* Analyst answers, formatted for the qualification prompt. */
