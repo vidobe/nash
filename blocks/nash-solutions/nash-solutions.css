@@ -1,28 +1,60 @@
 .nash-solutions {
-  padding: 32px 40px;
   max-width: 1200px;
+  padding: 32px 40px;
   margin: 0 auto;
 }
 
 .nash-solutions .nash-solutions-header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 28px;
+  gap: 24px;
+  margin-bottom: 18px;
 }
 
 .nash-solutions .nash-solutions-heading {
+  margin: 0 0 6px;
+  color: var(--ink, #111318);
   font-size: 20px;
   font-weight: 600;
-  color: var(--ink, #111318);
-  margin: 0 0 6px;
 }
 
 .nash-solutions .nash-solutions-subhead {
-  font-size: 13px;
-  color: var(--ink-70, #4a4d55);
-  margin: 0;
   max-width: 520px;
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 13px;
+}
+
+.nash-solutions .nash-solutions-total {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 999px;
+  background: var(--white, #fff);
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-solutions .nash-solutions-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 30px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 11px;
+}
+
+.nash-solutions .nash-solutions-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nash-solutions .nash-solutions-legend i {
+  font-style: normal;
 }
 
 .nash-solutions .nash-solutions-groups {
@@ -33,25 +65,19 @@
 
 .nash-solutions .nash-solutions-group-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 16px;
+  padding-left: 12px;
+  margin-bottom: 14px;
+  border-left: 4px solid var(--red, #eb1000);
 }
 
 .nash-solutions .nash-solutions-group-title {
-  margin: 0 0 4px;
+  margin: 0;
   color: var(--ink, #111318);
   font-size: 17px;
   font-weight: 600;
-}
-
-.nash-solutions .nash-solutions-group-description {
-  max-width: 700px;
-  margin: 0;
-  color: var(--ink-70, #4a4d55);
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .nash-solutions .nash-solutions-group-count {
@@ -62,130 +88,112 @@
 
 .nash-solutions .nash-solutions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-/* Card */
 .nash-solutions .nash-solutions-card {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 11px;
+  min-height: 74px;
+  padding: 12px 13px;
+  border: 1px solid #c7c9cf;
+  border-radius: 9px;
   background: var(--white, #fff);
-  border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 20px;
-  text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
   cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .nash-solutions .nash-solutions-card:hover {
-  border-color: var(--border, #e5e6ea);
-  box-shadow: 0 6px 20px rgb(0 0 0 / 6%);
+  border-color: var(--red, #eb1000);
+  box-shadow: 0 5px 16px rgb(0 0 0 / 8%);
   transform: translateY(-1px);
 }
 
-.nash-solutions .nash-solutions-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
 .nash-solutions .nash-solutions-logo {
-  width: 44px;
-  height: 44px;
-  background: var(--red, #eb1000);
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--white, #fff);
   flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-/* Badges */
-.nash-solutions .nash-solutions-badge {
-  font-size: 11px;
+.nash-solutions .nash-solutions-card-body {
+  min-width: 0;
+}
+
+.nash-solutions .nash-solutions-card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.nash-solutions .nash-solutions-title {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink, #111318);
+  font-size: 13px;
   font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.nash-solutions .nash-solutions-badge.active {
+.nash-solutions .nash-solutions-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.nash-solutions .nash-solutions-status-live {
   background: var(--green-lt, #edf7f2);
   color: var(--green, #0d7a45);
 }
 
-.nash-solutions .nash-solutions-badge.beta {
+.nash-solutions .nash-solutions-status-beta {
   background: var(--amber-lt, #fef3c7);
   color: var(--amber, #b45309);
 }
 
-/* Card body */
-.nash-solutions .nash-solutions-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink, #111318);
-  margin: 0 0 6px;
-}
-
-.nash-solutions .nash-solutions-desc {
-  font-size: 13px;
-  color: var(--ink-70, #4a4d55);
-  margin: 0;
-  line-height: 1.5;
-  flex: 1;
-}
-
-/* Card footer */
-.nash-solutions .nash-solutions-card-footer {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-top: 14px;
-  margin-top: 14px;
-  border-top: 1px solid var(--ink-08, #f4f4f6);
-}
-
-@media (width < 600px) {
-  .nash-solutions {
-    padding: 24px 20px;
-  }
-
-  .nash-solutions .nash-solutions-groups {
-    gap: 34px;
-  }
-
-  .nash-solutions .nash-solutions-group-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
-  }
+.nash-solutions .nash-solutions-status-early {
+  background: var(--blue-lt, #eff6ff);
+  color: var(--blue, #1d4ed8);
 }
 
 .nash-solutions .nash-solutions-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  display: block;
+  color: var(--ink-70, #4a4d55);
+  font-size: 11px;
+}
+
+.nash-solutions .nash-solutions-arrow {
   color: var(--ink-40, #9a9da6);
+  font-size: 16px;
+  transition: color 0.15s, transform 0.15s;
 }
 
-.nash-solutions .nash-solutions-configure {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 500;
+.nash-solutions .nash-solutions-card:hover .nash-solutions-arrow {
   color: var(--red, #eb1000);
+  transform: translateX(2px);
 }
 
-/* Empty state */
 .nash-solutions .nash-solutions-empty {
   display: flex;
   flex-direction: column;
@@ -197,6 +205,31 @@
 }
 
 .nash-solutions .nash-solutions-empty p {
-  font-size: 14px;
   margin: 0;
+  font-size: 14px;
+}
+
+@media (width < 600px) {
+  .nash-solutions {
+    padding: 24px 20px;
+  }
+
+  .nash-solutions .nash-solutions-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nash-solutions .nash-solutions-groups {
+    gap: 34px;
+  }
+
+  .nash-solutions .nash-solutions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width >= 600px) and (width < 900px) {
+  .nash-solutions .nash-solutions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
