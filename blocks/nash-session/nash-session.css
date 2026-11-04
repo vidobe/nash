@@ -928,6 +928,30 @@
   color: var(--red, #eb1000);
 }
 
+.nash-session .nash-session-legacy-required {
+  max-width: 680px;
+  margin: 56px auto;
+  padding: 28px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 12px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-session-legacy-required h2 {
+  margin: 7px 0 10px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-legacy-required p {
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .nash-session .nash-session-experiment-empty {
   display: grid;
   flex: 1;

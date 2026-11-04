@@ -1558,6 +1558,13 @@ function splitReportSections(md) {
   return h1.length >= 2 ? h1 : scan(/^#{1,2}(?!#)\s+(.+)$/);
 }
 
+function hasExperimentalReportShape(markdown) {
+  const labels = splitReportSections(markdown).map((section) => sectionLabel(section.title));
+  const experimental = ['Decision', 'Use Cases', 'Demo Storyline', 'Architecture', 'Evidence & Risks'];
+  return labels.length === experimental.length
+    && experimental.every((label, index) => labels[index] === label);
+}
+
 /* Scorecard cards from the parsed NASH_DIMS dimensions. */
 // Each scored dimension links to the narrative section that justifies it, so a
 // low score is traceable to its reasoning. Keyed by lower-cased dimension name;
@@ -2421,6 +2428,13 @@ function dossierBody(a) {
 
 /* Stable assessments use the original ten-section qualification view. */
 function renderDossier(a) {
+  if (hasExperimentalReportShape(a.reportMarkdown)) {
+    return `<div class="nash-session-legacy-required">
+      <span class="nash-session-kicker">Full assessment format restored</span>
+      <h2>Re-run this assessment once</h2>
+      <p>This result was created during the five-section report experiment and does not contain the full legacy sections. Use <strong>Re-run</strong> below to regenerate Overview, Market, Business, Architecture, Discovery, Competition, Recommendation, AI &amp; Agents, Rationale, and Accelerators with all score dimensions.</p>
+    </div>`;
+  }
   if (a.reportMarkdown) return daPreviewHtml(a);
   return `<div class="nash-session-report nash-md">${dossierHeader(a)}${dossierBody(a)}</div>`;
 }
@@ -3057,6 +3071,19 @@ async function runExperimentalAssessment(block, attempt = 1) {
 
 export function renderAssessment(block, a, autoRun = false) {
   current = a;
+  if (hasExperimentalReportShape(current.reportMarkdown)
+      && !current.experimentalReportMarkdown) {
+    current.experimentalReportMarkdown = current.reportMarkdown;
+    current.experimentalScore = current.score;
+    current.experimentalVerdict = current.verdict;
+    current.experimentalCms = current.cms;
+    current.experimentalDimensions = current.dimensions || [];
+    current.experimentalEvidence = current.evidence || [];
+    current.experimentalConfidence = current.confidence || [];
+    current.experimentalGeneratedAt = current.reportRev || current.createdAt || Date.now();
+    current.experimentalStatus = 'done';
+    persist(current);
+  }
   if (current.experimentalStatus === 'running') {
     current.experimentalStatus = 'error';
     current.experimentalError = 'The previous experimental run was interrupted. Run it again.';
