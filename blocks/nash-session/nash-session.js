@@ -779,14 +779,44 @@ function solutionTileHtml(solution, inferred) {
     || [solution.name.replace(/^Adobe\s+/i, '').split(/\W+/)
       .map((word) => word[0]).join('')
       .slice(0, 2), 0];
-  const pillar = PILLARS.find((item) => item.id === SOLUTION_PILLARS[solution.slug]);
-  return `<label class="nash-session-solution-tile${recommendation ? ' is-recommended' : ''}" style="--tile-accent:${pillar?.accent || '#6b7280'}">
+  return `<label class="nash-session-solution-tile${recommendation ? ' is-recommended' : ''}">
       <input type="checkbox" name="solutions" value="${escapeHtml(solution.slug)}" data-name="${escapeHtml(solution.name)}"${recommendation ? ' checked' : ''}/>
       <span class="nash-session-solution-num">${String(number).padStart(3, '0')}</span>
       <strong>${escapeHtml(symbol)}</strong>
       <span>${escapeHtml(solution.name.replace(/^Adobe\s+/i, ''))}</span>
       ${recommendation ? `<small>${escapeHtml(recommendation.reason)}${recommendation.evidence ? ` · ${escapeHtml(recommendation.evidence)}` : ''}</small>` : ''}
     </label>`;
+}
+
+function solutionGroupHtml(pillar, solutions, inferred) {
+  if (!solutions.length) return '';
+  const accent = pillar?.accent || '#6b7280';
+  const darkAccent = pillar?.darkAccent || '#9a9da6';
+  const id = pillar?.id || 'other';
+  const name = pillar?.name || 'Other solutions';
+  return `<section class="nash-session-solution-group" aria-labelledby="nash-session-solutions-${escapeHtml(id)}" style="--solution-accent-light:${accent};--solution-accent-dark:${darkAccent}">
+    <div class="nash-session-solution-group-head">
+      <h3 id="nash-session-solutions-${escapeHtml(id)}">${escapeHtml(name)}</h3>
+      <span>${solutions.length} ${solutions.length === 1 ? 'solution' : 'solutions'}</span>
+    </div>
+    <div class="nash-session-periodic">${solutions.map((solution) => solutionTileHtml(solution, inferred)).join('')}</div>
+  </section>`;
+}
+
+function groupedSolutionsHtml(solutions, inferred) {
+  const groupedSlugs = new Set();
+  const groups = PILLARS.map((pillar) => {
+    const pillarSolutions = solutions
+      .filter((solution) => SOLUTION_PILLARS[solution.slug] === pillar.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    pillarSolutions.forEach((solution) => groupedSlugs.add(solution.slug));
+    return solutionGroupHtml(pillar, pillarSolutions, inferred);
+  }).filter(Boolean);
+  const uncategorized = solutions
+    .filter((solution) => !groupedSlugs.has(solution.slug))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (uncategorized.length) groups.push(solutionGroupHtml(null, uncategorized, inferred));
+  return groups.join('');
 }
 
 function summaryList(title, values) {
@@ -824,7 +854,7 @@ function renderSetupReview(inferred, solutions, fileNames) {
         <div><span class="nash-session-kicker">Recommended scope</span><h2>Confirm the Adobe solutions</h2></div>
         <p>Recommendations are tied to the customer evidence. Add or remove products freely.</p>
       </div>
-      <div class="nash-session-periodic">${solutions.map((solution) => solutionTileHtml(solution, inferred)).join('')}</div>
+      <div class="nash-session-solution-groups">${groupedSolutionsHtml(solutions, inferred)}</div>
       ${recommendationReasons ? `<ul class="nash-session-scope-reasons">${recommendationReasons}</ul>` : ''}
       <div class="nash-session-setup-actions">
         <button type="submit" class="nash-session-btn-primary">Continue to open questions</button>
@@ -2602,22 +2632,17 @@ function renderInterviewForm(items, answers = {}) {
       <header class="nash-session-interview-head">
         <span class="nash-session-kicker">${items.length} open question${items.length === 1 ? '' : 's'}</span>
         <h2>Complete what you know</h2>
-        <p>Answer everything in one go. Leave an answer blank or mark it unknown when the information is not available.</p>
+        <p>Add the context you have. Leave anything blank and Nash will treat it as unknown.</p>
       </header>
       <div class="nash-session-interview-list">
         ${items.map((item, index) => {
-    const answer = answers[item.key] || '';
-    const unknown = answer === 'Unknown';
+    const answer = answers[item.key] === 'Unknown' ? '' : (answers[item.key] || '');
     return `<section class="nash-session-interview-item" data-key="${escapeHtml(item.key)}">
             <div class="nash-session-interview-question">
               <span>${String(index + 1).padStart(2, '0')}</span>
               <label class="nash-session-interview-q" for="iv-${index}">${escapeHtml(item.q)}</label>
             </div>
-            <textarea class="nash-session-interview-a" id="iv-${index}" rows="3" placeholder="${unknown ? 'Marked as unknown' : 'Answer in your own words'}"${unknown ? ' disabled' : ''}>${unknown ? '' : escapeHtml(answer)}</textarea>
-            <label class="nash-session-interview-unknown">
-              <input type="checkbox"${unknown ? ' checked' : ''}/>
-              <span>I don’t know yet</span>
-            </label>
+            <textarea class="nash-session-interview-a" id="iv-${index}" rows="2" placeholder="Add context if known">${escapeHtml(answer)}</textarea>
           </section>`;
   }).join('')}
       </div>
@@ -2638,7 +2663,7 @@ function finalReviewHtml(a) {
         <div><small>Customer</small><strong>${escapeHtml(a.company)}</strong></div>
         <div><small>Documents</small><strong>${escapeHtml(a.fileName || 'No documents')}</strong></div>
         <div><small>Adobe scope</small><strong>${escapeHtml(solutionsLabel(a) || 'To be inferred')}</strong></div>
-        <div><small>Open questions</small><strong>${Object.keys(answers).length} answered${unknowns ? ` · ${unknowns} unknown` : ''}</strong></div>
+        <div><small>Open questions</small><strong>${Object.keys(answers).length} questions${unknowns ? ` · ${unknowns} unknown` : ''}</strong></div>
       </div>
       <p>Nash will now research public sources, score the opportunity, map customer use cases to specific Adobe features, build a demo storyline, and produce a customer-specific logical architecture.</p>
       <button type="button" class="nash-session-run-final">Run assessment</button>
@@ -2690,14 +2715,7 @@ function askInterviewQuestions(block, items, answers = {}) {
   const form = area.querySelector('.nash-session-interview');
   form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
     const textarea = item.querySelector('textarea');
-    const unknown = item.querySelector('input[type="checkbox"]');
     textarea.addEventListener('input', () => autoResize(textarea));
-    unknown.addEventListener('change', () => {
-      textarea.disabled = unknown.checked;
-      textarea.placeholder = unknown.checked ? 'Marked as unknown' : 'Answer in your own words';
-      if (unknown.checked) textarea.value = '';
-      if (!unknown.checked) textarea.focus();
-    });
   });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -2705,10 +2723,7 @@ function askInterviewQuestions(block, items, answers = {}) {
     form.querySelectorAll('.nash-session-interview-item').forEach((item) => {
       const { key } = item.dataset;
       const textarea = item.querySelector('textarea');
-      const unknown = item.querySelector('input[type="checkbox"]');
-      nextAnswers[key] = unknown.checked || !textarea.value.trim()
-        ? 'Unknown'
-        : textarea.value.trim();
+      nextAnswers[key] = textarea.value.trim() || 'Unknown';
     });
     const priorItems = current.interview?.items || [];
     const allItems = new Map([...priorItems, ...items].map((item) => [item.key, item]));
