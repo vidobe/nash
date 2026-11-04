@@ -9,22 +9,32 @@ const PILLARS = [
   {
     id: 'brand-visibility',
     name: 'Brand Visibility',
+    accent: '#0c8a5e',
+    darkAccent: '#34d399',
   },
   {
     id: 'customer-engagement',
     name: 'Customer Engagement',
+    accent: '#3949d6',
+    darkAccent: '#8f9bff',
   },
   {
     id: 'content-supply-chain',
     name: 'Content Supply Chain',
+    accent: '#d99a0b',
+    darkAccent: '#f5b941',
   },
   {
     id: 'ai-orchestration',
     name: 'AI Platform & Orchestration',
+    accent: '#7a3fd1',
+    darkAccent: '#b48cff',
   },
   {
     id: 'developer',
     name: 'Developer & Extensibility',
+    accent: '#0a86b0',
+    darkAccent: '#4cc3ec',
   },
 ];
 
@@ -200,6 +210,8 @@ export default async function decorate(block) {
     const section = document.createElement('section');
     section.className = 'nash-solutions-group';
     section.setAttribute('aria-labelledby', `nash-solutions-${pillar.id}`);
+    section.style.setProperty('--solution-accent-light', pillar.accent);
+    section.style.setProperty('--solution-accent-dark', pillar.darkAccent);
     section.innerHTML = `
       <div class="nash-solutions-group-header">
         <h3 class="nash-solutions-group-title" id="nash-solutions-${pillar.id}">${pillar.name}</h3>
