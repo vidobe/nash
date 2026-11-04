@@ -1,3 +1,5 @@
+/* stylelint-disable no-descending-specificity */
+
 /* nash-session block — launcher + assessment chat */
 
 .nash-session {
@@ -338,6 +340,364 @@
   color: var(--ink-40, #9a9da6);
 }
 
+/* Document-first intake: one clear action before any metadata or product work. */
+.nash-session .nash-session-intake-focused {
+  width: min(760px, 100%);
+  margin: clamp(24px, 8vh, 84px) auto 0;
+  text-align: center;
+}
+
+.nash-session .nash-session-intake-copy {
+  max-width: 620px;
+  margin: 0 auto 28px;
+}
+
+.nash-session .nash-session-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--red, #eb1000);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nash-session .nash-session-intake-copy h2,
+.nash-session .nash-session-setup-review h2,
+.nash-session .nash-session-empty-start h2,
+.nash-session .nash-session-final-review h2 {
+  margin: 0 0 10px;
+  color: var(--ink, #111318);
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+}
+
+.nash-session .nash-session-intake-copy p,
+.nash-session .nash-session-setup-review header p,
+.nash-session .nash-session-empty-start p,
+.nash-session .nash-session-final-review > p {
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.nash-session .nash-session-drop-hero {
+  min-height: 160px;
+  justify-content: center;
+  padding: 28px;
+  border-color: color-mix(in srgb, var(--ink-40, #9a9da6) 55%, transparent);
+  background: color-mix(in srgb, var(--surface, #f8f8fa) 65%, transparent);
+}
+
+.nash-session .nash-session-drop-hero .nash-session-drop-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.nash-session .nash-session-drop-hero .nash-session-drop-text {
+  font-size: 16px;
+}
+
+.nash-session .nash-session-start-empty {
+  margin-top: 16px;
+  border: 0;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.nash-session .nash-session-start-empty:hover {
+  color: var(--ink, #111318);
+}
+
+.nash-session.is-setting-up .nash-session-tab:disabled,
+.nash-session.is-setting-up .nash-session-composer {
+  filter: grayscale(1);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.nash-session.is-setting-up .nash-session-composer {
+  background: var(--ink-08, #f4f4f6);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.nash-session .nash-session-setup-progress {
+  display: grid;
+  place-items: center;
+  width: min(680px, 100%);
+  min-height: 280px;
+  margin: clamp(20px, 7vh, 72px) auto 0;
+  text-align: center;
+}
+
+.nash-session .nash-session-product-pixels .nash-session-pixels {
+  margin: 0 auto 18px;
+}
+
+.nash-session .nash-session-product-name,
+.nash-session .nash-session-running-product {
+  min-height: 1.4em;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 400;
+  animation: nash-product-resolve 1.8s steps(6, end) infinite;
+}
+
+@keyframes nash-product-resolve {
+  /* stylelint-disable declaration-block-single-line-max-declarations */
+  0% { opacity: 0.25; filter: blur(5px); letter-spacing: 0.12em; }
+  45% { opacity: 1; filter: blur(0); letter-spacing: 0; }
+  100% { opacity: 0.7; filter: blur(1px); }
+  /* stylelint-enable declaration-block-single-line-max-declarations */
+}
+
+.nash-session .nash-session-progress-track {
+  width: min(420px, 80%);
+  height: 3px;
+  margin: 22px 0 12px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ink-15, #e8e9ec);
+}
+
+.nash-session .nash-session-progress-track span {
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff6fb0, #a78bfa, #5b9dff);
+  animation: nash-progress-scan 1.8s ease-in-out infinite;
+}
+
+@keyframes nash-progress-scan {
+  from { transform: translateX(-105%); }
+  to { transform: translateX(345%); }
+}
+
+.nash-session .nash-session-progress-message {
+  margin: 0;
+  color: var(--ink-40, #9a9da6);
+  font-size: 13px;
+}
+
+.nash-session .nash-session-setup-review {
+  width: min(1080px, 100%);
+  margin: 12px auto 40px;
+}
+
+.nash-session .nash-session-setup-review > header {
+  max-width: 760px;
+  margin-bottom: 28px;
+}
+
+.nash-session .nash-session-identity-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1.2fr 0.8fr;
+  gap: 20px;
+  padding: 18px 0 22px;
+  border-block: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-identity-row label,
+.nash-session .nash-session-empty-start label {
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-identity-row label > span {
+  color: var(--ink-40, #9a9da6);
+  font-weight: 400;
+}
+
+.nash-session .nash-session-identity-row input,
+.nash-session .nash-session-empty-start input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 0;
+  border: 0;
+  border-bottom: 1px solid var(--ink-15, #e8e9ec);
+  outline: 0;
+  background: transparent;
+  color: var(--ink, #111318);
+  font: inherit;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.nash-session .nash-session-identity-row input:focus,
+.nash-session .nash-session-empty-start input:focus {
+  border-color: var(--spectrum-accent, #1473e6);
+}
+
+.nash-session .nash-session-extracted-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 28px;
+  padding: 26px 0 18px;
+}
+
+.nash-session .nash-session-extracted-summary h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.nash-session .nash-session-extracted-summary ul {
+  margin: 0;
+  padding-left: 17px;
+}
+
+.nash-session .nash-session-extracted-summary li {
+  margin-bottom: 5px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.nash-session .nash-session-scope-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 28px 0 14px;
+}
+
+.nash-session .nash-session-scope-head h2 {
+  margin-bottom: 0;
+  font-size: 28px;
+}
+
+.nash-session .nash-session-scope-head p {
+  max-width: 390px;
+  margin: 0;
+  color: var(--ink-40, #9a9da6);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-session-periodic {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+  gap: 8px;
+}
+
+.nash-session .nash-session-solution-tile {
+  position: relative;
+  display: flex;
+  min-height: 100px;
+  flex-direction: column;
+  padding: 9px;
+  border-top: 3px solid var(--tile-accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--tile-accent) 7%, var(--white, #fff));
+  color: var(--ink, #111318);
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgb(17 19 24 / 8%);
+}
+
+.nash-session .nash-session-solution-tile:has(input:checked) {
+  background: color-mix(in srgb, var(--tile-accent) 17%, var(--white, #fff));
+  box-shadow: 0 0 0 2px var(--tile-accent);
+}
+
+.nash-session .nash-session-solution-tile input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nash-session .nash-session-solution-num {
+  align-self: flex-end;
+  color: var(--ink-40, #9a9da6);
+  font-size: 9px;
+}
+
+.nash-session .nash-session-solution-tile > strong {
+  margin-top: 3px;
+  color: var(--tile-accent);
+  font-size: 25px;
+  line-height: 1;
+}
+
+.nash-session .nash-session-solution-tile > span:not(.nash-session-solution-num) {
+  margin-top: auto;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.nash-session .nash-session-solution-tile small {
+  display: none;
+}
+
+.nash-session .nash-session-solution-tile.is-recommended::after {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: var(--tile-accent);
+  content: '●';
+  font-size: 8px;
+}
+
+.nash-session .nash-session-scope-reasons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px 24px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-session .nash-session-scope-reasons li {
+  color: var(--ink-70, #4a4d55);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.nash-session .nash-session-scope-reasons span {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-solution-tile.is-recommended:hover small,
+.nash-session .nash-session-solution-tile.is-recommended:focus-within small {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  left: 0;
+  display: block;
+  width: 190px;
+  padding: 9px;
+  border-radius: 7px;
+  background: var(--ink, #111318);
+  color: var(--white, #fff);
+  font-size: 10px;
+  line-height: 1.35;
+  box-shadow: 0 6px 20px rgb(17 19 24 / 22%);
+}
+
+.nash-session .nash-session-setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.nash-session .nash-session-empty-start,
+.nash-session .nash-session-final-review {
+  width: min(620px, 100%);
+  margin: clamp(28px, 8vh, 88px) auto 0;
+}
+
+.nash-session .nash-session-empty-start .nash-session-btn-primary {
+  margin-top: 18px;
+}
+
 .nash-session .nash-session-solgrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -619,6 +979,10 @@
   padding: 2px 0;
 }
 
+.nash-session .nash-session-interview .nash-session-kicker {
+  margin-bottom: -4px;
+}
+
 .nash-session .nash-session-interview-lead {
   margin: 0;
   color: inherit;
@@ -648,6 +1012,72 @@
   resize: none;
   box-sizing: border-box;
   transition: box-shadow 0.15s ease;
+}
+
+.nash-session .nash-session-question-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.nash-session .nash-session-question-actions button {
+  padding: 8px 15px;
+  border: 0;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nash-session .nash-session-interview-unknown {
+  background: none;
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-question-actions .nash-session-interview-run {
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+  box-shadow: none;
+}
+
+.nash-session .nash-session-final-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 28px;
+  margin: 28px 0;
+  padding-block: 20px;
+  border-block: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-final-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nash-session .nash-session-final-grid small {
+  color: var(--ink-40, #9a9da6);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.nash-session .nash-session-final-grid strong {
+  color: var(--ink, #111318);
+  font-size: 14px;
+}
+
+.nash-session .nash-session-run-final {
+  margin-top: 22px;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--red, #eb1000);
+  color: var(--white, #fff);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .nash-session .nash-session-interview-a::placeholder {
@@ -1746,7 +2176,6 @@
   opacity: 1;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-opp-tptile-remove:hover {
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
@@ -1897,7 +2326,6 @@
   background: var(--ink-08, #f4f4f6);
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-opp-modal-sub {
   margin: 4px 0 18px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
@@ -1905,7 +2333,6 @@
   color: var(--ink-40, #9a9da6);
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-opp-typegrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2022,7 +2449,6 @@
   color: var(--ink-40, #9a9da6);
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-publish {
   padding: 6px 14px;
   border: 1px solid var(--border, #e5e6ea);
@@ -2250,7 +2676,6 @@
   height: 22px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-pix i {
   position: absolute;
   width: 5px;
@@ -2334,7 +2759,6 @@
   white-space: nowrap;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-chip button {
   border: none;
   background: none;
@@ -2613,6 +3037,17 @@
 /* Live "thinking" run state */
 .nash-session .nash-session-running {
   margin-top: 8px;
+  text-align: center;
+}
+
+.nash-session .nash-session-running > .nash-session-pixels {
+  justify-content: center;
+  margin: 18px auto;
+}
+
+.nash-session .nash-session-running-product {
+  display: block;
+  margin-bottom: 18px;
 }
 
 .nash-session .nash-session-working {
@@ -2669,6 +3104,74 @@
   line-height: 1.7;
   color: var(--ink-40, #9a9da6);
   white-space: pre-wrap;
+  text-align: left;
+}
+
+.nash-session .nash-session-results {
+  width: 100%;
+}
+
+.nash-session .nash-session-result-tabs {
+  position: sticky;
+  z-index: 4;
+  top: 0;
+  display: flex;
+  gap: 4px;
+  padding: 4px 0 12px;
+  overflow-x: auto;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-session-result-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-40, #9a9da6);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nash-session .nash-session-result-tab svg {
+  width: 15px;
+  height: 15px;
+}
+
+.nash-session .nash-session-result-tab.active {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+  font-weight: 600;
+}
+
+.nash-session .nash-session-result-panel {
+  display: none;
+  padding: 14px 2px 24px;
+}
+
+.nash-session .nash-session-result-panel.active {
+  display: block;
+}
+
+.nash-session .nash-session-result-panel .nash-session-report-top {
+  margin-bottom: 20px;
+}
+
+.nash-session .nash-session-result-panel details {
+  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-session-publish-state {
+  color: var(--ink-40, #9a9da6);
+  font-size: 11.5px;
+}
+
+.nash-session .nash-session-publish-state.is-error {
+  color: var(--red, #eb1000);
 }
 
 /* Markdown dossier — shared by the live run and the DA-document preview so
@@ -2893,7 +3396,6 @@
   padding-left: 18px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-report-list li {
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
@@ -2921,6 +3423,26 @@
 }
 
 @media (width < 700px) {
+  .nash-session .nash-session-identity-row,
+  .nash-session .nash-session-extracted-summary,
+  .nash-session .nash-session-final-grid,
+  .nash-session .nash-session-scope-reasons {
+    grid-template-columns: 1fr;
+  }
+
+  .nash-session .nash-session-scope-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nash-session .nash-session-periodic {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .nash-session .nash-session-result-tab span {
+    display: none;
+  }
+
   .nash-session .nash-session-opp-grid,
   .nash-session .nash-opp-detail-row {
     grid-template-columns: 1fr;
@@ -3283,7 +3805,6 @@
   line-height: 1;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-sales-hl-score i {
   margin-left: 3px;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
@@ -3489,13 +4010,12 @@
   font-weight: 600;
 }
 
-/* stylelint-disable no-descending-specificity */
+
 .nash-session .nash-sales-tp-meta .nash-sales-in,
 .nash-session .nash-sales-tp-meta .nash-sales-sel {
   font-size: 12px;
   color: var(--ink-70, #4a4d55);
 }
-/* stylelint-enable no-descending-specificity */
 
 .nash-session .nash-sales-tp-who {
   flex: 1;
@@ -3506,7 +4026,6 @@
 .nash-session .nash-sales-tl-item.prog .nash-sales-tp-status { color: var(--spectrum-accent, #1473e6); }
 .nash-session .nash-sales-tl-item.done .nash-sales-tp-status { color: var(--green, #0d7a45); }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-sales-tp-when .nash-sales-in {
   color: var(--ink-70, #4a4d55);
 }
@@ -3678,7 +4197,6 @@
   margin-bottom: 36px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-decision-head h2 {
   margin: 2px 0 8px;
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
@@ -3687,7 +4205,6 @@
   color: var(--ink, #111318);
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .nash-session .nash-session-decision-head p {
   margin: 0;
   font-size: 14px;

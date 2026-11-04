@@ -5,7 +5,7 @@
  * @param {Element} block The block element
  */
 
-const PILLARS = [
+export const PILLARS = [
   {
     id: 'brand-visibility',
     name: 'Brand Visibility',
@@ -38,7 +38,7 @@ const PILLARS = [
   },
 ];
 
-const SOLUTION_PILLARS = {
+export const SOLUTION_PILLARS = {
   advertising: 'brand-visibility',
   aem: 'brand-visibility',
   'aem-forms': 'brand-visibility',
@@ -83,7 +83,7 @@ const SOLUTION_PILLARS = {
   'developer-app-builder': 'developer',
 };
 
-const SOLUTION_TILES = {
+export const SOLUTION_TILES = {
   advertising: ['Ad', 1],
   'brand-concierge': ['Bc', 2],
   llmo: ['Bv', 3],
