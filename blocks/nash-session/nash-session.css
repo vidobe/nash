@@ -4915,85 +4915,54 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   text-transform: uppercase;
 }
 
-.nash-session .nash-session-section-dialog {
-  width: min(940px, calc(100vw - 32px));
-  max-height: min(86vh, 920px);
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-  border-radius: 16px;
-  background: var(--white, #fff);
-  box-shadow: 0 30px 90px rgb(0 0 0 / 40%);
-  color: var(--ink, #111318);
+.nash-session .nash-session-section-reading {
+  scroll-margin-top: 20px;
 }
 
-.nash-session .nash-session-section-dialog::backdrop {
-  background: rgb(0 0 0 / 68%);
-  backdrop-filter: blur(5px);
-}
-
-.nash-session .nash-session-section-dialog-head {
-  display: flex;
+.nash-session .nash-session-section-back {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--border, #e5e6ea);
-  background: var(--surface, #f8f8fa);
-  font-size: 10px;
+  margin: 0 0 34px;
+  padding: 8px 11px;
+  border: 1px solid var(--gallery-line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.nash-session .nash-session-section-dialog-head button {
-  display: grid;
-  place-items: center;
-  width: 31px;
-  height: 31px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--ink-08, #f4f4f6);
-  font-size: 23px;
-  line-height: 1;
-  color: var(--ink-70, #4a4d55);
+  color: var(--gallery-muted);
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
 }
 
-.nash-session .nash-session-section-dialog-body {
-  max-height: calc(min(86vh, 920px) - 56px);
-  padding: clamp(24px, 5vw, 56px);
-  overflow-y: auto;
+.nash-session .nash-session-section-back:hover {
+  background: rgb(255 255 255 / 8%);
+  color: var(--gallery-copy);
 }
 
-.nash-session .nash-session-section-expanded[hidden] {
-  display: none;
-}
-
-.nash-session .nash-session-section-expanded > h2 {
-  margin: 12px 0 26px;
+.nash-session .nash-session-section-reading > h2 {
+  max-width: 900px;
+  margin: 14px 0 30px;
   font-family: var(--serif, 'DM Serif Display', georgia, serif);
   font-size: clamp(30px, 5vw, 52px);
   font-weight: 400;
   line-height: 1;
+  color: var(--gallery-copy);
 }
 
-.nash-session .nash-session-section-expanded .nash-session-dimension-kicker {
+.nash-session .nash-session-section-reading .nash-session-dimension-kicker {
   color: var(--red, #eb1000);
 }
 
-.nash-session .nash-session-section-expanded .nash-md p,
-.nash-session .nash-session-section-expanded .nash-md li {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--ink-70, #4a4d55);
+.nash-session .nash-session-section-reading .nash-md {
+  max-width: 900px;
 }
 
-.nash-session .nash-session-section-expanded .nash-md table {
-  display: block;
-  max-width: 100%;
-  overflow-x: auto;
-  border-collapse: collapse;
+.nash-session .nash-session-section-reading .nash-md p,
+.nash-session .nash-session-section-reading .nash-md li {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #c7cad1;
 }
 
 @media (width < 1100px) {
