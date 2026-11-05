@@ -2831,6 +2831,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   left: calc(var(--sidebar-w, 240px) + (100vw - var(--sidebar-w, 240px)) / 2);
   z-index: 120;
   display: grid;
+  box-sizing: border-box;
   width: min(1080px, calc(100vw - var(--sidebar-w, 240px) - 64px));
   min-height: 66px;
   padding: 8px 10px 8px 18px;
