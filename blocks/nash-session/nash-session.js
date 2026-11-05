@@ -1689,11 +1689,12 @@ function daPreviewHtml(a) {
       <b>${pct}</b><span>${escapeHtml(dimension.dimension)}</span>
     </button>`;
   }).join('');
-  const sectionPanels = sections.map((section, index) => `<section class="nash-session-section-expanded" data-section-index="${index}" hidden>
+  const sectionPanels = sections.map((section, index) => `<article class="nash-session-dimension-reading nash-session-section-reading" data-section-index="${index}" hidden>
+    <button type="button" class="nash-session-section-back">&larr; All dimensions</button>
     <span class="nash-session-dimension-kicker">Full assessment section</span>
     <h2>${escapeHtml(section.title)}</h2>
     <div class="nash-md">${renderReportMarkdown(section.md, {}, a.evidence || [])}</div>
-  </section>`).join('');
+  </article>`).join('');
   return `<div class="nash-session-qual nash-session-assessment-gallery">
     <div class="nash-session-qual-head">
       <div>
@@ -1722,18 +1723,12 @@ function daPreviewHtml(a) {
       <div class="nash-session-dimension-readings">
         ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, a)).join('')}
       </div>
+      <div class="nash-session-section-readings">${sectionPanels}</div>
       <footer class="nash-session-gallery-footer">
         <span>${sections.length} sections visible</span>
         <span>Open any section to read the complete assessment</span>
       </footer>
     </div>
-    <dialog class="nash-session-section-dialog">
-      <div class="nash-session-section-dialog-head">
-        <span>Assessment detail</span>
-        <button type="button" aria-label="Close assessment section">&times;</button>
-      </div>
-      <div class="nash-session-section-dialog-body">${sectionPanels}</div>
-    </dialog>
   </div>`;
 }
 
@@ -1762,7 +1757,8 @@ function wireAssessmentGallery(root) {
   if (!gallery) return;
   const filters = [...gallery.querySelectorAll('.nash-session-dimension-filter')];
   const sectionGallery = gallery.querySelector('.nash-session-section-gallery');
-  const readings = [...gallery.querySelectorAll('.nash-session-dimension-reading')];
+  const readings = [...gallery.querySelectorAll('.nash-session-dimension-readings .nash-session-dimension-reading')];
+  const sectionReadings = [...gallery.querySelectorAll('.nash-session-section-reading')];
   const footer = gallery.querySelector('.nash-session-gallery-footer');
   filters.forEach((filter) => filter.addEventListener('click', () => {
     filters.forEach((item) => {
@@ -1775,6 +1771,7 @@ function wireAssessmentGallery(root) {
     readings.forEach((reading) => {
       reading.hidden = all || reading.dataset.dimensionIndex !== filter.dataset.dimensionIndex;
     });
+    sectionReadings.forEach((reading) => { reading.hidden = true; });
     footer.firstElementChild.textContent = all
       ? `${sectionGallery.children.length} sections visible`
       : 'Dimension reading view';
@@ -1783,18 +1780,27 @@ function wireAssessmentGallery(root) {
       : 'Return to All dimensions to see the section gallery';
   }));
 
-  const dialog = gallery.querySelector('.nash-session-section-dialog');
   gallery.querySelectorAll('.nash-session-section-card').forEach((card) => {
     card.addEventListener('click', () => {
-      dialog.querySelectorAll('.nash-session-section-expanded').forEach((section) => {
+      filters.forEach((filter) => {
+        filter.classList.remove('active');
+        filter.setAttribute('aria-pressed', 'false');
+      });
+      sectionGallery.hidden = true;
+      readings.forEach((reading) => { reading.hidden = true; });
+      sectionReadings.forEach((section) => {
         section.hidden = section.dataset.sectionIndex !== card.dataset.sectionIndex;
       });
-      dialog.showModal();
+      const active = sectionReadings.find((section) => !section.hidden);
+      footer.firstElementChild.textContent = 'Section detail view';
+      footer.lastElementChild.textContent = 'Return to All dimensions to see the section gallery';
+      active?.scrollIntoView({ block: 'start' });
     });
   });
-  dialog.querySelector('.nash-session-section-dialog-head button')?.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) dialog.close();
+  gallery.querySelectorAll('.nash-session-section-back').forEach((button) => {
+    button.addEventListener('click', () => filters.find(
+      (filter) => filter.dataset.dimensionIndex === 'all',
+    )?.click());
   });
 }
 
