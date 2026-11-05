@@ -1477,20 +1477,6 @@ function hasExperimentalReportShape(markdown) {
     && experimental.every((label, index) => labels[index] === label);
 }
 
-/* Scorecard cards from the parsed NASH_DIMS dimensions. */
-// Each scored dimension links to the narrative section that justifies it, so a
-// low score is traceable to its reasoning. Keyed by lower-cased dimension name;
-// value is a section nav label (see sectionLabel).
-const DIM_SECTION = {
-  'strategic fit': 'Overview',
-  'technical fit': 'Architecture',
-  'functional coverage': 'Rationale',
-  'commercial viability': 'Business',
-  'competitive position': 'Competition',
-  'delivery risk': 'Architecture',
-  'ai & agentic fit': 'AI & Agents',
-};
-
 function confidencePanelHtml(confidence, evidence) {
   if (!Array.isArray(confidence) || !confidence.length) return '';
   const evidenceById = new Map((evidence || []).map((item) => [item.id.toLowerCase(), item]));
@@ -1576,22 +1562,17 @@ function evidencePanelHtml(evidence) {
   </section>`;
 }
 
-const GALLERY_CARD_LAYOUT = ['w6 h2', 'w3 h2', 'w3 h2', 'w4 h3', 'w4 h2', 'w4 h2', 'w6 h2', 'w3 h2', 'w3 h2', 'w6 h2'];
-const GALLERY_ACCENTS = ['#ff594d', '#5ea1ff', '#f6b84a', '#8d82ff', '#3fcf9a', '#ff7f9d', '#53d17e', '#c58cff', '#58c6dc', '#ff9f45'];
-
-function markdownExcerpt(markdown, maxLength = 260) {
-  const text = String(markdown || '')
-    .replace(/NASH_ARCH:[\s\S]*?NASH_ARCH_END/gi, ' ')
-    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/[*_`>|]/g, ' ')
-    .replace(/^\s*[-+]\s+/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength).replace(/\s+\S*$/, '')}…`;
-}
+const GALLERY_CARD_LAYOUT = ['w6 h2', 'w3 h2', 'w3 h2', 'w4 h2', 'w4 h2', 'w4 h2', 'w12 h2'];
+const GALLERY_ACCENTS = ['#ff594d', '#5ea1ff', '#f6b84a', '#8d82ff', '#3fcf9a', '#ff7f9d', '#53d17e'];
+const DIM_SECTIONS = {
+  'strategic fit': ['Overview', 'Market'],
+  'technical fit': ['Architecture'],
+  'functional coverage': ['Discovery', 'Rationale'],
+  'commercial viability': ['Business'],
+  'competitive position': ['Competition', 'Recommendation'],
+  'delivery risk': ['Accelerators'],
+  'ai & agentic fit': ['AI & Agents'],
+};
 
 function dimensionPercent(dimension) {
   return dimension.max ? Math.round((dimension.scored / dimension.max) * 100) : 0;
@@ -1608,12 +1589,26 @@ function dimensionEvidenceHtml(dimension, evidence) {
     </li>`).join('')}</ul>`;
 }
 
+function dimensionSectionsHtml(dimension, sections, evidence) {
+  const labels = DIM_SECTIONS[dimension.dimension.toLowerCase()] || [];
+  const matches = labels.map(
+    (label) => sections.find((section) => sectionLabel(section.title) === label),
+  ).filter(Boolean);
+  if (!matches.length) {
+    return '<p class="nash-session-gallery-empty">No report section is linked to this dimension yet.</p>';
+  }
+  return matches.map((section) => `<section class="nash-session-dimension-content-panel">
+    <span>${escapeHtml(sectionLabel(section.title))}</span>
+    <h3>${escapeHtml(section.title.replace(/^\d+[.)]\s*/, ''))}</h3>
+    <div class="nash-md">${renderReportMarkdown(section.md, {}, evidence || [])}</div>
+  </section>`).join('');
+}
+
 function dimensionReadingHtml(dimension, index, sections, assessment) {
   const confidence = (assessment.confidence || []).find(
     (item) => item.dimension.toLowerCase() === dimension.dimension.toLowerCase(),
   );
-  const target = DIM_SECTION[dimension.dimension.toLowerCase()];
-  const supporting = sections.find((section) => sectionLabel(section.title) === target);
+  const sectionCount = (DIM_SECTIONS[dimension.dimension.toLowerCase()] || []).length;
   const pct = dimensionPercent(dimension);
   return `<article class="nash-session-dimension-reading" data-dimension-index="${index}" hidden>
     <div class="nash-session-dimension-kicker"><i></i><span>Score dimension · ${escapeHtml(dimension.weight)}</span></div>
@@ -1622,55 +1617,59 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
       <div class="nash-session-dimension-score" style="color:${dimColor(pct)}"><strong>${pct}</strong><span>/ 100</span></div>
     </div>
     <p class="nash-session-dimension-lead">${escapeHtml(dimension.notes || 'This score is based on the available customer, Adobe, and public evidence.')}</p>
-    <div class="nash-session-dimension-columns">
-      <div>
-        <section>
-          <h3>Evidence from the assessment</h3>
-          <div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimension, assessment.evidence)}</div>
-        </section>
-        ${supporting ? `<section>
-          <h3>Supporting narrative · ${escapeHtml(target)}</h3>
-          <div class="nash-md">${renderReportMarkdown(supporting.md, {}, assessment.evidence || [])}</div>
-        </section>` : ''}
+    <div class="nash-session-dimension-summary">
+      <section>
+        <h3>Decision confidence</h3>
+        <div class="nash-session-dimension-confidence"><b>${escapeHtml(confidence?.level || 'Not assessed')}</b></div>
+        <div class="nash-session-dimension-sensitivity"><span style="width:${Math.min(100, Math.max(12, pct))}%"></span></div>
+        <small>${escapeHtml(confidence?.swing ? `${confidence.swing} potential score movement` : 'No score sensitivity recorded')}</small>
+      </section>
+      <section>
+        <h3>Key assumption</h3>
+        <p>${escapeHtml(confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none' ? confidence.assumptions : 'No material assumption recorded.')}</p>
+      </section>
+      <section>
+        <h3>Critical unknown</h3>
+        <p>${escapeHtml(confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none' ? confidence.unknowns : 'No critical unknown recorded.')}</p>
+      </section>
+      <section>
+        <h3>Validate next</h3>
+        <p>${escapeHtml(confidence?.scoreChanger || 'Confirm the evidence and assumptions behind this dimension with the customer.')}</p>
+      </section>
+    </div>
+    <section class="nash-session-dimension-evidence-panel">
+      <h3>Evidence from the assessment</h3>
+      <div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimension, assessment.evidence)}</div>
+    </section>
+    <div class="nash-session-dimension-content">
+      <div class="nash-session-dimension-content-head">
+        <div><span>Full assessment</span><h3>Supporting report sections</h3></div>
+        <b>${sectionCount} ${sectionCount === 1 ? 'section' : 'sections'}</b>
       </div>
-      <aside>
-        <section>
-          <div class="nash-session-dimension-confidence">
-            <span>Decision confidence</span>
-            <b>${escapeHtml(confidence?.level || 'Not assessed')}</b>
-          </div>
-          <div class="nash-session-dimension-sensitivity"><span style="width:${Math.min(100, Math.max(12, pct))}%"></span></div>
-          <small>${escapeHtml(confidence?.swing ? `${confidence.swing} potential score movement` : 'No score sensitivity recorded')}</small>
-        </section>
-        <section>
-          <h3>Key assumption</h3>
-          <p>${escapeHtml(confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none' ? confidence.assumptions : 'No material assumption recorded.')}</p>
-        </section>
-        <section>
-          <h3>Critical unknown</h3>
-          <p>${escapeHtml(confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none' ? confidence.unknowns : 'No critical unknown recorded.')}</p>
-        </section>
-        <section>
-          <h3>Validate next</h3>
-          <p>${escapeHtml(confidence?.scoreChanger || 'Confirm the evidence and assumptions behind this dimension with the customer.')}</p>
-        </section>
-      </aside>
+      ${dimensionSectionsHtml(dimension, sections, assessment.evidence)}
     </div>
   </article>`;
 }
 
-function sectionGalleryCard(section, index) {
-  const label = sectionLabel(section.title);
+function dimensionGalleryCard(dimension, index, confidence) {
   const layout = GALLERY_CARD_LAYOUT[index % GALLERY_CARD_LAYOUT.length];
   const accent = GALLERY_ACCENTS[index % GALLERY_ACCENTS.length];
-  return `<button type="button" class="nash-session-section-card ${layout}" style="--gallery-accent:${accent}" data-section-index="${index}">
+  const pct = dimensionPercent(dimension);
+  const confidenceItem = (confidence || []).find(
+    (item) => item.dimension.toLowerCase() === dimension.dimension.toLowerCase(),
+  );
+  return `<button type="button" class="nash-session-section-card ${layout}" style="--gallery-accent:${accent}" data-dimension-index="${index}">
     <div class="nash-session-section-card-top">
       <span class="nash-session-section-number">${String(index + 1).padStart(2, '0')}</span>
-      <span class="nash-session-section-label">${escapeHtml(label)}</span>
+      <span class="nash-session-section-label">Score dimension</span>
     </div>
-    <h2>${escapeHtml(section.title.replace(/^\d+[.)]\s*/, ''))}</h2>
-    <p>${escapeHtml(markdownExcerpt(section.md))}</p>
-    <span class="nash-session-section-open">Open full section &rarr;</span>
+    <h2>${escapeHtml(dimension.dimension)}</h2>
+    <p>${escapeHtml(dimension.notes || 'Open this dimension to review its evidence and full assessment content.')}</p>
+    <div class="nash-session-dimension-card-meta">
+      <strong style="color:${dimColor(pct)}">${pct}<span>/100</span></strong>
+      <span>${escapeHtml(confidenceItem?.level ? `${confidenceItem.level} confidence` : dimension.weight)}</span>
+    </div>
+    <span class="nash-session-section-open">View dimension &rarr;</span>
   </button>`;
 }
 
@@ -1689,12 +1688,6 @@ function daPreviewHtml(a) {
       <b>${pct}</b><span>${escapeHtml(dimension.dimension)}</span>
     </button>`;
   }).join('');
-  const sectionPanels = sections.map((section, index) => `<article class="nash-session-dimension-reading nash-session-section-reading" data-section-index="${index}" hidden>
-    <button type="button" class="nash-session-section-back">&larr; All dimensions</button>
-    <span class="nash-session-dimension-kicker">Full assessment section</span>
-    <h2>${escapeHtml(section.title)}</h2>
-    <div class="nash-md">${renderReportMarkdown(section.md, {}, a.evidence || [])}</div>
-  </article>`).join('');
   return `<div class="nash-session-qual nash-session-assessment-gallery">
     <div class="nash-session-qual-head">
       <div>
@@ -1718,15 +1711,14 @@ function daPreviewHtml(a) {
         <span class="nash-session-dimension-hint">Select a dimension to focus the evidence</span>
       </div>
       <div class="nash-session-section-gallery">
-        ${sections.map(sectionGalleryCard).join('')}
+        ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
       </div>
       <div class="nash-session-dimension-readings">
         ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, a)).join('')}
       </div>
-      <div class="nash-session-section-readings">${sectionPanels}</div>
       <footer class="nash-session-gallery-footer">
-        <span>${sections.length} sections visible</span>
-        <span>Open any section to read the complete assessment</span>
+        <span>${dimensions.length} dimensions visible</span>
+        <span>Open any dimension to read its full assessment content</span>
       </footer>
     </div>
   </div>`;
@@ -1758,7 +1750,6 @@ function wireAssessmentGallery(root) {
   const filters = [...gallery.querySelectorAll('.nash-session-dimension-filter')];
   const sectionGallery = gallery.querySelector('.nash-session-section-gallery');
   const readings = [...gallery.querySelectorAll('.nash-session-dimension-readings .nash-session-dimension-reading')];
-  const sectionReadings = [...gallery.querySelectorAll('.nash-session-section-reading')];
   const footer = gallery.querySelector('.nash-session-gallery-footer');
   filters.forEach((filter) => filter.addEventListener('click', () => {
     filters.forEach((item) => {
@@ -1771,36 +1762,23 @@ function wireAssessmentGallery(root) {
     readings.forEach((reading) => {
       reading.hidden = all || reading.dataset.dimensionIndex !== filter.dataset.dimensionIndex;
     });
-    sectionReadings.forEach((reading) => { reading.hidden = true; });
     footer.firstElementChild.textContent = all
-      ? `${sectionGallery.children.length} sections visible`
+      ? `${sectionGallery.children.length} dimensions visible`
       : 'Dimension reading view';
     footer.lastElementChild.textContent = all
-      ? 'Open any section to read the complete assessment'
+      ? 'Open any dimension to read its full assessment content'
       : 'Return to All dimensions to see the section gallery';
   }));
 
   gallery.querySelectorAll('.nash-session-section-card').forEach((card) => {
     card.addEventListener('click', () => {
-      filters.forEach((filter) => {
-        filter.classList.remove('active');
-        filter.setAttribute('aria-pressed', 'false');
-      });
-      sectionGallery.hidden = true;
-      readings.forEach((reading) => { reading.hidden = true; });
-      sectionReadings.forEach((section) => {
-        section.hidden = section.dataset.sectionIndex !== card.dataset.sectionIndex;
-      });
-      const active = sectionReadings.find((section) => !section.hidden);
-      footer.firstElementChild.textContent = 'Section detail view';
-      footer.lastElementChild.textContent = 'Return to All dimensions to see the section gallery';
-      active?.scrollIntoView({ block: 'start' });
+      filters.find(
+        (filter) => filter.dataset.dimensionIndex === card.dataset.dimensionIndex,
+      )?.click();
+      readings.find(
+        (reading) => reading.dataset.dimensionIndex === card.dataset.dimensionIndex,
+      )?.scrollIntoView({ block: 'start' });
     });
-  });
-  gallery.querySelectorAll('.nash-session-section-back').forEach((button) => {
-    button.addEventListener('click', () => filters.find(
-      (filter) => filter.dataset.dimensionIndex === 'all',
-    )?.click());
   });
 }
 
