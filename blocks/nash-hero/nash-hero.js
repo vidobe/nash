@@ -12,7 +12,7 @@ export default async function decorate(block) {
   const rows = [...block.querySelectorAll(':scope > div > div')];
   const headline = rows[0]?.innerHTML.trim() || 'Qualify, position, and win.';
   const sub = rows[1]?.textContent.trim()
-    || 'Turn an RFP into a grounded Adobe opportunity assessment — solution-fit scoring across AEM, Commerce, Workfront and more, with objectives, competition, and ways to win. Discuss it with Fluffy, manage the opportunity, and publish a shareable report.';
+    || 'Turn an RFP into a grounded Adobe opportunity assessment — solution-fit scoring across AEM, Commerce, Workfront and more, with objectives, competition, and ways to win.';
 
   block.innerHTML = `
     <div class="nash-hero-row">
