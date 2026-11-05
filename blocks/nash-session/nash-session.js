@@ -1423,7 +1423,7 @@ function canonicalSectionLabel(title) {
   if (/qualification|discovery|question/.test(t)) return 'Discovery';
   if (/rationale/.test(t)) return 'Rationale';
   if (/accelerat|reference/.test(t)) return 'Accelerators';
-  if (/competitive|win|position/.test(t)) return 'Competition';
+  if (/competition|competitive|win|position/.test(t)) return 'Competition';
   if (/recommendation|scope|final|verdict/.test(t)) return 'Recommendation';
   return null;
 }
@@ -3083,7 +3083,9 @@ export function renderAssessment(block, a, autoRun = false) {
     a.fileName ? escapeHtml(a.fileName) : '',
     date,
   ].filter(Boolean).join(' · ');
-  const solutions = (a.solutions || []).map((solution) => solution.name).join(', ')
+  const solutions = (a.solutions || [])
+    .map((solution) => (typeof solution === 'string' ? solution : solution.name))
+    .filter(Boolean).join(', ')
     || a.solutionNames || '';
   const verdict = verdictFor(a.score);
   const tabs = visibleTabs();
