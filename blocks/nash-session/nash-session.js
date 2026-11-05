@@ -1564,6 +1564,16 @@ function evidencePanelHtml(evidence) {
 
 const GALLERY_CARD_LAYOUT = ['w6 h2', 'w3 h2', 'w3 h2', 'w4 h2', 'w4 h2', 'w4 h2', 'w12 h2'];
 const GALLERY_ACCENTS = ['#ff594d', '#5ea1ff', '#f6b84a', '#8d82ff', '#3fcf9a', '#ff7f9d', '#53d17e'];
+const GALLERY_ICONS = [
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h7M15 18h5"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4h8v4a4 4 0 01-8 0V4zM8 6H4v2a4 4 0 004 4M16 6h4v2a4 4 0 01-4 4M12 12v5M8 21h8M9 17h6"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3L2.5 20h19L12 3z"/><path d="M12 9v5M12 17.5v.5"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15zM5 14l.7 1.8 1.8.7-1.8.7L5 19l-.7-1.8-1.8-.7 1.8-.7L5 14z"/></svg>',
+];
+const GALLERY_ALL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
 const DIM_SECTIONS = {
   'strategic fit': ['Overview', 'Market'],
   'technical fit': ['Architecture'],
@@ -1675,40 +1685,24 @@ function dimensionGalleryCard(dimension, index, confidence) {
 
 /* Gallery preview of the stable report, shared by Assessment and DA content. */
 function daPreviewHtml(a) {
-  const sols = (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '';
-  const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-  const metaBits = [date, a.opp?.salesStage]
-    .filter(Boolean).map((b) => `<span>${escapeHtml(b)}</span>`).join('');
-  const v = verdictFor(a.score);
   const sections = splitReportSections(a.reportMarkdown);
   const dimensions = a.dimensions || [];
   const dimensionButtons = dimensions.map((dimension, index) => {
-    const pct = dimensionPercent(dimension);
-    return `<button type="button" class="nash-session-dimension-filter" data-dimension-index="${index}" aria-pressed="false">
-      <b>${pct}</b><span>${escapeHtml(dimension.dimension)}</span>
+    const accent = GALLERY_ACCENTS[index % GALLERY_ACCENTS.length];
+    const icon = GALLERY_ICONS[index % GALLERY_ICONS.length];
+    return `<button type="button" class="nash-session-dimension-filter" style="--gallery-accent:${accent}" data-dimension-index="${index}" aria-pressed="false">
+      <i>${icon}</i><span>${escapeHtml(dimension.dimension)}</span>
     </button>`;
   }).join('');
   return `<div class="nash-session-qual nash-session-assessment-gallery">
-    <div class="nash-session-qual-head">
-      <div>
-        <div class="nash-session-qual-account">${escapeHtml(a.company)}</div>
-        ${sols ? `<div class="nash-session-qual-solution">${escapeHtml(sols)}</div>` : ''}
-        ${metaBits ? `<div class="nash-session-qual-meta">${metaBits}</div>` : ''}
-      </div>
-      ${typeof a.score === 'number' ? `<div class="nash-session-qual-score">
-        <div class="nash-session-qual-ring" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
-        <span class="nash-session-verdict ${v.cls}">${escapeHtml(a.verdict || v.label)}</span>
-      </div>` : ''}
-    </div>
     <div class="nash-session-gallery-surface">
       <div class="nash-session-dimension-rail-wrap">
         <nav class="nash-session-dimension-rail" aria-label="Score dimensions">
-          <button type="button" class="nash-session-dimension-filter active" data-dimension-index="all" aria-pressed="true">
-            <b>${dimensions.length}</b><span>All dimensions</span>
+          <button type="button" class="nash-session-dimension-filter active" style="--gallery-accent:#a7abb5" data-dimension-index="all" aria-pressed="true">
+            <i>${GALLERY_ALL_ICON}</i><span>All dimensions</span>
           </button>
           ${dimensionButtons}
         </nav>
-        <span class="nash-session-dimension-hint">Select a dimension to focus the evidence</span>
       </div>
       <div class="nash-session-section-gallery">
         ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
@@ -3081,10 +3075,17 @@ export function renderAssessment(block, a, autoRun = false) {
   chatGrounded = false;
   pendingDocs = [];
   block.classList.add('wide');
+  const date = a.createdAt
+    ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
   const meta = [
     a.dr ? `DR ${escapeHtml(a.dr)}` : '',
     a.fileName ? escapeHtml(a.fileName) : '',
+    date,
   ].filter(Boolean).join(' · ');
+  const solutions = (a.solutions || []).map((solution) => solution.name).join(', ')
+    || a.solutionNames || '';
+  const verdict = verdictFor(a.score);
   const tabs = visibleTabs();
   const experimentPanel = canViewReportExperiment()
     ? `<div class="nash-session-panel nash-session-experiment" data-panel="experiment">${renderExperimentalDossier(a)}</div>`
@@ -3095,13 +3096,20 @@ export function renderAssessment(block, a, autoRun = false) {
       <div class="nash-session-assess-head">
         <div>
           <h1 class="nash-session-assess-title">${escapeHtml(a.company || 'New analysis')}</h1>
+          ${solutions ? `<p class="nash-session-assess-solutions">${escapeHtml(solutions)}</p>` : ''}
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
-        <div class="nash-session-tabs" role="tablist">
-          ${tabs.map((t, i) => `
-            <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
-              ${ICONS[t.icon]}
-            </button>`).join('')}
+        <div class="nash-session-assess-actions">
+          <div class="nash-session-tabs" role="tablist">
+            ${tabs.map((t, i) => `
+              <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
+                ${ICONS[t.icon]}
+              </button>`).join('')}
+          </div>
+          ${typeof a.score === 'number' ? `<div class="nash-session-qual-score">
+            <div class="nash-session-qual-ring" style="color:${dimColor(a.score)}">${a.score}<span>/ 100</span></div>
+            <span class="nash-session-verdict ${verdict.cls}">${escapeHtml(a.verdict || verdict.label)}</span>
+          </div>` : ''}
         </div>
       </div>
       <div class="nash-session-panels">

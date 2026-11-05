@@ -835,14 +835,18 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 /* ── Assessment view ─────────────────────────────────── */
 
 .nash-session.wide {
-  max-width: 1160px;
+  max-width: none;
+  padding: 18px 22px 24px;
 }
 
 .nash-session .nash-session-assess {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 40px);
-  padding-top: 24px;
+  height: calc(100dvh - 42px);
+  padding: clamp(26px, 3vw, 42px);
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 24px;
+  background: var(--white, #fff);
 }
 
 /* ── Tabs (Assessment / DA content / Opp management) — icon group, top-right ── */
@@ -2565,11 +2569,11 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 .nash-session .nash-session-assess-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  gap: 24px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--ink-08, #f4f4f6);
 }
 
@@ -2582,10 +2586,38 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 .nash-session .nash-session-assess-meta {
-  margin: 0;
+  margin: 10px 0 0;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px;
   color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-session-assess-solutions {
+  margin: 2px 0 0;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-session-assess-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.nash-session .nash-session-assess-actions .nash-session-tabs {
+  padding-top: 2px;
+}
+
+.nash-session .nash-session-assess-actions .nash-session-qual-score {
+  margin-right: 0;
+}
+
+.nash-session .nash-session-assess-actions .nash-session-qual-ring {
+  background:
+    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
+    linear-gradient(120deg, #ff594d, #8d82ff 48%, #5ea1ff) border-box;
 }
 
 .nash-session .nash-session-publish {
@@ -4457,12 +4489,9 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   --gallery-copy: #f7f7f9;
   --gallery-muted: #a7abb5;
 
-  padding: 28px;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 8% 0%, rgb(235 16 0 / 11%), transparent 34%),
-    radial-gradient(circle at 92% 10%, rgb(94 161 255 / 8%), transparent 30%),
-    var(--gallery-bg);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--gallery-copy);
 }
 
@@ -4504,19 +4533,27 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 .nash-session .nash-session-dimension-rail-wrap {
   display: flex;
-  align-items: flex-end;
-  gap: 20px;
+  align-items: center;
   margin-bottom: 20px;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--gallery-line);
+  border-radius: 16px;
+  background: #0d0f13;
 }
 
 .nash-session .nash-session-dimension-rail {
   display: flex;
   flex: 1;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
   overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
+  padding: 2px;
+  scrollbar-width: none;
+}
+
+.nash-session .nash-session-dimension-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .nash-session .nash-session-dimension-filter {
@@ -4528,25 +4565,27 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   min-width: max-content;
   padding: 8px 11px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 10px;
   background: transparent;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   color: var(--gallery-muted);
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  box-shadow: 0 0 0 transparent;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
 }
 
-.nash-session .nash-session-dimension-filter b {
+.nash-session .nash-session-dimension-filter i {
   display: grid;
   place-items: center;
-  min-width: 27px;
+  width: 23px;
   height: 23px;
-  padding: 0 5px;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 7%);
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  color: currentcolor;
+  font-style: normal;
+}
+
+.nash-session .nash-session-dimension-filter i svg {
+  width: 20px;
+  height: 20px;
 }
 
 .nash-session .nash-session-dimension-filter span {
@@ -4556,40 +4595,21 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 .nash-session .nash-session-dimension-filter:hover {
-  border-color: var(--gallery-line);
   background: rgb(255 255 255 / 4%);
   color: var(--gallery-copy);
 }
 
 .nash-session .nash-session-dimension-filter.active {
-  border-color: rgb(235 16 0 / 30%);
-  background: rgb(235 16 0 / 13%);
+  border-color: var(--gallery-accent);
+  background: color-mix(in srgb, var(--gallery-accent) 13%, transparent);
   color: var(--gallery-copy);
+  box-shadow:
+    0 0 9px color-mix(in srgb, var(--gallery-accent) 62%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--gallery-accent) 10%, transparent);
 }
 
-.nash-session .nash-session-dimension-filter.active::after {
-  position: absolute;
-  right: 12px;
-  bottom: -5px;
-  left: 12px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--red, #eb1000);
-  content: '';
-}
-
-.nash-session .nash-session-dimension-filter.active b {
-  background: var(--red, #eb1000);
-  color: #fff;
-}
-
-.nash-session .nash-session-dimension-hint {
-  flex-shrink: 0;
-  padding-bottom: 10px;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: #747985;
-  text-transform: uppercase;
+.nash-session .nash-session-dimension-filter.active i {
+  color: var(--gallery-accent);
 }
 
 .nash-session .nash-session-section-gallery {
@@ -5013,10 +5033,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 @media (width < 1100px) {
-  .nash-session .nash-session-dimension-hint {
-    display: none;
-  }
-
   .nash-session .nash-session-section-gallery {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -5035,9 +5051,13 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 @media (width < 800px) {
-  .nash-session .nash-session-assessment-gallery {
-    padding: 20px;
-    border-radius: 14px;
+  .nash-session.wide {
+    padding: 12px;
+  }
+
+  .nash-session .nash-session-assess {
+    padding: 24px 18px;
+    border-radius: 18px;
   }
 
   .nash-session .nash-session-dimension-evidence ul {
@@ -5046,9 +5066,20 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 @media (width < 600px) {
-  .nash-session .nash-session-assessment-gallery {
-    padding: 16px;
-    border-radius: 0;
+  .nash-session.wide {
+    padding: 8px;
+  }
+
+  .nash-session .nash-session-assess-head {
+    gap: 12px;
+  }
+
+  .nash-session .nash-session-assess-actions {
+    gap: 8px;
+  }
+
+  .nash-session .nash-session-assess-actions .nash-session-tabs {
+    display: none;
   }
 
   .nash-session .nash-session-assessment-gallery .nash-session-qual-head {
