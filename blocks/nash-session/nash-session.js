@@ -3122,22 +3122,19 @@ export function renderAssessment(block, a, autoRun = false) {
     : reportPanel(a.report, a.company)}</div>
             <div class="nash-session-thread" aria-live="polite"></div>
           </div>
-          <div class="nash-session-attachments" hidden></div>
-          <form class="nash-session-composer" autocomplete="off">
-            <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
-            <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
-            <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
-          </form>
-          <div class="nash-session-footer">
-            <div class="nash-session-footer-row">
+          <div class="nash-session-fluffy-island">
+            <div class="nash-session-attachments" hidden></div>
+            <form class="nash-session-composer" autocomplete="off">
               <div class="nash-session-footer-left">
                 <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
                 <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
                 ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
               </div>
+              <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
+              <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
               <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
-            </div>
-            <p class="nash-session-disclaimer">AI generated answers · FluffyJaws can make mistakes. Please verify important information.</p>
+              <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+            </form>
           </div>
         </div>
         ${experimentPanel}
