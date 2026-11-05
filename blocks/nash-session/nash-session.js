@@ -6,7 +6,6 @@ import {
 } from '../../scripts/nash-assessments.js';
 import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js';
 import { publishAssessment } from '../../scripts/da-publish.js';
-import { renderOppPanel, wireOppPanel } from '../../scripts/nash-opp.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 import {
   PILLARS, SOLUTION_PILLARS, SOLUTION_TILES,
@@ -38,10 +37,6 @@ const ICONS = {
   doc: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   clipboard: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>',
   quality: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-3z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>',
-  cloud: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
-  briefcase: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-  sales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
-  postsales: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>',
   experiment: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10 3v6.2l-5.3 8.6A2.1 2.1 0 0 0 6.5 21h11a2.1 2.1 0 0 0 1.8-3.2L14 9.2V3"/><path d="M8 15h8"/></svg>',
   plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
@@ -54,11 +49,6 @@ const TABS = [
     tab: 'experiment', icon: 'experiment', label: 'Experimental report', experiment: true,
   },
   { tab: 'decision', icon: 'quality', label: 'Decision quality' },
-  { tab: 'da', icon: 'cloud', label: 'DA content' },
-  { tab: 'opp', icon: 'briefcase', label: 'Opp management' },
-  // Audience-targeted outputs — placeholders for now, no generation logic yet.
-  { tab: 'sales', icon: 'sales', label: 'Sales content' },
-  { tab: 'postsales', icon: 'postsales', label: 'Post-sales content' },
 ];
 
 function canViewReportExperiment() {
@@ -75,21 +65,6 @@ const SETUP_PROGRESS_MESSAGES = [
   'Checking which Adobe products have earned a seat at the table…',
   'Following the evidence, not the logo count…',
 ];
-
-// Small banner marking a tab whose content is still being built.
-function constructionNote() {
-  return '<div class="nash-session-wip" role="note">'
-    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-    + '<span>This section is still in construction — content and layout may change.</span></div>';
-}
-
-// Placeholder panel for an audience tab that has no generation logic yet.
-function audiencePlaceholder(label) {
-  return `<div class="nash-session-placeholder">
-      <p class="nash-session-placeholder-title">${escapeHtml(label)}</p>
-      <p class="nash-session-placeholder-note">Coming soon — this view will generate ${escapeHtml(label.toLowerCase())} tailored to its audience.</p>
-    </div>`;
-}
 
 /* Pre-assessment interview. Nash extracts what it can from the uploaded docs,
    then interviews the analyst about ONLY the gaps. The first three items are
@@ -1336,9 +1311,7 @@ ${docText ? `\n=== ATTACHED DOCUMENT (${fileName}) — PRIMARY INPUT. Analyse it
 
 function setStatusDone(block) {
   current.status = 'done';
-  renderBelowBar(block);
   renderDecisionPanelContent(block);
-  renderDaPanelContent(block);
 }
 
 /* Rendered report HTML for the published DA page body. */
@@ -1357,31 +1330,6 @@ function reportHtmlForPublish(a) {
   return header + body;
 }
 
-/* Short relative time for the "Published … ago" label. */
-function relTimeShort(ts) {
-  const s = Math.round((Date.now() - ts) / 1000);
-  if (s < 45) return 'just now';
-  const m = Math.round(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.round(h / 24)}d ago`;
-}
-
-/* Transient "✓ Published" confirmation so a (re)publish has a clear result. */
-function flashPublished(block, message = '✓ Published to DA') {
-  const footer = block.querySelector('.nash-session-footer');
-  if (!footer) return;
-  footer.querySelector('.nash-session-toast')?.remove();
-  const toast = document.createElement('span');
-  toast.className = 'nash-session-toast';
-  toast.textContent = message;
-  footer.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add('in'));
-  setTimeout(() => { toast.classList.remove('in'); }, 2400);
-  setTimeout(() => { toast.remove(); }, 2800);
-}
-
 /* Reflect on the Re-run button whether chat notes still need folding in. */
 function renderRerunState(block) {
   const btn = block?.querySelector('.nash-session-rerun');
@@ -1394,35 +1342,6 @@ function renderRerunState(block) {
     : 'Re-run the assessment, folding in your chat with Fluffy';
 }
 
-/* Shared publish action — drives the below-bar button and the DA-tab button. */
-async function publishCurrent(block, trigger) {
-  const original = trigger.textContent;
-  trigger.disabled = true;
-  trigger.textContent = 'Publishing…';
-  block.querySelector('.nash-session-publish-error')?.remove();
-  try {
-    const res = await publishAssessment(current, reportHtmlForPublish(current), getUserInfo()?.email || '');
-    current.publishedUrl = res.url;
-    current.publishedSlug = res.slug;
-    // Stamp each publish so the "Published" link is cache-busted (the live host
-    // caches pages for 2h) and record which report version is now live, so the
-    // button can show when a later re-run has moved ahead of the published copy.
-    current.publishedAt = Date.now();
-    current.publishedRev = current.reportRev || current.publishedRev || current.publishedAt;
-    persist(current);
-    renderBelowBar(block);
-    renderDaPanelContent(block);
-    flashPublished(block);
-  } catch (e) {
-    trigger.disabled = false;
-    trigger.textContent = original;
-    const note = document.createElement('p');
-    note.className = 'nash-session-publish-error';
-    note.textContent = e.message;
-    trigger.parentElement.appendChild(note);
-  }
-}
-
 async function publishAutomatically(block, attempt = 0) {
   if (!current || !(current.reportMarkdown || current.report)) return;
   if (publishRetryTimer) {
@@ -1432,8 +1351,6 @@ async function publishAutomatically(block, attempt = 0) {
   current.publishState = 'publishing';
   delete current.publishError;
   persist(current);
-  renderBelowBar(block);
-  renderDaPanelContent(block);
   try {
     const res = await publishAssessment(
       current,
@@ -1447,58 +1364,23 @@ async function publishAutomatically(block, attempt = 0) {
     current.publishState = 'published';
     delete current.publishError;
     persist(current);
-    renderBelowBar(block);
-    renderDaPanelContent(block);
-    flashPublished(block, '✓ Assessment published automatically');
   } catch (error) {
     current.publishState = 'error';
     current.publishError = error.message;
     persist(current);
-    renderBelowBar(block);
-    renderDaPanelContent(block);
     const delays = [15000, 45000, 120000];
     if (attempt < delays.length) {
       publishRetryTimer = window.setTimeout(
         () => publishAutomatically(block, attempt + 1),
         delays[attempt],
       );
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('Nash background report sync failed after retries', error);
     }
   }
 }
 
-/* "Published" chip with a freshness stamp. Clicking it opens the DA content tab
-   in-app (which renders the published document from current data) rather than the
-   gated live page in a new tab — no re-auth, and never a stale cached copy. */
-function publishedLink(a) {
-  const when = a.publishedAt ? ` · ${relTimeShort(a.publishedAt)}` : '';
-  return `<button type="button" class="nash-session-published" data-goto-da title="View the published document">Published${when}</button>`;
-}
-
-/* The area below the chat bar: Publish to DA (or the published link + re-publish).
-   When a re-run has moved the report ahead of what's published, the button turns
-   into an emphasised "Publish changes" so it's clear a re-publish is meaningful. */
-function renderBelowBar(block) {
-  const el = block.querySelector('.nash-session-belowbar');
-  if (!el || !current) return;
-  if (!(current.reportMarkdown || current.report)) { el.innerHTML = ''; return; }
-  if (current.publishState === 'publishing') {
-    el.innerHTML = '<span class="nash-session-publish-state">Publishing assessment…</span>';
-  } else if (current.publishState === 'error') {
-    el.innerHTML = `<span class="nash-session-publish-state is-error">Publishing failed · retrying automatically</span>
-      <button type="button" class="nash-session-publish subtle">Retry now</button>`;
-  } else if (current.publishedUrl) {
-    el.innerHTML = `${publishedLink(current)}<span class="nash-session-publish-state">Auto-published</span>`;
-  } else {
-    el.innerHTML = '<span class="nash-session-publish-state">Publishing starts automatically when the assessment completes</span>';
-  }
-  el.querySelector('.nash-session-publish')?.addEventListener('click', (event) => {
-    event.currentTarget.disabled = true;
-    publishAutomatically(block);
-  });
-  el.querySelector('[data-goto-da]')?.addEventListener('click', () => switchTab(block, 'da'));
-}
-
-/* DA content tab body — the published page (rendered) + live link, or a CTA. */
 const SVG = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 // One distinct icon per section position (standard 7-section order).
 // Section nav icons, keyed by label so re-ordering sections never misaligns them.
@@ -1855,37 +1737,6 @@ function daPreviewHtml(a) {
   </div>`;
 }
 
-function daPanelHtml(a) {
-  const hasReport = a.reportMarkdown || a.report || a.reportHtml;
-  if (!hasReport) {
-    return `<div class="nash-session-comingsoon">
-      ${ICONS.cloud}
-      <h2>No document yet</h2>
-      <p>Run the assessment first — the DA document is generated from it.</p>
-    </div>`;
-  }
-  const bar = a.publishedUrl
-    ? `<div class="nash-session-da-bar">
-        ${publishedLink(a)}
-        <span class="nash-session-da-note">Updated automatically after every successful assessment.</span>
-      </div>`
-    : `<div class="nash-session-da-bar">
-        <span class="nash-session-da-note">${a.publishState === 'error' ? 'Publishing failed; Nash is retrying automatically.' : 'This document will publish automatically when the assessment completes.'}</span>
-      </div>`;
-  let body;
-  if (a.reportMarkdown) body = daPreviewHtml(a);
-  else if (a.reportHtml) body = `<div class="nash-session-report nash-md">${a.reportHtml}</div>`;
-  else body = reportPanel(a.report, a.company);
-  return `<div class="nash-session-da">${bar}${body}</div>`;
-}
-
-function wireDaPanel(block) {
-  block.querySelector('[data-da-publish]')?.addEventListener('click', (e) => publishCurrent(block, e.currentTarget));
-  const panel = block.querySelector('.nash-session-panel[data-panel="da"]');
-  panel?.querySelector('[data-goto-da]')?.addEventListener('click', () => switchTab(block, 'da'));
-  wireQualificationPanel(panel);
-}
-
 function wireQualificationPanel(panel) {
   wireAssessmentGallery(panel);
   panel?.querySelectorAll('.nash-session-qtab').forEach((tab) => {
@@ -1945,13 +1796,6 @@ function wireAssessmentGallery(root) {
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
   });
-}
-
-function renderDaPanelContent(block) {
-  const panel = block.querySelector('.nash-session-panel[data-panel="da"]');
-  if (!panel || !current) return;
-  panel.innerHTML = daPanelHtml(current);
-  wireDaPanel(block);
 }
 
 function decisionQualityHtml(a) {
@@ -2163,7 +2007,6 @@ function salesPanelHtml(a) {
 
   const planName = s.planName ? escapeHtml(s.planName) : '';
   return `<div class="nash-session-qual nash-sales">
-    ${constructionNote()}
     <div class="nash-session-qual-head">
       <div>
         <div class="nash-session-qual-account">${escapeHtml(a.company || 'Sales content')}</div>
@@ -3297,7 +3140,6 @@ export function renderAssessment(block, a, autoRun = false) {
                 <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
                 <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
                 ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
-                <div class="nash-session-belowbar"></div>
               </div>
               <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
             </div>
@@ -3306,10 +3148,7 @@ export function renderAssessment(block, a, autoRun = false) {
         </div>
         ${experimentPanel}
         <div class="nash-session-panel" data-panel="decision">${decisionQualityHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="da">${daPanelHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="opp">${constructionNote()}${renderOppPanel(a, getUserInfo()?.name || '')}</div>
         <div class="nash-session-panel" data-panel="sales">${salesPanelHtml(a)}</div>
-        <div class="nash-session-panel" data-panel="postsales">${constructionNote()}${audiencePlaceholder('Post-sales content')}</div>
       </div>
     </div>
   `;
@@ -3317,14 +3156,11 @@ export function renderAssessment(block, a, autoRun = false) {
   block.querySelectorAll('.nash-session-tab').forEach((t) => {
     t.addEventListener('click', () => switchTab(block, t.dataset.tab));
   });
-  wireDaPanel(block);
   refreshExperimentPanel(block);
   wireQualificationPanel(block.querySelector('.nash-session-report-area'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="decision"]'));
   wireEvidence(block.querySelector('.nash-session-panel[data-panel="assessment"]'));
-  renderBelowBar(block);
   renderRerunState(block);
-  wireOppPanel(block, current, (data) => { current.opp = data; persist(current); }, getUserInfo()?.name || '');
   wireSalesPanel(block);
 
   const thread = block.querySelector('.nash-session-thread');

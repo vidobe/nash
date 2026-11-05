@@ -77,10 +77,9 @@ export default async function decorate(block) {
         <td class="nash-admin-user">${esc(r.email)}</td>
         <td>${r.logins}</td>
         <td>${Math.max(r.assessments, r.published)}</td>
-        <td>${r.published}</td>
         <td class="nash-admin-muted">${relTime(r.lastSeen)}</td>
       </tr>`).join('')
-    : '<tr><td colspan="5" class="nash-admin-muted">No activity recorded yet.</td></tr>';
+    : '<tr><td colspan="4" class="nash-admin-muted">No activity recorded yet.</td></tr>';
 
   block.innerHTML = `
     <div class="nash-admin">
@@ -94,7 +93,7 @@ export default async function decorate(block) {
         ${tile(totalAssessments, 'Assessments run')}
       </div>
       <table class="nash-admin-table">
-        <thead><tr><th>User</th><th>Logins</th><th>Assessments</th><th>Published</th><th>Last seen</th></tr></thead>
+        <thead><tr><th>User</th><th>Logins</th><th>Assessments</th><th>Last seen</th></tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </div>
