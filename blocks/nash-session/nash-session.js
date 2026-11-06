@@ -3142,27 +3142,29 @@ export function renderAssessment(block, a, autoRun = false) {
     : reportPanel(a.report, a.company)}</div>
             ${inlineThread}
           </div>
-          ${chatSheet}
-          <div class="nash-session-fluffy-island">
-            <div class="nash-session-attachments" hidden></div>
-            <form class="nash-session-composer" autocomplete="off">
-              <div class="nash-session-composer-main">
-                <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
-                <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
-              </div>
-              <div class="nash-session-composer-tools">
-                <div class="nash-session-action-menu">
-                  <button type="button" class="nash-session-footer-btn nash-session-action-toggle" aria-label="More actions" title="More actions" aria-haspopup="menu" aria-expanded="false">${ICONS.plusadd}</button>
-                  <div class="nash-session-action-popover" role="menu" hidden>
-                    <button type="button" class="nash-session-action-item nash-session-attach" role="menuitem">${ICONS.attach}<span>Upload documents</span></button>
-                    ${a.published ? '' : '<button type="button" class="nash-session-action-item nash-session-rerun" role="menuitem" title="Re-run the assessment, folding in your chat with Fluffy"><span class="nash-session-action-symbol" aria-hidden="true">↻</span><span class="nash-session-action-label">Re-run assessment</span></button>'}
-                  </div>
-                  <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
+          <div class="nash-session-fluffy-shell">
+            ${chatSheet}
+            <div class="nash-session-fluffy-island">
+              <div class="nash-session-attachments" hidden></div>
+              <form class="nash-session-composer" autocomplete="off">
+                <div class="nash-session-composer-main">
+                  <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
+                  <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
                 </div>
-                <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
-                <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
-              </div>
-            </form>
+                <div class="nash-session-composer-tools">
+                  <div class="nash-session-action-menu">
+                    <button type="button" class="nash-session-footer-btn nash-session-action-toggle" aria-label="More actions" title="More actions" aria-haspopup="menu" aria-expanded="false">${ICONS.plusadd}</button>
+                    <div class="nash-session-action-popover" role="menu" hidden>
+                      <button type="button" class="nash-session-action-item nash-session-attach" role="menuitem">${ICONS.attach}<span>Upload documents</span></button>
+                      ${a.published ? '' : '<button type="button" class="nash-session-action-item nash-session-rerun" role="menuitem" title="Re-run the assessment, folding in your chat with Fluffy"><span class="nash-session-action-symbol" aria-hidden="true">↻</span><span class="nash-session-action-label">Re-run assessment</span></button>'}
+                    </div>
+                    <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
+                  </div>
+                  <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
+                  <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
         ${experimentPanel}
@@ -3203,17 +3205,17 @@ export function renderAssessment(block, a, autoRun = false) {
     if (block.isConnected) closeActionPopover();
   });
   const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
-  const fluffyIsland = block.querySelector('.nash-session-fluffy-island');
+  const fluffyShell = block.querySelector('.nash-session-fluffy-shell');
   const openChatSheet = () => {
     if (!chatSheetElement || chatSheetElement.open) return;
     chatSheetElement.show();
-    fluffyIsland?.classList.add('is-chat-open');
+    fluffyShell?.classList.add('is-chat-open');
   };
   const closeChatSheet = () => {
     if (!chatSheetElement?.open) return;
     chatSheetElement.close();
     chatSheetElement.removeAttribute('open');
-    fluffyIsland?.classList.remove('is-chat-open');
+    fluffyShell?.classList.remove('is-chat-open');
     input?.blur();
   };
   chatSheetElement?.querySelector('.nash-session-fluffy-chat-close')
@@ -3237,7 +3239,7 @@ export function renderAssessment(block, a, autoRun = false) {
   });
   document.addEventListener('pointerdown', (event) => {
     if (!block.isConnected || !chatSheetElement?.open) return;
-    if (!chatSheetElement.contains(event.target) && !fluffyIsland?.contains(event.target)) {
+    if (!fluffyShell?.contains(event.target)) {
       closeChatSheet();
     }
   });
