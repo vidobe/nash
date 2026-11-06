@@ -34,6 +34,7 @@ const OPPORTUNITIES_KEY = 'nash-opportunities';
 const defaultDir = (sort) => (sort === 'alpha' ? 'asc' : 'desc');
 
 const ICONS = {
+  search: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.2" y2="16.2"/></svg>',
   sort: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h10M11 9h7M11 13h4M3 7l3-3 3 3M6 4v16"/></svg>',
   grid: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
   plus: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -176,9 +177,12 @@ function assessmentsHtml(reports) {
     <div class="nash-sidebar-section nash-sidebar-opportunities">
       <div class="nash-sidebar-assess-head">
         <span class="nash-sidebar-label">My Opportunities</span>
-        <button class="nash-sidebar-create-opportunity" type="button" aria-label="Create opportunity" title="Create opportunity">+</button>
+        <div class="nash-sidebar-opportunity-actions">
+          <button class="nash-sidebar-search-opportunities" type="button" aria-label="Find opportunities" title="Find opportunities" aria-expanded="false">${ICONS.search}</button>
+          <button class="nash-sidebar-create-opportunity" type="button" aria-label="Create opportunity" title="Create opportunity">+</button>
+        </div>
       </div>
-      <input class="nash-sidebar-opportunity-filter" type="search" placeholder="Filter opportunities…" aria-label="Filter opportunities"/>
+      <input class="nash-sidebar-opportunity-filter" type="search" placeholder="Find opportunities…" aria-label="Find opportunities" hidden/>
       <div class="nash-sidebar-opportunity-list">${rows || '<p class="nash-sidebar-opportunity-none">Create your first opportunity.</p>'}</div>
     </div>
   `;
@@ -460,6 +464,10 @@ export default async function decorate(block) {
     const nextFilter = container.querySelector('.nash-sidebar-opportunity-filter');
     if (nextFilter && filter) {
       nextFilter.value = filter;
+      nextFilter.hidden = false;
+      const searchButton = container.querySelector('.nash-sidebar-search-opportunities');
+      searchButton?.classList.add('active');
+      searchButton?.setAttribute('aria-expanded', 'true');
       container.querySelectorAll('.nash-sidebar-opportunity').forEach((opportunity) => {
         opportunity.hidden = !opportunity.dataset.opportunity.includes(filter.toLowerCase());
       });
@@ -531,6 +539,25 @@ export default async function decorate(block) {
   setActive(block, matched?.view || '');
 
   block.addEventListener('click', (e) => {
+    const searchOpportunities = e.target.closest('.nash-sidebar-search-opportunities');
+    if (searchOpportunities) {
+      const filter = block.querySelector('.nash-sidebar-opportunity-filter');
+      if (!filter) return;
+      const opening = filter.hidden;
+      filter.hidden = !opening;
+      searchOpportunities.classList.toggle('active', opening);
+      searchOpportunities.setAttribute('aria-expanded', String(opening));
+      if (opening) {
+        filter.focus();
+      } else {
+        filter.value = '';
+        block.querySelectorAll('.nash-sidebar-opportunity').forEach((opportunity) => {
+          opportunity.hidden = false;
+        });
+      }
+      return;
+    }
+
     const createOpportunity = e.target.closest('.nash-sidebar-create-opportunity');
     if (createOpportunity) {
       openOpportunityDialog();

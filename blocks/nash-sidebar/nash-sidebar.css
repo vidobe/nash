@@ -116,7 +116,14 @@ html[data-theme="dark"] .nash-sidebar {
   margin-bottom: 0;
 }
 
+.nash-sidebar .nash-sidebar-opportunity-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .nash-sidebar .nash-sidebar-create-opportunity,
+.nash-sidebar .nash-sidebar-search-opportunities,
 .nash-sidebar .nash-sidebar-opportunity-add {
   display: grid;
   place-items: center;
@@ -133,9 +140,16 @@ html[data-theme="dark"] .nash-sidebar {
 }
 
 .nash-sidebar .nash-sidebar-create-opportunity:hover,
+.nash-sidebar .nash-sidebar-search-opportunities:hover,
+.nash-sidebar .nash-sidebar-search-opportunities.active,
 .nash-sidebar .nash-sidebar-opportunity-add:hover {
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-search-opportunities svg {
+  width: 13px;
+  height: 13px;
 }
 
 .nash-sidebar .nash-sidebar-opportunity-filter {
@@ -149,6 +163,10 @@ html[data-theme="dark"] .nash-sidebar {
   color: var(--ink, #111318);
   font: 11.5px var(--sans, 'DM Sans', system-ui, sans-serif);
   outline: none;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-filter[hidden] {
+  display: none;
 }
 
 .nash-sidebar .nash-sidebar-opportunity-filter:focus {
@@ -867,4 +885,36 @@ body.nash-nav-collapsed .nash-sidebar .nash-sidebar-item {
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user {
   justify-content: center;
   padding: 6px 0;
+}
+
+@media (width < 600px) {
+  .nash-sidebar .nash-sidebar-wordmark,
+  .nash-sidebar .nash-sidebar-subtitle,
+  .nash-sidebar .nash-sidebar-text,
+  .nash-sidebar .nash-sidebar-badge,
+  .nash-sidebar .nash-sidebar-opportunities,
+  .nash-sidebar .nash-sidebar-user-name,
+  .nash-sidebar .nash-sidebar-user-email,
+  .nash-sidebar .nash-sidebar-feedback {
+    display: none;
+  }
+
+  .nash-sidebar .nash-sidebar-head {
+    flex-direction: column;
+    padding: 12px 0;
+  }
+
+  .nash-sidebar .nash-sidebar-toggle {
+    display: none;
+  }
+
+  .nash-sidebar .nash-sidebar-section {
+    padding-inline: 10px;
+  }
+
+  .nash-sidebar .nash-sidebar-item,
+  .nash-sidebar .nash-sidebar-user {
+    justify-content: center;
+    padding-inline: 0;
+  }
 }

@@ -300,8 +300,9 @@
 
 .nash-overview .nash-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
 }
 
 /* Grid ⇄ list-table toggle */
@@ -381,8 +382,12 @@
 
 .nash-overview .nash-overview-card {
   position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 250px;
+  flex-direction: column;
   overflow: hidden;
-  padding: 20px;
+  padding: 20px 20px 16px;
   border: 1px solid var(--border, #e5e6ea);
   border-radius: 16px;
   background:
@@ -439,8 +444,13 @@
 
 .nash-overview .nash-overview-card-left {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 10px;
+}
+
+.nash-overview .nash-overview-card-left > div:last-child {
+  min-width: 0;
 }
 
 .nash-overview .nash-overview-favicon {
@@ -459,11 +469,17 @@
 }
 
 .nash-overview .nash-overview-company {
+  display: -webkit-box;
+  overflow: hidden;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--ink, #111318);
   letter-spacing: -0.01em;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .nash-overview .nash-overview-domain {
@@ -474,6 +490,9 @@
   font-size: 11.5px;
   color: var(--ink-40, #9a9da6);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nash-overview .nash-overview-card-meta {
@@ -481,6 +500,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .nash-overview .nash-overview-time {
@@ -522,6 +542,14 @@
 }
 
 /* ── Card body ───────────────────────────────────────── */
+
+.nash-overview .nash-overview-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 0;
+}
 
 .nash-overview .nash-overview-card-status {
   font-size: 12.5px;
@@ -638,22 +666,41 @@
   justify-content: space-between;
   padding-top: 10px;
   border-top: 1px solid var(--border, #e5e6ea);
-  margin-top: 4px;
+  margin-top: auto;
 }
 
 .nash-overview .nash-overview-footer-meta {
-  display: flex;
+  display: grid;
+  min-width: 0;
+  flex: 1;
   align-items: center;
-  gap: 12px;
+  grid-template-columns: minmax(0, auto) minmax(50px, 1fr) auto;
+  gap: 10px;
 }
 
 .nash-overview .nash-overview-meta-item {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 4px;
   font-size: 11px;
   color: var(--ink-40, #9a9da6);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.nash-overview .nash-overview-meta-item > svg {
+  flex-shrink: 0;
+}
+
+.nash-overview .nash-overview-meta-item > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nash-overview .nash-overview-meta-owner {
+  max-width: 170px;
 }
 
 .nash-overview .nash-overview-pillar {
@@ -664,6 +711,7 @@
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
   font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .nash-overview .nash-overview-pillar::before {
@@ -673,6 +721,36 @@
   background: var(--overview-card-accent);
   box-shadow: 0 0 7px var(--overview-card-accent);
   content: "";
+}
+
+@media (width <= 1200px) {
+  .nash-overview .nash-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 900px) {
+  .nash-overview .nash-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 600px) {
+  .nash-overview .nash-overview-head {
+    padding-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-stats {
+    margin-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-toolbar {
+    padding-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-area {
+    padding-inline: 18px;
+  }
 }
 
 .nash-overview .nash-overview-menu-btn {

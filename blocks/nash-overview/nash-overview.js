@@ -276,16 +276,16 @@ function buildCard(r) {
         <div class="nash-overview-time">${r.time}</div>
       </div>
     </div>
-    ${body}
+    <div class="nash-overview-card-body">${body}</div>
     <div class="nash-overview-card-footer">
       <div class="nash-overview-footer-meta">
-        <span class="nash-overview-meta-item">
+        <span class="nash-overview-meta-item nash-overview-meta-owner">
           <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          ${r.user}
+          <span>${r.user}</span>
         </span>
-        <span class="nash-overview-meta-item">
+        <span class="nash-overview-meta-item nash-overview-meta-solutions">
           <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          ${r.solutions || '—'}
+          <span>${r.solutions || '—'}</span>
         </span>
         <span class="nash-overview-pillar">${pillar.name}</span>
       </div>
