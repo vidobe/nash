@@ -383,27 +383,34 @@
   position: relative;
   overflow: hidden;
   padding: 20px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border, #e5e6ea);
   border-radius: 16px;
   background:
-    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
-    linear-gradient(120deg, rgb(255 111 176 / 24%), rgb(167 139 250 / 24%) 50%, rgb(91 157 255 / 24%)) border-box;
-  box-shadow: 0 1px 3px rgb(17 19 24 / 4%), 0 0 12px -5px rgb(167 139 250 / 18%);
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--overview-card-accent) 7%, transparent), transparent 44%),
+    linear-gradient(145deg, color-mix(in srgb, var(--overview-card-accent) 3%, transparent), transparent 52%),
+    var(--white, #fff);
+  box-shadow:
+    0 1px 3px rgb(17 19 24 / 4%),
+    0 0 16px color-mix(in srgb, var(--overview-card-accent) 13%, transparent),
+    0 0 30px color-mix(in srgb, var(--overview-card-accent) 5%, transparent);
   cursor: pointer;
-  transition: box-shadow 0.18s ease, background 0.18s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .nash-overview .nash-overview-card:hover {
-  background:
-    linear-gradient(var(--surface, #f8f8fa), var(--surface, #f8f8fa)) padding-box,
-    linear-gradient(120deg, rgb(255 111 176 / 48%), rgb(167 139 250 / 48%) 50%, rgb(91 157 255 / 48%)) border-box;
-  box-shadow: 0 4px 16px rgb(17 19 24 / 7%), 0 0 18px -3px rgb(167 139 250 / 30%);
+  border-color: color-mix(in srgb, var(--overview-card-accent) 24%, var(--border, #e5e6ea));
+  box-shadow:
+    0 4px 16px rgb(17 19 24 / 7%),
+    0 0 18px color-mix(in srgb, var(--overview-card-accent) 20%, transparent),
+    0 0 34px color-mix(in srgb, var(--overview-card-accent) 8%, transparent);
+  transform: translateY(-2px);
 }
 
 .nash-overview .nash-overview-card.generating {
   background:
-    linear-gradient(var(--white, #fff), var(--white, #fff)) padding-box,
-    linear-gradient(120deg, rgb(235 16 0 / 32%), rgb(255 111 176 / 32%)) border-box;
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--overview-card-accent) 7%, transparent), transparent 44%),
+    linear-gradient(145deg, color-mix(in srgb, var(--overview-card-accent) 3%, transparent), transparent 52%),
+    var(--white, #fff);
 }
 
 .nash-overview .nash-overview-card.generating::before {
@@ -647,6 +654,25 @@
   font-size: 11px;
   color: var(--ink-40, #9a9da6);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-pillar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--overview-card-accent);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.nash-overview .nash-overview-pillar::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--overview-card-accent);
+  box-shadow: 0 0 7px var(--overview-card-accent);
+  content: "";
 }
 
 .nash-overview .nash-overview-menu-btn {

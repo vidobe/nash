@@ -6,16 +6,10 @@ import { slugify } from '../../scripts/da-doc.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 
-/* Stable per-opportunity key (matches the DA publish slug). */
-const oppSlug = (a) => slugify(a.dr || a.company);
-
 const NAV = [
   {
     label: '',
     items: [
-      {
-        view: 'session', text: 'New Session', icon: 'plus', href: '/indextest',
-      },
       {
         view: 'overview', text: 'Overview', badge: 'count', icon: 'grid', href: '/',
       },
@@ -36,6 +30,7 @@ const USER_MENU = [
 
 const SORT_KEY = 'nash-sidebar-sort';
 const SORT_DIR_KEY = 'nash-sidebar-sort-dir';
+const OPPORTUNITIES_KEY = 'nash-opportunities';
 const defaultDir = (sort) => (sort === 'alpha' ? 'asc' : 'desc');
 
 const ICONS = {
@@ -77,32 +72,41 @@ function statusClass(s) {
 /* Assessments — locally-created (in-progress) merged with published qualifications. */
 function buildAssessItems(reports) {
   const currentUser = (getUserInfo()?.email || '').toLowerCase();
-  const seen = new Set();
+  const localPublishedSlugs = new Set();
+  const localLegacySlugs = new Set();
 
   const local = listAssessments()
     .filter((a) => {
       if (a.user && a.user.toLowerCase() !== currentUser) return false;
-      const slug = oppSlug(a);
-      if (seen.has(slug)) return false;
-      seen.add(slug);
       return true;
     })
-    .map((a) => ({
-      name: a.company || '',
-      href: `/indextest?a=${encodeURIComponent(a.id)}`,
-      status: a.status,
-      date: a.updatedAt || a.createdAt || 0,
-      solutions: Array.isArray(a.solutions) ? a.solutions.join(', ') : (a.solutions || ''),
-      isLocal: true,
-      id: a.id,
-    }));
+    .map((a) => {
+      if (a.publishedSlug) localPublishedSlugs.add(a.publishedSlug);
+      else localLegacySlugs.add(slugify(a.dr || a.opportunity || a.company));
+      return {
+        name: a.assessmentName || a.title || a.fileName || `${a.company || 'Opportunity'} assessment`,
+        opportunity: a.opportunity || a.company || '',
+        href: `/indextest?a=${encodeURIComponent(a.id)}`,
+        status: a.status,
+        date: a.updatedAt || a.createdAt || 0,
+        solutions: Array.isArray(a.solutions)
+          ? a.solutions.map((solution) => solution.name || solution.slug || solution).join(', ')
+          : (a.solutions || ''),
+        isLocal: true,
+        id: a.id,
+      };
+    });
 
   const pub = [...reports]
     .filter((r) => cleanTitle(r.title))
     .filter((r) => !currentUser || (r.user || '').toLowerCase() === currentUser)
-    .filter((r) => !seen.has((r.path || '').split('/').pop()))
+    .filter((r) => {
+      const slug = (r.path || '').split('/').pop();
+      return !localPublishedSlugs.has(slug) && !localLegacySlugs.has(slug);
+    })
     .map((r) => ({
-      name: cleanTitle(r.title),
+      name: r.assessmentname || r.requestname || `${cleanTitle(r.title)} assessment`,
+      opportunity: r.opportunity || cleanTitle(r.title),
       href: r.path || '#',
       status: r.status,
       date: Number(r.lastModified || 0),
@@ -113,6 +117,23 @@ function buildAssessItems(reports) {
   // Items the user removed from the sidebar (keyed by href) stay hidden here but
   // are NOT deleted — they remain available in the Overview.
   return [...local, ...pub].filter((it) => !isHidden(it.href));
+}
+
+function storedOpportunities() {
+  try {
+    const value = JSON.parse(localStorage.getItem(OPPORTUNITIES_KEY) || '[]');
+    return Array.isArray(value) ? value.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOpportunity(name) {
+  const names = storedOpportunities();
+  if (!names.some((item) => item.toLowerCase() === name.toLowerCase())) {
+    names.unshift(name);
+    localStorage.setItem(OPPORTUNITIES_KEY, JSON.stringify(names));
+  }
 }
 
 function sortAssessItems(items, sort, dir) {
@@ -126,39 +147,39 @@ function sortAssessItems(items, sort, dir) {
 function assessmentsHtml(reports) {
   const sort = localStorage.getItem(SORT_KEY) || 'date';
   const dir = localStorage.getItem(SORT_DIR_KEY) || defaultDir(sort);
-  const items = sortAssessItems(buildAssessItems(reports), sort, dir).slice(0, 16);
-  if (!items.length) return '';
+  const items = sortAssessItems(buildAssessItems(reports), sort, dir);
+  const groups = new Map(storedOpportunities().map((name) => [name, []]));
+  items.forEach((item) => {
+    const name = item.opportunity || 'Unassigned';
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(item);
+  });
 
-  const SORT_OPTS = [
-    { key: 'date', label: 'Date' },
-    { key: 'alpha', label: 'A to Z' },
-  ];
-
-  const rows = items.map((item) => `
-    <div class="nash-sidebar-recent-item">
-      <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
-      <button class="nash-sidebar-recent-del" type="button" data-hide="${esc(item.href)}" aria-label="Remove from list" title="Remove from list (keeps the assessment)">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+  const rows = [...groups.entries()].map(([name, assessments], groupIndex) => `
+    <div class="nash-sidebar-opportunity${groupIndex === 0 ? ' expanded' : ''}" data-opportunity="${esc(name.toLowerCase())}">
+      <div class="nash-sidebar-opportunity-row">
+        <button class="nash-sidebar-opportunity-toggle" type="button" aria-expanded="${groupIndex === 0 ? 'true' : 'false'}">
+          <span class="nash-sidebar-opportunity-chevron">›</span>
+          <span class="nash-sidebar-opportunity-name">${esc(name)}</span>
+          <span class="nash-sidebar-opportunity-count">${assessments.length}</span>
+        </button>
+        <button class="nash-sidebar-opportunity-add" type="button" data-new-assessment="${esc(name)}" aria-label="New assessment for ${esc(name)}" title="New assessment">+</button>
+      </div>
+      <div class="nash-sidebar-opportunity-assessments">
+        ${assessments.length ? assessments.map((item) => `
+          <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
+        `).join('') : '<span class="nash-sidebar-opportunity-empty">No assessments yet</span>'}
+      </div>
     </div>`).join('');
 
   return `
-    <div class="nash-sidebar-section nash-sidebar-recent-section">
+    <div class="nash-sidebar-section nash-sidebar-opportunities">
       <div class="nash-sidebar-assess-head">
-        <span class="nash-sidebar-label">Assessments</span>
-        <div class="nash-sidebar-sort-wrap">
-          <button class="nash-sidebar-sort-btn" type="button" title="Sort assessments" aria-label="Sort assessments">${dir === 'asc' ? ICONS.arrowUp : ICONS.arrowDown}</button>
-          <div class="nash-sidebar-sort-menu" hidden>
-            ${SORT_OPTS.map((o) => {
-    const active = sort === o.key;
-    let arrow = '';
-    if (active) arrow = dir === 'asc' ? ICONS.arrowUp : ICONS.arrowDown;
-    return `<button class="nash-sidebar-sort-opt${active ? ' active' : ''}" type="button" data-sort-by="${o.key}"><span>${o.label}</span>${arrow}</button>`;
-  }).join('')}
-          </div>
-        </div>
+        <span class="nash-sidebar-label">My Opportunities</span>
+        <button class="nash-sidebar-create-opportunity" type="button" aria-label="Create opportunity" title="Create opportunity">+</button>
       </div>
-      ${rows}
+      <input class="nash-sidebar-opportunity-filter" type="search" placeholder="Filter opportunities…" aria-label="Filter opportunities"/>
+      <div class="nash-sidebar-opportunity-list">${rows || '<p class="nash-sidebar-opportunity-none">Create your first opportunity.</p>'}</div>
     </div>
   `;
 }
@@ -188,7 +209,7 @@ function renderNav(block, reportCount) {
 
   block.innerHTML = `
     <div class="nash-sidebar-head">
-      <a class="nash-sidebar-brand" href="/" aria-label="Nash home">
+      <a class="nash-sidebar-brand" href="/indextest" aria-label="Nash home">
         <span class="nash-sidebar-logo" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 240 234" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adobe">
             <rect height="234" rx="42.5" width="240" fill="#fa0f00"/>
@@ -251,6 +272,18 @@ function renderNav(block, reportCount) {
         </div>
       </div>
     </div>
+    <dialog class="nash-sidebar-opportunity-dialog">
+      <form method="dialog" class="nash-sidebar-opportunity-form">
+        <button class="nash-sidebar-dialog-close" type="button" aria-label="Close">×</button>
+        <span class="nash-sidebar-dialog-kicker">New opportunity</span>
+        <h2>Name this opportunity</h2>
+        <p>Assessments created later will stay grouped under this customer opportunity.</p>
+        <label>Opportunity name
+          <input name="opportunity" type="text" required placeholder="e.g. Acme digital platform" autocomplete="organization"/>
+        </label>
+        <button class="nash-sidebar-dialog-create" value="create" type="submit" disabled>Create opportunity</button>
+      </form>
+    </dialog>
   `;
 }
 
@@ -401,27 +434,76 @@ export default async function decorate(block) {
   }
   if (!reports.length) reports = MOCK_RECENT; // dev fallback
 
-  // Badge = the same total the Qualifications overview shows: locally-created
-  // assessments (deduped) + published ones not already covered by a local copy.
-  const seenSlugs = new Set();
-  const localCount = listAssessments().filter((a) => {
-    const slug = slugify(a.dr || a.company);
-    if (seenSlugs.has(slug)) return false;
-    seenSlugs.add(slug);
-    return true;
+  // Badge = all local assessments plus published assessments that do not have a
+  // corresponding local copy.
+  const localAssessments = listAssessments();
+  const publishedSlugs = new Set(localAssessments.map((a) => a.publishedSlug).filter(Boolean));
+  const legacySlugs = new Set(localAssessments
+    .filter((a) => !a.publishedSlug)
+    .map((a) => slugify(a.dr || a.opportunity || a.company)));
+  const pubCount = reports.filter((r) => {
+    const slug = (r.path || '').split('/').pop();
+    return !publishedSlugs.has(slug) && !legacySlugs.has(slug);
   }).length;
-  const pubCount = reports.filter((r) => !seenSlugs.has((r.path || '').split('/').pop())).length;
-  renderNav(block, localCount + pubCount);
+  renderNav(block, localAssessments.length + pubCount);
 
   // Record a login once per browser session (best-effort, admin analytics).
   if (getUserInfo()?.email) logActivity('login');
 
   const refreshAssess = () => {
     const container = block.querySelector('.nash-sidebar-assess');
-    if (container) container.innerHTML = assessmentsHtml(reports);
+    if (!container) return;
+    const filter = container.querySelector('.nash-sidebar-opportunity-filter')?.value || '';
+    const expanded = new Set([...container.querySelectorAll('.nash-sidebar-opportunity.expanded')]
+      .map((item) => item.dataset.opportunity));
+    container.innerHTML = assessmentsHtml(reports);
+    const nextFilter = container.querySelector('.nash-sidebar-opportunity-filter');
+    if (nextFilter && filter) {
+      nextFilter.value = filter;
+      container.querySelectorAll('.nash-sidebar-opportunity').forEach((opportunity) => {
+        opportunity.hidden = !opportunity.dataset.opportunity.includes(filter.toLowerCase());
+      });
+    }
+    if (expanded.size) {
+      container.querySelectorAll('.nash-sidebar-opportunity').forEach((opportunity) => {
+        const isExpanded = expanded.has(opportunity.dataset.opportunity);
+        opportunity.classList.toggle('expanded', isExpanded);
+        opportunity.querySelector('.nash-sidebar-opportunity-toggle')
+          ?.setAttribute('aria-expanded', String(isExpanded));
+      });
+    }
   };
   refreshAssess();
   document.addEventListener('nash:assessments-changed', refreshAssess);
+
+  const opportunityDialog = block.querySelector('.nash-sidebar-opportunity-dialog');
+  const opportunityForm = block.querySelector('.nash-sidebar-opportunity-form');
+  const opportunityInput = opportunityForm?.elements.opportunity;
+  const createOpportunityButton = block.querySelector('.nash-sidebar-dialog-create');
+  const openOpportunityDialog = () => {
+    if (!opportunityDialog) return;
+    opportunityForm?.reset();
+    if (createOpportunityButton) createOpportunityButton.disabled = true;
+    opportunityDialog.showModal();
+    window.setTimeout(() => opportunityInput?.focus(), 0);
+  };
+  document.addEventListener('nash:create-opportunity', openOpportunityDialog);
+  opportunityInput?.addEventListener('input', () => {
+    if (createOpportunityButton) createOpportunityButton.disabled = !opportunityInput.value.trim();
+  });
+  block.querySelector('.nash-sidebar-dialog-close')?.addEventListener('click', () => {
+    opportunityDialog?.close();
+  });
+  opportunityForm?.addEventListener('submit', (event) => {
+    if (event.submitter?.value !== 'create') return;
+    const name = opportunityInput.value.trim();
+    if (!name) {
+      event.preventDefault();
+      return;
+    }
+    saveOpportunity(name);
+    refreshAssess();
+  });
 
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.nash-sidebar-sort-wrap')) {
@@ -449,6 +531,26 @@ export default async function decorate(block) {
   setActive(block, matched?.view || '');
 
   block.addEventListener('click', (e) => {
+    const createOpportunity = e.target.closest('.nash-sidebar-create-opportunity');
+    if (createOpportunity) {
+      openOpportunityDialog();
+      return;
+    }
+
+    const opportunityToggle = e.target.closest('.nash-sidebar-opportunity-toggle');
+    if (opportunityToggle) {
+      const opportunity = opportunityToggle.closest('.nash-sidebar-opportunity');
+      const expanded = opportunity?.classList.toggle('expanded');
+      opportunityToggle.setAttribute('aria-expanded', String(Boolean(expanded)));
+      return;
+    }
+
+    const newAssessment = e.target.closest('[data-new-assessment]');
+    if (newAssessment) {
+      window.location.href = `/indextest?opportunity=${encodeURIComponent(newAssessment.dataset.newAssessment)}`;
+      return;
+    }
+
     const del = e.target.closest('.nash-sidebar-recent-del');
     if (del) {
       e.preventDefault();
@@ -495,6 +597,14 @@ export default async function decorate(block) {
     }
     setActive(block, view);
     document.dispatchEvent(new CustomEvent('nash:navigate', { detail: { view }, bubbles: true }));
+  });
+
+  block.addEventListener('input', (e) => {
+    if (!e.target.matches('.nash-sidebar-opportunity-filter')) return;
+    const query = e.target.value.trim().toLowerCase();
+    block.querySelectorAll('.nash-sidebar-opportunity').forEach((opportunity) => {
+      opportunity.hidden = !opportunity.dataset.opportunity.includes(query);
+    });
   });
 
   document.addEventListener('nash:navigate', (e) => {

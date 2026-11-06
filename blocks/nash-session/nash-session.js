@@ -87,10 +87,10 @@ const MANDATORY_INTERVIEW_KEYS = ['meetingNotes', 'rfpInfluence', 'champions'];
 
 const LAUNCH = [
   {
-    action: 'new', icon: 'plus', text: 'Create a new analysis', desc: 'Upload an RFP and start a qualification',
+    action: 'new', icon: 'plus', text: 'Create a new opportunity', desc: 'Name the customer and group its assessments',
   },
   {
-    action: 'find', icon: 'search', text: 'Find a previous analysis', desc: 'Browse your assessments',
+    action: 'find', icon: 'search', text: 'Find a previous opportunity', desc: 'Browse all assessments',
   },
   {
     action: 'skills', icon: 'layers', text: 'Skills & solution files', desc: 'Review what Nash scores against',
@@ -534,7 +534,7 @@ function renderLauncher(block, name) {
   block.querySelectorAll('.nash-session-launch-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const { action } = btn.dataset;
-      if (action === 'new') startNewAnalysis(block);
+      if (action === 'new') document.dispatchEvent(new CustomEvent('nash:create-opportunity', { bubbles: true }));
       else if (action === 'find') window.location.href = '/';
       else if (action === 'skills') window.location.href = '/solutions/';
     });
@@ -573,9 +573,11 @@ async function processFiles(fileList) {
    (customer, DR, documents, solutions) as the first card of the questionnaire,
    rather than in a separate modal. Not persisted until intake is submitted. */
 function startNewAnalysis(block) {
+  const opportunity = new URLSearchParams(window.location.search).get('opportunity') || '';
   const assessment = {
     id: newAssessmentId(),
     company: '',
+    opportunity,
     status: 'draft',
     createdAt: Date.now(),
     solutions: [],
@@ -813,7 +815,7 @@ function renderSetupReview(inferred, solutions, fileNames) {
         <p>${escapeHtml(fileNames)} · Confirm the customer and Adobe scope. Everything else can be refined during the interview.</p>
       </header>
       <div class="nash-session-identity-row">
-        <label>Customer name<input name="company" value="${escapeHtml(inferred.company || '')}" required/></label>
+        <label>Customer name<input name="company" value="${escapeHtml(inferred.company || current.opportunity || '')}" required/></label>
         <label>Official website<input name="website" value="${escapeHtml(inferred.website || '')}" placeholder="Inferred automatically"/></label>
         <label>DR <span>optional</span><input name="dr" value="${escapeHtml(inferred.dr || '')}" placeholder="Not found"/></label>
       </div>
@@ -923,7 +925,7 @@ async function runIntake(block) {
       <span class="nash-session-kicker">No documents yet</span>
       <h2>Who is the customer?</h2>
       <p>Nash will guide you through the objectives and challenges one question at a time.</p>
-      <label>Customer name<input name="company" required autofocus placeholder="e.g. Unilever"/></label>
+      <label>Customer name<input name="company" value="${escapeHtml(current.opportunity || '')}" required autofocus placeholder="e.g. Unilever"/></label>
       <button class="nash-session-btn-primary" type="submit">Continue</button>
     </form>`;
     area.querySelector('form').addEventListener('submit', (event) => {
@@ -3430,7 +3432,9 @@ async function loadSolutions() {
 
 export default async function decorate(block) {
   const name = 'Vitor';
-  const id = new URLSearchParams(window.location.search).get('a');
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('a');
+  const opportunity = params.get('opportunity');
   const assessment = id ? getAssessment(id) : null;
 
   // A live FluffyJaws stream can't survive a full page load, so warn before the
@@ -3444,6 +3448,8 @@ export default async function decorate(block) {
     // autoRun only takes effect when there's no report yet, so a finished
     // assessment just re-opens, while an unfinished one restarts automatically.
     renderAssessment(block, assessment, true);
+  } else if (opportunity) {
+    startNewAnalysis(block);
   } else {
     renderLauncher(block, name);
   }

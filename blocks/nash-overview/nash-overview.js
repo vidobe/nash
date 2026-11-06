@@ -88,10 +88,12 @@ function mapQueryRow(row, idx) {
   // Strip " | Nash" suffix from <title> and fall back to path slug
   const rawTitle = (row.title || '').replace(/\s*\|.*$/, '').trim();
   const pathSlug = (row.path || '').split('/').pop();
-  const company = rawTitle || toTitleCase(pathSlug) || 'Unknown';
+  const company = row.opportunity || rawTitle || toTitleCase(pathSlug) || 'Unknown';
   return {
     id: idx,
     company,
+    opportunity: company,
+    assessmentName: row.assessmentname || rawTitle || `${company} assessment`,
     domain: row.description || '',
     status,
     pct: status === 'done' ? 100 : (parseInt(row.progress, 10) || 0),
@@ -118,6 +120,8 @@ function mapLocalAssessment(a, idx) {
   return {
     id: `local-${idx}`,
     company: a.company || 'Untitled',
+    assessmentName: a.assessmentName || a.title || a.fileName || `${a.company || 'Untitled'} assessment`,
+    opportunity: a.opportunity || a.company || 'Untitled',
     domain: a.dr ? `DR ${a.dr}` : '',
     status: a.status === 'done' ? 'done' : 'generating',
     pct: a.status === 'done' ? 100 : 0,
@@ -166,6 +170,27 @@ function verdictInfo(r) {
   return { label: '', style: '' };
 }
 
+const PILLAR_ACCENTS = {
+  brand: { name: 'Brand Visibility', color: '#34d399' },
+  engagement: { name: 'Customer Engagement', color: '#8f9bff' },
+  content: { name: 'Content Supply Chain', color: '#f5b941' },
+  ai: { name: 'AI Platform & Orchestration', color: '#b48cff' },
+  developer: { name: 'Developer & Extensibility', color: '#4cc3ec' },
+};
+
+function solutionPillar(solutions = '') {
+  const value = solutions.toLowerCase();
+  if (/app builder|developer|extensib/.test(value)) return PILLAR_ACCENTS.developer;
+  if (/orchestrat|intelligence|coworker|agent/.test(value)) return PILLAR_ACCENTS.ai;
+  if (/assets|workfront|express|firefly|frame|learning manager|substance/.test(value)) {
+    return PILLAR_ACCENTS.content;
+  }
+  if (/analytics|campaign|journey|marketo|target|audience|experience platform|rtcdp|cdp/.test(value)) {
+    return PILLAR_ACCENTS.engagement;
+  }
+  return PILLAR_ACCENTS.brand;
+}
+
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
 /* Delete an assessment: local ones from localStorage, published ones by
@@ -197,7 +222,9 @@ async function deleteReport(r) {
 
 function buildCard(r) {
   const card = document.createElement('div');
+  const pillar = solutionPillar(r.solutions);
   card.className = `nash-overview-card${r.status === 'generating' ? ' generating' : ''}`;
+  card.style.setProperty('--overview-card-accent', pillar.color);
   card.dataset.id = r.id;
   card.dataset.status = r.status;
   card.dataset.company = r.company.toLowerCase();
@@ -237,10 +264,10 @@ function buildCard(r) {
       <div class="nash-overview-card-left">
         <div class="nash-overview-favicon" aria-hidden="true">${r.company.charAt(0)}</div>
         <div>
-          <div class="nash-overview-company">${r.company}<span class="nash-overview-star" aria-label="Bookmarked"${bookmarked ? '' : ' hidden'}>${STAR}</span></div>
+          <div class="nash-overview-company">${r.assessmentName || r.company}<span class="nash-overview-star" aria-label="Bookmarked"${bookmarked ? '' : ' hidden'}>${STAR}</span></div>
           <div class="nash-overview-domain">
             <svg width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            ${r.domain}
+            ${r.opportunity || r.company}${r.domain && r.domain !== r.company ? ` · ${r.domain}` : ''}
           </div>
         </div>
       </div>
@@ -260,6 +287,7 @@ function buildCard(r) {
           <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
           ${r.solutions || '—'}
         </span>
+        <span class="nash-overview-pillar">${pillar.name}</span>
       </div>
       <div class="nash-overview-menuwrap">
         <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button" aria-haspopup="true" aria-expanded="false">
@@ -346,6 +374,7 @@ function tableRow(r) {
       <span class="nash-overview-favicon" aria-hidden="true">${esc(r.company.charAt(0))}</span>
       <span>${esc(r.company)}</span>
     </td>
+    <td>${esc(r.assessmentName || r.company)}</td>
     <td>${scoreCell}</td>
     <td>${verdictCell}</td>
     <td class="nash-overview-t-muted">${esc(r.solutions || '—')}</td>
@@ -359,7 +388,7 @@ function renderTable(block, reports) {
   if (!wrap) return;
   wrap.innerHTML = `<table class="nash-overview-table">
     <thead><tr>
-      <th>Company</th><th>Fit score</th><th>Verdict</th><th>Solutions</th><th>Owner</th><th>Updated</th>
+      <th>Opportunity</th><th>Assessment</th><th>Fit score</th><th>Verdict</th><th>Solutions</th><th>Owner</th><th>Updated</th>
     </tr></thead>
     <tbody>${reports.map(tableRow).join('')}</tbody>
   </table>`;
@@ -425,19 +454,20 @@ export default async function decorate(block) {
   // Merge locally-created assessments (newest first) ahead of published ones,
   // deduped by opportunity: keep the local (editable) copy and drop any published
   // doc for the same opp.
-  const seen = new Set();
-  const localRaw = listAssessments().filter((a) => {
-    const slug = slugify(a.dr || a.company);
-    if (seen.has(slug)) return false;
-    seen.add(slug);
-    return true;
-  });
+  const localRaw = listAssessments();
   const local = localRaw.map(mapLocalAssessment);
+  const localPublishedSlugs = new Set(localRaw.map((a) => a.publishedSlug).filter(Boolean));
+  const localLegacySlugs = new Set(localRaw
+    .filter((a) => !a.publishedSlug)
+    .map((a) => slugify(a.dr || a.opportunity || a.company)));
   // Drop published docs that are duplicates of a local copy, or that the user has
   // deleted/removed locally (so a lagging query index can't resurrect them).
   const publishedDeduped = reports.filter((r) => {
     const slug = (r.path || '').split('/').pop();
-    return !seen.has(slug) && !isHidden(r.key) && !isHidden(r.path);
+    return !localPublishedSlugs.has(slug)
+      && !localLegacySlugs.has(slug)
+      && !isHidden(r.key)
+      && !isHidden(r.path);
   });
   reports = [...local, ...publishedDeduped];
 
@@ -456,8 +486,8 @@ export default async function decorate(block) {
 
   block.innerHTML = `
     <div class="nash-overview-head">
-      <h1 class="nash-overview-title">Qualifications</h1>
-      <p class="nash-overview-subtitle">Every opportunity your team has assessed with Nash.</p>
+      <h1 class="nash-overview-title">All assessments</h1>
+      <p class="nash-overview-subtitle">Every assessment across your Nash opportunities.</p>
       <p class="nash-overview-intro">Fit scores, verdicts and win rate across all completed assessments. Search or filter to find a deal, switch between grid and list, or open one to dive in.</p>
     </div>
     <div class="nash-overview-stats">
@@ -521,6 +551,7 @@ export default async function decorate(block) {
     let list = reports.filter((r) => state.status === 'all' || r.status === state.status);
     if (state.q) {
       list = list.filter((r) => r.company.toLowerCase().includes(state.q)
+        || (r.assessmentName || '').toLowerCase().includes(state.q)
         || (r.solutions || '').toLowerCase().includes(state.q));
     }
     const by = state.sort === 'score'
