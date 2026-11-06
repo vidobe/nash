@@ -116,7 +116,14 @@ html[data-theme="dark"] .nash-sidebar {
   margin-bottom: 0;
 }
 
+.nash-sidebar .nash-sidebar-opportunity-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .nash-sidebar .nash-sidebar-create-opportunity,
+.nash-sidebar .nash-sidebar-search-opportunities,
 .nash-sidebar .nash-sidebar-opportunity-add {
   display: grid;
   place-items: center;
@@ -133,9 +140,16 @@ html[data-theme="dark"] .nash-sidebar {
 }
 
 .nash-sidebar .nash-sidebar-create-opportunity:hover,
+.nash-sidebar .nash-sidebar-search-opportunities:hover,
+.nash-sidebar .nash-sidebar-search-opportunities.active,
 .nash-sidebar .nash-sidebar-opportunity-add:hover {
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-search-opportunities svg {
+  width: 13px;
+  height: 13px;
 }
 
 .nash-sidebar .nash-sidebar-opportunity-filter {
@@ -149,6 +163,10 @@ html[data-theme="dark"] .nash-sidebar {
   color: var(--ink, #111318);
   font: 11.5px var(--sans, 'DM Sans', system-ui, sans-serif);
   outline: none;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-filter[hidden] {
+  display: none;
 }
 
 .nash-sidebar .nash-sidebar-opportunity-filter:focus {
