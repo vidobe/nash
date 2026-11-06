@@ -836,17 +836,18 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 .nash-session.wide {
   max-width: none;
-  padding: 18px 22px 24px;
+  padding: 0;
 }
 
 .nash-session .nash-session-assess {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 42px);
   padding: clamp(26px, 3vw, 42px);
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 24px;
-  background: var(--white, #fff);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
 }
 
 /* ── Tabs (Assessment / DA content / Opp management) — icon group, top-right ── */
@@ -2572,9 +2573,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--ink-08, #f4f4f6);
+  margin-bottom: 24px;
 }
 
 .nash-session .nash-session-assess-title {
@@ -2846,6 +2845,8 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 .nash-session .nash-session-fluffy-island .nash-session-composer {
+  align-items: center;
+  gap: 12px;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -2861,12 +2862,110 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 .nash-session .nash-session-fluffy-island .nash-session-footer-left {
+  align-items: center;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 
+.nash-session .nash-session-fluffy-island .nash-session-footer-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.nash-session .nash-session-fluffy-island .nash-session-rerun {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .nash-session .nash-session-fluffy-island .nash-session-model {
+  align-self: center;
   padding: 0 8px 0 2px;
   white-space: nowrap;
+}
+
+.nash-session .nash-session-fluffy-island .nash-session-send {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+}
+
+.nash-session .nash-session-fluffy-chat {
+  position: fixed;
+  bottom: 104px;
+  left: calc(var(--sidebar-w, 240px) + (100vw - var(--sidebar-w, 240px)) / 2);
+  z-index: 119;
+  box-sizing: border-box;
+  width: min(1080px, calc(100vw - var(--sidebar-w, 240px) - 64px));
+  height: min(470px, calc(100dvh - 150px));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 90% 0%, rgb(141 130 255 / 8%), transparent 34%),
+    color-mix(in srgb, var(--white, #fff) 96%, #111318);
+  box-shadow:
+    0 26px 80px rgb(0 0 0 / 52%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+  color: var(--ink, #111318);
+  transform: translateX(-50%);
+}
+
+.nash-session .nash-session-fluffy-chat[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.nash-session .nash-session-fluffy-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-session .nash-session-fluffy-chat-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-fluffy-chat-title .nash-session-pix {
+  margin: 0;
+}
+
+.nash-session .nash-session-fluffy-chat-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.nash-session .nash-session-fluffy-chat-close:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-session-fluffy-chat .nash-session-thread {
+  min-height: 0;
+  margin: 0;
+  padding: 24px;
+  overflow-y: auto;
+  border: 0;
 }
 
 .nash-session .nash-session-composer:focus-within {
@@ -5091,14 +5190,14 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 @media (width < 800px) {
   .nash-session.wide {
-    padding: 12px;
+    padding: 0;
   }
 
   .nash-session .nash-session-assess {
     padding: 24px 18px;
-    border-radius: 18px;
   }
 
+  .nash-session .nash-session-fluffy-chat,
   .nash-session .nash-session-fluffy-island {
     width: calc(100vw - var(--sidebar-w, 64px) - 32px);
   }
@@ -5110,7 +5209,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 @media (width < 600px) {
   .nash-session.wide {
-    padding: 8px;
+    padding: 0;
   }
 
   .nash-session .nash-session-assess-head {
@@ -5126,6 +5225,13 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
     width: calc(100vw - var(--sidebar-w, 64px) - 20px);
     min-height: 58px;
     padding: 7px 8px 7px 14px;
+    border-radius: 20px;
+  }
+
+  .nash-session .nash-session-fluffy-chat {
+    bottom: 82px;
+    width: calc(100vw - var(--sidebar-w, 64px) - 20px);
+    height: min(500px, calc(100dvh - 104px));
     border-radius: 20px;
   }
 

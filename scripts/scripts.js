@@ -134,6 +134,11 @@ export function decorateMain(main) {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+  const path = window.location.pathname;
+  const isNashApp = path !== '/login'
+    && !path.startsWith('/login/')
+    && !path.startsWith('/aibootcamp/');
+  document.body.classList.toggle('nash-app-page', isNashApp);
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);

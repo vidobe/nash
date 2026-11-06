@@ -3092,6 +3092,19 @@ export function renderAssessment(block, a, autoRun = false) {
   const experimentPanel = canViewReportExperiment()
     ? `<div class="nash-session-panel nash-session-experiment" data-panel="experiment">${renderExperimentalDossier(a)}</div>`
     : '';
+  const hasReport = a.reportMarkdown || a.report || a.reportHtml;
+  const inlineThread = hasReport ? '' : '<div class="nash-session-thread" aria-live="polite"></div>';
+  const chatSheet = hasReport ? `
+    <dialog class="nash-session-fluffy-chat" aria-label="Ask Fluffy about this assessment">
+      <header class="nash-session-fluffy-chat-head">
+        <div class="nash-session-fluffy-chat-title">
+          <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
+          <span>Ask Fluffy about this assessment</span>
+        </div>
+        <button type="button" class="nash-session-fluffy-chat-close" aria-label="Close chat">&times;</button>
+      </header>
+      <div class="nash-session-thread" aria-live="polite"></div>
+    </dialog>` : '';
 
   block.innerHTML = `
     <div class="nash-session-assess">
@@ -3120,8 +3133,9 @@ export function renderAssessment(block, a, autoRun = false) {
             <div class="nash-session-report-area">${a.reportMarkdown
     ? renderDossier(a)
     : reportPanel(a.report, a.company)}</div>
-            <div class="nash-session-thread" aria-live="polite"></div>
+            ${inlineThread}
           </div>
+          ${chatSheet}
           <div class="nash-session-fluffy-island">
             <div class="nash-session-attachments" hidden></div>
             <form class="nash-session-composer" autocomplete="off">
@@ -3157,11 +3171,19 @@ export function renderAssessment(block, a, autoRun = false) {
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
   const sendBtn = block.querySelector('.nash-session-send');
+  const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
+  const openChatSheet = () => {
+    if (chatSheetElement && !chatSheetElement.open) chatSheetElement.show();
+  };
+  chatSheetElement?.querySelector('.nash-session-fluffy-chat-close')
+    ?.addEventListener('click', () => chatSheetElement.close());
+  chatSheetElement?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') chatSheetElement.close();
+  });
 
   // Always open on a clean thread — prior chat history is not replayed (the
   // report is the focus), but the composer stays so Fluffy can be asked about
   // the results. Past messages are still kept for re-run context.
-  const hasReport = a.reportMarkdown || a.report || a.reportHtml;
   const willAutoRun = autoRun && !hasReport;
   // An interrupted run (status 'running', no report yet) resumes straight into the
   // assessment; a fresh draft starts with the pre-assessment interview.
@@ -3185,12 +3207,14 @@ export function renderAssessment(block, a, autoRun = false) {
   const syncSend = () => {
     sendBtn.disabled = input.value.trim().length === 0 && pendingDocs.length === 0;
   };
+  input.addEventListener('focus', openChatSheet);
   input.addEventListener('input', () => { autoResize(input); syncSend(); });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(block, input.value); }
   });
   block.querySelector('.nash-session-composer').addEventListener('submit', (e) => {
     e.preventDefault();
+    openChatSheet();
     send(block, input.value);
   });
 
@@ -3253,6 +3277,7 @@ function chatInsightsText() {
 
 /* Switch the active assessment tab (assessment | da | opp). */
 function switchTab(block, name) {
+  if (name !== 'assessment') block.querySelector('.nash-session-fluffy-chat')?.close();
   block.querySelectorAll('.nash-session-tab').forEach((t) => {
     const on = t.dataset.tab === name;
     t.classList.toggle('active', on);
