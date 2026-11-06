@@ -405,13 +405,16 @@ main {
 }
 
 body.nash-app-page main {
+  position: relative;
+  isolation: isolate;
   padding: 18px 22px 24px;
-  background: var(--background-color, #f8f8fa);
+  background: var(--white, #fff);
 }
 
-body.nash-app-page main > .section {
-  box-sizing: border-box;
-  min-height: calc(100dvh - 42px);
+body.nash-app-page main::before {
+  position: absolute;
+  z-index: 0;
+  inset: 18px 22px 24px;
   border: 1px solid var(--border, #e5e6ea);
   border-radius: 24px;
   background:
@@ -419,11 +422,22 @@ body.nash-app-page main > .section {
     radial-gradient(circle at 92% 10%, rgb(141 130 255 / 6.5%), transparent 34%),
     radial-gradient(circle at 72% 96%, rgb(94 161 255 / 3.5%), transparent 38%),
     linear-gradient(145deg, rgb(255 255 255 / 1.8%), transparent 42%),
-    var(--white, #fff);
+    color-mix(in srgb, var(--white, #fff) 94%, var(--text-color, #131313) 6%);
+  content: "";
+  pointer-events: none;
+}
+
+body.nash-app-page main > .section {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 body.nash-app-page main > .section > div {
-  min-height: inherit;
+  background: transparent;
 }
 
 /* ── Collapsed sidebar → narrow icon rail ────────────── */
@@ -437,8 +451,8 @@ body.nash-nav-collapsed {
     padding: 12px;
   }
 
-  body.nash-app-page main > .section {
-    min-height: calc(100dvh - 24px);
+  body.nash-app-page main::before {
+    inset: 12px;
     border-radius: 18px;
   }
 }
@@ -448,7 +462,7 @@ body.nash-nav-collapsed {
     padding: 8px;
   }
 
-  body.nash-app-page main > .section {
-    min-height: calc(100dvh - 16px);
+  body.nash-app-page main::before {
+    inset: 8px;
   }
 }
