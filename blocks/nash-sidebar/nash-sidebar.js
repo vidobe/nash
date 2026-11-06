@@ -2,7 +2,7 @@
 
 import { listAssessments, isHidden, hideFromList } from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
-import { slugify } from '../../scripts/da-doc.js';
+import { assessmentTitle, slugify } from '../../scripts/da-doc.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 
@@ -88,7 +88,7 @@ function buildAssessItems(reports) {
       if (a.publishedSlug) localPublishedSlugs.add(a.publishedSlug);
       else localLegacySlugs.add(slugify(a.dr || a.opportunity || a.company));
       return {
-        name: a.assessmentName || a.title || a.fileName || `${a.company || 'Opportunity'} assessment`,
+        name: assessmentTitle(a),
         opportunity: a.opportunity || a.company || '',
         href: `/indextest?a=${encodeURIComponent(a.id)}`,
         status: a.status,
@@ -109,7 +109,11 @@ function buildAssessItems(reports) {
       return !localPublishedSlugs.has(slug) && !localLegacySlugs.has(slug);
     })
     .map((r) => ({
-      name: r.assessmentname || r.requestname || `${cleanTitle(r.title)} assessment`,
+      name: assessmentTitle({
+        assessmentName: r.assessmentname || r.requestname,
+        company: cleanTitle(r.title),
+        solutionNames: r.solutionnames || '',
+      }),
       opportunity: r.opportunity || cleanTitle(r.title),
       href: r.path || '#',
       status: r.status,
