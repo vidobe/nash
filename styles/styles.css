@@ -458,6 +458,10 @@ body.nash-nav-collapsed {
 }
 
 @media (width < 600px) {
+  body {
+    --sidebar-w: 64px;
+  }
+
   .nash-app-nav {
     width: 64px;
   }
