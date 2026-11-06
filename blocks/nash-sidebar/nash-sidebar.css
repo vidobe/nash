@@ -124,7 +124,8 @@ html[data-theme="dark"] .nash-sidebar {
 
 .nash-sidebar .nash-sidebar-create-opportunity,
 .nash-sidebar .nash-sidebar-search-opportunities,
-.nash-sidebar .nash-sidebar-opportunity-add {
+.nash-sidebar .nash-sidebar-opportunity-add,
+.nash-sidebar .nash-sidebar-opportunity-delete {
   display: grid;
   place-items: center;
   width: 23px;
@@ -139,12 +140,46 @@ html[data-theme="dark"] .nash-sidebar {
   cursor: pointer;
 }
 
+.nash-sidebar .nash-sidebar-opportunity-delete {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.15s ease, opacity 0.15s ease;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-delete:focus-visible {
+  width: 23px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .nash-sidebar .nash-sidebar-create-opportunity:hover,
 .nash-sidebar .nash-sidebar-search-opportunities:hover,
 .nash-sidebar .nash-sidebar-search-opportunities.active,
-.nash-sidebar .nash-sidebar-opportunity-add:hover {
+.nash-sidebar .nash-sidebar-opportunity-add:hover,
+.nash-sidebar .nash-sidebar-opportunity-delete:hover {
   background: var(--red-lt, #fff0ef);
   color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-row:hover .nash-sidebar-opportunity-delete {
+  width: 23px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-delete svg {
+  width: 13px;
+  height: 13px;
+}
+
+@media (hover: none) {
+  .nash-sidebar .nash-sidebar-opportunity-delete {
+    width: 23px;
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .nash-sidebar .nash-sidebar-search-opportunities svg {

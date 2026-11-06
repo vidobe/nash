@@ -1,8 +1,10 @@
 /* eslint-disable no-use-before-define */
 
-import { listAssessments, isHidden, hideFromList } from '../../scripts/nash-assessments.js';
+import {
+  listAssessments, isHidden, hideFromList, reassignOpportunity,
+} from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
-import { slugify } from '../../scripts/da-doc.js';
+import { assessmentTitle, slugify } from '../../scripts/da-doc.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 
@@ -31,6 +33,7 @@ const USER_MENU = [
 const SORT_KEY = 'nash-sidebar-sort';
 const SORT_DIR_KEY = 'nash-sidebar-sort-dir';
 const OPPORTUNITIES_KEY = 'nash-opportunities';
+const REMOVED_OPPORTUNITIES_KEY = 'nash-removed-opportunities';
 const EXPANDED_OPPORTUNITIES_KEY = 'nash-sidebar-expanded-opportunities';
 const defaultDir = (sort) => (sort === 'alpha' ? 'asc' : 'desc');
 
@@ -55,6 +58,7 @@ const ICONS = {
   arrowUp: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
   folderClosed: '<svg class="nash-sidebar-opportunity-folder-closed" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5a2 2 0 012-2h5l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
   folderOpen: '<svg class="nash-sidebar-opportunity-folder-open" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V6a2 2 0 012-2h5l2 2h7a2 2 0 012 2v1"/><path d="M4.2 9h16.3a1.5 1.5 0 011.4 2l-2.6 7a2 2 0 01-1.9 1.3H5.2A2 2 0 013.3 18l-2.1-6.3A2 2 0 013.1 9z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6"/></svg>',
 };
 
 function cleanTitle(t) {
@@ -76,6 +80,7 @@ function statusClass(s) {
 /* Assessments — locally-created (in-progress) merged with published qualifications. */
 function buildAssessItems(reports) {
   const currentUser = (getUserInfo()?.email || '').toLowerCase();
+  const removedOpportunities = storedRemovedOpportunities();
   const localPublishedSlugs = new Set();
   const localLegacySlugs = new Set();
 
@@ -87,9 +92,10 @@ function buildAssessItems(reports) {
     .map((a) => {
       if (a.publishedSlug) localPublishedSlugs.add(a.publishedSlug);
       else localLegacySlugs.add(slugify(a.dr || a.opportunity || a.company));
+      const opportunity = a.opportunity || a.company || '';
       return {
-        name: a.assessmentName || a.title || a.fileName || `${a.company || 'Opportunity'} assessment`,
-        opportunity: a.opportunity || a.company || '',
+        name: assessmentTitle(a),
+        opportunity: removedOpportunities.has(opportunity.toLowerCase()) ? 'Unassigned' : opportunity,
         href: `/indextest?a=${encodeURIComponent(a.id)}`,
         status: a.status,
         date: a.updatedAt || a.createdAt || 0,
@@ -108,15 +114,22 @@ function buildAssessItems(reports) {
       const slug = (r.path || '').split('/').pop();
       return !localPublishedSlugs.has(slug) && !localLegacySlugs.has(slug);
     })
-    .map((r) => ({
-      name: r.assessmentname || r.requestname || `${cleanTitle(r.title)} assessment`,
-      opportunity: r.opportunity || cleanTitle(r.title),
-      href: r.path || '#',
-      status: r.status,
-      date: Number(r.lastModified || 0),
-      solutions: r.solutions || '',
-      isLocal: false,
-    }));
+    .map((r) => {
+      const opportunity = r.opportunity || cleanTitle(r.title);
+      return {
+        name: assessmentTitle({
+          assessmentName: r.assessmentname || r.requestname,
+          company: cleanTitle(r.title),
+          solutionNames: r.solutionnames || '',
+        }),
+        opportunity: removedOpportunities.has(opportunity.toLowerCase()) ? 'Unassigned' : opportunity,
+        href: r.path || '#',
+        status: r.status,
+        date: Number(r.lastModified || 0),
+        solutions: r.solutions || '',
+        isLocal: false,
+      };
+    });
 
   // Items the user removed from the sidebar (keyed by href) stay hidden here but
   // are NOT deleted — they remain available in the Overview.
@@ -132,12 +145,35 @@ function storedOpportunities() {
   }
 }
 
+function storedRemovedOpportunities() {
+  try {
+    const value = JSON.parse(localStorage.getItem(REMOVED_OPPORTUNITIES_KEY) || '[]');
+    return new Set(Array.isArray(value) ? value : []);
+  } catch {
+    return new Set();
+  }
+}
+
 function saveOpportunity(name) {
   const names = storedOpportunities();
   if (!names.some((item) => item.toLowerCase() === name.toLowerCase())) {
     names.unshift(name);
     localStorage.setItem(OPPORTUNITIES_KEY, JSON.stringify(names));
   }
+  const removed = storedRemovedOpportunities();
+  removed.delete(name.toLowerCase());
+  localStorage.setItem(REMOVED_OPPORTUNITIES_KEY, JSON.stringify([...removed]));
+}
+
+function deleteOpportunity(name) {
+  const key = name.toLowerCase();
+  localStorage.setItem(OPPORTUNITIES_KEY, JSON.stringify(
+    storedOpportunities().filter((item) => item.toLowerCase() !== key),
+  ));
+  const removed = storedRemovedOpportunities();
+  removed.add(key);
+  localStorage.setItem(REMOVED_OPPORTUNITIES_KEY, JSON.stringify([...removed]));
+  reassignOpportunity(name);
 }
 
 function sortAssessItems(items, sort, dir) {
@@ -197,6 +233,7 @@ function assessmentsHtml(reports) {
           <span class="nash-sidebar-opportunity-count">${assessments.length}</span>
         </button>
         <button class="nash-sidebar-opportunity-add" type="button" data-new-assessment="${esc(name)}" aria-label="New assessment for ${esc(name)}" title="New assessment">+</button>
+        ${key === 'unassigned' ? '' : `<button class="nash-sidebar-opportunity-delete" type="button" data-delete-opportunity="${esc(name)}" aria-label="Delete opportunity ${esc(name)}" title="Delete opportunity">${ICONS.trash}</button>`}
       </div>
       <div class="nash-sidebar-opportunity-assessments">
         ${assessments.length ? assessments.map((item) => `
@@ -631,6 +668,17 @@ export default async function decorate(block) {
     const newAssessment = e.target.closest('[data-new-assessment]');
     if (newAssessment) {
       window.location.href = `/indextest?opportunity=${encodeURIComponent(newAssessment.dataset.newAssessment)}`;
+      return;
+    }
+
+    const removeOpportunity = e.target.closest('[data-delete-opportunity]');
+    if (removeOpportunity) {
+      const name = removeOpportunity.dataset.deleteOpportunity;
+      // eslint-disable-next-line no-alert
+      if (window.confirm(`Delete "${name}"? Its assessments will move to Unassigned.`)) {
+        deleteOpportunity(name);
+        refreshAssess();
+      }
       return;
     }
 

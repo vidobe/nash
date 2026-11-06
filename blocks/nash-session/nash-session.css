@@ -5243,6 +5243,131 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   text-transform: uppercase;
 }
 
+/* Light mode keeps report surfaces calm and reserves color for active context. */
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island {
+  border-color: rgb(17 19 24 / 10%);
+  background:
+    radial-gradient(circle at 8% 0%, rgb(235 16 0 / 3%), transparent 34%),
+    radial-gradient(circle at 92% 100%, rgb(91 157 255 / 4%), transparent 38%),
+    rgb(255 255 255 / 94%);
+  box-shadow:
+    0 18px 48px rgb(17 19 24 / 13%),
+    inset 0 1px 0 rgb(255 255 255 / 90%);
+  color: var(--ink, #111318);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island .nash-session-input {
+  color: var(--ink, #111318);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island .nash-session-footer-btn {
+  color: var(--ink-40, #9a9da6);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island .nash-session-footer-btn:hover,
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island .nash-session-footer-btn[aria-expanded="true"] {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-action-popover {
+  border-color: var(--border, #e5e6ea);
+  background: rgb(255 255 255 / 98%);
+  box-shadow: 0 16px 42px rgb(17 19 24 / 16%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-action-item {
+  color: var(--ink-70, #4a4d55);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-action-item:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-assessment-gallery {
+  --gallery-bg: #f7f7f5;
+  --gallery-panel: #fff;
+  --gallery-panel-strong: #f8f8f7;
+  --gallery-line: rgb(17 19 24 / 10%);
+  --gallery-copy: #1b1d22;
+  --gallery-muted: #70747d;
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-assessment-gallery .nash-session-qual-ring {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(120deg, rgb(235 16 0 / 52%), rgb(141 130 255 / 44%) 48%, rgb(94 161 255 / 48%)) border-box;
+  box-shadow: 0 8px 24px rgb(17 19 24 / 7%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-rail-wrap {
+  background: rgb(255 255 255 / 76%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-filter:hover {
+  background: #f2f2f0;
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-filter.active {
+  border-color: color-mix(in srgb, var(--gallery-accent) 42%, var(--gallery-line));
+  background: color-mix(in srgb, var(--gallery-accent) 7%, #fff);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--gallery-accent) 13%, transparent);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-section-card {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--gallery-accent) 4%, transparent), transparent 42%),
+    var(--gallery-panel);
+  box-shadow: 0 5px 18px rgb(17 19 24 / 4%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-section-card:hover {
+  border-color: color-mix(in srgb, var(--gallery-accent) 30%, var(--gallery-line));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--gallery-accent) 7%, transparent), transparent 44%),
+    var(--gallery-panel-strong);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-reading {
+  background:
+    radial-gradient(circle at 90% 0%, rgb(94 161 255 / 3.5%), transparent 36%),
+    var(--gallery-panel);
+  box-shadow: 0 8px 28px rgb(17 19 24 / 4%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-lead,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-summary p,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-reading .nash-md p,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-reading .nash-md li {
+  color: var(--gallery-muted);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-summary section,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence-panel,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-content-panel {
+  background: rgb(250 250 248 / 92%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-content {
+  background: rgb(247 247 245 / 72%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-confidence b,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li strong {
+  color: var(--gallery-copy);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-sensitivity {
+  background: rgb(17 19 24 / 8%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li {
+  background: rgb(255 255 255 / 72%);
+}
+
 @media (width < 1100px) {
   .nash-session .nash-session-section-gallery {
     grid-template-columns: repeat(6, minmax(0, 1fr));

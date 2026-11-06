@@ -44,6 +44,22 @@ export function deleteAssessment(id) {
   document.dispatchEvent(new CustomEvent('nash:assessments-changed', { bubbles: true }));
 }
 
+export function reassignOpportunity(name) {
+  const target = String(name || '').trim().toLowerCase();
+  if (!target) return;
+  const next = listAssessments().map((assessment) => {
+    const opportunity = assessment.opportunity || assessment.company || '';
+    if (opportunity.trim().toLowerCase() !== target) return assessment;
+    return { ...assessment, opportunity: 'Unassigned', updatedAt: Date.now() };
+  });
+  try {
+    localStorage.setItem(KEY, JSON.stringify(next));
+  } catch {
+    // ignore quota errors
+  }
+  document.dispatchEvent(new CustomEvent('nash:assessments-changed', { bubbles: true }));
+}
+
 export function newAssessmentId() {
   return `a-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }

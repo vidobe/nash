@@ -35,6 +35,33 @@ export function slugify(name) {
     .slice(0, 80) || 'assessment';
 }
 
+function solutionLabels(assessment) {
+  if (Array.isArray(assessment?.solutions)) {
+    return assessment.solutions
+      .map((solution) => solution?.name || solution)
+      .filter(Boolean);
+  }
+  return String(assessment?.solutionNames || assessment?.solutions || '')
+    .split(',')
+    .map((solution) => solution.trim())
+    .filter(Boolean);
+}
+
+function isDocumentName(value) {
+  return /\.(pdf|docx?|xlsx?|pptx?|csv|txt)$/i.test(String(value || '').trim());
+}
+
+/** Returns a human assessment title without exposing an uploaded document name. */
+export function assessmentTitle(assessment = {}) {
+  const explicit = assessment.assessmentName || assessment.title || '';
+  if (explicit && !isDocumentName(explicit)) return explicit;
+  const solutions = solutionLabels(assessment);
+  if (solutions.length === 1) return `${solutions[0]} assessment`;
+  if (solutions.length === 2) return `${solutions[0]} + ${solutions[1]} assessment`;
+  if (solutions.length > 2) return `${solutions[0]} + ${solutions.length - 1} more assessment`;
+  return `${assessment.company || assessment.opportunity || 'Untitled'} assessment`;
+}
+
 function today() {
   return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
@@ -66,7 +93,7 @@ function encodePayload(a) {
     id: a.id || '',
     company: a.company,
     opportunity: a.opportunity || a.company,
-    assessmentName: a.assessmentName || a.fileName || `${a.company} assessment`,
+    assessmentName: assessmentTitle(a),
     dr: a.dr || '',
     fileName: a.fileName || '',
     solutions: a.solutions || [],
@@ -91,7 +118,7 @@ function encodePayload(a) {
 
 function metadataBlock(a, user) {
   const opportunity = a.opportunity || a.company;
-  const assessmentName = a.assessmentName || a.fileName || `${a.company} assessment`;
+  const assessmentName = assessmentTitle(a);
   return `<div class="metadata">${
     kv('Title', a.company)
     + kv('opportunity', opportunity)
@@ -100,6 +127,7 @@ function metadataBlock(a, user) {
     + kv('score', a.score ?? '')
     + kv('cms', a.cms || 'n/a')
     + kv('solutionnames', (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '')
+    + kv('dimensionvalues', JSON.stringify(Array.isArray(a.dimensions) ? a.dimensions : []))
     + kv('verdict', a.verdict || '')
     + kv('user', user || '')
     + kv('description', a.dr || a.company)

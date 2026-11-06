@@ -31,6 +31,18 @@ indices:
       solutionnames:
         select: head > meta[name="solutionnames"]
         value: attribute(el, "content")
+      dimensionvalues:
+        select: head > meta[name="dimensionvalues"]
+        value: attribute(el, "content")
+      dimensionnames:
+        select: main .nash-qualification > div:not(:first-child) > div:nth-child(1)
+        values: textContent(el)
+      dimensionscored:
+        select: main .nash-qualification > div:not(:first-child) > div:nth-child(3)
+        values: textContent(el)
+      dimensionmax:
+        select: main .nash-qualification > div:not(:first-child) > div:nth-child(4)
+        values: textContent(el)
       user:
         select: head > meta[name="user"]
         value: attribute(el, "content")
