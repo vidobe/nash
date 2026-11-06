@@ -96,6 +96,16 @@ function mapQueryRow(row, idx) {
   } catch {
     dimensions = [];
   }
+  if (!dimensions.length) {
+    const names = Array.isArray(row.dimensionnames) ? row.dimensionnames : [];
+    const scored = Array.isArray(row.dimensionscored) ? row.dimensionscored : [];
+    const max = Array.isArray(row.dimensionmax) ? row.dimensionmax : [];
+    dimensions = names.map((dimension, dimensionIndex) => ({
+      dimension,
+      scored: scored[dimensionIndex],
+      max: max[dimensionIndex],
+    }));
+  }
   const solutions = row.solutionnames || '';
   return {
     id: idx,
