@@ -13,6 +13,12 @@ indices:
       description:
         select: head > meta[name="description"]
         value: attribute(el, "content")
+      opportunity:
+        select: head > meta[name="opportunity"]
+        value: attribute(el, "content")
+      assessmentname:
+        select: head > meta[name="assessmentname"]
+        value: attribute(el, "content")
       status:
         select: head > meta[name="status"]
         value: attribute(el, "content")

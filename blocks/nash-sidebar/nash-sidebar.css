@@ -116,6 +116,111 @@ html[data-theme="dark"] .nash-sidebar {
   margin-bottom: 0;
 }
 
+.nash-sidebar .nash-sidebar-create-opportunity,
+.nash-sidebar .nash-sidebar-opportunity-add {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nash-sidebar .nash-sidebar-create-opportunity:hover,
+.nash-sidebar .nash-sidebar-opportunity-add:hover {
+  background: var(--red-lt, #fff0ef);
+  color: var(--red, #eb1000);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-filter {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 8px 0 7px;
+  padding: 7px 9px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--white, #fff) 84%, transparent);
+  color: var(--ink, #111318);
+  font: 11.5px var(--sans, 'DM Sans', system-ui, sans-serif);
+  outline: none;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-filter:focus {
+  border-color: color-mix(in srgb, var(--red, #eb1000) 35%, var(--border, #e5e6ea));
+}
+
+.nash-sidebar .nash-sidebar-opportunity-row {
+  display: flex;
+  align-items: center;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-toggle {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 3px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-70, #4a4d55);
+  font: 500 12.5px var(--sans, 'DM Sans', system-ui, sans-serif);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-toggle:hover {
+  background: color-mix(in srgb, var(--white, #fff) 76%, transparent);
+  color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-chevron {
+  width: 12px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 16px;
+  transition: transform 0.15s;
+}
+
+.nash-sidebar .nash-sidebar-opportunity.expanded .nash-sidebar-opportunity-chevron {
+  transform: rotate(90deg);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-count {
+  margin-left: auto;
+  color: var(--ink-40, #9a9da6);
+  font-size: 10px;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-assessments {
+  display: none;
+  padding-left: 9px;
+}
+
+.nash-sidebar .nash-sidebar-opportunity.expanded .nash-sidebar-opportunity-assessments {
+  display: block;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-empty,
+.nash-sidebar .nash-sidebar-opportunity-none {
+  display: block;
+  margin: 3px 8px 7px 22px;
+  color: var(--ink-40, #9a9da6);
+  font: 10.5px var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
 .nash-sidebar .nash-sidebar-sort-wrap {
   position: relative;
 }
@@ -500,6 +605,98 @@ html[data-theme="dark"] .nash-sidebar {
   line-height: 1.2;
 }
 
+/* ── Opportunity naming dialog ───────────────────────── */
+
+.nash-sidebar .nash-sidebar-opportunity-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 18px;
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-dialog::backdrop {
+  background: rgb(7 9 13 / 62%);
+  backdrop-filter: blur(5px);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 26px;
+}
+
+.nash-sidebar .nash-sidebar-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.nash-sidebar .nash-sidebar-dialog-kicker {
+  color: var(--red, #eb1000);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-form h2 {
+  margin: 7px 0 0;
+  font: 400 28px var(--serif, 'DM Serif Display', georgia, serif);
+}
+
+.nash-sidebar .nash-sidebar-opportunity-form p {
+  margin: 8px 0 22px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-form input {
+  padding: 10px 11px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 9px;
+  background: var(--surface, #f8f8fa);
+  color: var(--ink, #111318);
+  font: 13px var(--sans, 'DM Sans', system-ui, sans-serif);
+  outline: none;
+}
+
+.nash-sidebar .nash-sidebar-dialog-create {
+  align-self: flex-end;
+  margin-top: 20px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--red, #eb1000);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nash-sidebar .nash-sidebar-dialog-create:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ── User menu popup ─────────────────────────────────── */
 
 .nash-sidebar .nash-sidebar-usermenu {
@@ -634,6 +831,7 @@ body.nash-nav-collapsed .nash-sidebar .nash-sidebar-wordmark,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-subtitle,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-badge,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-recent-section,
+body.nash-nav-collapsed .nash-sidebar .nash-sidebar-opportunities,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user-name,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user-email,
 body.nash-nav-collapsed .nash-sidebar .nash-sidebar-feedback-btn span,

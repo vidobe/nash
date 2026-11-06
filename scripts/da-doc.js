@@ -63,7 +63,10 @@ function qualificationBlock(a) {
 function encodePayload(a) {
   const data = {
     v: 1,
+    id: a.id || '',
     company: a.company,
+    opportunity: a.opportunity || a.company,
+    assessmentName: a.assessmentName || a.fileName || `${a.company} assessment`,
     dr: a.dr || '',
     fileName: a.fileName || '',
     solutions: a.solutions || [],
@@ -87,8 +90,12 @@ function encodePayload(a) {
 }
 
 function metadataBlock(a, user) {
+  const opportunity = a.opportunity || a.company;
+  const assessmentName = a.assessmentName || a.fileName || `${a.company} assessment`;
   return `<div class="metadata">${
     kv('Title', a.company)
+    + kv('opportunity', opportunity)
+    + kv('assessmentname', assessmentName)
     + kv('status', 'done')
     + kv('score', a.score ?? '')
     + kv('cms', a.cms || 'n/a')

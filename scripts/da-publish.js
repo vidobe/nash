@@ -22,11 +22,13 @@ export function isPublishConfigured() {
 }
 
 /**
- * Stable DA slug for an opportunity — keyed on the DR (opportunity id) so every
- * assessment/re-run for the same opp maps to ONE document. Falls back to company.
+ * Stable DA slug for an assessment. The opportunity remains the grouping key,
+ * while the assessment id prevents later assessments from overwriting earlier ones.
  */
 export function assessmentSlug(a) {
-  return slugify(a.dr || a.company);
+  const opportunity = slugify(a.dr || a.opportunity || a.company);
+  const assessment = slugify(a.id || a.assessmentName || a.fileName);
+  return `${opportunity}-${assessment}`;
 }
 
 /**
