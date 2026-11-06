@@ -127,6 +127,63 @@ export function decorateMain(main) {
   decorateButtons(main);
 }
 
+let appRouteInProgress = false;
+
+async function navigateAppMain(url, pushState = true) {
+  if (appRouteInProgress) return;
+  const target = new URL(url, window.location.href);
+  if (target.origin !== window.location.origin) {
+    window.location.href = target.href;
+    return;
+  }
+
+  const beforeRoute = new CustomEvent('nash:before-route', {
+    detail: { url: target.href },
+    cancelable: true,
+  });
+  if (!document.dispatchEvent(beforeRoute)) return;
+
+  if (target.pathname === window.location.pathname
+    && target.pathname.replace(/\/$/, '') === '/indextest') {
+    if (pushState) window.history.pushState({ nashRoute: true }, '', target);
+    document.dispatchEvent(new CustomEvent('nash:session-route', {
+      detail: { url: target.href },
+    }));
+    document.dispatchEvent(new CustomEvent('nash:route-complete', {
+      detail: { url: target.href },
+    }));
+    return;
+  }
+
+  appRouteInProgress = true;
+  document.body.classList.add('nash-route-loading');
+  try {
+    const response = await fetch(`${target.pathname}${target.search}`);
+    if (!response.ok) throw new Error(`Route request failed with ${response.status}`);
+    const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const nextMain = nextDocument.querySelector('main');
+    const currentMain = document.querySelector('main');
+    if (!nextMain || !currentMain) throw new Error('Route response did not contain main content');
+
+    if (pushState) window.history.pushState({ nashRoute: true }, '', target);
+    currentMain.replaceWith(nextMain);
+    decorateMain(nextMain);
+    await loadSections(nextMain);
+    if (nextDocument.title) document.title = nextDocument.title;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.dispatchEvent(new CustomEvent('nash:route-complete', {
+      detail: { url: target.href },
+    }));
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Nash in-app navigation failed', error);
+    window.location.href = target.href;
+  } finally {
+    appRouteInProgress = false;
+    document.body.classList.remove('nash-route-loading');
+  }
+}
+
 /**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
@@ -208,6 +265,13 @@ async function loadLazy(doc) {
 
   if (!onLogin && !isPublic) {
     loadNashSidebar(main);
+    document.addEventListener('nash:route', (event) => {
+      if (!event.detail?.url) return;
+      navigateAppMain(event.detail.url);
+    });
+    window.addEventListener('popstate', () => {
+      navigateAppMain(window.location.href, false);
+    });
   }
 
   await loadSections(main);

@@ -199,15 +199,43 @@ html[data-theme="dark"] .nash-sidebar {
   color: var(--ink, #111318);
 }
 
-.nash-sidebar .nash-sidebar-opportunity-chevron {
-  width: 12px;
+.nash-sidebar .nash-sidebar-opportunity-folder {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
   color: var(--ink-40, #9a9da6);
-  font-size: 16px;
-  transition: transform 0.15s;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
-.nash-sidebar .nash-sidebar-opportunity.expanded .nash-sidebar-opportunity-chevron {
-  transform: rotate(90deg);
+.nash-sidebar .nash-sidebar-opportunity-folder svg {
+  grid-area: 1 / 1;
+  width: 15px;
+  height: 15px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.nash-sidebar .nash-sidebar-opportunity-folder-closed {
+  opacity: var(--nash-folder-closed-opacity, 1);
+  transform: scale(var(--nash-folder-closed-scale, 1));
+}
+
+.nash-sidebar .nash-sidebar-opportunity-folder-open {
+  opacity: var(--nash-folder-open-opacity, 0);
+  transform: scale(var(--nash-folder-open-scale, 0.82));
+}
+
+.nash-sidebar .nash-sidebar-opportunity.expanded .nash-sidebar-opportunity-folder {
+  color: var(--red, #eb1000);
+  transform: translateY(1px);
+}
+
+.nash-sidebar .nash-sidebar-opportunity.expanded {
+  --nash-folder-closed-opacity: 0;
+  --nash-folder-closed-scale: 0.82;
+  --nash-folder-open-opacity: 1;
+  --nash-folder-open-scale: 1;
 }
 
 .nash-sidebar .nash-sidebar-opportunity-name {
@@ -425,6 +453,12 @@ html[data-theme="dark"] .nash-sidebar {
 .nash-sidebar .nash-sidebar-recent:hover {
   background: var(--white, #fff);
   color: var(--ink, #111318);
+}
+
+.nash-sidebar .nash-sidebar-recent.active {
+  background: color-mix(in srgb, var(--red-lt, #fff0ef) 72%, transparent);
+  color: var(--red, #eb1000);
+  font-weight: 500;
 }
 
 .nash-sidebar .nash-sidebar-recent-item {

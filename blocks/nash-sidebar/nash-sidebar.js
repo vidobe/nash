@@ -31,6 +31,7 @@ const USER_MENU = [
 const SORT_KEY = 'nash-sidebar-sort';
 const SORT_DIR_KEY = 'nash-sidebar-sort-dir';
 const OPPORTUNITIES_KEY = 'nash-opportunities';
+const EXPANDED_OPPORTUNITIES_KEY = 'nash-sidebar-expanded-opportunities';
 const defaultDir = (sort) => (sort === 'alpha' ? 'asc' : 'desc');
 
 const ICONS = {
@@ -52,6 +53,8 @@ const ICONS = {
   moon: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
   arrowDown: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
   arrowUp: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+  folderClosed: '<svg class="nash-sidebar-opportunity-folder-closed" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5a2 2 0 012-2h5l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
+  folderOpen: '<svg class="nash-sidebar-opportunity-folder-open" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V6a2 2 0 012-2h5l2 2h7a2 2 0 012 2v1"/><path d="M4.2 9h16.3a1.5 1.5 0 011.4 2l-2.6 7a2 2 0 01-1.9 1.3H5.2A2 2 0 013.3 18l-2.1-6.3A2 2 0 013.1 9z"/></svg>',
 };
 
 function cleanTitle(t) {
@@ -145,6 +148,27 @@ function sortAssessItems(items, sort, dir) {
   return arr;
 }
 
+function storedExpandedOpportunities() {
+  try {
+    const value = JSON.parse(localStorage.getItem(EXPANDED_OPPORTUNITIES_KEY) || '[]');
+    return new Set(Array.isArray(value) ? value : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveExpandedOpportunities(block) {
+  const expanded = [...block.querySelectorAll('.nash-sidebar-opportunity.expanded')]
+    .map((item) => item.dataset.opportunity);
+  localStorage.setItem(EXPANDED_OPPORTUNITIES_KEY, JSON.stringify(expanded));
+}
+
+function isCurrentAssessment(href) {
+  const target = new URL(href, window.location.origin);
+  return target.pathname === window.location.pathname
+    && target.search === window.location.search;
+}
+
 function assessmentsHtml(reports) {
   const sort = localStorage.getItem(SORT_KEY) || 'date';
   const dir = localStorage.getItem(SORT_DIR_KEY) || defaultDir(sort);
@@ -155,12 +179,20 @@ function assessmentsHtml(reports) {
     if (!groups.has(name)) groups.set(name, []);
     groups.get(name).push(item);
   });
+  const expandedOpportunities = storedExpandedOpportunities();
+  const hasSavedExpansion = expandedOpportunities.size > 0;
 
-  const rows = [...groups.entries()].map(([name, assessments], groupIndex) => `
-    <div class="nash-sidebar-opportunity${groupIndex === 0 ? ' expanded' : ''}" data-opportunity="${esc(name.toLowerCase())}">
+  const rows = [...groups.entries()].map(([name, assessments], groupIndex) => {
+    const key = name.toLowerCase();
+    const containsCurrentAssessment = assessments.some((item) => isCurrentAssessment(item.href));
+    const isExpanded = expandedOpportunities.has(key)
+      || containsCurrentAssessment
+      || (!hasSavedExpansion && groupIndex === 0);
+    return `
+    <div class="nash-sidebar-opportunity${isExpanded ? ' expanded' : ''}" data-opportunity="${esc(key)}">
       <div class="nash-sidebar-opportunity-row">
-        <button class="nash-sidebar-opportunity-toggle" type="button" aria-expanded="${groupIndex === 0 ? 'true' : 'false'}">
-          <span class="nash-sidebar-opportunity-chevron">›</span>
+        <button class="nash-sidebar-opportunity-toggle" type="button" aria-expanded="${isExpanded}">
+          <span class="nash-sidebar-opportunity-folder" aria-hidden="true">${ICONS.folderClosed}${ICONS.folderOpen}</span>
           <span class="nash-sidebar-opportunity-name">${esc(name)}</span>
           <span class="nash-sidebar-opportunity-count">${assessments.length}</span>
         </button>
@@ -168,10 +200,11 @@ function assessmentsHtml(reports) {
       </div>
       <div class="nash-sidebar-opportunity-assessments">
         ${assessments.length ? assessments.map((item) => `
-          <a class="nash-sidebar-recent ${statusClass(item.status)}" href="${esc(item.href)}" title="${esc(item.name)}">${esc(item.name)}</a>
+          <a class="nash-sidebar-recent ${statusClass(item.status)}${isCurrentAssessment(item.href) ? ' active' : ''}" href="${esc(item.href)}" title="${esc(item.name)}"${isCurrentAssessment(item.href) ? ' aria-current="page"' : ''}>${esc(item.name)}</a>
         `).join('') : '<span class="nash-sidebar-opportunity-empty">No assessments yet</span>'}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   return `
     <div class="nash-sidebar-section nash-sidebar-opportunities">
@@ -480,6 +513,7 @@ export default async function decorate(block) {
           ?.setAttribute('aria-expanded', String(isExpanded));
       });
     }
+    saveExpandedOpportunities(block);
   };
   refreshAssess();
   document.addEventListener('nash:assessments-changed', refreshAssess);
@@ -569,6 +603,28 @@ export default async function decorate(block) {
       const opportunity = opportunityToggle.closest('.nash-sidebar-opportunity');
       const expanded = opportunity?.classList.toggle('expanded');
       opportunityToggle.setAttribute('aria-expanded', String(Boolean(expanded)));
+      saveExpandedOpportunities(block);
+      return;
+    }
+
+    const assessmentLink = e.target.closest('.nash-sidebar-recent');
+    if (assessmentLink) {
+      e.preventDefault();
+      const opportunity = assessmentLink.closest('.nash-sidebar-opportunity');
+      opportunity?.classList.add('expanded');
+      opportunity?.querySelector('.nash-sidebar-opportunity-toggle')
+        ?.setAttribute('aria-expanded', 'true');
+      block.querySelectorAll('.nash-sidebar-recent.active').forEach((item) => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+      });
+      assessmentLink.classList.add('active');
+      assessmentLink.setAttribute('aria-current', 'page');
+      saveExpandedOpportunities(block);
+      document.dispatchEvent(new CustomEvent('nash:route', {
+        detail: { url: assessmentLink.href },
+        bubbles: true,
+      }));
       return;
     }
 
@@ -636,5 +692,26 @@ export default async function decorate(block) {
 
   document.addEventListener('nash:navigate', (e) => {
     setActive(block, e.detail?.view);
+  });
+
+  document.addEventListener('nash:route-complete', (event) => {
+    if (!block.isConnected) return;
+    const currentUrl = new URL(event.detail?.url || window.location.href);
+    block.querySelectorAll('.nash-sidebar-recent').forEach((item) => {
+      const itemUrl = new URL(item.href, window.location.origin);
+      const isActive = itemUrl.pathname === currentUrl.pathname
+        && itemUrl.search === currentUrl.search;
+      item.classList.toggle('active', isActive);
+      if (isActive) {
+        item.setAttribute('aria-current', 'page');
+        const opportunity = item.closest('.nash-sidebar-opportunity');
+        opportunity?.classList.add('expanded');
+        opportunity?.querySelector('.nash-sidebar-opportunity-toggle')
+          ?.setAttribute('aria-expanded', 'true');
+      } else {
+        item.removeAttribute('aria-current');
+      }
+    });
+    saveExpandedOpportunities(block);
   });
 }

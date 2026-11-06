@@ -3456,6 +3456,7 @@ export default async function decorate(block) {
 
   // "New Session" in the sidebar returns to the launcher.
   document.addEventListener('nash:new-session', () => {
+    if (!block.isConnected) return;
     if (new URLSearchParams(window.location.search).get('a')) {
       window.location.href = '/indextest';
     } else {
@@ -3463,5 +3464,28 @@ export default async function decorate(block) {
       previousResponseId = null;
       renderLauncher(block, name);
     }
+  });
+
+  document.addEventListener('nash:before-route', (event) => {
+    if (!block.isConnected || !isRunning) return;
+    // Keep an active generation attached unless the user explicitly chooses to leave it.
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('An assessment is still running. Leave it and open another assessment?')) {
+      event.preventDefault();
+    }
+  });
+
+  document.addEventListener('nash:session-route', (event) => {
+    if (!block.isConnected) return;
+    const route = new URL(event.detail?.url || window.location.href);
+    const nextId = route.searchParams.get('a');
+    const nextOpportunity = route.searchParams.get('opportunity');
+    const nextAssessment = nextId ? getAssessment(nextId) : null;
+    current = null;
+    previousResponseId = null;
+    chatGrounded = false;
+    if (nextAssessment) renderAssessment(block, nextAssessment, true);
+    else if (nextOpportunity) startNewAnalysis(block);
+    else renderLauncher(block, name);
   });
 }
