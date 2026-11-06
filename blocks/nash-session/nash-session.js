@@ -3106,7 +3106,9 @@ export function renderAssessment(block, a, autoRun = false) {
           <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
           <span>Ask Fluffy about this assessment</span>
         </div>
-        <button type="button" class="nash-session-fluffy-chat-close" aria-label="Close chat">&times;</button>
+        <button type="button" class="nash-session-fluffy-chat-close" aria-label="Close chat" title="Close chat">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+        </button>
       </header>
       <div class="nash-session-thread" aria-live="polite"></div>
     </dialog>` : '';
@@ -3201,16 +3203,43 @@ export function renderAssessment(block, a, autoRun = false) {
     if (block.isConnected) closeActionPopover();
   });
   const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
+  const fluffyIsland = block.querySelector('.nash-session-fluffy-island');
   const openChatSheet = () => {
-    if (chatSheetElement && !chatSheetElement.open) chatSheetElement.show();
+    if (!chatSheetElement || chatSheetElement.open) return;
+    chatSheetElement.show();
+    fluffyIsland?.classList.add('is-chat-open');
+  };
+  const closeChatSheet = () => {
+    if (!chatSheetElement?.open) return;
+    chatSheetElement.close();
+    chatSheetElement.removeAttribute('open');
+    fluffyIsland?.classList.remove('is-chat-open');
+    input?.blur();
   };
   chatSheetElement?.querySelector('.nash-session-fluffy-chat-close')
-    ?.addEventListener('click', () => chatSheetElement.close());
+    ?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeChatSheet();
+    });
+  chatSheetElement?.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    closeChatSheet();
+  });
   chatSheetElement?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') chatSheetElement.close();
+    if (event.key === 'Escape') closeChatSheet();
   });
   block.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeActionPopover();
+    if (event.key === 'Escape') {
+      closeActionPopover();
+      closeChatSheet();
+    }
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!block.isConnected || !chatSheetElement?.open) return;
+    if (!chatSheetElement.contains(event.target) && !fluffyIsland?.contains(event.target)) {
+      closeChatSheet();
+    }
   });
 
   // Always open on a clean thread — prior chat history is not replayed (the
