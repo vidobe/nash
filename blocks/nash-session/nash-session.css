@@ -2824,24 +2824,32 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   transition: box-shadow 0.2s ease;
 }
 
-.nash-session .nash-session-fluffy-island {
+.nash-session .nash-session-fluffy-shell {
   position: fixed;
   bottom: 22px;
   left: calc(var(--sidebar-w, 240px) + (100vw - var(--sidebar-w, 240px)) / 2);
   z-index: 120;
   display: grid;
   box-sizing: border-box;
-  width: min(1080px, calc(100vw - var(--sidebar-w, 240px) - 64px));
-  min-height: 66px;
-  padding: 8px 10px 8px 18px;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 24px;
+  width: min(760px, calc(100vw - var(--sidebar-w, 240px) - 64px));
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 20px;
   background: rgb(15 17 22 / 92%);
   box-shadow:
-    0 18px 55px rgb(0 0 0 / 45%),
+    0 14px 40px rgb(0 0 0 / 28%),
     inset 0 1px 0 rgb(255 255 255 / 6%);
   backdrop-filter: blur(18px);
   transform: translateX(-50%);
+}
+
+.nash-session .nash-session-fluffy-island {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px 8px 16px;
 }
 
 .nash-session .nash-session-fluffy-island .nash-session-composer {
@@ -2967,39 +2975,46 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 .nash-session .nash-session-fluffy-chat {
-  position: fixed;
-  bottom: 132px;
-  left: calc(var(--sidebar-w, 240px) + (100vw - var(--sidebar-w, 240px)) / 2);
-  z-index: 119;
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
-  width: min(1080px, calc(100vw - var(--sidebar-w, 240px) - 64px));
-  height: min(470px, calc(100dvh - 150px));
+  width: 100%;
+  height: auto;
+  max-height: min(430px, calc(100dvh - 126px));
   margin: 0;
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 90% 0%, rgb(141 130 255 / 8%), transparent 34%),
-    color-mix(in srgb, var(--white, #fff) 96%, #111318);
-  box-shadow:
-    0 26px 80px rgb(0 0 0 / 52%),
-    inset 0 1px 0 rgb(255 255 255 / 6%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--ink, #111318);
-  transform: translateX(-50%);
 }
 
 .nash-session .nash-session-fluffy-chat[open] {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, auto);
+  transform-origin: center bottom;
+  animation: nash-chat-grow 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes nash-chat-grow {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scaleY(0.86);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
 }
 
 .nash-session .nash-session-fluffy-chat-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 17px 20px;
-  border-bottom: 1px solid var(--border, #e5e6ea);
+  padding: 13px 15px 13px 18px;
 }
 
 .nash-session .nash-session-fluffy-chat-title {
@@ -3017,15 +3032,14 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 .nash-session .nash-session-fluffy-chat-close {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 50%;
   background: transparent;
   color: var(--ink-40, #9a9da6);
   cursor: pointer;
-  font-size: 20px;
 }
 
 .nash-session .nash-session-fluffy-chat-close:hover {
@@ -3033,10 +3047,20 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   color: var(--ink, #111318);
 }
 
+.nash-session .nash-session-fluffy-chat-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
 .nash-session .nash-session-fluffy-chat .nash-session-thread {
   min-height: 0;
+  max-height: 330px;
   margin: 0;
-  padding: 24px;
+  padding: 18px;
   overflow-y: auto;
   border: 0;
 }
@@ -5244,7 +5268,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 /* Light mode keeps report surfaces calm and reserves color for active context. */
-html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-island {
+html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-shell {
   border-color: rgb(17 19 24 / 10%);
   background:
     radial-gradient(circle at 8% 0%, rgb(235 16 0 / 3%), transparent 34%),
@@ -5395,8 +5419,7 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
     padding: 24px 18px;
   }
 
-  .nash-session .nash-session-fluffy-chat,
-  .nash-session .nash-session-fluffy-island {
+  .nash-session .nash-session-fluffy-shell {
     width: calc(100vw - var(--sidebar-w, 64px) - 32px);
   }
 
@@ -5418,19 +5441,20 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
     padding-bottom: 96px;
   }
 
-  .nash-session .nash-session-fluffy-island {
+  .nash-session .nash-session-fluffy-shell {
     bottom: 12px;
     width: calc(100vw - var(--sidebar-w, 64px) - 20px);
+    border-radius: 18px;
+  }
+
+  .nash-session .nash-session-fluffy-island {
     min-height: 58px;
     padding: 7px 8px 7px 14px;
-    border-radius: 20px;
   }
 
   .nash-session .nash-session-fluffy-chat {
-    bottom: 118px;
-    width: calc(100vw - var(--sidebar-w, 64px) - 20px);
-    height: min(500px, calc(100dvh - 104px));
-    border-radius: 20px;
+    height: auto;
+    max-height: min(500px, calc(100dvh - 104px));
   }
 
   .nash-session .nash-session-fluffy-island .nash-session-model {
