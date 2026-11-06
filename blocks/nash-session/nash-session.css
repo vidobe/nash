@@ -5355,6 +5355,19 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-content {
   background: rgb(247 247 245 / 72%);
 }
 
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-confidence b,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li strong {
+  color: var(--gallery-copy);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-sensitivity {
+  background: rgb(17 19 24 / 8%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li {
+  background: rgb(255 255 255 / 72%);
+}
+
 @media (width < 1100px) {
   .nash-session .nash-session-section-gallery {
     grid-template-columns: repeat(6, minmax(0, 1fr));
