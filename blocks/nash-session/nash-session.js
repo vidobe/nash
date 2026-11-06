@@ -1337,8 +1337,9 @@ function renderRerunState(block) {
   const btn = block?.querySelector('.nash-session-rerun');
   if (!btn || !current) return;
   const pending = !!current.notesSinceRun;
+  const label = btn.querySelector('.nash-session-action-label');
   btn.classList.toggle('has-notes', pending);
-  btn.innerHTML = pending ? '↻ Re-run to update' : '↻ Re-run';
+  if (label) label.textContent = pending ? 'Re-run to update' : 'Re-run assessment';
   btn.title = pending
     ? 'You added notes in chat — re-run to fold them into the report'
     : 'Re-run the assessment, folding in your chat with Fluffy';
@@ -3141,15 +3142,22 @@ export function renderAssessment(block, a, autoRun = false) {
           <div class="nash-session-fluffy-island">
             <div class="nash-session-attachments" hidden></div>
             <form class="nash-session-composer" autocomplete="off">
-              <div class="nash-session-footer-left">
-                <button type="button" class="nash-session-footer-btn nash-session-attach" aria-label="Add documents" title="Add documents">${ICONS.plusadd}</button>
-                <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
-                ${a.published ? '' : '<button type="button" class="nash-session-rerun" title="Re-run the assessment, folding in your chat with Fluffy">↻ Re-run</button>'}
+              <div class="nash-session-composer-main">
+                <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
+                <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
               </div>
-              <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
-              <textarea class="nash-session-input" rows="1" placeholder="Ask Fluffy about this assessment, or add context…" aria-label="Message Nash"></textarea>
-              <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
-              <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+              <div class="nash-session-composer-tools">
+                <div class="nash-session-action-menu">
+                  <button type="button" class="nash-session-footer-btn nash-session-action-toggle" aria-label="More actions" title="More actions" aria-haspopup="menu" aria-expanded="false">${ICONS.plusadd}</button>
+                  <div class="nash-session-action-popover" role="menu" hidden>
+                    <button type="button" class="nash-session-action-item nash-session-attach" role="menuitem">${ICONS.attach}<span>Upload documents</span></button>
+                    ${a.published ? '' : '<button type="button" class="nash-session-action-item nash-session-rerun" role="menuitem" title="Re-run the assessment, folding in your chat with Fluffy"><span class="nash-session-action-symbol" aria-hidden="true">↻</span><span class="nash-session-action-label">Re-run assessment</span></button>'}
+                  </div>
+                  <input class="nash-session-attach-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple hidden/>
+                </div>
+                <span class="nash-session-model">${isAuthenticated() ? '<span class="nash-session-conn-dot"></span>' : ''}FluffyJaws</span>
+                <button type="submit" class="nash-session-send" aria-label="Send" disabled>${ICONS.send}</button>
+              </div>
             </form>
           </div>
         </div>
@@ -3173,6 +3181,23 @@ export function renderAssessment(block, a, autoRun = false) {
   const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
   const sendBtn = block.querySelector('.nash-session-send');
+  const actionToggle = block.querySelector('.nash-session-action-toggle');
+  const actionPopover = block.querySelector('.nash-session-action-popover');
+  const closeActionPopover = () => {
+    if (!actionPopover || !actionToggle) return;
+    actionPopover.hidden = true;
+    actionToggle.setAttribute('aria-expanded', 'false');
+  };
+  actionToggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const opening = actionPopover.hidden;
+    actionPopover.hidden = !opening;
+    actionToggle.setAttribute('aria-expanded', String(opening));
+  });
+  actionPopover?.addEventListener('click', (event) => event.stopPropagation());
+  document.addEventListener('click', () => {
+    if (block.isConnected) closeActionPopover();
+  });
   const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
   const openChatSheet = () => {
     if (chatSheetElement && !chatSheetElement.open) chatSheetElement.show();
@@ -3181,6 +3206,9 @@ export function renderAssessment(block, a, autoRun = false) {
     ?.addEventListener('click', () => chatSheetElement.close());
   chatSheetElement?.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') chatSheetElement.close();
+  });
+  block.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeActionPopover();
   });
 
   // Always open on a clean thread — prior chat history is not replayed (the
@@ -3234,7 +3262,10 @@ export function renderAssessment(block, a, autoRun = false) {
     }));
     syncSend();
   };
-  block.querySelector('.nash-session-attach').addEventListener('click', () => attachInput.click());
+  block.querySelector('.nash-session-attach').addEventListener('click', () => {
+    closeActionPopover();
+    attachInput.click();
+  });
   attachInput.addEventListener('change', async () => {
     const picked = [...attachInput.files];
     attachInput.value = '';
@@ -3262,6 +3293,7 @@ export function renderAssessment(block, a, autoRun = false) {
   }
 
   block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
+    closeActionPopover();
     switchTab(block, 'assessment');
     runAssessment(block, 1, chatInsightsText());
   });
