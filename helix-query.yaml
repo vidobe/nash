@@ -31,6 +31,9 @@ indices:
       solutionnames:
         select: head > meta[name="solutionnames"]
         value: attribute(el, "content")
+      dimensionvalues:
+        select: head > meta[name="dimensionvalues"]
+        value: attribute(el, "content")
       user:
         select: head > meta[name="user"]
         value: attribute(el, "content")

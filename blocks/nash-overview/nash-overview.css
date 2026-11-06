@@ -629,6 +629,124 @@
   transition: width 0.6s ease;
 }
 
+.nash-overview .nash-overview-complete {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: center;
+  gap: 14px;
+  min-height: 120px;
+}
+
+.nash-overview .nash-overview-scope {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.nash-overview .nash-overview-scope-group {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.nash-overview .nash-overview-scope-label {
+  color: var(--ink-40, #9a9da6);
+  font: 500 9.5px/1.2 var(--sans, 'DM Sans', system-ui, sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nash-overview .nash-overview-scope-group strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink, #111318);
+  font: 600 12px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.nash-overview .nash-overview-radar-wrap,
+.nash-overview .nash-overview-score-orbit {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  flex-shrink: 0;
+}
+
+.nash-overview .nash-overview-radar {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--overview-card-accent);
+}
+
+.nash-overview .nash-overview-radar-ring,
+.nash-overview .nash-overview-radar-axes line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink-40, #9a9da6) 24%, transparent);
+  stroke-width: 0.8;
+}
+
+.nash-overview .nash-overview-radar-value {
+  fill: currentcolor;
+  fill-opacity: 0.16;
+  stroke: currentcolor;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--overview-card-accent) 45%, transparent));
+}
+
+.nash-overview .nash-overview-radar-score {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.nash-overview .nash-overview-radar-score strong,
+.nash-overview .nash-overview-score-orbit strong {
+  font: 700 20px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
+  letter-spacing: -0.03em;
+}
+
+.nash-overview .nash-overview-radar-score span,
+.nash-overview .nash-overview-score-orbit span {
+  margin-top: 2px;
+  color: var(--ink-40, #9a9da6);
+  font: 500 8px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-score-orbit {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+}
+
+.nash-overview .nash-overview-score-orbit .nash-overview-score-orbit-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.nash-overview .nash-overview-score-orbit circle {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink-40, #9a9da6) 18%, transparent);
+  stroke-width: 5;
+}
+
+.nash-overview .nash-overview-score-orbit .nash-overview-score-orbit-value {
+  stroke: var(--overview-card-accent);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--overview-card-accent) 45%, transparent));
+}
+
 .nash-overview .nash-overview-score-row {
   display: flex;
   align-items: baseline;
@@ -670,11 +788,10 @@
 }
 
 .nash-overview .nash-overview-footer-meta {
-  display: grid;
+  display: flex;
   min-width: 0;
   flex: 1;
   align-items: center;
-  grid-template-columns: minmax(0, auto) minmax(50px, 1fr) auto;
   gap: 10px;
 }
 
@@ -750,6 +867,17 @@
 
   .nash-overview .nash-overview-area {
     padding-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-complete {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 10px;
+  }
+
+  .nash-overview .nash-overview-radar-wrap,
+  .nash-overview .nash-overview-score-orbit {
+    width: 96px;
+    height: 96px;
   }
 }
 

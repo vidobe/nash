@@ -7,6 +7,7 @@ import {
 import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js';
 import { publishAssessment } from '../../scripts/da-publish.js';
 import { logActivity } from '../../scripts/nash-activity.js';
+import { assessmentTitle } from '../../scripts/da-doc.js';
 import {
   PILLARS, SOLUTION_PILLARS, SOLUTION_TILES,
 } from '../nash-solutions/nash-solutions.js';
@@ -855,6 +856,7 @@ function wireSetupReview(block, inferred, solutions, onConfirm = () => runInterv
       solutions: selected,
       intake: inferred,
     });
+    current.assessmentName = assessmentTitle(current);
     const title = block.querySelector('.nash-session-assess-title');
     if (title) title.textContent = current.company;
     persist(current);

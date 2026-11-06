@@ -11,7 +11,7 @@ import {
   listAssessments, deleteAssessment, toggleBookmark, isBookmarked,
   hideFromList, isHidden,
 } from '../../scripts/nash-assessments.js';
-import { slugify } from '../../scripts/da-doc.js';
+import { assessmentTitle, slugify } from '../../scripts/da-doc.js';
 import { canDelete } from '../../scripts/nash-perms.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { unpublishAssessment } from '../../scripts/da-publish.js';
@@ -89,11 +89,23 @@ function mapQueryRow(row, idx) {
   const rawTitle = (row.title || '').replace(/\s*\|.*$/, '').trim();
   const pathSlug = (row.path || '').split('/').pop();
   const company = row.opportunity || rawTitle || toTitleCase(pathSlug) || 'Unknown';
+  let dimensions = [];
+  try {
+    const parsed = JSON.parse(row.dimensionvalues || '[]');
+    if (Array.isArray(parsed)) dimensions = parsed;
+  } catch {
+    dimensions = [];
+  }
+  const solutions = row.solutionnames || '';
   return {
     id: idx,
     company,
     opportunity: company,
-    assessmentName: row.assessmentname || rawTitle || `${company} assessment`,
+    assessmentName: assessmentTitle({
+      assessmentName: row.assessmentname,
+      company,
+      solutionNames: solutions,
+    }),
     domain: row.description || '',
     status,
     pct: status === 'done' ? 100 : (parseInt(row.progress, 10) || 0),
@@ -101,7 +113,8 @@ function mapQueryRow(row, idx) {
     total: parseInt(row.totalsteps, 10) || 23,
     task: row.task || 'Processing',
     user: row.user || '',
-    solutions: row.solutionnames || '',
+    solutions,
+    dimensions,
     time: relativeTime(row.lastmodified || row.lastModified),
     ts: Number(row.lastmodified || row.lastModified) || 0,
     score: status === 'done' ? score : null,
@@ -120,7 +133,7 @@ function mapLocalAssessment(a, idx) {
   return {
     id: `local-${idx}`,
     company: a.company || 'Untitled',
-    assessmentName: a.assessmentName || a.title || a.fileName || `${a.company || 'Untitled'} assessment`,
+    assessmentName: assessmentTitle(a),
     opportunity: a.opportunity || a.company || 'Untitled',
     domain: a.dr ? `DR ${a.dr}` : '',
     status: a.status === 'done' ? 'done' : 'generating',
@@ -130,6 +143,7 @@ function mapLocalAssessment(a, idx) {
     task: 'Draft',
     user: a.user || (getUserInfo()?.email || ''),
     solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
+    dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
     time: relativeTime(ts),
     ts,
     score: a.status === 'done' ? coerceScore(a) : null,
@@ -189,6 +203,78 @@ function solutionPillar(solutions = '') {
     return PILLAR_ACCENTS.engagement;
   }
   return PILLAR_ACCENTS.brand;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function radarDimensions(dimensions = []) {
+  return dimensions.map((dimension) => {
+    const max = Number(dimension.max) || 100;
+    const scored = Number(dimension.scored ?? dimension.score);
+    if (!Number.isFinite(scored) || max <= 0) return null;
+    return {
+      name: dimension.dimension || dimension.name || 'Dimension',
+      value: Math.max(0, Math.min(1, scored / max)),
+    };
+  }).filter(Boolean).slice(0, 7);
+}
+
+function polygonPoints(count, radius, center = 56) {
+  return Array.from({ length: count }, (_, index) => {
+    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / count);
+    return `${(center + Math.cos(angle) * radius).toFixed(1)},${(center + Math.sin(angle) * radius).toFixed(1)}`;
+  }).join(' ');
+}
+
+function radarChart(r) {
+  const dimensions = radarDimensions(r.dimensions);
+  const score = r.score == null ? '—' : r.score;
+  const scoreStyle = r.score == null ? 'var(--ink-40,#9a9da6)' : scoreColor(r.score);
+  if (dimensions.length < 3) {
+    return `<div class="nash-overview-score-orbit" aria-label="${score} out of 100 fit score">
+      <svg class="nash-overview-score-orbit-svg" viewBox="0 0 112 112" aria-hidden="true">
+        <circle cx="56" cy="56" r="39"></circle>
+        <circle class="nash-overview-score-orbit-value" cx="56" cy="56" r="39" pathLength="100" style="stroke-dasharray:${r.score || 0} 100"></circle>
+      </svg>
+      <strong style="color:${scoreStyle}">${score}</strong>
+      <span>/100</span>
+    </div>`;
+  }
+
+  const valuePoints = dimensions.map((dimension, index) => {
+    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / dimensions.length);
+    const radius = 40 * dimension.value;
+    return `${(56 + Math.cos(angle) * radius).toFixed(1)},${(56 + Math.sin(angle) * radius).toFixed(1)}`;
+  }).join(' ');
+  const axes = dimensions.map((dimension, index) => {
+    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / dimensions.length);
+    const x = (56 + Math.cos(angle) * 40).toFixed(1);
+    const y = (56 + Math.sin(angle) * 40).toFixed(1);
+    return `<line x1="56" y1="56" x2="${x}" y2="${y}"></line>`;
+  }).join('');
+  const label = dimensions
+    .map((dimension) => `${dimension.name} ${Math.round(dimension.value * 100)}%`)
+    .join(', ');
+  return `<div class="nash-overview-radar-wrap">
+    <svg class="nash-overview-radar" viewBox="0 0 112 112" role="img" aria-label="Score profile: ${esc(label)}">
+      <polygon class="nash-overview-radar-ring" points="${polygonPoints(dimensions.length, 20)}"></polygon>
+      <polygon class="nash-overview-radar-ring" points="${polygonPoints(dimensions.length, 40)}"></polygon>
+      <g class="nash-overview-radar-axes">${axes}</g>
+      <polygon class="nash-overview-radar-value" points="${valuePoints}"></polygon>
+    </svg>
+    <div class="nash-overview-radar-score"><strong style="color:${scoreStyle}">${score}</strong><span>/100</span></div>
+  </div>`;
+}
+
+function solutionSummary(solutions = '') {
+  const names = solutions.split(',').map((solution) => solution.trim()).filter(Boolean);
+  if (!names.length) return 'Solution scope not recorded';
+  if (names.length <= 2) return names.join(' + ');
+  return `${names.slice(0, 2).join(' + ')} + ${names.length - 2} more`;
 }
 
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
@@ -252,12 +338,20 @@ function buildCard(r) {
        <div class="nash-overview-progress-track">
          <div class="nash-overview-progress-fill" style="width:${r.pct}%" aria-valuenow="${r.pct}" aria-valuemin="0" aria-valuemax="100" role="progressbar"></div>
        </div>`
-    : `<div class="nash-overview-card-status">Qualification complete.</div>
-       <div class="nash-overview-score-row">
-         <span class="nash-overview-score" style="color:${r.score == null ? 'var(--ink-40,#9a9da6)' : scoreColor(r.score)}">${r.score == null ? '—' : r.score}</span>
-         <span class="nash-overview-score-of">/ 100 fit score</span>
-         ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>` : ''; })()}
-       </div>`;
+    : `<div class="nash-overview-complete">
+        <div class="nash-overview-scope">
+          <div class="nash-overview-scope-group">
+            <span class="nash-overview-scope-label">Solutions</span>
+            <strong>${esc(solutionSummary(r.solutions))}</strong>
+          </div>
+          <div class="nash-overview-scope-group">
+            <span class="nash-overview-scope-label">Solution pillar</span>
+            <span class="nash-overview-pillar">${pillar.name}</span>
+          </div>
+          ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>` : ''; })()}
+        </div>
+        ${radarChart(r)}
+      </div>`;
 
   card.innerHTML = `
     <div class="nash-overview-card-top">
@@ -283,11 +377,6 @@ function buildCard(r) {
           <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           <span>${r.user}</span>
         </span>
-        <span class="nash-overview-meta-item nash-overview-meta-solutions">
-          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          <span>${r.solutions || '—'}</span>
-        </span>
-        <span class="nash-overview-pillar">${pillar.name}</span>
       </div>
       <div class="nash-overview-menuwrap">
         <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button" aria-haspopup="true" aria-expanded="false">
@@ -347,12 +436,6 @@ function renderCards(block, reports) {
   if (!grid) return;
   grid.innerHTML = '';
   reports.forEach((r) => grid.appendChild(buildCard(r)));
-}
-
-function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /* Clean, borderless table for the list view. */
