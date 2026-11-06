@@ -735,6 +735,24 @@
   }
 }
 
+@media (width <= 600px) {
+  .nash-overview .nash-overview-head {
+    padding-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-stats {
+    margin-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-toolbar {
+    padding-inline: 18px;
+  }
+
+  .nash-overview .nash-overview-area {
+    padding-inline: 18px;
+  }
+}
+
 .nash-overview .nash-overview-menu-btn {
   display: grid;
   place-items: center;

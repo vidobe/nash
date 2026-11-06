@@ -458,6 +458,14 @@ body.nash-nav-collapsed {
 }
 
 @media (width < 600px) {
+  .nash-app-nav {
+    width: 64px;
+  }
+
+  main {
+    margin-left: 64px;
+  }
+
   body.nash-app-page main {
     padding: 8px;
   }

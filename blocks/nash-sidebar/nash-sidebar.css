@@ -886,3 +886,35 @@ body.nash-nav-collapsed .nash-sidebar .nash-sidebar-user {
   justify-content: center;
   padding: 6px 0;
 }
+
+@media (width < 600px) {
+  .nash-sidebar .nash-sidebar-wordmark,
+  .nash-sidebar .nash-sidebar-subtitle,
+  .nash-sidebar .nash-sidebar-text,
+  .nash-sidebar .nash-sidebar-badge,
+  .nash-sidebar .nash-sidebar-opportunities,
+  .nash-sidebar .nash-sidebar-user-name,
+  .nash-sidebar .nash-sidebar-user-email,
+  .nash-sidebar .nash-sidebar-feedback {
+    display: none;
+  }
+
+  .nash-sidebar .nash-sidebar-head {
+    flex-direction: column;
+    padding: 12px 0;
+  }
+
+  .nash-sidebar .nash-sidebar-toggle {
+    display: none;
+  }
+
+  .nash-sidebar .nash-sidebar-section {
+    padding-inline: 10px;
+  }
+
+  .nash-sidebar .nash-sidebar-item,
+  .nash-sidebar .nash-sidebar-user {
+    justify-content: center;
+    padding-inline: 0;
+  }
+}
