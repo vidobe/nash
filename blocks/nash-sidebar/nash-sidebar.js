@@ -1,10 +1,12 @@
 /* eslint-disable no-use-before-define */
 
 import {
-  listAssessments, isHidden, hideFromList, reassignOpportunity,
+  listAssessments, deleteAssessment, isHidden, hideFromList, reassignOpportunity,
 } from '../../scripts/nash-assessments.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { assessmentTitle, slugify } from '../../scripts/da-doc.js';
+import { unpublishAssessment } from '../../scripts/da-publish.js';
+import { canDelete } from '../../scripts/nash-perms.js';
 import { submitFeedback } from '../../scripts/da-feedback.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 
@@ -69,6 +71,12 @@ function esc(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function qualificationSlug(value) {
+  const path = String(value || '').split(/[?#]/)[0].replace(/\/$/, '');
+  if (!path.includes('/qualifications/')) return '';
+  return path.split('/').pop() || '';
+}
+
 function statusClass(s) {
   const t = (s || '').toLowerCase();
   if (t === 'done' || t === 'complete') return 'status-done';
@@ -97,6 +105,7 @@ function buildAssessItems(reports) {
         name: assessmentTitle(a),
         opportunity: removedOpportunities.has(opportunity.toLowerCase()) ? 'Unassigned' : opportunity,
         href: `/indextest?a=${encodeURIComponent(a.id)}`,
+        key: `/indextest?a=${encodeURIComponent(a.id)}`,
         status: a.status,
         date: a.updatedAt || a.createdAt || 0,
         solutions: Array.isArray(a.solutions)
@@ -104,6 +113,8 @@ function buildAssessItems(reports) {
           : (a.solutions || ''),
         isLocal: true,
         id: a.id,
+        slug: a.publishedSlug || qualificationSlug(a.publishedUrl),
+        user: a.user || currentUser,
       };
     });
 
@@ -116,6 +127,7 @@ function buildAssessItems(reports) {
     })
     .map((r) => {
       const opportunity = r.opportunity || cleanTitle(r.title);
+      const slug = (r.path || '').split('/').pop();
       return {
         name: assessmentTitle({
           assessmentName: r.assessmentname || r.requestname,
@@ -124,10 +136,14 @@ function buildAssessItems(reports) {
         }),
         opportunity: removedOpportunities.has(opportunity.toLowerCase()) ? 'Unassigned' : opportunity,
         href: r.path || '#',
+        key: r.path || '#',
         status: r.status,
         date: Number(r.lastModified || 0),
         solutions: r.solutions || '',
         isLocal: false,
+        id: r.path || slug,
+        slug,
+        user: r.user || '',
       };
     });
 
@@ -230,14 +246,23 @@ function assessmentsHtml(reports) {
         <button class="nash-sidebar-opportunity-toggle" type="button" aria-expanded="${isExpanded}">
           <span class="nash-sidebar-opportunity-folder" aria-hidden="true">${ICONS.folderClosed}${ICONS.folderOpen}</span>
           <span class="nash-sidebar-opportunity-name">${esc(name)}</span>
-          <span class="nash-sidebar-opportunity-count">${assessments.length}</span>
         </button>
         <button class="nash-sidebar-opportunity-add" type="button" data-new-assessment="${esc(name)}" aria-label="New assessment for ${esc(name)}" title="New assessment">+</button>
         ${key === 'unassigned' ? '' : `<button class="nash-sidebar-opportunity-delete" type="button" data-delete-opportunity="${esc(name)}" aria-label="Delete opportunity ${esc(name)}" title="Delete opportunity">${ICONS.trash}</button>`}
       </div>
       <div class="nash-sidebar-opportunity-assessments">
         ${assessments.length ? assessments.map((item) => `
-          <a class="nash-sidebar-recent ${statusClass(item.status)}${isCurrentAssessment(item.href) ? ' active' : ''}" href="${esc(item.href)}" title="${esc(item.name)}"${isCurrentAssessment(item.href) ? ' aria-current="page"' : ''}>${esc(item.name)}</a>
+          <div class="nash-sidebar-recent-item">
+            <a class="nash-sidebar-recent ${statusClass(item.status)}${isCurrentAssessment(item.href) ? ' active' : ''}" href="${esc(item.href)}" title="${esc(item.name)}"${isCurrentAssessment(item.href) ? ' aria-current="page"' : ''}>${esc(item.name)}</a>
+            ${canDelete(item.user) && (item.isLocal || item.slug) ? `<button class="nash-sidebar-recent-del" type="button"
+              data-delete-assessment="${esc(item.id)}"
+              data-assessment-key="${esc(item.key)}"
+              data-assessment-name="${esc(item.name)}"
+              data-local-id="${item.isLocal ? esc(item.id) : ''}"
+              data-published-slug="${esc(item.slug)}"
+              aria-label="Delete assessment ${esc(item.name)}"
+              title="Delete assessment">${ICONS.trash}</button>` : ''}
+          </div>
         `).join('') : '<span class="nash-sidebar-opportunity-empty">No assessments yet</span>'}
       </div>
     </div>`;
@@ -609,7 +634,7 @@ export default async function decorate(block) {
   if (onAssessment && matched?.view === 'session') matched = null;
   setActive(block, matched?.view || '');
 
-  block.addEventListener('click', (e) => {
+  block.addEventListener('click', async (e) => {
     const searchOpportunities = e.target.closest('.nash-sidebar-search-opportunities');
     if (searchOpportunities) {
       const filter = block.querySelector('.nash-sidebar-opportunity-filter');
@@ -641,6 +666,42 @@ export default async function decorate(block) {
       const expanded = opportunity?.classList.toggle('expanded');
       opportunityToggle.setAttribute('aria-expanded', String(Boolean(expanded)));
       saveExpandedOpportunities(block);
+      return;
+    }
+
+    const removeAssessment = e.target.closest('.nash-sidebar-recent-del');
+    if (removeAssessment) {
+      e.preventDefault();
+      e.stopPropagation();
+      const name = removeAssessment.dataset.assessmentName || 'this assessment';
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(`Delete "${name}"? This can’t be undone.`)) return;
+      const deletingCurrent = Boolean(removeAssessment
+        .closest('.nash-sidebar-recent-item')
+        ?.querySelector('.nash-sidebar-recent.active'));
+      removeAssessment.disabled = true;
+      try {
+        const {
+          publishedSlug: slug,
+          localId,
+          assessmentKey: key,
+        } = removeAssessment.dataset;
+        if (slug) await unpublishAssessment(slug);
+        if (localId) deleteAssessment(localId);
+        if (key) hideFromList(key);
+        if (deletingCurrent) {
+          window.location.href = '/';
+          return;
+        }
+        refreshAssess();
+        document.dispatchEvent(new CustomEvent('nash:overview-refresh', { bubbles: true }));
+      } catch (err) {
+        removeAssessment.disabled = false;
+        // eslint-disable-next-line no-console
+        console.error('Nash assessment delete failed', err);
+        // eslint-disable-next-line no-alert
+        window.alert(err.message || 'Couldn’t delete the assessment.');
+      }
       return;
     }
 
@@ -679,14 +740,6 @@ export default async function decorate(block) {
         deleteOpportunity(name);
         refreshAssess();
       }
-      return;
-    }
-
-    const del = e.target.closest('.nash-sidebar-recent-del');
-    if (del) {
-      e.preventDefault();
-      e.stopPropagation();
-      hideFromList(del.dataset.hide);
       return;
     }
 
