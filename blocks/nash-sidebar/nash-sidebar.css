@@ -279,12 +279,6 @@ html[data-theme="dark"] .nash-sidebar {
   white-space: nowrap;
 }
 
-.nash-sidebar .nash-sidebar-opportunity-count {
-  margin-left: auto;
-  color: var(--ink-40, #9a9da6);
-  font-size: 10px;
-}
-
 .nash-sidebar .nash-sidebar-opportunity-assessments {
   display: none;
   padding-left: 9px;
@@ -523,7 +517,8 @@ html[data-theme="dark"] .nash-sidebar {
   transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 
-.nash-sidebar .nash-sidebar-recent-item:hover .nash-sidebar-recent-del {
+.nash-sidebar .nash-sidebar-recent-item:hover .nash-sidebar-recent-del,
+.nash-sidebar .nash-sidebar-recent-item:focus-within .nash-sidebar-recent-del {
   opacity: 1;
 }
 
@@ -537,6 +532,12 @@ html[data-theme="dark"] .nash-sidebar {
 .nash-sidebar .nash-sidebar-recent-del svg {
   width: 13px;
   height: 13px;
+}
+
+@media (hover: none) {
+  .nash-sidebar .nash-sidebar-recent-del {
+    opacity: 1;
+  }
 }
 
 /* ── Bottom area (About + user) ──────────────────────── */
