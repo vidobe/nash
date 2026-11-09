@@ -4766,6 +4766,257 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   padding: clamp(10px, 1.5vw, 18px) 0 0;
 }
 
+.nash-session .nash-session-assessment-overview[hidden] {
+  display: none;
+}
+
+.nash-session .nash-session-overview-content {
+  display: grid;
+  gap: 14px;
+}
+
+.nash-session .nash-session-executive-summary,
+.nash-session .nash-session-overview-use-cases,
+.nash-session .nash-session-public-references {
+  padding: clamp(22px, 3.5vw, 40px);
+  border-radius: 18px;
+  background: var(--gallery-panel);
+}
+
+.nash-session .nash-session-overview-kicker,
+.nash-session .nash-session-overview-section-head > div > span,
+.nash-session .nash-session-use-case-grid article > span,
+.nash-session .nash-session-reference-card > span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ff7468;
+  text-transform: uppercase;
+}
+
+.nash-session .nash-session-executive-summary > h2,
+.nash-session .nash-session-solution-rationale > h2,
+.nash-session .nash-session-overview-section-head h2 {
+  margin: 6px 0 16px;
+  font-family: var(--serif, 'DM Serif Display', georgia, serif);
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--gallery-copy);
+}
+
+.nash-session .nash-session-executive-summary details {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gallery-line);
+}
+
+.nash-session .nash-session-executive-summary summary {
+  color: var(--gallery-copy);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-executive-summary details .nash-md {
+  margin-top: 16px;
+}
+
+.nash-session .nash-session-overview-content .nash-md {
+  color: var(--gallery-muted);
+}
+
+.nash-session .nash-session-overview-content .nash-md > :first-child {
+  margin-top: 0;
+}
+
+.nash-session .nash-session-overview-content .nash-md > :last-child {
+  margin-bottom: 0;
+}
+
+.nash-session .nash-session-overview-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.nash-session .nash-session-overview-context > div {
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--gallery-panel);
+}
+
+.nash-session .nash-session-overview-context h3 {
+  margin: 0 0 12px;
+  color: var(--gallery-copy);
+  font-size: 13px;
+}
+
+.nash-session .nash-session-overview-context ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 0 17px;
+  color: var(--gallery-muted);
+  font-size: 12px;
+}
+
+.nash-session .nash-session-solution-rationale {
+  padding: clamp(24px, 4vw, 44px);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0, rgb(255 116 104 / 9%), transparent 34%),
+    #1d2027;
+  color: #f7f7f9;
+}
+
+.nash-session .nash-session-solution-rationale > h2 {
+  color: #fff;
+}
+
+.nash-session .nash-session-solution-rationale .nash-md,
+.nash-session .nash-session-solution-rationale .nash-md p,
+.nash-session .nash-session-solution-rationale .nash-md li,
+.nash-session .nash-session-solution-rationale .nash-md td {
+  color: #c4c7cf;
+}
+
+.nash-session .nash-session-solution-rationale .nash-md .nash-md-h,
+.nash-session .nash-session-solution-rationale .nash-md h2,
+.nash-session .nash-session-solution-rationale .nash-md h3,
+.nash-session .nash-session-solution-rationale .nash-md h4,
+.nash-session .nash-session-solution-rationale .nash-md th {
+  color: #fff;
+}
+
+.nash-session .nash-session-solution-rationale .nash-md table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.nash-session .nash-session-solution-rationale .nash-md th,
+.nash-session .nash-session-solution-rationale .nash-md td {
+  padding: 9px 10px;
+  border: 1px solid rgb(255 255 255 / 11%);
+}
+
+.nash-session .nash-session-solution-rationale .nash-md th {
+  background: rgb(255 255 255 / 6%);
+}
+
+.nash-session .nash-session-solution-scope {
+  margin: -7px 0 24px;
+  color: #ffb268;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nash-session .nash-session-overview-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.nash-session .nash-session-overview-section-head h2 {
+  margin-bottom: 0;
+}
+
+.nash-session .nash-session-overview-section-head > p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--gallery-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.nash-session .nash-session-use-case-grid,
+.nash-session .nash-session-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.nash-session .nash-session-use-case-analysis {
+  margin-top: 20px;
+}
+
+.nash-session .nash-session-use-case-analysis table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.nash-session .nash-session-use-case-analysis th,
+.nash-session .nash-session-use-case-analysis td {
+  padding: 9px 10px;
+  border: 1px solid var(--gallery-line);
+  color: var(--gallery-muted);
+  font-size: 11px;
+  vertical-align: top;
+}
+
+.nash-session .nash-session-use-case-analysis th {
+  background: color-mix(in srgb, var(--gallery-panel-strong) 72%, transparent);
+  color: var(--gallery-copy);
+}
+
+.nash-session .nash-session-use-case-grid article,
+.nash-session .nash-session-reference-card {
+  min-width: 0;
+  padding: 18px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gallery-panel-strong) 72%, transparent);
+}
+
+.nash-session .nash-session-use-case-grid h3,
+.nash-session .nash-session-reference-card h3 {
+  margin: 10px 0 7px;
+  color: var(--gallery-copy);
+  font-size: 14px;
+}
+
+.nash-session .nash-session-use-case-grid p,
+.nash-session .nash-session-reference-card p {
+  margin: 0;
+  color: var(--gallery-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.nash-session .nash-session-dimensions-head {
+  margin: 34px 0 14px;
+}
+
+.nash-session .nash-session-public-references {
+  margin-top: 34px;
+}
+
+.nash-session .nash-session-reference-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.nash-session .nash-session-reference-card:hover {
+  background: color-mix(in srgb, var(--gallery-panel-strong) 88%, transparent);
+  transform: translateY(-2px);
+}
+
+.nash-session .nash-session-reference-card b {
+  margin-top: auto;
+  padding-top: 14px;
+  color: #8d82ff;
+  font-size: 10px;
+}
+
 .nash-session .nash-session-dimension-rail-wrap {
   display: flex;
   align-items: center;
@@ -5114,6 +5365,52 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   padding: clamp(18px, 2.5vw, 28px);
 }
 
+.nash-session .nash-session-dimension-verification {
+  margin-bottom: 12px;
+  padding: clamp(18px, 2.5vw, 28px);
+  border: 1px solid var(--gallery-line);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 2.5%);
+}
+
+.nash-session .nash-session-dimension-verification > h3 {
+  margin: 0 0 13px;
+  color: var(--gallery-copy);
+  font-size: 14px;
+}
+
+.nash-session .nash-session-dimension-verification ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-session .nash-session-dimension-verification li {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.nash-session .nash-session-dimension-verification strong,
+.nash-session .nash-session-dimension-verification span {
+  display: block;
+}
+
+.nash-session .nash-session-dimension-verification strong {
+  margin-bottom: 6px;
+  color: var(--gallery-copy);
+  font-size: 10px;
+}
+
+.nash-session .nash-session-dimension-verification span {
+  color: var(--gallery-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .nash-session .nash-session-dimension-evidence ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5370,6 +5667,7 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-reading .nas
 
 html:not([data-theme="dark"]) .nash-session .nash-session-dimension-summary section,
 html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence-panel,
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-verification,
 html:not([data-theme="dark"]) .nash-session .nash-session-dimension-content-panel {
   background: rgb(250 250 248 / 92%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
@@ -5392,6 +5690,22 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
   background: rgb(255 255 255 / 72%);
 }
 
+html:not([data-theme="dark"]) .nash-session .nash-session-executive-summary,
+html:not([data-theme="dark"]) .nash-session .nash-session-overview-use-cases,
+html:not([data-theme="dark"]) .nash-session .nash-session-public-references,
+html:not([data-theme="dark"]) .nash-session .nash-session-overview-context > div {
+  box-shadow: 0 6px 22px rgb(17 19 24 / 4%);
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-use-case-grid article,
+html:not([data-theme="dark"]) .nash-session .nash-session-reference-card {
+  background: #f7f7f5;
+}
+
+html:not([data-theme="dark"]) .nash-session .nash-session-dimension-verification li {
+  background: rgb(255 255 255 / 78%);
+}
+
 @media (width < 1100px) {
   .nash-session .nash-session-section-gallery {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -5407,6 +5721,10 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
 
   .nash-session .nash-session-dimension-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nash-session .nash-session-dimension-verification ul {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5424,6 +5742,12 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
   }
 
   .nash-session .nash-session-dimension-evidence ul {
+    grid-template-columns: 1fr;
+  }
+
+  .nash-session .nash-session-overview-context,
+  .nash-session .nash-session-use-case-grid,
+  .nash-session .nash-session-reference-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -5516,6 +5840,15 @@ html:not([data-theme="dark"]) .nash-session .nash-session-dimension-evidence li 
 
   .nash-session .nash-session-dimension-summary {
     grid-template-columns: 1fr;
+  }
+
+  .nash-session .nash-session-overview-section-head {
+    display: block;
+  }
+
+  .nash-session .nash-session-overview-section-head > p {
+    margin-top: 7px;
+    text-align: left;
   }
 
   .nash-session .nash-session-dimension-content-head {

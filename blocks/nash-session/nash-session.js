@@ -1187,8 +1187,11 @@ function legacyReportInstructions(solutionNames) {
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe.
 Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists, plus current tech stack and what success looks like.
-Section 6 must include a competitor comparison table using the competitive alternatives named in the solution knowledge.
-Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap.
+If the source contains explicit requirements, Section 3 must also include a COMPLETE requirement coverage table with one traceable row per issued requirement:
+| Requirement ID | Short requirement | Covered / Partially covered / Needs clarification / Gap | Adobe response | Product / deployment model | Caveat / dependency |
+Do not merge away repeated requirement IDs; cross-reference duplicates.
+Section 6 must compare Adobe with every competitor explicitly named by the customer or source document. For each competitor show where Adobe can win, where Adobe may lose, and the proof needed. Do not present framework alternatives as confirmed competitors.
+Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap with entry/exit gates. Always evaluate relevant AEM agents as delivery accelerators, including Experience Modernization Agent for eligible legacy migration, while clearly marking availability, entitlement, and source-technology dependencies.
 Section 4 must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences:
 NASH_ARCH:
 layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
@@ -1205,17 +1208,21 @@ Section 8 is a first-class, customer-specific assessment of Adobe's agentic valu
 - **Prioritised agentic use cases** — HIGH/MEDIUM use cases with trigger, agent/MCP, and business benefit.
 - **Benefits & business value** — efficiency, speed-to-market, personalisation, quality, and cost value, quantified where possible.
 - **Readiness & prerequisites** — data, governance, integration, and skills prerequisites plus honest risks.
+Always consider Experience Modernization Agent, Content Discovery, Experience Production, Experience Governance, Coworker, and the unified AEM MCP. Include only agents that map to a real customer workflow; never make an agent a production dependency unless availability, entitlement, and governance are confirmed.
 Section 9 must contain these subsections in order:
 1. Customer Context — organisation, objectives, challenges, maturity, and existing stack, noting what to integrate versus replace.
 2. Core Capability Needs — table: | Capability need | What the customer needs to do | Relevance (HIGH/MEDIUM/LOW) |
-3. Solution Fit Comparison — two viable scenarios and a table: | Criterion | Scenario A | Scenario B | across 8-10 decision criteria.
-4. Budget Indication — table: | Cost category | Basis / driver | Indication | using "TBD" where figures are unavailable.
-5. Recommendation Summary — preferred scenario, justification, points of attention, and next steps.
+3. Proposed Solution & Deployment Rationale — table: | Adobe product / capability | Deployment model | Role | Why proposed | Requirement IDs | Dependencies / unresolved decisions |. Explicitly distinguish AEM as a Cloud Service, Edge Delivery Services, headless APIs, traditional Sites, hybrid delivery, Dynamic Media, agents/MCP, and external customer systems. Do not force one delivery model across every channel.
+4. Priority Use Cases — 3-6 customer-specific use cases with persona, trigger, journey, Adobe products/deployment, requirement IDs, expected outcome, proof required, and prerequisites. Put core customer workflows before future agentic accelerators.
+5. Solution Fit Comparison — two viable scenarios and a table: | Criterion | Scenario A | Scenario B | across 8-10 decision criteria.
+6. Budget Indication — table: | Cost category | Basis / driver | Indication | using "TBD" where figures are unavailable.
+7. Recommendation Summary — preferred scenario, justification, points of attention, and next steps.
 Section 10 must cover these subsections:
 - **Ideas to win the deal** — concrete, tailored plays and next-best actions.
 - **VIP / early-access products** — relevant real limited-availability or newly launched products; note uncertainty.
 - **Beta features** — relevant pre-release capabilities, clearly labelled beta.
 - **Co-innovation opportunities** — suitable design-partner opportunities.
+- **Customer-shareable public references** — official public Adobe product pages, Experience League documentation, Trust Center material, and relevant public customer stories. Include the public URL and why it is relevant. Never include private, authentication-gated, internal competitive, customer-confidential, or analyst-only sources.
 - **Similar customer references** — sourced comparable Adobe customers with why each is relevant.
 
 Write for busy sales and solution leaders. Be concise: short bullets, compact tables, no repeated facts, no generic Adobe marketing language, and no paragraph longer than three sentences.`;
@@ -1582,10 +1589,10 @@ const GALLERY_ALL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 const DIM_SECTIONS = {
   'strategic fit': ['Overview', 'Market'],
   'technical fit': ['Architecture'],
-  'functional coverage': ['Discovery', 'Rationale'],
-  'commercial viability': ['Business'],
+  'functional coverage': ['Business', 'Rationale'],
+  'commercial viability': ['Rationale', 'Recommendation'],
   'competitive position': ['Competition', 'Recommendation'],
-  'delivery risk': ['Accelerators'],
+  'delivery risk': ['Recommendation', 'Accelerators'],
   'ai & agentic fit': ['AI & Agents'],
 };
 
@@ -1625,6 +1632,17 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
   );
   const sectionCount = (DIM_SECTIONS[dimension.dimension.toLowerCase()] || []).length;
   const pct = dimensionPercent(dimension);
+  const verificationItems = [
+    confidence?.scoreChanger
+      ? `<li><strong>Validate next</strong><span>${escapeHtml(confidence.scoreChanger)}</span></li>` : '',
+    confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none'
+      ? `<li><strong>Resolve the unknown</strong><span>${escapeHtml(confidence.unknowns)}</span></li>` : '',
+    confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none'
+      ? `<li><strong>Test the assumption</strong><span>${escapeHtml(confidence.assumptions)}</span></li>` : '',
+  ].filter(Boolean).join('');
+  const supportingTitle = dimension.dimension.toLowerCase() === 'functional coverage'
+    ? 'Requirements and functional coverage'
+    : 'Supporting report sections';
   return `<article class="nash-session-dimension-reading" data-dimension-index="${index}" hidden>
     <div class="nash-session-dimension-kicker"><i></i><span>Score dimension · ${escapeHtml(dimension.weight)}</span></div>
     <div class="nash-session-dimension-title-row">
@@ -1656,9 +1674,13 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
       <h3>Evidence from the assessment</h3>
       <div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimension, assessment.evidence)}</div>
     </section>
+    ${verificationItems ? `<section class="nash-session-dimension-verification">
+      <h3>How to verify this score</h3>
+      <ul>${verificationItems}</ul>
+    </section>` : ''}
     <div class="nash-session-dimension-content">
       <div class="nash-session-dimension-content-head">
-        <div><span>Full assessment</span><h3>Supporting report sections</h3></div>
+        <div><span>Full assessment</span><h3>${supportingTitle}</h3></div>
         <b>${sectionCount} ${sectionCount === 1 ? 'section' : 'sections'}</b>
       </div>
       ${dimensionSectionsHtml(dimension, sections, assessment.evidence)}
@@ -1688,6 +1710,109 @@ function dimensionGalleryCard(dimension, index, confidence) {
   </button>`;
 }
 
+function reportSection(sections, label) {
+  return sections.find((section) => sectionLabel(section.title) === label);
+}
+
+function contextItems(context, key) {
+  return String(context?.[key] || '').split(';').map((item) => item.trim()).filter(Boolean);
+}
+
+function reportSubsection(markdown, titlePattern) {
+  const lines = String(markdown || '').split('\n');
+  let headingLevel = 0;
+  const selected = [];
+  lines.forEach((line) => {
+    const heading = line.match(/^(#{2,6})\s+(.+)$/);
+    if (heading && titlePattern.test(heading[2])) {
+      headingLevel = heading[1].length;
+      selected.push(line);
+      return;
+    }
+    if (!headingLevel) return;
+    if (heading && heading[1].length <= headingLevel) headingLevel = 0;
+    else selected.push(line);
+  });
+  return selected.join('\n').trim();
+}
+
+function customerReferencesHtml(evidence) {
+  const publicSources = (evidence || []).filter(
+    (item) => item.type === 'public-source' && /^https?:\/\//i.test(item.locator),
+  );
+  if (!publicSources.length) return '';
+  return `<section class="nash-session-public-references">
+    <div class="nash-session-overview-section-head">
+      <div><span>Public and customer-shareable</span><h2>Reference pack</h2></div>
+      <p>Public sources that support customer conversations. They explain capabilities but do not replace customer-specific architecture, security, or contractual validation.</p>
+    </div>
+    <div class="nash-session-reference-grid">${publicSources.map((item) => `<a class="nash-session-reference-card" href="${escapeHtml(item.locator)}" target="_blank" rel="noopener">
+      <span>${escapeHtml(EVIDENCE_TYPE_LABELS[item.type] || 'Public reference')}</span>
+      <h3>${escapeHtml(item.source)}</h3>
+      <p>${escapeHtml(item.claim)}</p>
+      <b>Open public source &nearr;</b>
+    </a>`).join('')}</div>
+  </section>`;
+}
+
+function assessmentOverviewHtml(a, sections) {
+  const overview = reportSection(sections, 'Overview');
+  const rationale = reportSection(sections, 'Rationale');
+  const recommendation = reportSection(sections, 'Recommendation');
+  const useCases = contextItems(a.context, 'use_cases');
+  const objectives = contextItems(a.context, 'objectives');
+  const challenges = contextItems(a.context, 'challenges');
+  const deploymentRationale = reportSubsection(
+    rationale?.md,
+    /proposed solution.*deployment rationale/i,
+  );
+  const useCaseAnalysis = reportSubsection(rationale?.md, /priority use cases/i);
+  const contextList = (items) => (items.length
+    ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+    : '<p class="nash-session-gallery-empty">Not established in the available evidence.</p>');
+  const sectionHtml = (section) => (section
+    ? renderReportMarkdown(section.md, {}, a.evidence || [])
+    : '<p class="nash-session-gallery-empty">This assessment does not yet include this section. Re-run it to generate the updated format.</p>');
+  const solutionNames = solutionsLabel(a);
+  let useCasesHtml = '<p class="nash-session-gallery-empty">No priority use cases were captured in this assessment.</p>';
+  if (useCaseAnalysis) {
+    useCasesHtml = `<div class="nash-md nash-session-use-case-analysis">${renderReportMarkdown(useCaseAnalysis, {}, a.evidence || [])}</div>`;
+  } else if (useCases.length) {
+    useCasesHtml = `<div class="nash-session-use-case-grid">${useCases.map((useCase, index) => `<article>
+      <span>Use case ${String(index + 1).padStart(2, '0')}</span>
+      <h3>${escapeHtml(useCase)}</h3>
+      <p>Open the Solution Rationale and relevant score dimension for requirements, deployment, proof, and dependencies.</p>
+    </article>`).join('')}</div>`;
+  }
+  return `<div class="nash-session-overview-content">
+    <section class="nash-session-executive-summary">
+      <span class="nash-session-overview-kicker">Executive summary</span>
+      <h2>What Nash recommends</h2>
+      <div class="nash-md">${sectionHtml(overview)}</div>
+      ${recommendation ? `<details><summary>Recommendation conditions and next steps</summary><div class="nash-md">${sectionHtml(recommendation)}</div></details>` : ''}
+    </section>
+    <section class="nash-session-overview-context">
+      <div><h3>Customer objectives</h3>${contextList(objectives)}</div>
+      <div><h3>Biggest challenges</h3>${contextList(challenges)}</div>
+    </section>
+    <section class="nash-session-solution-rationale">
+      <span class="nash-session-overview-kicker">Recommended architecture</span>
+      <h2>Solution rationale</h2>
+      ${solutionNames ? `<p class="nash-session-solution-scope">${escapeHtml(solutionNames)}</p>` : ''}
+      <div class="nash-md">${deploymentRationale
+    ? renderReportMarkdown(deploymentRationale, {}, a.evidence || [])
+    : sectionHtml(rationale)}</div>
+    </section>
+    <section class="nash-session-overview-use-cases">
+      <div class="nash-session-overview-section-head">
+        <div><span>Customer value</span><h2>Priority use cases</h2></div>
+        <p>These use cases connect the proposed solution and deployment models to customer outcomes.</p>
+      </div>
+      ${useCasesHtml}
+    </section>
+  </div>`;
+}
+
 /* Gallery preview of the stable report, shared by Assessment and DA content. */
 function daPreviewHtml(a) {
   const sections = splitReportSections(a.reportMarkdown);
@@ -1704,19 +1829,27 @@ function daPreviewHtml(a) {
       <div class="nash-session-dimension-rail-wrap">
         <nav class="nash-session-dimension-rail" aria-label="Score dimensions">
           <button type="button" class="nash-session-dimension-filter active" style="--gallery-accent:#a7abb5" data-dimension-index="all" aria-pressed="true">
-            <i>${GALLERY_ALL_ICON}</i><span>All dimensions</span>
+            <i>${GALLERY_ALL_ICON}</i><span>Assessment overview</span>
           </button>
           ${dimensionButtons}
         </nav>
       </div>
-      <div class="nash-session-section-gallery">
-        ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
+      <div class="nash-session-assessment-overview">
+        ${assessmentOverviewHtml(a, sections)}
+        <div class="nash-session-overview-section-head nash-session-dimensions-head">
+          <div><span>Qualification scorecard</span><h2>Assessment dimensions</h2></div>
+          <p>Open a dimension for its fit rationale, requirements, verification plan, risks, and evidence.</p>
+        </div>
+        <div class="nash-session-section-gallery">
+          ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
+        </div>
+        ${customerReferencesHtml(a.evidence)}
       </div>
       <div class="nash-session-dimension-readings">
         ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, a)).join('')}
       </div>
       <footer class="nash-session-gallery-footer">
-        <span>${dimensions.length} dimensions visible</span>
+        <span>Assessment overview</span>
         <span>Open any dimension to read its full assessment content</span>
       </footer>
     </div>
@@ -1747,7 +1880,7 @@ function wireAssessmentGallery(root) {
   const gallery = root?.querySelector('.nash-session-assessment-gallery');
   if (!gallery) return;
   const filters = [...gallery.querySelectorAll('.nash-session-dimension-filter')];
-  const sectionGallery = gallery.querySelector('.nash-session-section-gallery');
+  const assessmentOverview = gallery.querySelector('.nash-session-assessment-overview');
   const readings = [...gallery.querySelectorAll('.nash-session-dimension-readings .nash-session-dimension-reading')];
   const footer = gallery.querySelector('.nash-session-gallery-footer');
   filters.forEach((filter) => filter.addEventListener('click', () => {
@@ -1757,12 +1890,12 @@ function wireAssessmentGallery(root) {
       item.setAttribute('aria-pressed', String(active));
     });
     const all = filter.dataset.dimensionIndex === 'all';
-    sectionGallery.hidden = !all;
+    assessmentOverview.hidden = !all;
     readings.forEach((reading) => {
       reading.hidden = all || reading.dataset.dimensionIndex !== filter.dataset.dimensionIndex;
     });
     footer.firstElementChild.textContent = all
-      ? `${sectionGallery.children.length} dimensions visible`
+      ? 'Assessment overview'
       : 'Dimension reading view';
     footer.lastElementChild.textContent = all
       ? 'Open any dimension to read its full assessment content'
