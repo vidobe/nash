@@ -4,6 +4,7 @@
   "version": "1.3.0",
   "description": "Starter project for Adobe Helix",
   "scripts": {
+    "test": "node --experimental-default-type=module --test tests/*.test.js",
     "lint:js": "eslint .",
     "lint:css": "stylelint \"blocks/**/*.css\" \"styles/*.css\"",
     "lint": "npm run lint:js && npm run lint:css",

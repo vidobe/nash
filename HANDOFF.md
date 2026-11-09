@@ -57,6 +57,7 @@ Vanilla JS Edge Delivery app — no build step, no framework, no npm imports in 
 - `fluffyjaws.js` — Azure OpenAI client (`streamQualification`).
 - `nash-auth.js` — Okta auth.
 - `nash-assessments.js` — localStorage assessments (save/get/delete, bookmarks, hidden).
+- `nash-assessment-view.js` — read-only compatibility adapter for assessment presentation. Converts existing Markdown solution/use-case tables and recorded evidence into the same seller-facing view as V2 payloads; recognizes numbered headings and numbered bold subsection titles.
 - `nash-perms.js` — permissions (`ADMINS`, `isAdmin`, `canDelete`). Only vgabriel@adobe.com can delete anything; others only their own.
 - `nash-activity.js` — usage tracking (logins + assessments) → private DA summary; read by nash-admin.
 - `da-publish.js` — client for the publish action (`publishAssessment`, `unpublishAssessment`, `PUBLISH_ENDPOINT`).
@@ -75,6 +76,10 @@ Vanilla JS Edge Delivery app — no build step, no framework, no npm imports in 
 Sections: 1 Executive Overview · 2 Market/Competitor/Financial · 3 Business Analysis · 4 Technical & Architecture (renders an SVG from `NASH_ARCH`) · 5 Qualification & Discovery Questions · 6 Competitive Positioning & Win Sentiment · 7 Final Recommendation & Scope · 8 AI, Agents & Coworker · 9 Solution Rationale (RFP-ready) · 10 Deal Accelerators & References.
 
 The prompt is assembled in `buildQualPrompt()` in `nash-session.js` — read that function to understand exactly what the model is told and the output contract it must follow.
+
+The visible assessment is a concise overview plus dimension briefs, not the raw ten-section dossier. Solution rationale uses a platform recommendation, channel-delivery callout, and product/deployment cards; the complete original rationale remains in an expandable disclosure. Both in-app and published reports use this renderer. Older reports do not need regeneration to get this presentation: the compatibility adapter derives it from their existing content without changing their scores or saved payloads. Explicit V2 fields take precedence, including deliberately empty collections. New V2 generations also include an `architecture` summary alongside the existing `architectureBoundary` and solution records.
+
+New assessment elements use the BEM names required by `AGENTS.md`; Stylelint accepts these alongside the existing kebab-case classes.
 
 ## 7. DA content model (org `vidobe`, repo `nash`)
 

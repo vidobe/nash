@@ -8,6 +8,7 @@ import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js'
 import { publishAssessment } from '../../scripts/da-publish.js';
 import { logActivity } from '../../scripts/nash-activity.js';
 import { assessmentTitle } from '../../scripts/da-doc.js';
+import { assessmentViewFor } from '../../scripts/nash-assessment-view.js';
 import {
   PILLARS, SOLUTION_PILLARS, SOLUTION_TILES,
 } from '../nash-solutions/nash-solutions.js';
@@ -1259,6 +1260,12 @@ NASH_ASSESSMENT_V2:
     "conditions": ["<material condition that must be met>"],
     "nextAction": "<single best next action>"
   },
+  "architecture": {
+    "headline": "<one concise sentence explaining the recommended platform and channel-delivery approach>",
+    "summary": "<2 concise sentences explaining why this architecture fits the customer's evidence; do not repeat the product list>",
+    "status": "<Provisional architecture|Recommended architecture>",
+    "recommendation": "<the platform baseline, delivery choices by channel, and the most important unresolved architecture decision>"
+  },
   "architectureBoundary": "<what Adobe owns versus customer runtime, data, identity, transaction, messaging, and integration systems>",
   "solutions": [{
     "product": "<official Adobe product or external customer system>",
@@ -1839,7 +1846,7 @@ function deliveryAnalysisHtml(deliveryPath) {
     <div class="nash-session-analysis-head"><div><span>Phased delivery</span><h3>Crawl, walk, run</h3></div></div>
     <div class="nash-session-delivery-path">${deliveryPath.map((item) => `<article>
       <span>${escapeHtml(item.phase || 'Phase')}</span>
-      <h4>${escapeHtml(item.objective || '')}</h4>
+      ${item.objective ? `<h4>${escapeHtml(item.objective)}</h4>` : ''}
       <dl>
         <div><dt>Entry gate</dt><dd>${escapeHtml(item.entryGate || '')}</dd></div>
         <div><dt>Exit gate</dt><dd>${escapeHtml(item.exitGate || '')}</dd></div>
@@ -1881,19 +1888,16 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
   );
   const dimensionWithDetail = { ...dimension, detail };
   const pct = dimensionPercent(dimension);
-  const verification = detail?.verification?.length ? detail.verification : [
+  const verification = Array.isArray(detail?.verification) ? detail.verification : [
     confidence?.scoreChanger,
     confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none'
       ? `Resolve: ${confidence.unknowns}` : '',
     confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none'
       ? `Test: ${confidence.assumptions}` : '',
   ].filter(Boolean);
-  const actions = detail?.nextActions?.length ? detail.nextActions : [
-    confidence?.scoreChanger || 'Confirm the highest-impact missing evidence with the customer.',
-    'Validate the requirements and assumptions linked to this score.',
-    'Agree the owner and timing for the next proof point.',
-  ];
-  const increaseDecrease = detail ? `<div class="nash-session-score-movement">
+  const actions = Array.isArray(detail?.nextActions)
+    ? detail.nextActions : verification.slice(0, 3);
+  const increaseDecrease = detail?.increase?.length || detail?.decrease?.length ? `<div class="nash-session-score-movement">
     <article><h3>What would increase the score</h3>${listItemsHtml(detail.increase, 'No increase condition was provided.')}</article>
     <article><h3>What would decrease the score</h3>${listItemsHtml(detail.decrease, 'No decrease condition was provided.')}</article>
   </div>` : '';
@@ -1906,11 +1910,13 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
     <p class="nash-session-dimension-lead">${escapeHtml(detail?.takeaway || dimension.notes || 'This score is based on the available customer, Adobe, and public evidence.')}</p>
     <section class="nash-session-dimension-brief-section">
       <h3>What matters in this opportunity</h3>
-      ${briefItemsHtml(detail?.matters, 'Open the deeper analysis for the available report evidence.')}
+      ${briefItemsHtml(detail?.matters?.length ? detail.matters : [
+    { label: 'Score rationale', text: dimension.notes || 'No supporting rationale was recorded.' },
+  ], '')}
     </section>
     <section class="nash-session-dimension-brief-section">
       <h3>How Adobe should respond</h3>
-      ${briefItemsHtml(detail?.response, 'Use the score rationale and deeper analysis to prepare the response.')}
+      ${briefItemsHtml(detail?.response, 'No specific Adobe response was recorded for this dimension.')}
     </section>
     <section class="nash-session-dimension-brief-section">
       <h3>How to verify this score</h3>
@@ -1920,7 +1926,7 @@ function dimensionReadingHtml(dimension, index, sections, assessment) {
     ${dimensionSpecialAnalysisHtml(dimension, assessment)}
     <section class="nash-session-dimension-brief-section">
       <h3>What to validate next</h3>
-      <ol class="nash-session-action-list">${actions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}</ol>
+      ${actions.length ? `<ol class="nash-session-action-list">${actions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}</ol>` : '<p class="nash-session-gallery-empty">No next action was recorded for this dimension.</p>'}
     </section>
     ${detail?.deepAnalysis ? `<details class="nash-session-dimension-disclosure"><summary>Deeper analysis</summary><p>${escapeHtml(detail.deepAnalysis)}</p>${dimensionSectionsHtml(dimension, sections, assessment.evidence)}</details>` : `<details class="nash-session-dimension-disclosure"><summary>Deeper analysis</summary>${dimensionSectionsHtml(dimension, sections, assessment.evidence)}</details>`}
     <details class="nash-session-dimension-disclosure"><summary>Evidence and sources</summary><div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimensionWithDetail, assessment.evidence)}</div></details>
@@ -1957,24 +1963,6 @@ function contextItems(context, key) {
   return String(context?.[key] || '').split(';').map((item) => item.trim()).filter(Boolean);
 }
 
-function reportSubsection(markdown, titlePattern) {
-  const lines = String(markdown || '').split('\n');
-  let headingLevel = 0;
-  const selected = [];
-  lines.forEach((line) => {
-    const heading = line.match(/^(#{2,6})\s+(.+)$/);
-    if (heading && titlePattern.test(heading[2])) {
-      headingLevel = heading[1].length;
-      selected.push(line);
-      return;
-    }
-    if (!headingLevel) return;
-    if (heading && heading[1].length <= headingLevel) headingLevel = 0;
-    else selected.push(line);
-  });
-  return selected.join('\n').trim();
-}
-
 function customerReferencesHtml(assessment) {
   const structured = (assessment.assessmentView?.publicReferences || []).filter(
     (item) => /^https:\/\//i.test(item.url || ''),
@@ -2006,35 +1994,17 @@ function customerReferencesHtml(assessment) {
   </section>`;
 }
 
-function legacyAssessmentHeadline(assessment) {
-  if ((assessment.score || 0) >= 70) return 'Strong platform fit—provided the open conditions are resolved';
-  if ((assessment.score || 0) >= 50) return 'Promising Adobe fit—with material conditions to validate';
-  return 'Limited current fit—resolve the critical gaps before pursuing';
-}
-
-function legacyAssessmentSummary(assessment) {
-  const notes = (assessment.dimensions || []).map((item) => item.notes).filter(Boolean).slice(0, 2);
-  if (assessment.context?.success) notes.push(assessment.context.success);
-  return notes.join(' ') || 'The recommendation reflects the available customer, Adobe, and public evidence. Validate the open assumptions before treating it as final.';
-}
-
-function executiveConditions(assessment) {
-  const structured = assessment.assessmentView?.executive?.conditions;
-  if (Array.isArray(structured) && structured.length) return structured;
-  return (assessment.confidence || [])
-    .map((item) => item.unknowns)
-    .filter((item) => item && item.toLowerCase() !== 'none')
-    .slice(0, 3);
-}
-
 function solutionCardsHtml(solutions) {
   if (!Array.isArray(solutions) || !solutions.length) return '';
-  return `<div class="nash-session-solution-stack">${solutions.map((item) => `<article>
-    <header><h3>${escapeHtml(item.product || '')}</h3><span>${escapeHtml(item.deployment || 'Deployment to validate')}</span></header>
-    <p>${escapeHtml(item.role || '')}</p>
-    <strong>${escapeHtml(item.rationale || '')}</strong>
-    ${Array.isArray(item.dependencies) && item.dependencies.length
-    ? `<small>Depends on: ${escapeHtml(item.dependencies.join('; '))}</small>` : ''}
+  return `<div class="nash-session-solution-stack">${solutions.map((item) => `<article class="nash-session__solution-card">
+    <header><h3>${escapeHtml(item.product || 'Solution')}</h3>${item.deployment ? `<span>${escapeHtml(item.deployment)}</span>` : ''}</header>
+    ${item.role ? `<p>${escapeHtml(item.role)}</p>` : ''}
+    ${item.rationale ? `<p class="nash-session__solution-why"><b>Why:</b> ${escapeHtml(item.rationale)}</p>` : ''}
+    ${item.dependencies?.length || item.requirements?.length ? `<details class="nash-session__solution-dependencies">
+      <summary>Dependencies and requirements</summary>
+      ${Array.isArray(item.dependencies) && item.dependencies.length ? `<p>${escapeHtml(item.dependencies.join('; '))}</p>` : ''}
+      ${Array.isArray(item.requirements) && item.requirements.length ? `<p><b>Requirements:</b> ${escapeHtml(item.requirements.join(', '))}</p>` : ''}
+    </details>` : ''}
   </article>`).join('')}</div>`;
 }
 
@@ -2053,9 +2023,10 @@ function valueMappingsHtml(mappings) {
 function useCaseCardsHtml(useCases) {
   if (!Array.isArray(useCases) || !useCases.length) return '';
   return `<div class="nash-session-use-case-grid">${useCases.map((item, index) => `<article>
-    <div><span>Use case ${String(index + 1).padStart(2, '0')}</span><b>${escapeHtml(item.priority || 'Priority')}</b></div>
+    <div><span>Use case ${String(index + 1).padStart(2, '0')}</span>${item.priority ? `<b>${escapeHtml(item.priority)}</b>` : ''}</div>
     <h3>${escapeHtml(item.name || '')}</h3>
-    <p>${escapeHtml(item.journey || '')}</p>
+    ${item.persona ? `<small class="nash-session__use-case-persona">${escapeHtml(item.persona)}</small>` : ''}
+    ${item.journey ? `<p>${escapeHtml(item.journey)}</p>` : ''}
     ${Array.isArray(item.products) && item.products.length
     ? `<ul>${item.products.map((product) => `<li>${escapeHtml(product)}</li>`).join('')}</ul>` : ''}
     ${item.outcome ? `<strong>${escapeHtml(item.outcome)}</strong>` : ''}
@@ -2067,43 +2038,29 @@ function assessmentOverviewHtml(a, sections) {
   const rationale = reportSection(sections, 'Rationale');
   const view = a.assessmentView || {};
   const executive = view.executive || {};
-  const legacyUseCases = contextItems(a.context, 'use_cases');
+  const architecture = view.architecture || {};
   const objectives = contextItems(a.context, 'objectives');
   const challenges = contextItems(a.context, 'challenges');
-  const deploymentRationale = reportSubsection(
-    rationale?.md,
-    /proposed solution.*deployment rationale/i,
-  );
   const contextList = (items) => (items.length
     ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
     : '<p class="nash-session-gallery-empty">Not established in the available evidence.</p>');
   const solutionNames = solutionsLabel(a);
-  const headline = executive.headline || legacyAssessmentHeadline(a);
-  const summary = executive.summary || legacyAssessmentSummary(a);
-  const conditions = executiveConditions(a);
-  const nextAction = executive.nextAction
-    || (a.confidence || []).map((item) => item.scoreChanger).find(Boolean)
-    || 'Confirm the highest-impact open requirement and agree the next proof point.';
-  const useCases = Array.isArray(view.useCases) && view.useCases.length
-    ? view.useCases
-    : legacyUseCases.map((name) => ({
-      name,
-      priority: 'Core',
-      journey: 'Open the relevant score dimension for requirements, deployment, proof, and dependencies.',
-    }));
+  const headline = executive.headline || 'Assessment summary';
+  const summary = executive.summary || '';
+  const conditions = Array.isArray(executive.conditions) ? executive.conditions : [];
+  const nextAction = executive.nextAction || '';
+  const verdict = a.verdict || (typeof a.score === 'number' ? verdictFor(a.score).label : '');
+  const useCases = Array.isArray(view.useCases) ? view.useCases : [];
   const structuredSolutions = Array.isArray(view.solutions) ? view.solutions : [];
-  const rationaleFallback = deploymentRationale
-    ? `<div class="nash-md">${renderReportMarkdown(deploymentRationale, { evidenceMarkers: false }, a.evidence || [])}</div>`
-    : '<p class="nash-session-gallery-empty">Re-run with the source documents to generate product and deployment rationale.</p>';
   return `<div class="nash-session-overview-content">
     <section class="nash-session-executive-summary">
       <span class="nash-session-overview-kicker">Executive summary</span>
       <h2>${escapeHtml(headline)}</h2>
-      <p class="nash-session-executive-lead">${escapeHtml(summary)}</p>
-      <div class="nash-session-executive-decision">
-        <strong>${escapeHtml(a.verdict || verdictFor(a.score || 0).label)}</strong>
-        <p><b>Next best action</b>${escapeHtml(nextAction)}</p>
-      </div>
+      ${summary ? `<p class="nash-session-executive-lead">${escapeHtml(summary)}</p>` : '<p class="nash-session-gallery-empty">No executive summary was recorded in this assessment.</p>'}
+      ${verdict || nextAction ? `<div class="nash-session-executive-decision">
+        ${verdict ? `<strong>${escapeHtml(verdict)}</strong>` : ''}
+        ${nextAction ? `<p><b>Next best action</b>${escapeHtml(nextAction)}</p>` : ''}
+      </div>` : ''}
       ${conditions.length ? `<div class="nash-session-executive-conditions"><h3>Conditions to proceed</h3>${listItemsHtml(conditions, '')}</div>` : ''}
     </section>
     <section class="nash-session-overview-context">
@@ -2113,10 +2070,16 @@ function assessmentOverviewHtml(a, sections) {
     <section class="nash-session-solution-rationale">
       <span class="nash-session-overview-kicker">Recommended architecture</span>
       <h2>Solution rationale</h2>
-      ${solutionNames ? `<p class="nash-session-solution-scope">${escapeHtml(solutionNames)}</p>` : ''}
-      ${view.architectureBoundary ? `<div class="nash-session-architecture-boundary"><b>Architecture boundary</b><p>${escapeHtml(view.architectureBoundary)}</p></div>` : ''}
-      ${structuredSolutions.length ? solutionCardsHtml(structuredSolutions) : rationaleFallback}
+      ${architecture.headline || solutionNames ? `<p class="nash-session-solution-scope">${escapeHtml(architecture.headline || solutionNames)}</p>` : ''}
+      ${architecture.summary ? `<p class="nash-session__architecture-summary">${escapeHtml(architecture.summary)}</p>` : ''}
+      ${architecture.recommendation ? `<div class="nash-session-architecture-boundary"><b>${escapeHtml(architecture.status || 'Architecture recommendation')}</b><p>${escapeHtml(architecture.recommendation)}</p></div>` : ''}
+      ${solutionCardsHtml(structuredSolutions) || '<p class="nash-session-gallery-empty">No product and deployment breakdown was recorded in this assessment.</p>'}
       ${valueMappingsHtml(view.valueMappings)}
+      ${rationale?.md || view.architectureBoundary ? `<details class="nash-session__architecture-details">
+        <summary>Architecture boundaries and full rationale</summary>
+        ${view.architectureBoundary ? `<p class="nash-session__architecture-summary">${escapeHtml(view.architectureBoundary)}</p>` : ''}
+        ${rationale?.md ? `<div class="nash-md">${renderReportMarkdown(rationale.md, { evidenceMarkers: false }, a.evidence || [])}</div>` : ''}
+      </details>` : ''}
     </section>
     <section class="nash-session-overview-use-cases">
       <div class="nash-session-overview-section-head">
@@ -2131,6 +2094,12 @@ function assessmentOverviewHtml(a, sections) {
 /* Gallery preview of the stable report, shared by Assessment and DA content. */
 function daPreviewHtml(a) {
   const sections = splitReportSections(a.reportMarkdown);
+  const assessment = {
+    ...a,
+    assessmentView: assessmentViewFor(a, Object.fromEntries(
+      sections.map((section) => [sectionLabel(section.title), section.md]),
+    )),
+  };
   const dimensions = a.dimensions || [];
   const dimensionButtons = dimensions.map((dimension, index) => {
     const accent = GALLERY_ACCENTS[index % GALLERY_ACCENTS.length];
@@ -2150,7 +2119,7 @@ function daPreviewHtml(a) {
         </nav>
       </div>
       <div class="nash-session-assessment-overview">
-        ${assessmentOverviewHtml(a, sections)}
+        ${assessmentOverviewHtml(assessment, sections)}
         <div class="nash-session-overview-section-head nash-session-dimensions-head">
           <div><span>Qualification scorecard</span><h2>Assessment dimensions</h2></div>
           <p>Open a dimension for its fit rationale, requirements, verification plan, risks, and evidence.</p>
@@ -2158,10 +2127,10 @@ function daPreviewHtml(a) {
         <div class="nash-session-section-gallery">
           ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
         </div>
-        ${customerReferencesHtml(a)}
+        ${customerReferencesHtml(assessment)}
       </div>
       <div class="nash-session-dimension-readings">
-        ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, a)).join('')}
+        ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, assessment)).join('')}
       </div>
       <footer class="nash-session-gallery-footer">
         <span>Assessment overview</span>
