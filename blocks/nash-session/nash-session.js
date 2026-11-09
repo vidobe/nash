@@ -496,10 +496,32 @@ function renderReportMarkdown(src, opts = {}, evidence = []) {
   diagrams.forEach(({ tok, html: d }) => {
     html = html.split(`<p>${tok}</p>`).join(d).split(tok).join(d);
   });
-  if (evidence.length) {
+  if (opts.evidenceMarkers === false) {
+    html = html.replace(/\[\[([a-z0-9_-]+)\]\]/gi, '');
+  } else if (evidence.length) {
     html = html.replace(/\[\[([a-z0-9_-]+)\]\]/gi, (match, id) => evidenceMarkerHtml(id, evidence));
   }
   return html;
+}
+
+function parseAssessmentView(text) {
+  const block = String(text || '').match(
+    /NASH_ASSESSMENT_V2:\s*([\s\S]*?)NASH_ASSESSMENT_V2_END/i,
+  );
+  if (!block) return null;
+  let raw = block[1].trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start >= 0 && end > start) raw = raw.slice(start, end + 1);
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.version !== 2 || !parsed.executive || !Array.isArray(parsed.dimensionDetails)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 /* ── Launcher ────────────────────────────────────────── */
@@ -1187,11 +1209,9 @@ function legacyReportInstructions(solutionNames) {
 
 Section 1 must include an initial Fit Score (High / Medium / Low) for ${solutionNames} with a one-sentence rationale and why this logo matters to Adobe.
 Section 3 must explicitly list the customer's Top 3-5 Business Objectives and Top 3-5 Pains / Challenges as bullet lists, plus current tech stack and what success looks like.
-If the source contains explicit requirements, Section 3 must also include a COMPLETE requirement coverage table with one traceable row per issued requirement:
-| Requirement ID | Short requirement | Covered / Partially covered / Needs clarification / Gap | Adobe response | Product / deployment model | Caveat / dependency |
-Do not merge away repeated requirement IDs; cross-reference duplicates.
-Section 6 must compare Adobe with every competitor explicitly named by the customer or source document. For each competitor show where Adobe can win, where Adobe may lose, and the proof needed. Do not present framework alternatives as confirmed competitors.
-Section 7 must give a Go / No-Go / Conditional-Go with reasoning, the recommended Adobe solution scope, and a crawl-walk-run roadmap with entry/exit gates. Always evaluate relevant AEM agents as delivery accelerators, including Experience Modernization Agent for eligible legacy migration, while clearly marking availability, entitlement, and source-technology dependencies.
+If the source contains explicit requirements, Section 3 must summarize coverage totals, the most important covered needs, and the highest-risk gaps. The complete one-row-per-requirement matrix belongs in the NASH_ASSESSMENT_V2 requirements array; do not duplicate that full table in markdown. Do not merge away repeated requirement IDs in the V2 array; cross-reference duplicates.
+Section 6 must summarize Adobe's competitive position against every competitor explicitly named by the customer or source document. The structured win/loss/proof comparison belongs in NASH_ASSESSMENT_V2 competitors. Do not present framework alternatives as confirmed competitors.
+Section 7 must give a Go / No-Go / Conditional-Go with reasoning and summarize the recommended Adobe scope and phased path. The full crawl-walk-run gates belong in NASH_ASSESSMENT_V2 deliveryPath. Always evaluate relevant AEM agents as delivery accelerators, including Experience Modernization Agent for eligible legacy migration, while clearly marking availability, entitlement, and source-technology dependencies.
 Section 4 must include a target-architecture diagram expressed ONLY as a machine-readable NASH_ARCH block — do NOT use mermaid, ASCII art, or code fences:
 NASH_ARCH:
 layers: <left-to-right layer names, semicolon-separated, e.g. Sources; Platform; Decisioning; Channels>
@@ -1226,6 +1246,103 @@ Section 10 must cover these subsections:
 - **Similar customer references** — sourced comparable Adobe customers with why each is relevant.
 
 Write for busy sales and solution leaders. Be concise: short bullets, compact tables, no repeated facts, no generic Adobe marketing language, and no paragraph longer than three sentences.`;
+}
+
+function assessmentViewInstructions() {
+  return `Before the markdown dossier, output one valid JSON object between these exact markers:
+NASH_ASSESSMENT_V2:
+{
+  "version": 2,
+  "executive": {
+    "headline": "<specific one-sentence platform-fit thesis; do not begin with the verdict or score>",
+    "summary": "<2-3 concise sentences explaining why Adobe fits, the most important condition, and the decision implication>",
+    "conditions": ["<material condition that must be met>"],
+    "nextAction": "<single best next action>"
+  },
+  "architectureBoundary": "<what Adobe owns versus customer runtime, data, identity, transaction, messaging, and integration systems>",
+  "solutions": [{
+    "product": "<official Adobe product or external customer system>",
+    "deployment": "<AEM as a Cloud Service, Edge Delivery Services, headless APIs, traditional Sites, hybrid, Dynamic Media, agent/MCP, or external system>",
+    "role": "<role in the architecture>",
+    "rationale": "<why this product and deployment fit the customer's requirements>",
+    "requirements": ["<requirement ID>"],
+    "dependencies": ["<dependency or unresolved decision>"]
+  }],
+  "valueMappings": [{
+    "customerNeed": "<objective or challenge>",
+    "adobeCapability": "<product, capability, and deployment>",
+    "outcome": "<specific expected outcome>"
+  }],
+  "useCases": [{
+    "name": "<customer-specific use case>",
+    "priority": "<Core|Differentiator|Future accelerator>",
+    "persona": "<user or team>",
+    "journey": "<concise end-to-end journey>",
+    "products": ["<product, deployment, or agent>"],
+    "requirements": ["<requirement ID>"],
+    "outcome": "<expected business outcome>",
+    "proof": "<demo or evidence needed>",
+    "prerequisites": ["<prerequisite or risk>"]
+  }],
+  "dimensionDetails": [{
+    "name": "<exact NASH_DIMS dimension name>",
+    "takeaway": "<plain-language seller takeaway>",
+    "matters": [{"label": "<short label>", "text": "<customer requirement, signal, risk, or unknown>"}],
+    "response": [{"label": "<short label>", "text": "<how Adobe should respond>"}],
+    "verification": ["<falsifiable check that verifies the score>"],
+    "increase": ["<evidence that would increase the score>"],
+    "decrease": ["<evidence that would decrease the score>"],
+    "nextActions": ["<specific customer question or action>"],
+    "deepAnalysis": "<2-4 concise sentences of deeper analysis>",
+    "evidenceRefs": ["<evidence ID>"]
+  }],
+  "requirements": [{
+    "id": "<issued requirement ID>",
+    "requirement": "<shortened but traceable requirement>",
+    "source": "<source name>",
+    "priority": "<priority or Unknown>",
+    "status": "<Covered|Partially covered|Needs clarification|Gap>",
+    "response": "<direct Adobe response>",
+    "solution": "<product, capability, and deployment>",
+    "caveat": "<dependency or caveat>",
+    "owner": "<responsible Adobe role>",
+    "validation": "<validation action>"
+  }],
+  "competitors": [{
+    "name": "<confirmed competitor name>",
+    "status": "<confirmed participation and scope>",
+    "win": "<where Adobe can win against buyer requirements>",
+    "lose": "<where Adobe may lose>",
+    "proof": "<proof or comparison required>"
+  }],
+  "deliveryPath": [{
+    "phase": "<Crawl|Walk|Run>",
+    "objective": "<phase objective>",
+    "entryGate": "<entry gate>",
+    "exitGate": "<measurable exit gate>",
+    "work": ["<migration, architecture, governance, or operating-model work>"],
+    "agent": "<relevant agent or EMA applicability and prerequisite, or Not applicable>"
+  }],
+  "publicReferences": [{
+    "title": "<customer-shareable title>",
+    "url": "<public https URL>",
+    "relevance": "<why it matters here>",
+    "supports": "<solution, deployment, use case, or requirement supported>",
+    "limitation": "<what this reference does not prove>"
+  }]
+}
+NASH_ASSESSMENT_V2_END
+
+V2 JSON rules:
+- Return strict JSON: double quotes, no comments, no trailing commas, and no markdown inside string values.
+- This object is the seller-facing source of truth. Make it specific enough to render without reading the markdown dossier.
+- Include every NASH_DIMS dimension exactly once in dimensionDetails.
+- Keep matters and response to 2-4 items each, verification to 3-6 checks, and nextActions to exactly 3 items.
+- Preserve every issued requirement in requirements. If source workbooks are unavailable, do not invent IDs; leave requirements empty and explain the missing source in executive.conditions.
+- Include only competitors confirmed by customer evidence.
+- Include only public, customer-shareable URLs in publicReferences.
+- Do not put [[E1]] evidence tokens in any V2 display string; use evidenceRefs instead.
+- Keep the markdown dossier as supporting analysis. Do not duplicate the full requirement matrix, competitor table, or delivery-path table there because the V2 object already contains them.`;
 }
 
 function experimentalReportInstructions() {
@@ -1313,6 +1430,8 @@ NASH_CONFIDENCE:
 NASH_CONFIDENCE_END
 Add one NASH_CONFIDENCE row for every NASH_DIMS row. Confidence reflects the quality and completeness of available evidence, not whether the score is high or low. Facts must reference IDs from NASH_EVIDENCE. Keep assumptions and unknowns distinct: an assumption is a provisional interpretation; an unknown is information not yet available. The score swing is the plausible change to the overall 0-100 score if the assumption or unknown proves materially favorable or unfavorable. The final field must state the single highest-impact question, document, or proof point to validate next.
 
+${experimental ? '' : assessmentViewInstructions()}
+
 ${experimental ? experimentalReportInstructions() : legacyReportInstructions(solutionNames)}
 
 === ADOBE SOLUTION KNOWLEDGE (ground your analysis in this) ===
@@ -1346,12 +1465,23 @@ function renderRerunState(block) {
   const btn = block?.querySelector('.nash-session-rerun');
   if (!btn || !current) return;
   const pending = !!current.notesSinceRun;
+  const missing = missingSourceFiles(current);
   const label = btn.querySelector('.nash-session-action-label');
   btn.classList.toggle('has-notes', pending);
-  if (label) label.textContent = pending ? 'Re-run to update' : 'Re-run assessment';
-  btn.title = pending
-    ? 'You added notes in chat — re-run to fold them into the report'
-    : 'Re-run the assessment, folding in your chat with Fluffy';
+  btn.classList.toggle('needs-sources', missing.length > 0);
+  if (label) {
+    let rerunLabel = 'Re-run assessment';
+    if (missing.length) rerunLabel = 'Reattach source documents';
+    else if (pending) rerunLabel = 'Re-run to update';
+    label.textContent = rerunLabel;
+  }
+  let title = 'Re-run the assessment, folding in your chat with Fluffy';
+  if (missing.length) {
+    title = `Reattach ${missing.map((file) => file.name).join(', ')} before re-running`;
+  } else if (pending) {
+    title = 'You added notes in chat — re-run to fold them into the report';
+  }
+  btn.title = title;
 }
 
 async function publishAutomatically(block, attempt = 0) {
@@ -1602,12 +1732,15 @@ function dimensionPercent(dimension) {
 
 function dimensionEvidenceHtml(dimension, evidence) {
   const byId = new Map((evidence || []).map((item) => [item.id.toLowerCase(), item]));
-  const items = (dimension.evidenceRefs || [])
+  const refs = dimension.detail?.evidenceRefs?.length
+    ? dimension.detail.evidenceRefs : dimension.evidenceRefs;
+  const items = (refs || [])
     .map((id) => byId.get(id.toLowerCase())).filter(Boolean);
   if (!items.length) return '<p class="nash-session-gallery-empty">No evidence is linked directly to this score yet.</p>';
   return `<ul>${items.map((item) => `<li>
-      <strong>${escapeHtml(item.id)}</strong> ${escapeHtml(item.claim)}
-      <span>${escapeHtml(item.source)}${item.locator ? ` · ${escapeHtml(item.locator)}` : ''}</span>
+      <strong>${escapeHtml(item.source)}</strong>
+      <p>${escapeHtml(item.claim)}</p>
+      <span>${escapeHtml(EVIDENCE_TYPE_LABELS[item.type] || 'Supporting evidence')}${item.locator ? ` · ${escapeHtml(item.locator)}` : ''}</span>
     </li>`).join('')}</ul>`;
 }
 
@@ -1622,69 +1755,175 @@ function dimensionSectionsHtml(dimension, sections, evidence) {
   return matches.map((section) => `<section class="nash-session-dimension-content-panel">
     <span>${escapeHtml(sectionLabel(section.title))}</span>
     <h3>${escapeHtml(section.title.replace(/^\d+[.)]\s*/, ''))}</h3>
-    <div class="nash-md">${renderReportMarkdown(section.md, {}, evidence || [])}</div>
+    <div class="nash-md">${renderReportMarkdown(section.md, { evidenceMarkers: false }, evidence || [])}</div>
   </section>`).join('');
+}
+
+function briefItemsHtml(items, empty) {
+  if (!Array.isArray(items) || !items.length) {
+    return `<p class="nash-session-gallery-empty">${escapeHtml(empty)}</p>`;
+  }
+  return `<div class="nash-session-brief-grid">${items.map((item) => `<article>
+    <h3>${escapeHtml(item.label || 'Assessment point')}</h3>
+    <p>${escapeHtml(item.text || '')}</p>
+  </article>`).join('')}</div>`;
+}
+
+function listItemsHtml(items, empty) {
+  if (!Array.isArray(items) || !items.length) {
+    return `<p class="nash-session-gallery-empty">${escapeHtml(empty)}</p>`;
+  }
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+}
+
+function requirementStatusClass(status) {
+  const value = String(status || '').toLowerCase();
+  if (value === 'covered') return 'covered';
+  if (value.includes('partial')) return 'partial';
+  if (value.includes('gap')) return 'gap';
+  return 'clarify';
+}
+
+function requirementsAnalysisHtml(requirements) {
+  if (!Array.isArray(requirements) || !requirements.length) return '';
+  const counts = requirements.reduce((totals, requirement) => {
+    const key = requirementStatusClass(requirement.status);
+    totals[key] += 1;
+    return totals;
+  }, {
+    covered: 0, partial: 0, clarify: 0, gap: 0,
+  });
+  return `<section class="nash-session-special-analysis">
+    <div class="nash-session-analysis-head">
+      <div><span>Complete requirement traceability</span><h3>Functional coverage</h3></div>
+      <div class="nash-session-coverage-summary">
+        <span><b>${counts.covered}</b>Covered</span>
+        <span><b>${counts.partial}</b>Partial</span>
+        <span><b>${counts.clarify}</b>Clarify</span>
+        <span><b>${counts.gap}</b>Gap</span>
+      </div>
+    </div>
+    <div class="nash-session-analysis-table-wrap"><table>
+      <thead><tr><th>ID</th><th>Status</th><th>Requirement</th><th>Adobe response</th><th>Solution / deployment</th><th>Validation</th></tr></thead>
+      <tbody>${requirements.map((item) => `<tr>
+        <td>${escapeHtml(item.id || '—')}</td>
+        <td><span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.status || 'Needs clarification')}</span></td>
+        <td><strong>${escapeHtml(item.requirement || '')}</strong>${item.source ? `<small>${escapeHtml(item.source)}</small>` : ''}</td>
+        <td>${escapeHtml(item.response || '')}${item.caveat ? `<small>${escapeHtml(item.caveat)}</small>` : ''}</td>
+        <td>${escapeHtml(item.solution || '')}</td>
+        <td>${escapeHtml(item.validation || '')}${item.owner ? `<small>Owner: ${escapeHtml(item.owner)}</small>` : ''}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
+function competitorAnalysisHtml(competitors) {
+  if (!Array.isArray(competitors) || !competitors.length) return '';
+  return `<section class="nash-session-special-analysis">
+    <div class="nash-session-analysis-head"><div><span>Named alternatives</span><h3>Competitive proof plan</h3></div></div>
+    <div class="nash-session-analysis-table-wrap"><table>
+      <thead><tr><th>Competitor</th><th>Adobe can win</th><th>Adobe may lose</th><th>Proof required</th></tr></thead>
+      <tbody>${competitors.map((item) => `<tr>
+        <td><strong>${escapeHtml(item.name || '')}</strong>${item.status ? `<small>${escapeHtml(item.status)}</small>` : ''}</td>
+        <td>${escapeHtml(item.win || '')}</td>
+        <td>${escapeHtml(item.lose || '')}</td>
+        <td>${escapeHtml(item.proof || '')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
+function deliveryAnalysisHtml(deliveryPath) {
+  if (!Array.isArray(deliveryPath) || !deliveryPath.length) return '';
+  return `<section class="nash-session-special-analysis">
+    <div class="nash-session-analysis-head"><div><span>Phased delivery</span><h3>Crawl, walk, run</h3></div></div>
+    <div class="nash-session-delivery-path">${deliveryPath.map((item) => `<article>
+      <span>${escapeHtml(item.phase || 'Phase')}</span>
+      <h4>${escapeHtml(item.objective || '')}</h4>
+      <dl>
+        <div><dt>Entry gate</dt><dd>${escapeHtml(item.entryGate || '')}</dd></div>
+        <div><dt>Exit gate</dt><dd>${escapeHtml(item.exitGate || '')}</dd></div>
+      </dl>
+      ${listItemsHtml(item.work, 'No workstream specified.')}
+      ${item.agent ? `<p class="nash-session-agent-note"><strong>Agent / EMA</strong>${escapeHtml(item.agent)}</p>` : ''}
+    </article>`).join('')}</div>
+  </section>`;
+}
+
+function solutionsAnalysisHtml(solutions) {
+  if (!Array.isArray(solutions) || !solutions.length) return '';
+  return `<section class="nash-session-special-analysis">
+    <div class="nash-session-analysis-head"><div><span>Architecture response</span><h3>Proposed solution and deployment</h3></div></div>
+    <div class="nash-session-solution-detail-grid">${solutions.map((item) => `<article>
+      <header><h4>${escapeHtml(item.product || '')}</h4><span>${escapeHtml(item.deployment || '')}</span></header>
+      <p>${escapeHtml(item.rationale || item.role || '')}</p>
+      ${item.role ? `<small>${escapeHtml(item.role)}</small>` : ''}
+    </article>`).join('')}</div>
+  </section>`;
+}
+
+function dimensionSpecialAnalysisHtml(dimension, assessment) {
+  const name = dimension.dimension.toLowerCase();
+  const view = assessment.assessmentView || {};
+  if (name === 'functional coverage') return requirementsAnalysisHtml(view.requirements);
+  if (name === 'competitive position') return competitorAnalysisHtml(view.competitors);
+  if (name === 'delivery risk') return deliveryAnalysisHtml(view.deliveryPath);
+  if (name === 'technical fit') return solutionsAnalysisHtml(view.solutions);
+  return '';
 }
 
 function dimensionReadingHtml(dimension, index, sections, assessment) {
   const confidence = (assessment.confidence || []).find(
     (item) => item.dimension.toLowerCase() === dimension.dimension.toLowerCase(),
   );
-  const sectionCount = (DIM_SECTIONS[dimension.dimension.toLowerCase()] || []).length;
+  const detail = (assessment.assessmentView?.dimensionDetails || []).find(
+    (item) => item.name?.toLowerCase() === dimension.dimension.toLowerCase(),
+  );
+  const dimensionWithDetail = { ...dimension, detail };
   const pct = dimensionPercent(dimension);
-  const verificationItems = [
-    confidence?.scoreChanger
-      ? `<li><strong>Validate next</strong><span>${escapeHtml(confidence.scoreChanger)}</span></li>` : '',
+  const verification = detail?.verification?.length ? detail.verification : [
+    confidence?.scoreChanger,
     confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none'
-      ? `<li><strong>Resolve the unknown</strong><span>${escapeHtml(confidence.unknowns)}</span></li>` : '',
+      ? `Resolve: ${confidence.unknowns}` : '',
     confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none'
-      ? `<li><strong>Test the assumption</strong><span>${escapeHtml(confidence.assumptions)}</span></li>` : '',
-  ].filter(Boolean).join('');
-  const supportingTitle = dimension.dimension.toLowerCase() === 'functional coverage'
-    ? 'Requirements and functional coverage'
-    : 'Supporting report sections';
+      ? `Test: ${confidence.assumptions}` : '',
+  ].filter(Boolean);
+  const actions = detail?.nextActions?.length ? detail.nextActions : [
+    confidence?.scoreChanger || 'Confirm the highest-impact missing evidence with the customer.',
+    'Validate the requirements and assumptions linked to this score.',
+    'Agree the owner and timing for the next proof point.',
+  ];
+  const increaseDecrease = detail ? `<div class="nash-session-score-movement">
+    <article><h3>What would increase the score</h3>${listItemsHtml(detail.increase, 'No increase condition was provided.')}</article>
+    <article><h3>What would decrease the score</h3>${listItemsHtml(detail.decrease, 'No decrease condition was provided.')}</article>
+  </div>` : '';
   return `<article class="nash-session-dimension-reading" data-dimension-index="${index}" hidden>
     <div class="nash-session-dimension-kicker"><i></i><span>Score dimension · ${escapeHtml(dimension.weight)}</span></div>
     <div class="nash-session-dimension-title-row">
       <h2>${escapeHtml(dimension.dimension)}</h2>
       <div class="nash-session-dimension-score" style="color:${dimColor(pct)}"><strong>${pct}</strong><span>/ 100</span></div>
     </div>
-    <p class="nash-session-dimension-lead">${escapeHtml(dimension.notes || 'This score is based on the available customer, Adobe, and public evidence.')}</p>
-    <div class="nash-session-dimension-summary">
-      <section>
-        <h3>Decision confidence</h3>
-        <div class="nash-session-dimension-confidence"><b>${escapeHtml(confidence?.level || 'Not assessed')}</b></div>
-        <div class="nash-session-dimension-sensitivity"><span style="width:${Math.min(100, Math.max(12, pct))}%"></span></div>
-        <small>${escapeHtml(confidence?.swing ? `${confidence.swing} potential score movement` : 'No score sensitivity recorded')}</small>
-      </section>
-      <section>
-        <h3>Key assumption</h3>
-        <p>${escapeHtml(confidence?.assumptions && confidence.assumptions.toLowerCase() !== 'none' ? confidence.assumptions : 'No material assumption recorded.')}</p>
-      </section>
-      <section>
-        <h3>Critical unknown</h3>
-        <p>${escapeHtml(confidence?.unknowns && confidence.unknowns.toLowerCase() !== 'none' ? confidence.unknowns : 'No critical unknown recorded.')}</p>
-      </section>
-      <section>
-        <h3>Validate next</h3>
-        <p>${escapeHtml(confidence?.scoreChanger || 'Confirm the evidence and assumptions behind this dimension with the customer.')}</p>
-      </section>
-    </div>
-    <section class="nash-session-dimension-evidence-panel">
-      <h3>Evidence from the assessment</h3>
-      <div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimension, assessment.evidence)}</div>
+    <p class="nash-session-dimension-lead">${escapeHtml(detail?.takeaway || dimension.notes || 'This score is based on the available customer, Adobe, and public evidence.')}</p>
+    <section class="nash-session-dimension-brief-section">
+      <h3>What matters in this opportunity</h3>
+      ${briefItemsHtml(detail?.matters, 'Open the deeper analysis for the available report evidence.')}
     </section>
-    ${verificationItems ? `<section class="nash-session-dimension-verification">
+    <section class="nash-session-dimension-brief-section">
+      <h3>How Adobe should respond</h3>
+      ${briefItemsHtml(detail?.response, 'Use the score rationale and deeper analysis to prepare the response.')}
+    </section>
+    <section class="nash-session-dimension-brief-section">
       <h3>How to verify this score</h3>
-      <ul>${verificationItems}</ul>
-    </section>` : ''}
-    <div class="nash-session-dimension-content">
-      <div class="nash-session-dimension-content-head">
-        <div><span>Full assessment</span><h3>${supportingTitle}</h3></div>
-        <b>${sectionCount} ${sectionCount === 1 ? 'section' : 'sections'}</b>
-      </div>
-      ${dimensionSectionsHtml(dimension, sections, assessment.evidence)}
-    </div>
+      <div class="nash-session-verification-list">${listItemsHtml(verification, 'No verification plan was generated.')}</div>
+      ${increaseDecrease}
+    </section>
+    ${dimensionSpecialAnalysisHtml(dimension, assessment)}
+    <section class="nash-session-dimension-brief-section">
+      <h3>What to validate next</h3>
+      <ol class="nash-session-action-list">${actions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}</ol>
+    </section>
+    ${detail?.deepAnalysis ? `<details class="nash-session-dimension-disclosure"><summary>Deeper analysis</summary><p>${escapeHtml(detail.deepAnalysis)}</p>${dimensionSectionsHtml(dimension, sections, assessment.evidence)}</details>` : `<details class="nash-session-dimension-disclosure"><summary>Deeper analysis</summary>${dimensionSectionsHtml(dimension, sections, assessment.evidence)}</details>`}
+    <details class="nash-session-dimension-disclosure"><summary>Evidence and sources</summary><div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimensionWithDetail, assessment.evidence)}</div></details>
   </article>`;
 }
 
@@ -1736,8 +1975,18 @@ function reportSubsection(markdown, titlePattern) {
   return selected.join('\n').trim();
 }
 
-function customerReferencesHtml(evidence) {
-  const publicSources = (evidence || []).filter(
+function customerReferencesHtml(assessment) {
+  const structured = (assessment.assessmentView?.publicReferences || []).filter(
+    (item) => /^https:\/\//i.test(item.url || ''),
+  );
+  const publicSources = structured.length ? structured.map((item) => ({
+    source: item.title,
+    locator: item.url,
+    claim: item.relevance,
+    supports: item.supports,
+    limitation: item.limitation,
+    type: 'public-source',
+  })) : (assessment.evidence || []).filter(
     (item) => item.type === 'public-source' && /^https?:\/\//i.test(item.locator),
   );
   if (!publicSources.length) return '';
@@ -1746,50 +1995,116 @@ function customerReferencesHtml(evidence) {
       <div><span>Public and customer-shareable</span><h2>Reference pack</h2></div>
       <p>Public sources that support customer conversations. They explain capabilities but do not replace customer-specific architecture, security, or contractual validation.</p>
     </div>
-    <div class="nash-session-reference-grid">${publicSources.map((item) => `<a class="nash-session-reference-card" href="${escapeHtml(item.locator)}" target="_blank" rel="noopener">
+    <div class="nash-session-reference-grid">${publicSources.map((item) => `<a class="nash-session-reference-card" href="${escapeHtml(item.locator)}" target="_blank" rel="noopener noreferrer">
       <span>${escapeHtml(EVIDENCE_TYPE_LABELS[item.type] || 'Public reference')}</span>
       <h3>${escapeHtml(item.source)}</h3>
       <p>${escapeHtml(item.claim)}</p>
+      ${item.supports ? `<small>Supports: ${escapeHtml(item.supports)}</small>` : ''}
+      ${item.limitation ? `<small>Does not prove: ${escapeHtml(item.limitation)}</small>` : ''}
       <b>Open public source &nearr;</b>
     </a>`).join('')}</div>
   </section>`;
 }
 
+function legacyAssessmentHeadline(assessment) {
+  if ((assessment.score || 0) >= 70) return 'Strong platform fit—provided the open conditions are resolved';
+  if ((assessment.score || 0) >= 50) return 'Promising Adobe fit—with material conditions to validate';
+  return 'Limited current fit—resolve the critical gaps before pursuing';
+}
+
+function legacyAssessmentSummary(assessment) {
+  const notes = (assessment.dimensions || []).map((item) => item.notes).filter(Boolean).slice(0, 2);
+  if (assessment.context?.success) notes.push(assessment.context.success);
+  return notes.join(' ') || 'The recommendation reflects the available customer, Adobe, and public evidence. Validate the open assumptions before treating it as final.';
+}
+
+function executiveConditions(assessment) {
+  const structured = assessment.assessmentView?.executive?.conditions;
+  if (Array.isArray(structured) && structured.length) return structured;
+  return (assessment.confidence || [])
+    .map((item) => item.unknowns)
+    .filter((item) => item && item.toLowerCase() !== 'none')
+    .slice(0, 3);
+}
+
+function solutionCardsHtml(solutions) {
+  if (!Array.isArray(solutions) || !solutions.length) return '';
+  return `<div class="nash-session-solution-stack">${solutions.map((item) => `<article>
+    <header><h3>${escapeHtml(item.product || '')}</h3><span>${escapeHtml(item.deployment || 'Deployment to validate')}</span></header>
+    <p>${escapeHtml(item.role || '')}</p>
+    <strong>${escapeHtml(item.rationale || '')}</strong>
+    ${Array.isArray(item.dependencies) && item.dependencies.length
+    ? `<small>Depends on: ${escapeHtml(item.dependencies.join('; '))}</small>` : ''}
+  </article>`).join('')}</div>`;
+}
+
+function valueMappingsHtml(mappings) {
+  if (!Array.isArray(mappings) || !mappings.length) return '';
+  return `<div class="nash-session-value-mapping">
+    <div><span>Customer need</span><span>Adobe capability</span><span>Expected outcome</span></div>
+    ${mappings.map((item) => `<div>
+      <p>${escapeHtml(item.customerNeed || '')}</p>
+      <p>${escapeHtml(item.adobeCapability || '')}</p>
+      <p>${escapeHtml(item.outcome || '')}</p>
+    </div>`).join('')}
+  </div>`;
+}
+
+function useCaseCardsHtml(useCases) {
+  if (!Array.isArray(useCases) || !useCases.length) return '';
+  return `<div class="nash-session-use-case-grid">${useCases.map((item, index) => `<article>
+    <div><span>Use case ${String(index + 1).padStart(2, '0')}</span><b>${escapeHtml(item.priority || 'Priority')}</b></div>
+    <h3>${escapeHtml(item.name || '')}</h3>
+    <p>${escapeHtml(item.journey || '')}</p>
+    ${Array.isArray(item.products) && item.products.length
+    ? `<ul>${item.products.map((product) => `<li>${escapeHtml(product)}</li>`).join('')}</ul>` : ''}
+    ${item.outcome ? `<strong>${escapeHtml(item.outcome)}</strong>` : ''}
+    ${item.proof ? `<small>Proof needed: ${escapeHtml(item.proof)}</small>` : ''}
+  </article>`).join('')}</div>`;
+}
+
 function assessmentOverviewHtml(a, sections) {
-  const overview = reportSection(sections, 'Overview');
   const rationale = reportSection(sections, 'Rationale');
-  const recommendation = reportSection(sections, 'Recommendation');
-  const useCases = contextItems(a.context, 'use_cases');
+  const view = a.assessmentView || {};
+  const executive = view.executive || {};
+  const legacyUseCases = contextItems(a.context, 'use_cases');
   const objectives = contextItems(a.context, 'objectives');
   const challenges = contextItems(a.context, 'challenges');
   const deploymentRationale = reportSubsection(
     rationale?.md,
     /proposed solution.*deployment rationale/i,
   );
-  const useCaseAnalysis = reportSubsection(rationale?.md, /priority use cases/i);
   const contextList = (items) => (items.length
     ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
     : '<p class="nash-session-gallery-empty">Not established in the available evidence.</p>');
-  const sectionHtml = (section) => (section
-    ? renderReportMarkdown(section.md, {}, a.evidence || [])
-    : '<p class="nash-session-gallery-empty">This assessment does not yet include this section. Re-run it to generate the updated format.</p>');
   const solutionNames = solutionsLabel(a);
-  let useCasesHtml = '<p class="nash-session-gallery-empty">No priority use cases were captured in this assessment.</p>';
-  if (useCaseAnalysis) {
-    useCasesHtml = `<div class="nash-md nash-session-use-case-analysis">${renderReportMarkdown(useCaseAnalysis, {}, a.evidence || [])}</div>`;
-  } else if (useCases.length) {
-    useCasesHtml = `<div class="nash-session-use-case-grid">${useCases.map((useCase, index) => `<article>
-      <span>Use case ${String(index + 1).padStart(2, '0')}</span>
-      <h3>${escapeHtml(useCase)}</h3>
-      <p>Open the Solution Rationale and relevant score dimension for requirements, deployment, proof, and dependencies.</p>
-    </article>`).join('')}</div>`;
-  }
+  const headline = executive.headline || legacyAssessmentHeadline(a);
+  const summary = executive.summary || legacyAssessmentSummary(a);
+  const conditions = executiveConditions(a);
+  const nextAction = executive.nextAction
+    || (a.confidence || []).map((item) => item.scoreChanger).find(Boolean)
+    || 'Confirm the highest-impact open requirement and agree the next proof point.';
+  const useCases = Array.isArray(view.useCases) && view.useCases.length
+    ? view.useCases
+    : legacyUseCases.map((name) => ({
+      name,
+      priority: 'Core',
+      journey: 'Open the relevant score dimension for requirements, deployment, proof, and dependencies.',
+    }));
+  const structuredSolutions = Array.isArray(view.solutions) ? view.solutions : [];
+  const rationaleFallback = deploymentRationale
+    ? `<div class="nash-md">${renderReportMarkdown(deploymentRationale, { evidenceMarkers: false }, a.evidence || [])}</div>`
+    : '<p class="nash-session-gallery-empty">Re-run with the source documents to generate product and deployment rationale.</p>';
   return `<div class="nash-session-overview-content">
     <section class="nash-session-executive-summary">
       <span class="nash-session-overview-kicker">Executive summary</span>
-      <h2>What Nash recommends</h2>
-      <div class="nash-md">${sectionHtml(overview)}</div>
-      ${recommendation ? `<details><summary>Recommendation conditions and next steps</summary><div class="nash-md">${sectionHtml(recommendation)}</div></details>` : ''}
+      <h2>${escapeHtml(headline)}</h2>
+      <p class="nash-session-executive-lead">${escapeHtml(summary)}</p>
+      <div class="nash-session-executive-decision">
+        <strong>${escapeHtml(a.verdict || verdictFor(a.score || 0).label)}</strong>
+        <p><b>Next best action</b>${escapeHtml(nextAction)}</p>
+      </div>
+      ${conditions.length ? `<div class="nash-session-executive-conditions"><h3>Conditions to proceed</h3>${listItemsHtml(conditions, '')}</div>` : ''}
     </section>
     <section class="nash-session-overview-context">
       <div><h3>Customer objectives</h3>${contextList(objectives)}</div>
@@ -1799,16 +2114,16 @@ function assessmentOverviewHtml(a, sections) {
       <span class="nash-session-overview-kicker">Recommended architecture</span>
       <h2>Solution rationale</h2>
       ${solutionNames ? `<p class="nash-session-solution-scope">${escapeHtml(solutionNames)}</p>` : ''}
-      <div class="nash-md">${deploymentRationale
-    ? renderReportMarkdown(deploymentRationale, {}, a.evidence || [])
-    : sectionHtml(rationale)}</div>
+      ${view.architectureBoundary ? `<div class="nash-session-architecture-boundary"><b>Architecture boundary</b><p>${escapeHtml(view.architectureBoundary)}</p></div>` : ''}
+      ${structuredSolutions.length ? solutionCardsHtml(structuredSolutions) : rationaleFallback}
+      ${valueMappingsHtml(view.valueMappings)}
     </section>
     <section class="nash-session-overview-use-cases">
       <div class="nash-session-overview-section-head">
         <div><span>Customer value</span><h2>Priority use cases</h2></div>
         <p>These use cases connect the proposed solution and deployment models to customer outcomes.</p>
       </div>
-      ${useCasesHtml}
+      ${useCaseCardsHtml(useCases) || '<p class="nash-session-gallery-empty">No priority use cases were captured in this assessment.</p>'}
     </section>
   </div>`;
 }
@@ -1843,7 +2158,7 @@ function daPreviewHtml(a) {
         <div class="nash-session-section-gallery">
           ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
         </div>
-        ${customerReferencesHtml(a.evidence)}
+        ${customerReferencesHtml(a)}
       </div>
       <div class="nash-session-dimension-readings">
         ${dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, sections, a)).join('')}
@@ -2471,15 +2786,17 @@ function parseMeta(text) {
     });
   }
 
+  const assessmentView = parseAssessmentView(text);
   const body = text
     .replace(/NASH_META:[^\n]*\n?/i, '')
     .replace(/NASH_DIMS:[\s\S]*?NASH_DIMS_END\n?/i, '')
     .replace(/NASH_CONTEXT:[\s\S]*?NASH_CONTEXT_END\n?/i, '')
     .replace(/NASH_EVIDENCE:[\s\S]*?NASH_EVIDENCE_END\n?/i, '')
     .replace(/NASH_CONFIDENCE:[\s\S]*?NASH_CONFIDENCE_END\n?/i, '')
+    .replace(/NASH_ASSESSMENT_V2:[\s\S]*?NASH_ASSESSMENT_V2_END\n?/i, '')
     .trimStart();
   return {
-    meta, body, dimensions, context, evidence, confidence,
+    meta, body, dimensions, context, evidence, confidence, assessmentView,
   };
 }
 
@@ -2628,7 +2945,45 @@ function assessmentFiles(a) {
       name: a.fileName || 'document', mime: a.fileMime || '', text: a.fileText || '', data: a.fileData || '',
     }];
   }
+  if (a.fileName) {
+    return String(a.fileName).split(',').map((name) => ({
+      name: name.trim(), mime: '', text: '', data: '',
+    })).filter((file) => file.name);
+  }
   return [];
+}
+
+function sourceFileHasContent(file) {
+  return Boolean(file?.text?.trim() || file?.data);
+}
+
+function missingSourceFiles(a) {
+  if (!(a?.reportMarkdown || a?.report || a?.reportHtml)) return [];
+  return assessmentFiles(a).filter((file) => !sourceFileHasContent(file));
+}
+
+function mergeAssessmentFiles(existing, incoming) {
+  const merged = new Map((existing || []).map((file) => [file.name.toLowerCase(), file]));
+  (incoming || []).forEach((file) => {
+    const key = file.name.toLowerCase();
+    const prior = merged.get(key) || {};
+    merged.set(key, {
+      ...prior,
+      ...file,
+      text: file.text || prior.text || '',
+      data: file.data || prior.data || '',
+    });
+  });
+  return [...merged.values()];
+}
+
+function missingSourcesHtml(files) {
+  const names = files.map((file) => file.name).join(', ');
+  return `<div class="nash-session-source-warning" role="alert">
+    <strong>Source documents are required for a reliable re-run</strong>
+    <p>Nash remembers the file names, but not their contents after a completed assessment. Reattach ${escapeHtml(names)} before generating a replacement report.</p>
+    <button type="button" class="nash-session-source-attach">Reattach source documents</button>
+  </div>`;
 }
 
 /* Persist an assessment without the large file bytes (keep localStorage small).
@@ -2892,6 +3247,20 @@ function interviewText(a) {
 
 async function runAssessment(block, attempt = 1, insights = '') {
   const area = block.querySelector('.nash-session-report-area');
+  const missing = missingSourceFiles(current);
+  if (missing.length) {
+    setSetupAvailability(block, false);
+    const thread = block.querySelector('.nash-session-thread');
+    const warning = thread
+      ? addMessage(thread, 'assistant', missingSourcesHtml(missing))
+      : area;
+    if (!thread) area.insertAdjacentHTML('afterbegin', missingSourcesHtml(missing));
+    const scope = warning || area;
+    scope.querySelector('.nash-session-source-attach')?.addEventListener('click', () => {
+      block.querySelector('.nash-session-attach-input')?.click();
+    });
+    return;
+  }
 
   // Not connected to FluffyJaws → simulated structured report.
   if (!isAuthenticated()) {
@@ -2986,7 +3355,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     // A terminal failure — the run is no longer in flight. Roll the status back so
     // re-opening offers a fresh run rather than trying to resume a dead stream.
     isRunning = false;
-    current.status = 'draft';
+    current.status = current.reportMarkdown ? 'done' : 'draft';
     delete current.runStartedAt;
     persist(current);
     setSetupAvailability(block, false);
@@ -3036,8 +3405,17 @@ async function runAssessment(block, attempt = 1, insights = '') {
         return;
       }
       const {
-        meta, body, dimensions, context, evidence, confidence,
+        meta, body, dimensions, context, evidence, confidence, assessmentView,
       } = parseMeta(answer);
+      if (!assessmentView) {
+        if (attempt < 2) {
+          if (inThread) host.closest('.nash-session-msg')?.remove();
+          runAssessment(block, attempt + 1, insights);
+          return;
+        }
+        failMsg('FluffyJaws returned an incomplete assessment structure, so Nash did not replace the current report. Re-run the assessment; the source documents remain available in this session.');
+        return;
+      }
       current.reportMarkdown = body;
       // Version the report so the publish button can tell when the published
       // copy is behind, and clear the "notes added in chat" flag now that this
@@ -3048,6 +3426,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       if (context && Object.keys(context).length) current.context = context;
       current.evidence = evidence;
       current.confidence = confidence;
+      current.assessmentView = assessmentView;
       if (meta) {
         current.score = meta.score;
         current.verdict = meta.verdict;
@@ -3085,6 +3464,14 @@ async function runAssessment(block, attempt = 1, insights = '') {
 
 async function runExperimentalAssessment(block, attempt = 1) {
   if (!canViewReportExperiment() || !current) return;
+  const missing = missingSourceFiles(current);
+  if (missing.length) {
+    current.experimentalStatus = 'error';
+    current.experimentalError = `Reattach ${missing.map((file) => file.name).join(', ')} in the Fluffy chat before generating an experimental report.`;
+    persist(current);
+    refreshExperimentPanel(block);
+    return;
+  }
   current.experimentalStatus = 'running';
   delete current.experimentalError;
   persist(current);
@@ -3436,10 +3823,11 @@ export function renderAssessment(block, a, autoRun = false) {
   attachInput.addEventListener('change', async () => {
     const picked = [...attachInput.files];
     attachInput.value = '';
-    const extracted = await Promise.all(
-      picked.map(async (f) => ({ name: f.name, text: await extractFileText(f) })),
-    );
+    const extracted = await processFiles(picked);
     pendingDocs.push(...extracted);
+    current.files = mergeAssessmentFiles(assessmentFiles(current), extracted);
+    persist(current);
+    renderRerunState(block);
     renderChips();
   });
 
@@ -3536,11 +3924,7 @@ async function send(block, text) {
     renderRerunState(block);
   }
   // Fold attached docs into current.files so a later re-run includes them too.
-  docs.filter((d) => d.text).forEach((d) => {
-    current.files = [...(current.files || []), {
-      name: d.name, mime: '', text: d.text, data: '',
-    }];
-  });
+  current.files = mergeAssessmentFiles(assessmentFiles(current), docs);
   persist(current);
 
   const docsText = docs.length

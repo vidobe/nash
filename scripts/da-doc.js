@@ -89,7 +89,7 @@ function qualificationBlock(a) {
    assessment — report markdown + opp + meta — and render the interactive view. */
 function encodePayload(a) {
   const data = {
-    v: 1,
+    v: 2,
     id: a.id || '',
     company: a.company,
     opportunity: a.opportunity || a.company,
@@ -106,6 +106,7 @@ function encodePayload(a) {
     dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
     evidence: Array.isArray(a.evidence) ? a.evidence : [],
     confidence: Array.isArray(a.confidence) ? a.confidence : [],
+    assessmentView: a.assessmentView || null,
     reportMarkdown: a.reportMarkdown || '',
     opp: a.opp || {},
   };
