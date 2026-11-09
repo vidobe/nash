@@ -3184,7 +3184,9 @@ export function renderAssessment(block, a, autoRun = false) {
   renderRerunState(block);
   wireSalesPanel(block);
 
-  const thread = block.querySelector('.nash-session-thread');
+  const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
+  const thread = chatSheetElement?.querySelector('.nash-session-thread')
+    || block.querySelector('.nash-session-assess-scroll > .nash-session-thread');
   const input = block.querySelector('.nash-session-input');
   const sendBtn = block.querySelector('.nash-session-send');
   const actionToggle = block.querySelector('.nash-session-action-toggle');
@@ -3204,7 +3206,6 @@ export function renderAssessment(block, a, autoRun = false) {
   document.addEventListener('click', () => {
     if (block.isConnected) closeActionPopover();
   });
-  const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
   const fluffyShell = block.querySelector('.nash-session-fluffy-shell');
   const openChatSheet = () => {
     if (!chatSheetElement || chatSheetElement.open) return;

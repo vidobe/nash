@@ -3073,13 +3073,13 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   box-shadow: none;
 }
 
-.nash-session .nash-session-composer.is-thinking {
-  animation: nash-composer-glow 1.9s ease-in-out infinite;
+.nash-session .nash-session-fluffy-shell:has(.nash-session-composer.is-thinking) {
+  animation: nash-shell-glow 1.9s ease-in-out infinite;
 }
 
-@keyframes nash-composer-glow {
-  0%, 100% { box-shadow: 0 6px 26px rgb(17 19 24 / 8%), 0 0 20px 2px rgb(255 111 176 / 22%); }
-  50% { box-shadow: 0 6px 26px rgb(17 19 24 / 8%), 0 0 26px 4px rgb(91 157 255 / 26%); }
+@keyframes nash-shell-glow {
+  0%, 100% { box-shadow: 0 14px 40px rgb(0 0 0 / 20%), 0 0 18px 1px rgb(255 111 176 / 16%); }
+  50% { box-shadow: 0 14px 40px rgb(0 0 0 / 20%), 0 0 24px 2px rgb(91 157 255 / 20%); }
 }
 
 /* Star/ball cluster in the chat bar — pieces float up & down at their own pace. */
