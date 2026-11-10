@@ -106,7 +106,7 @@ export function validateAssessmentView(view, {
     errors.push('The executive assessment is incomplete.');
   }
   if (nonempty(view.executive?.headline) && view.executive.headline.trim().split(/\s+/).length > 24) {
-    errors.push('The executive headline is too long; use a concise customer-fit thesis and move conditions into the summary.');
+    errors.push('The executive headline is too long; use a short solution-and-customer title and move conditions into the summary.');
   }
   if (!object(view.context) || !nonempty(view.reportMarkdown)) {
     errors.push('Context and supporting analysis are required.');

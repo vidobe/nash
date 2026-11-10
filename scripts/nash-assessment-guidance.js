@@ -21,7 +21,7 @@ const COMMON_GUIDANCE = [
   },
   {
     title: 'Customer-specific decision and supporting analysis',
-    text: 'The executive headline is a customer-specific fit thesis, never an instruction to discover, approve or validate something. Put material conditions and the single best next action in the overview. Dimension details explain their conclusions and criteria. Deep Markdown supports source analysis and must not duplicate complete structured requirement, competitor, delivery or scoring matrices. Use one linked acceptance-gate register. AI review must distinguish native AI, named product agents, Coworker/MCP, availability, entitlement, sensitive-data controls and measurable workflow value; optional AI must not become a core-production prerequisite.',
+    text: 'The executive headline is a short solution-and-customer title, such as Unified CMS and DAM for Acme Bank. Name the proposed solution scope in plain language; do not make the heading a fit judgment, risk statement, evidence caveat or instruction to discover, approve or validate something. Put the fit conclusion in the summary, material conditions below it and the single best next action in the overview. Dimension details explain their conclusions and criteria. Deep Markdown supports source analysis and must not duplicate complete structured requirement, competitor, delivery or scoring matrices. Use one linked acceptance-gate register. AI review must distinguish native AI, named product agents, Coworker/MCP, availability, entitlement, sensitive-data controls and measurable workflow value; optional AI must not become a core-production prerequisite.',
   },
   {
     title: 'Reassess source claims and preserve requirement traceability',

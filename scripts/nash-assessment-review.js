@@ -30,6 +30,7 @@ requirementCorrections contains COMPLETE corrected row objects for only the rows
 Every row must be reviewed even if left unchanged. reviewedRequirementIds must match the existing complete matrix, not a sample.
 
 CRITICAL CHECKS
+- Keep executive.headline a short solution-and-customer title, not a sentence judging fit or describing unverified controls. The fit conclusion and evidence caveats belong in summary/conditions, not the heading.
 - Reassess draft vendor Yes AND No answers. Do not infer a product limitation from a draft claim or missing proof. In particular, distinguish template authoring/storage/localization/placeholder definition from messaging execution, runtime resolution and sending; do not automatically mark every template requirement either covered or a gap.
 - Keep Must capabilities required. A conditional license, delivery route or additional offering does not make the capability optional. Trace recommended solutions and use cases to real requirement IDs where available; do not leave all traceability arrays empty.
 - Evaluate current supported approaches first and make a decisive primary selection. Avoid unexplained and/or architecture. App-only APIs need no page-rendering tier; no traditional Java stack without a sourced blocker to the modern approach.

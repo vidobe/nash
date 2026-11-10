@@ -81,6 +81,18 @@ test('every dimension needs its reasons, criteria and evidence rather than repea
   assert.deepEqual(schemaFor(prompt).dimensionDetails[0].gateRefs, ['G1']);
 });
 
+test('executive headings name the solution and customer instead of judging fit or listing caveats', () => {
+  const prompt = promptFor();
+  const { headline } = schemaFor(prompt).executive;
+  assert.match(headline, /short solution-and-customer title/);
+  assert.match(prompt, /Unified CMS and DAM for Acme Bank/);
+  assert.match(prompt, /Customer journey orchestration for Acme/);
+  assert.match(prompt, /examples, not defaults/);
+  assert.match(prompt, /Never put fit judgments, risk statements, evidence caveats/);
+  assert.match(prompt, /fit conclusion in executive.summary and caveats in executive.conditions/);
+  assert.doesNotMatch(prompt, /customer-specific fit thesis|customer-fit thesis/);
+});
+
 test('AI is reviewed explicitly without forcing adoption, weighting or unsupported availability', () => {
   const prompt = promptFor();
   [

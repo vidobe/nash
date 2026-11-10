@@ -32,7 +32,7 @@ export function canonicalAssessment() {
     meta: { score: null, verdict: 'Conditional-Go', cms: 'n/a' },
     scoring: { status: 'not-calibrated', reason: 'No approved numerical rubric was provided.' },
     executive: {
-      headline: 'Governed content supports shared channels at Example Organization',
+      headline: 'Unified content services for Example Organization',
       summary: 'The supported authoring capability fits. Customer acceptance remains open.',
       conditions: ['Agree the consuming application contract.'],
       nextAction: 'Demonstrate a reviewed content update in the application.',

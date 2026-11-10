@@ -16,7 +16,7 @@ export function assessmentContractTemplate() {
     meta: { score: null, verdict: 'Conditional-Go', cms: '<evidenced current platform or n/a>' },
     scoring: { status: 'not-calibrated', reason: '<why no approved numerical rubric is available>' },
     executive: {
-      headline: '<customer-specific fit thesis, never a discovery/approval instruction>',
+      headline: '<short solution-and-customer title, e.g. Unified CMS and DAM for Acme Bank>',
       summary: '<customer need, actual fit and most material condition>',
       conditions: ['<material acceptance condition>'],
       nextAction: '<single most useful next action>',
@@ -175,7 +175,7 @@ REASONING CONTRACT
 - AI dimension sections MUST include these exact titles: "Native product AI", "Product agents", "Coworker and MCP", "Readiness and governance". Include realistic workflow/value and availability/entitlement tables, not just a generic paragraph. Assess relevant named agents only; mark unavailable/unverified agents honestly. Do not treat optional AI as a core-production prerequisite or arbitrary risk penalty.
 - Evaluate current generally available supported technology first. Latest/beta/preview is not proof of production readiness. An older stack may be appropriate only with an exact requirement, modern approach evaluated, older approach required, sourced blocker and trade-off in architecture.legacyExceptions. Otherwise that array is empty.
 - Assign every component a selection. Only recommended entries form the baseline. Conditional entries need a precise trigger in dependencies. Alternatives and exclusions stay outside the baseline; existing customer identity, applications and transactions remain external. Required capability is not optional just because its specific offering/entitlement is undecided.
-- Lead with a customer-specific fit thesis of at most 18 words, never an approval, discovery or validation instruction. Put caveats in summary/conditions, not a long headline. Put conditions and one best next action in the overview. Do not repeat "what matters/how Adobe should respond" or action templates in every dimension.
+- Use a short solution-and-customer title for executive.headline, usually 6-10 words: for example "Unified CMS and DAM for Acme Bank" or "Customer journey orchestration for Acme". Adapt the scope to the actual selected solutions; these are examples, not defaults. Never put fit judgments, risk statements, evidence caveats or approval/discovery instructions in the title. Put the fit conclusion in executive.summary and caveats in executive.conditions. Put one best next action in the overview. Do not repeat "what matters/how Adobe should respond" or action templates in every dimension.
 - Use ONE verificationGates register with IDs, owners and measurable acceptance criteria. Every gate ID cited anywhere, including prose and component dependencies, MUST exist in that register. Link dimension findings and delivery entry/exit conditions to those gates instead of reproducing the same lists.
 - Preserve issued/normalized question IDs, repeated wording, source priorities and unclassified priorities. Duplicates with distinct IDs remain distinct rows; no double penalties. Procurement implications need buyer confirmation; do not invent automatic disqualification.
 - Competitor registers are not proof of active bids or win rankings. Blank scorecards/prices are unknown, not zero. RTO/RPO, cache freshness, throughput and support terms must retain exact documented scope and measurement boundaries.
