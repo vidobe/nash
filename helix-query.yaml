@@ -25,6 +25,12 @@ indices:
       score:
         select: head > meta[name="score"]
         value: attribute(el, "content")
+      verdict:
+        select: head > meta[name="verdict"]
+        value: attribute(el, "content")
+      scoringstatus:
+        select: head > meta[name="scoringstatus"]
+        value: attribute(el, "content")
       cms:
         select: head > meta[name="cms"]
         value: attribute(el, "content")

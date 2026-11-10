@@ -2,6 +2,8 @@
  * localStorage store for Nash assessments created from the launcher.
  * An assessment = { id, company, dr, fileName, status, createdAt,
  *   messages: [{ role, content }], previousResponseId }.
+ * Experimental lab fields, including experimentalAssessmentView, stay with the
+ * local draft; DA publication applies its own allowlist in da-doc.js.
  * Published assessments live in /qualifications; these are the in-progress
  * client-side ones until the DA write-back is wired.
  */

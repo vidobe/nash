@@ -11,17 +11,14 @@
  */
 
 import { loadCSS } from '../../scripts/aem.js';
+import { decodeAssessmentPayload } from '../../scripts/da-doc.js';
+import { assessmentScore } from '../../scripts/nash-scoring.js';
 import { renderAssessment } from '../nash-session/nash-session.js';
 
 /* Decode the base64 (Unicode-safe) assessment payload embedded at publish time. */
 function decodePayload() {
   const meta = document.querySelector('meta[name="nash-payload"]');
-  if (!meta || !meta.content) return null;
-  try {
-    return JSON.parse(decodeURIComponent(escape(window.atob(meta.content))));
-  } catch {
-    return null;
-  }
+  return decodeAssessmentPayload(meta?.content);
 }
 
 /* Gather the report body from the sections below the block (fallback for pages
@@ -45,12 +42,28 @@ export default async function decorate(block) {
   const rows = [...block.querySelectorAll(':scope > div')];
   const metaCells = rows.length ? [...rows[0].querySelectorAll(':scope > div')] : [];
   const cell = (i) => metaCells[i]?.textContent.trim() || '';
+  const dimensions = rows.slice(1).map((row) => {
+    const cells = [...row.querySelectorAll(':scope > div')].map((c) => c.textContent.trim());
+    return {
+      dimension: cells[0] || '',
+      weight: cells[1] || null,
+      scored: cells[2] || null,
+      max: cells[3] || null,
+      notes: cells[4] || '',
+    };
+  });
 
   const payload = decodePayload();
+  const scoringstatus = document.querySelector('meta[name="scoringstatus"]')?.content || '';
+  const score = assessmentScore(payload ? {
+    ...payload,
+    scoringstatus: payload.scoringstatus || scoringstatus,
+  } : { score: cell(2), dimensions, scoringstatus });
   const { html: reportHtml, toRemove } = collectReportBody(block);
 
   const assessment = payload ? {
-    id: payload.company,
+    ...payload,
+    id: payload.id || payload.company,
     published: true,
     company: payload.company,
     dr: payload.dr,
@@ -58,7 +71,8 @@ export default async function decorate(block) {
     solutions: payload.solutions || [],
     solutionNames: payload.solutionNames,
     proposedSolution: payload.proposedSolution,
-    score: payload.score,
+    score,
+    scoringstatus: score === null ? 'not-calibrated' : 'scored',
     verdict: payload.verdict,
     cms: payload.cms,
     context: payload.context || {},
@@ -79,8 +93,10 @@ export default async function decorate(block) {
     solutions: [],
     solutionNames: cell(1),
     proposedSolution: cell(6),
-    score: parseInt(cell(2), 10) || undefined,
+    score,
+    scoringstatus: score === null ? 'not-calibrated' : 'scored',
     verdict: cell(3),
+    dimensions,
     cms: document.querySelector('meta[name="cms"]')?.content || '',
     reportHtml,
     opp: {},

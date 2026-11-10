@@ -10,6 +10,7 @@
 
 import { ensureFreshToken } from './nash-auth.js';
 import { buildDaDocument, slugify } from './da-doc.js';
+import { validateAssessmentView } from './nash-assessment-contract.js';
 
 // Adobe App Builder action (tools/da-publish-app/), Stage workspace.
 export const PUBLISH_ENDPOINT = 'https://97154-nashdapublish-stage.adobeioruntime.net/api/v1/web/nash-da-publish/publish';
@@ -40,7 +41,19 @@ export function assessmentSlug(a) {
  * @returns {{ slug:string, html:string }}
  */
 export function buildAssessmentDoc(a, bodyHtml, user = '') {
-  return { slug: assessmentSlug(a), html: buildDaDocument(a, bodyHtml, user) };
+  if (a.assessmentView?.contractVersion === 3) {
+    const requirements = a.assessmentView.inputCoverage?.requirementIds?.map((id) => ({
+      id, priority: a.assessmentView.requirements.find((row) => row.id === id)?.priority,
+    })) || [];
+    const errors = validateAssessmentView(a.assessmentView, { requirements });
+    if (a.status !== 'done' || errors.length) {
+      throw new Error(`Only a completed, validated assessment can be published. ${errors.slice(0, 3).join(' ')}`);
+    }
+  }
+  const publishable = { ...a };
+  delete publishable.generationCheckpoint;
+  delete publishable.experimentalGenerationCheckpoint;
+  return { slug: assessmentSlug(a), html: buildDaDocument(publishable, bodyHtml, user) };
 }
 
 /**

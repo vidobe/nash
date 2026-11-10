@@ -100,6 +100,11 @@
   color: var(--ink, #111318);
 }
 
+.nash-overview .nash-overview__stat-unscored {
+  color: var(--ink-70, #4a4d55);
+  font-size: 20px;
+}
+
 .nash-overview .nash-overview-stat-unit {
   margin-left: 3px;
   font-size: 14px;
@@ -147,6 +152,7 @@
 .nash-overview .nash-overview-seg.go { background: var(--green, #0d7a45); }
 .nash-overview .nash-overview-seg.cond { background: var(--amber, #b45309); }
 .nash-overview .nash-overview-seg.nogo { background: var(--red, #eb1000); }
+.nash-overview .nash-overview-seg.unscored { background: var(--ink-15, #e8e9ec); }
 
 .nash-overview .nash-overview-mixlegend {
   display: flex;
@@ -366,6 +372,10 @@
 .nash-overview .nash-overview-t-of,
 .nash-overview .nash-overview-t-muted {
   color: var(--ink-40, #9a9da6);
+}
+
+.nash-overview .nash-overview__unscored-label {
+  color: var(--ink-70, #4a4d55);
 }
 
 .nash-overview .nash-overview-t-time {
@@ -666,6 +676,23 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.nash-overview .nash-overview__unscored {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  min-height: 112px;
+  color: var(--ink-70, #4a4d55);
+  text-align: center;
+}
+
+.nash-overview .nash-overview__unscored strong {
+  font: 600 14px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview__unscored span {
+  font: 400 11px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
 }
 
 .nash-overview .nash-overview-radar-wrap,

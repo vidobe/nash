@@ -13,13 +13,15 @@
  *     </div>
  *     <div>                         ← section 2
  *       …report body (headings, paragraphs, tables)…
- *       <div class="metadata"> Title|status|score|cms|verdict|user|description </div>
+ *       <div class="metadata"> Title|status|score|scoringstatus|cms|verdict|user|description </div>
  *     </div>
  *   </main>
  *
  * This module only builds the document string — writing it to DA + publishing is
  * handled by the publish Worker (scripts/da-publish.js / tools/da-publish).
  */
+
+import { assessmentScore } from './nash-scoring.js';
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -73,7 +75,7 @@ const kv = (k, v) => `<div><div>${esc(k)}</div><div>${esc(v)}</div></div>`;
 function qualificationBlock(a) {
   const solution = (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '';
   const row1 = `<div>${[
-    a.company, solution, a.score ?? '', a.verdict || '', today(),
+    a.company, solution, assessmentScore(a) ?? '', a.verdict || '', today(),
     a.opp?.salesStage || '', a.proposedSolution || '',
   ].map((v) => `<div>${esc(v)}</div>`).join('')}</div>`;
 
@@ -86,8 +88,11 @@ function qualificationBlock(a) {
 }
 
 /* Base64 (Unicode-safe) payload so a published page can reconstruct the full
-   assessment — report markdown + opp + meta — and render the interactive view. */
+   assessment — report markdown + opp + meta — and render the interactive view.
+   Keep this publication allowlist explicit: experimental* lab fields, including
+   experimentalAssessmentView, are local-only and must not be added here. */
 function encodePayload(a) {
+  const score = assessmentScore(a);
   const data = {
     v: 2,
     id: a.id || '',
@@ -99,7 +104,8 @@ function encodePayload(a) {
     solutions: a.solutions || [],
     solutionNames: a.solutionNames || '',
     proposedSolution: a.proposedSolution || '',
-    score: a.score ?? null,
+    score,
+    scoringstatus: score === null ? 'not-calibrated' : 'scored',
     verdict: a.verdict || '',
     cms: a.cms || '',
     context: a.context || {},
@@ -117,15 +123,29 @@ function encodePayload(a) {
   }
 }
 
+/** Reads the complete published payload without discarding canonical assessmentView fields. */
+export function decodeAssessmentPayload(encoded) {
+  if (typeof encoded !== 'string' || !encoded.trim()) return null;
+  try {
+    const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    const data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 function metadataBlock(a, user) {
   const opportunity = a.opportunity || a.company;
   const assessmentName = assessmentTitle(a);
+  const score = assessmentScore(a);
   return `<div class="metadata">${
     kv('Title', a.company)
     + kv('opportunity', opportunity)
     + kv('assessmentname', assessmentName)
     + kv('status', 'done')
-    + kv('score', a.score ?? '')
+    + kv('score', score ?? '')
+    + kv('scoringstatus', score === null ? 'not-calibrated' : 'scored')
     + kv('cms', a.cms || 'n/a')
     + kv('solutionnames', (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '')
     + kv('dimensionvalues', JSON.stringify(Array.isArray(a.dimensions) ? a.dimensions : []))

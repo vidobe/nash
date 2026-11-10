@@ -1,3 +1,5 @@
+import { solutionGuidance } from '../../scripts/nash-assessment-guidance.js';
+
 /**
  * nash-solution-config block
  *
@@ -39,6 +41,30 @@ function buildSection(title, rows) {
       </div>
     </div>
   `;
+}
+
+function guidanceSection(slug) {
+  const section = document.createElement('section');
+  section.className = 'nash-config-section nash-solution-config__guidance';
+  const heading = document.createElement('h2');
+  heading.className = 'nash-config-section-title';
+  heading.textContent = 'Shared assessment guidance';
+  const rows = document.createElement('dl');
+  rows.className = 'nash-config-rows';
+  solutionGuidance([slug]).forEach(({ title, text }) => {
+    const row = document.createElement('div');
+    row.className = 'nash-config-row';
+    const key = document.createElement('dt');
+    key.className = 'nash-config-key';
+    key.textContent = title;
+    const value = document.createElement('dd');
+    value.className = 'nash-config-val';
+    value.textContent = text;
+    row.append(key, value);
+    rows.append(row);
+  });
+  section.append(heading, rows);
+  return section;
 }
 
 export default async function decorate(block) {
@@ -95,6 +121,9 @@ export default async function decorate(block) {
       ${sections.map((s) => buildSection(s.title, s.rows)).join('')}
     </div>
   `;
+
+  const slug = daPath.split('/').filter(Boolean).pop()?.replace(/\.html$/, '') || '';
+  block.querySelector('.nash-config-body').prepend(guidanceSection(slug));
 
   document.dispatchEvent(new CustomEvent('nash:page-title', { detail: { title: solutionName }, bubbles: true }));
 }

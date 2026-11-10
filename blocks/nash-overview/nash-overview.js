@@ -2,7 +2,8 @@
  * loads and decorates the nash-overview block
  * Fetches /qualifications/query.json for live data; falls back to mock data in dev.
  * Also merges locally-created assessments (localStorage) so completed runs appear here.
- * Document metadata fields: title, description (domain), status, score, cms, user, lastModified
+ * Document metadata: title, description, status, score, scoringstatus, verdict,
+ * cms, user, lastModified.
  *
  * @param {Element} block The block element
  */
@@ -15,6 +16,7 @@ import { assessmentTitle, slugify } from '../../scripts/da-doc.js';
 import { canDelete } from '../../scripts/nash-perms.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { unpublishAssessment } from '../../scripts/da-publish.js';
+import { assessmentScore, dimensionPercent } from '../../scripts/nash-scoring.js';
 
 const MOCK_REPORTS = [
   {
@@ -68,23 +70,14 @@ function toTitleCase(str) {
   return str.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/* Resolve a numeric fit score, tolerating a string score or a missing one by
-   summing the scored dimensions (which sum to the overall score). */
-function coerceScore(a) {
-  if (typeof a.score === 'number' && Number.isFinite(a.score)) return a.score;
-  if (typeof a.score === 'string' && a.score.trim() !== '' && Number.isFinite(Number(a.score))) {
-    return Number(a.score);
-  }
-  if (Array.isArray(a.dimensions) && a.dimensions.length) {
-    const sum = a.dimensions.reduce((t, d) => t + (parseInt(d.scored, 10) || 0), 0);
-    if (sum > 0) return sum;
-  }
-  return null;
-}
-
 function mapQueryRow(row, idx) {
-  const score = parseInt(row.score, 10) || null;
   const status = (row.status || '').toLowerCase() === 'generating' ? 'generating' : 'done';
+  // Blank index metadata is authoritative, not an invitation to reconstruct a rating.
+  const score = status === 'done' ? assessmentScore({
+    score: row.score,
+    scoringstatus: row.scoringstatus,
+    assessmentView: row.assessmentView,
+  }) : null;
   // Strip " | Nash" suffix from <title> and fall back to path slug
   const rawTitle = (row.title || '').replace(/\s*\|.*$/, '').trim();
   const pathSlug = (row.path || '').split('/').pop();
@@ -125,9 +118,11 @@ function mapQueryRow(row, idx) {
     user: row.user || '',
     solutions,
     dimensions,
+    assessmentView: row.assessmentView || null,
     time: relativeTime(row.lastmodified || row.lastModified),
     ts: Number(row.lastmodified || row.lastModified) || 0,
-    score: status === 'done' ? score : null,
+    score,
+    scoringstatus: score === null ? 'not-calibrated' : 'scored',
     verdict: row.verdict || '',
     path: row.path || null,
     isLocal: false,
@@ -140,6 +135,7 @@ function mapQueryRow(row, idx) {
 function mapLocalAssessment(a, idx) {
   const ts = Math.floor((a.updatedAt || a.createdAt || Date.now()) / 1000);
   const path = `/indextest?a=${encodeURIComponent(a.id)}`;
+  const score = a.status === 'done' ? assessmentScore(a) : null;
   return {
     id: `local-${idx}`,
     company: a.company || 'Untitled',
@@ -154,9 +150,11 @@ function mapLocalAssessment(a, idx) {
     user: a.user || (getUserInfo()?.email || ''),
     solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
     dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
+    assessmentView: a.assessmentView || null,
     time: relativeTime(ts),
     ts,
-    score: a.status === 'done' ? coerceScore(a) : null,
+    score,
+    scoringstatus: score === null ? 'not-calibrated' : 'scored',
     verdict: a.verdict || '',
     path,
     isLocal: true,
@@ -167,6 +165,7 @@ function mapLocalAssessment(a, idx) {
 }
 
 function scoreColor(s) {
+  if (s == null) return 'var(--ink-70, #4a4d55)';
   if (s >= 70) return 'var(--green, #0d7a45)';
   if (s >= 50) return 'var(--amber, #b45309)';
   return 'var(--red, #eb1000)';
@@ -179,6 +178,7 @@ function verdictLabel(s) {
 }
 
 function verdictStyle(s) {
+  if (s == null) return 'background:var(--ink-08,#f4f4f6);color:var(--ink-70,#4a4d55);';
   if (s >= 70) return 'background:var(--green-lt,#edf7f2);color:var(--green,#0d7a45);';
   if (s >= 50) return 'background:var(--amber-lt,#fef3c7);color:var(--amber,#b45309);';
   return 'background:var(--red-lt,#fff0ef);color:var(--red,#eb1000);';
@@ -186,11 +186,13 @@ function verdictStyle(s) {
 
 /* Verdict chip label + style — prefer the stored verdict, fall back to score. */
 function verdictInfo(r) {
-  if (typeof r.score === 'number') return { label: verdictLabel(r.score), style: verdictStyle(r.score) };
-  const v = (r.verdict || '').toLowerCase();
-  if (/no.?go/.test(v)) return { label: 'No-go', style: verdictStyle(0) };
-  if (/condition/.test(v)) return { label: 'Conditional', style: verdictStyle(60) };
-  if (/\bgo\b/.test(v)) return { label: 'Go', style: verdictStyle(80) };
+  const label = typeof r.verdict === 'string' ? r.verdict.trim() : '';
+  const v = label.toLowerCase();
+  if (/no.?go/.test(v)) return { label, style: verdictStyle(0) };
+  if (/condition/.test(v)) return { label, style: verdictStyle(60) };
+  if (/\bgo\b/.test(v)) return { label, style: verdictStyle(80) };
+  if (label) return { label, style: verdictStyle(null) };
+  if (r.score != null) return { label: verdictLabel(r.score), style: verdictStyle(r.score) };
   return { label: '', style: '' };
 }
 
@@ -222,15 +224,15 @@ function esc(s) {
 }
 
 function radarDimensions(dimensions = []) {
-  return dimensions.map((dimension) => {
-    const max = Number(dimension.max) || 100;
-    const scored = Number(dimension.scored ?? dimension.score);
-    if (!Number.isFinite(scored) || max <= 0) return null;
+  const values = dimensions.map((dimension) => {
+    const percent = dimensionPercent(dimension);
+    if (percent === null) return null;
     return {
       name: dimension.dimension || dimension.name || 'Dimension',
-      value: Math.max(0, Math.min(1, scored / max)),
+      value: percent / 100,
     };
-  }).filter(Boolean).slice(0, 7);
+  });
+  return values.some((dimension) => dimension === null) ? [] : values.slice(0, 7);
 }
 
 function polygonPoints(count, radius, center = 56) {
@@ -241,14 +243,21 @@ function polygonPoints(count, radius, center = 56) {
 }
 
 function radarChart(r) {
+  if (r.score == null) {
+    const reason = r.assessmentView?.scoring?.reason || 'A numeric fit score is not available.';
+    return `<div class="nash-overview__unscored" role="group" aria-label="Fit score: Not scored. ${esc(reason)}">
+      <strong>Not scored</strong>
+      <span>No numeric rating</span>
+    </div>`;
+  }
   const dimensions = radarDimensions(r.dimensions);
-  const score = r.score == null ? '—' : r.score;
-  const scoreStyle = r.score == null ? 'var(--ink-40,#9a9da6)' : scoreColor(r.score);
+  const { score } = r;
+  const scoreStyle = scoreColor(score);
   if (dimensions.length < 3) {
     return `<div class="nash-overview-score-orbit" aria-label="${score} out of 100 fit score">
       <svg class="nash-overview-score-orbit-svg" viewBox="0 0 112 112" aria-hidden="true">
         <circle cx="56" cy="56" r="39"></circle>
-        <circle class="nash-overview-score-orbit-value" cx="56" cy="56" r="39" pathLength="100" style="stroke-dasharray:${r.score || 0} 100"></circle>
+        <circle class="nash-overview-score-orbit-value" cx="56" cy="56" r="39" pathLength="100" style="stroke-dasharray:${Math.max(0, Math.min(100, score))} 100"></circle>
       </svg>
       <strong style="color:${scoreStyle}">${score}</strong>
       <span>/100</span>
@@ -323,6 +332,7 @@ function buildCard(r) {
   card.style.setProperty('--overview-card-accent', pillar.color);
   card.dataset.id = r.id;
   card.dataset.status = r.status;
+  card.dataset.scoringStatus = r.scoringstatus || (r.score == null ? 'not-calibrated' : 'scored');
   card.dataset.company = r.company.toLowerCase();
   const bookmarked = isBookmarked(r.key);
   const allowDelete = canDelete(r.user);
@@ -358,7 +368,7 @@ function buildCard(r) {
             <span class="nash-overview-scope-label">Solution pillar</span>
             <span class="nash-overview-pillar">${pillar.name}</span>
           </div>
-          ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>` : ''; })()}
+          ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${esc(v.label)}</span>` : ''; })()}
         </div>
         ${radarChart(r)}
       </div>`;
@@ -454,15 +464,15 @@ function tableRow(r) {
   if (r.status === 'generating') {
     scoreCell = `<span class="nash-overview-t-gen">Generating ${r.pct}%</span>`;
   } else if (r.score == null) {
-    scoreCell = '<span class="nash-overview-t-muted">—</span>';
+    scoreCell = '<span class="nash-overview__unscored-label" aria-label="Fit score: Not scored">Not scored</span>';
   } else {
     scoreCell = `<span class="nash-overview-t-score" style="color:${scoreColor(r.score)}">${r.score}</span><span class="nash-overview-t-of"> / 100</span>`;
   }
   const v = verdictInfo(r);
   const verdictCell = r.status === 'generating' || !v.label
     ? '<span class="nash-overview-t-muted">—</span>'
-    : `<span class="nash-overview-verdict" style="${v.style}">${v.label}</span>`;
-  return `<tr class="nash-overview-trow" data-id="${esc(r.id)}" data-status="${esc(r.status)}" data-company="${esc(r.company.toLowerCase())}"${r.path ? ` data-path="${esc(r.path)}"` : ''}>
+    : `<span class="nash-overview-verdict" style="${v.style}">${esc(v.label)}</span>`;
+  return `<tr class="nash-overview-trow" data-id="${esc(r.id)}" data-status="${esc(r.status)}" data-scoring-status="${esc(r.scoringstatus || (r.score == null ? 'not-calibrated' : 'scored'))}" data-company="${esc(r.company.toLowerCase())}"${r.path ? ` data-path="${esc(r.path)}"` : ''}>
     <td class="nash-overview-t-name">
       <span class="nash-overview-favicon" aria-hidden="true">${esc(r.company.charAt(0))}</span>
       <span>${esc(r.company)}</span>
@@ -494,9 +504,30 @@ function renderTable(block, reports) {
   });
 }
 
-/* Richer stats strip: total, avg score (with bar), win rate, and a verdict mix. */
+function reportStats(reports) {
+  const completed = reports.filter((report) => report.status === 'done');
+  const scored = completed.filter((report) => Number.isFinite(report.score));
+  const go = scored.filter((report) => report.score >= 70).length;
+  return {
+    total: reports.length,
+    done: completed.length,
+    gen: reports.filter((report) => report.status === 'generating').length,
+    avg: scored.length
+      ? Math.round(scored.reduce((sum, report) => sum + report.score, 0) / scored.length) : null,
+    winRate: scored.length ? Math.round((go / scored.length) * 100) : null,
+    go,
+    cond: scored.filter((report) => report.score >= 50 && report.score < 70).length,
+    nogo: scored.filter((report) => report.score < 50).length,
+    scoredCount: scored.length,
+    unscoredCount: completed.length - scored.length,
+  };
+}
+
+/* Numeric metrics exclude unscored reports, even when they have a qualitative verdict. */
 function statsStrip(s) {
-  const avgColor = s.avg == null ? 'var(--ink-40, #9a9da6)' : scoreColor(s.avg);
+  const avgColor = scoreColor(s.avg);
+  const unscoredClass = ' nash-overview__stat-unscored';
+  const avg = s.avg == null ? 'Not scored' : `${s.avg}<span class="nash-overview-stat-unit">/100</span>`;
   const seg = (n, cls) => (n > 0 ? `<span class="nash-overview-seg ${cls}" style="flex:${n}"></span>` : '');
   return `
     <div class="nash-overview-stat">
@@ -505,22 +536,24 @@ function statsStrip(s) {
       <div class="nash-overview-stat-sub">${s.done} complete &middot; ${s.gen} in progress</div>
     </div>
     <div class="nash-overview-stat">
-      <div class="nash-overview-stat-num" style="color:${avgColor}">${s.avg == null ? '—' : s.avg}<span class="nash-overview-stat-unit">/100</span></div>
+      <div class="nash-overview-stat-num${s.avg == null ? unscoredClass : ''}" style="color:${avgColor}">${avg}</div>
       <div class="nash-overview-stat-label">Avg fit score</div>
-      <div class="nash-overview-stat-bar"><div style="width:${s.avg == null ? 0 : s.avg}%;background:${avgColor}"></div></div>
+      ${s.avg == null ? '' : `<div class="nash-overview-stat-bar" aria-hidden="true"><div style="width:${s.avg}%;background:${avgColor}"></div></div>`}
+      <div class="nash-overview-stat-sub">${s.scoredCount} scored &middot; ${s.unscoredCount} not scored</div>
     </div>
     <div class="nash-overview-stat">
-      <div class="nash-overview-stat-num">${s.winRate == null ? '—' : `${s.winRate}%`}</div>
+      <div class="nash-overview-stat-num${s.winRate == null ? unscoredClass : ''}">${s.winRate == null ? 'Not scored' : `${s.winRate}%`}</div>
       <div class="nash-overview-stat-label">Win rate</div>
-      <div class="nash-overview-stat-sub">${s.go} of ${s.scoredCount} rated Go</div>
+      <div class="nash-overview-stat-sub">${s.go} of ${s.scoredCount} scored assessments rated Go</div>
     </div>
     <div class="nash-overview-stat nash-overview-stat-wide">
-      <div class="nash-overview-stat-label">Verdict mix</div>
-      <div class="nash-overview-mixbar">${seg(s.go, 'go')}${seg(s.cond, 'cond')}${seg(s.nogo, 'nogo')}</div>
+      <div class="nash-overview-stat-label">Score-based verdict mix</div>
+      <div class="nash-overview-mixbar" role="img" aria-label="${s.go} Go, ${s.cond} Conditional, ${s.nogo} No-go, ${s.unscoredCount} not scored">${seg(s.go, 'go')}${seg(s.cond, 'cond')}${seg(s.nogo, 'nogo')}${seg(s.unscoredCount, 'unscored')}</div>
       <div class="nash-overview-mixlegend">
         <span class="go">${s.go} Go</span>
         <span class="cond">${s.cond} Conditional</span>
         <span class="nogo">${s.nogo} No-go</span>
+        <span>${s.unscoredCount} Not scored</span>
       </div>
     </div>`;
 }
@@ -564,37 +597,16 @@ export default async function decorate(block) {
   });
   reports = [...local, ...publishedDeduped];
 
-  const genCount = reports.filter((r) => r.status === 'generating').length;
-  const doneCount = reports.filter((r) => r.status === 'done').length;
-
-  // Stats over completed qualifications
-  const scored = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
-  const avgScore = scored.length
-    ? Math.round(scored.reduce((sum, r) => sum + r.score, 0) / scored.length) : null;
-  const goCount = scored.filter((r) => r.score >= 70).length;
-  const condCount = scored.filter((r) => r.score >= 50 && r.score < 70).length;
-  const nogoCount = scored.filter((r) => r.score < 50).length;
-  const scoredCount = scored.length;
-  const winRate = scoredCount ? Math.round((goCount / scoredCount) * 100) : null;
+  const stats = reportStats(reports);
 
   block.innerHTML = `
     <div class="nash-overview-head">
       <h1 class="nash-overview-title">All assessments</h1>
       <p class="nash-overview-subtitle">Every assessment across your Nash opportunities.</p>
-      <p class="nash-overview-intro">Fit scores, verdicts and win rate across all completed assessments. Search or filter to find a deal, switch between grid and list, or open one to dive in.</p>
+      <p class="nash-overview-intro">Fit scores and qualitative verdicts across completed assessments. Unscored reports are excluded from score averages and win rate. Search or filter to find a deal, switch between grid and list, or open one to dive in.</p>
     </div>
     <div class="nash-overview-stats">
-      ${statsStrip({
-    total: reports.length,
-    done: doneCount,
-    gen: genCount,
-    avg: avgScore,
-    winRate,
-    go: goCount,
-    cond: condCount,
-    nogo: nogoCount,
-    scoredCount,
-  })}
+      ${statsStrip(stats)}
     </div>
     <div class="nash-overview-toolbar">
       <div class="nash-overview-search-wrap">
@@ -603,8 +615,8 @@ export default async function decorate(block) {
       </div>
       <select class="nash-overview-filter" aria-label="Filter by status">
         <option value="all">Status: All (${reports.length})</option>
-        <option value="generating">Generating (${genCount})</option>
-        <option value="done">Complete (${doneCount})</option>
+        <option value="generating">Generating (${stats.gen})</option>
+        <option value="done">Complete (${stats.done})</option>
       </select>
       <div class="nash-overview-toolbar-right">
         <button class="nash-overview-sort-btn" type="button">
@@ -648,7 +660,11 @@ export default async function decorate(block) {
         || (r.solutions || '').toLowerCase().includes(state.q));
     }
     const by = state.sort === 'score'
-      ? (a, b) => (b.score || 0) - (a.score || 0)
+      ? (a, b) => {
+        if (a.score == null) return b.score == null ? 0 : 1;
+        if (b.score == null) return -1;
+        return b.score - a.score;
+      }
       : (a, b) => (b.ts || 0) - (a.ts || 0);
     return [...list].sort(by);
   };
@@ -656,28 +672,15 @@ export default async function decorate(block) {
   // Recompute the KPI strip + filter counts from the current `reports` set, so a
   // delete (or any change to the set) updates the totals — not just the grid.
   function refreshStats() {
-    const gen = reports.filter((r) => r.status === 'generating').length;
-    const done = reports.filter((r) => r.status === 'done').length;
-    const scoredList = reports.filter((r) => r.status === 'done' && typeof r.score === 'number');
-    const avg = scoredList.length
-      ? Math.round(scoredList.reduce((sum, r) => sum + r.score, 0) / scoredList.length) : null;
-    const go = scoredList.filter((r) => r.score >= 70).length;
-    const cond = scoredList.filter((r) => r.score >= 50 && r.score < 70).length;
-    const nogo = scoredList.filter((r) => r.score < 50).length;
-    const nScored = scoredList.length;
-    const wr = nScored ? Math.round((go / nScored) * 100) : null;
+    const nextStats = reportStats(reports);
     const strip = block.querySelector('.nash-overview-stats');
-    if (strip) {
-      strip.innerHTML = statsStrip({
-        total: reports.length, done, gen, avg, winRate: wr, go, cond, nogo, scoredCount: nScored,
-      });
-    }
+    if (strip) strip.innerHTML = statsStrip(nextStats);
     const optAll = block.querySelector('.nash-overview-filter option[value="all"]');
     const optGen = block.querySelector('.nash-overview-filter option[value="generating"]');
     const optDone = block.querySelector('.nash-overview-filter option[value="done"]');
     if (optAll) optAll.textContent = `Status: All (${reports.length})`;
-    if (optGen) optGen.textContent = `Generating (${gen})`;
-    if (optDone) optDone.textContent = `Complete (${done})`;
+    if (optGen) optGen.textContent = `Generating (${nextStats.gen})`;
+    if (optDone) optDone.textContent = `Complete (${nextStats.done})`;
   }
 
   function renderPage() {

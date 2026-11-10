@@ -4725,18 +4725,24 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 /* ── Assessment dimension gallery ─────────────────────── */
-.nash-session .nash-session-assessment-gallery {
+.nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) {
   --gallery-bg: #111318;
   --gallery-panel: #181b22;
   --gallery-panel-strong: #1d2028;
   --gallery-line: rgb(255 255 255 / 10%);
   --gallery-copy: #f7f7f9;
   --gallery-muted: #a7abb5;
+  --assessment-body-size: 14px;
+  --assessment-table-size: 12px;
+  --assessment-label-size: 11px;
+}
 
+.nash-session .nash-session-assessment-gallery {
   padding: 0;
   border-radius: 0;
   background: transparent;
   color: var(--gallery-copy);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
 }
 
 .nash-session .nash-session-assessment-gallery .nash-session-qual-head {
@@ -4896,23 +4902,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 .nash-session .nash-session-solution-rationale .nash-md h4,
 .nash-session .nash-session-solution-rationale .nash-md th {
   color: #fff;
-}
-
-.nash-session .nash-session-solution-rationale .nash-md table {
-  display: block;
-  max-width: 100%;
-  overflow-x: auto;
-  border-collapse: collapse;
-}
-
-.nash-session .nash-session-solution-rationale .nash-md th,
-.nash-session .nash-session-solution-rationale .nash-md td {
-  padding: 9px 10px;
-  border: 1px solid rgb(255 255 255 / 11%);
-}
-
-.nash-session .nash-session-solution-rationale .nash-md th {
-  background: rgb(255 255 255 / 6%);
 }
 
 .nash-session .nash-session-solution-scope {
@@ -5548,10 +5537,11 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
 .nash-session .nash-session-dimension-title-row h2 {
   margin: 0;
-  font-family: var(--serif, 'DM Serif Display', georgia, serif);
-  font-size: clamp(34px, 5vw, 62px);
-  font-weight: 400;
-  line-height: 0.96;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: clamp(24px, 2.5vw, 30px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
   color: var(--gallery-copy);
 }
 
@@ -5783,25 +5773,33 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   overflow-x: auto;
 }
 
-.nash-session .nash-session-analysis-table-wrap table {
+.nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) .nash-session-analysis-table-wrap table {
+  display: table;
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
   color: var(--gallery-muted);
-  font-size: 10px;
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: var(--assessment-table-size);
+  line-height: 1.6;
 }
 
-.nash-session .nash-session-analysis-table-wrap th,
-.nash-session .nash-session-analysis-table-wrap td {
+.nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) .nash-session-analysis-table-wrap th,
+.nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) .nash-session-analysis-table-wrap td {
   padding: 11px 10px;
+  border: 0;
   border-bottom: 1px solid var(--gallery-line);
+  background: transparent;
+  color: var(--gallery-muted);
+  font-size: inherit;
   text-align: left;
   vertical-align: top;
 }
 
-.nash-session .nash-session-analysis-table-wrap th {
-  color: #838895;
-  font-size: 9px;
+.nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) .nash-session-analysis-table-wrap th {
+  font-size: var(--assessment-label-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -6106,25 +6104,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   color: var(--gallery-copy);
 }
 
-.nash-session .nash-session-dimension-reading .nash-md table {
-  display: block;
-  max-width: 100%;
-  overflow-x: auto;
-  border-collapse: collapse;
-}
-
-.nash-session .nash-session-dimension-reading .nash-md th,
-.nash-session .nash-session-dimension-reading .nash-md td {
-  padding: 8px 10px;
-  border: 1px solid var(--gallery-line);
-  color: #c7cad1;
-}
-
-.nash-session .nash-session-dimension-reading .nash-md th {
-  background: rgb(255 255 255 / 5%);
-  color: #fff;
-}
-
 .nash-session .nash-session-dimension-reading .nash-arch {
   color: var(--ink, #111318);
 }
@@ -6219,6 +6198,161 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   text-transform: uppercase;
 }
 
+.nash-session .nash-session-assessment-gallery :is(
+  .nash-session-executive-lead,
+  .nash-session-overview-context ul,
+  .nash-session-solution-scope,
+  .nash-session__architecture-summary,
+  .nash-session-architecture-boundary p,
+  .nash-session-solution-stack p,
+  .nash-session-solution-stack small,
+  .nash-session__solution-dependencies summary,
+  .nash-session__use-case-details,
+  .nash-session__scoring-note,
+  .nash-session__architecture-details > summary,
+  .nash-session-use-case-grid p,
+  .nash-session-use-case-grid article > strong,
+  .nash-session-reference-card p,
+  .nash-session-dimension-lead,
+  .nash-session__dimension-analysis,
+  .nash-session-gallery-empty,
+  .nash-session-dimension-disclosure > summary,
+  .nash-session-dimension-disclosure > p,
+  .nash-session-dimension-disclosure li,
+  .nash-session-dimension-evidence p,
+  .nash-session-delivery-path dd,
+  .nash-session-delivery-path li,
+  .nash-session-solution-detail-grid p,
+  .nash-md p:not(.nash-md-h),
+  .nash-md li
+) {
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: var(--assessment-body-size);
+  line-height: 1.65;
+}
+
+.nash-session .nash-session-assessment-gallery .nash-md .nash-md-h {
+  color: var(--gallery-copy);
+  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.nash-session .nash-session-dimension-disclosure > h3 {
+  margin: 18px 0 10px;
+  color: var(--gallery-copy, var(--ink));
+  font-size: var(--assessment-body-size, 14px);
+}
+
+.nash-session details.nash-session__architecture-options > summary {
+  padding: 18px 0;
+  color: var(--gallery-copy);
+  font-size: var(--assessment-body-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nash-session .nash-session__architecture-options {
+  margin-top: 24px;
+}
+
+.nash-session .nash-session__architecture-options > h3,
+.nash-session .nash-session__reference-group > h3 {
+  margin: 0 0 12px;
+  color: var(--gallery-copy);
+  font-size: 16px;
+}
+
+.nash-session .nash-session__reference-group {
+  margin-top: 28px;
+}
+
+.nash-session .nash-session__reference-group .nash-session-reference-grid {
+  margin-top: 12px;
+}
+
+.nash-session .nash-session__score-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 18px;
+  color: var(--gallery-muted);
+  font-size: var(--assessment-label-size);
+}
+
+.nash-session .nash-session__score-warning,
+.nash-session .nash-session__input-warning {
+  padding: 14px 16px;
+  border-left: 3px solid #d88a24;
+  background: color-mix(in srgb, #d88a24 8%, transparent);
+  color: var(--gallery-copy);
+  font-size: var(--assessment-body-size);
+  line-height: 1.65;
+}
+
+.nash-session .nash-session__unscored {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.nash-session .nash-session__input-warning {
+  color: var(--ink, #111318);
+  font-size: 14px;
+}
+
+.nash-session .nash-session__gate-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0;
+  color: var(--gallery-muted);
+  font-size: var(--assessment-label-size);
+}
+
+.nash-session .nash-session__gate-link {
+  padding: 5px 10px;
+  border: 1px solid var(--gallery-line);
+  border-radius: 6px;
+  background: var(--gallery-panel);
+  color: var(--gallery-copy);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nash-session .nash-session__gate-link:focus-visible,
+.nash-session .nash-session__acceptance-gate:focus-visible {
+  outline: 2px solid var(--red, #eb1000);
+  outline-offset: 3px;
+}
+
+.nash-session .nash-session__section-evidence {
+  margin-top: 12px;
+  color: var(--gallery-muted);
+  font-size: var(--assessment-label-size);
+}
+
+.nash-session .nash-session__source-analysis {
+  margin-top: 28px;
+  padding: clamp(22px, 3.5vw, 40px);
+  border: 1px solid var(--gallery-line);
+  border-radius: 16px;
+  background: var(--gallery-panel);
+}
+
+.nash-session .nash-session__source-analysis > summary {
+  color: var(--gallery-copy);
+  font-size: var(--assessment-body-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nash-session .nash-session__source-analysis > .nash-md {
+  margin-top: 24px;
+  color: var(--gallery-muted);
+}
+
 /* Light mode keeps report surfaces calm and reserves color for active context. */
 html:not([data-theme="dark"]) .nash-session .nash-session-fluffy-shell {
   border-color: rgb(17 19 24 / 10%);
@@ -6261,7 +6395,7 @@ html:not([data-theme="dark"]) .nash-session .nash-session-action-item:hover {
   color: var(--ink, #111318);
 }
 
-html:not([data-theme="dark"]) .nash-session .nash-session-assessment-gallery {
+html:not([data-theme="dark"]) .nash-session :is(.nash-session-assessment-gallery, .nash-session-decision) {
   --gallery-bg: #f7f7f5;
   --gallery-panel: #fff;
   --gallery-panel-strong: #f8f8f7;
@@ -6448,6 +6582,8 @@ html:not([data-theme="dark"]) .nash-session .nash-session-action-list li::before
   }
 
   .nash-session .nash-session-assess-head {
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
   }
 
@@ -6476,11 +6612,29 @@ html:not([data-theme="dark"]) .nash-session .nash-session-action-list li::before
   }
 
   .nash-session .nash-session-assess-actions {
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 8px;
   }
 
   .nash-session .nash-session-assess-actions .nash-session-tabs {
-    display: none;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .nash-session .nash-session-assess-actions .nash-session-qual-score {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .nash-session .nash-session-assess-actions .nash-session-qual-ring {
+    width: 62px;
+    height: 62px;
+    font-size: 24px;
+  }
+
+  .nash-session .nash-session-assess-actions .nash-session-qual-ring.nash-session__unscored {
+    font-size: 12px;
   }
 
   .nash-session .nash-session-assessment-gallery .nash-session-qual-head {

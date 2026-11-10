@@ -1,3 +1,5 @@
+import { isCustomerShareableUrl } from './nash-assessment-contract.js';
+
 function text(value) {
   return String(value ?? '')
     .replace(/\[\[[a-z0-9_-]+\]\]/gi, '')
@@ -117,6 +119,94 @@ function legacySolutions(markdown) {
   }));
 }
 
+export function solutionSelection(solution) {
+  const selections = ['recommended', 'conditional', 'alternative', 'excluded', 'external'];
+  if (solution.selection !== undefined) {
+    return selections.includes(solution.selection) ? solution.selection : 'unclassified';
+  }
+  const deployment = text(solution.deployment);
+  const scope = [deployment, solution.role, solution.rationale].map(text).join(' ');
+  if (/\bexternal\b|customer[- ]owned|customer[- ]managed|existing customer systems/i.test(deployment)
+    || /^external customer systems?\b/i.test(text(solution.product))) {
+    return 'external';
+  }
+  if (/\bnot (?:selected|proposed|recommended|required|(?:(?:in|part of) (?:the )?)?baseline)|\bout of scope\b|\bexcluded\b/i.test(scope)) {
+    return 'excluded';
+  }
+  if (/\balternative\b|\bfuture (?:option|phase|scope)\b/i.test(scope)) return 'alternative';
+  if (/\bconditional option\b|\boptional\b|\bonly (?:if|for|where|when)\b/i.test(scope)
+    || /\bpreferred scenario pending\b/i.test(list(solution.dependencies).join(' '))) {
+    return 'conditional';
+  }
+  return 'recommended';
+}
+
+export function referenceKind(reference) {
+  const kinds = ['customer-story', 'product-documentation', 'trust-compliance', 'other'];
+  if (reference.kind !== undefined) {
+    return kinds.includes(reference.kind) ? reference.kind : 'other';
+  }
+  const url = String(reference.url || '');
+  if (/^https?:\/\/(?:business|www)\.adobe\.com\/(?:[a-z]{2}\/)?(?:customer-success-stories|customers)\//i.test(url)) {
+    return 'customer-story';
+  }
+  if (/^https?:\/\/(?:www\.)?adobe\.com\/(?:trust|privacy|legal)(?:\/|\.html(?:[?#]|$)|[?#]|$)/i.test(url)) {
+    return 'trust-compliance';
+  }
+  if (/^https?:\/\/(?:www\.)?aem\.live\/(?:docs|developer)\//i.test(url)
+    || /^https?:\/\/experienceleague\.adobe\.com\/(?:[a-z-]+\/)?docs\//i.test(url)
+    || /^https?:\/\/developer\.adobe\.com\//i.test(url)
+    || /^https?:\/\/business\.adobe\.com\/(?:[a-z]{2}\/)?products\//i.test(url)) {
+    return 'product-documentation';
+  }
+  if (/\bcustomer (?:success )?story\b|\bcase study\b/i.test(reference.relevance || '')
+    && !/\bnot (?:a )?(?:customer story|case study)\b/i.test(reference.relevance || '')) {
+    return 'customer-story';
+  }
+  return 'other';
+}
+
+export function scoreBreakdownFor(dimension, detail = {}) {
+  const { criteria } = detail;
+  if (criteria === undefined || (Array.isArray(criteria) && !criteria.length)) {
+    return { status: 'missing', criteria: [] };
+  }
+  if (!Array.isArray(criteria)) return { status: 'invalid', criteria: [] };
+  if (detail.scoreBasis === 'unscored' && dimension.scored === null && dimension.max === null) {
+    const qualitative = criteria.every((item) => item && typeof item.criterion === 'string'
+      && item.criterion.trim() && typeof item.rationale === 'string' && item.rationale.trim()
+      && ['supported', 'conditional', 'unknown', 'gap'].includes(item.status)
+      && item.scored === null && item.max === null);
+    return { status: qualitative ? 'unscored' : 'invalid', criteria: qualitative ? criteria : [] };
+  }
+  const valid = criteria.every((item) => item && typeof item.criterion === 'string'
+    && item.criterion.trim() && typeof item.rationale === 'string' && item.rationale.trim()
+    && Number.isFinite(item.scored) && Number.isFinite(item.max)
+    && item.max > 0 && item.scored >= 0 && item.scored <= item.max);
+  if (!valid || !Number.isFinite(dimension.scored) || !Number.isFinite(dimension.max)) {
+    return { status: 'invalid', criteria: [] };
+  }
+  const scored = criteria.reduce((sum, item) => sum + item.scored, 0);
+  const max = criteria.reduce((sum, item) => sum + item.max, 0);
+  if (Math.abs(scored - dimension.scored) > 0.000001
+    || Math.abs(max - dimension.max) > 0.000001) {
+    return { status: 'mismatch', criteria: [] };
+  }
+  return {
+    status: 'valid', criteria, scored, max,
+  };
+}
+
+function legacyReferences(assessment) {
+  return (assessment.evidence || []).filter(
+    (item) => item.type === 'public-source' && isCustomerShareableUrl(item.locator),
+  ).map((item) => ({
+    title: text(item.source),
+    url: item.locator,
+    relevance: text(item.claim),
+  }));
+}
+
 function legacyUseCases(markdown) {
   return tableRecords(markdown, {
     name: /^use case\b/i,
@@ -200,11 +290,10 @@ function legacyArchitecture(assessment, sections) {
 function legacyExecutive(assessment, sections) {
   const overview = sections.Overview || '';
   const recommendation = sections.Recommendation || '';
-  const posture = point(overview, /decision posture|recommendation|pursuit/i);
   const fit = points(overview).filter((item) => /fit\b|why adobe/i.test(item.label))
     .map((item) => item.text);
   return {
-    headline: firstSentence(posture) || firstSentence(assessment.dimensions?.[0]?.notes),
+    headline: firstSentence(fit[0]) || firstSentence(paragraphs(overview)[0]),
     summary: fit.slice(0, 2).join(' ') || paragraphs(overview)[0]
       || text(assessment.context?.success),
     conditions: list((assessment.confidence || []).map((item) => item.unknowns)).slice(0, 3),
@@ -214,7 +303,7 @@ function legacyExecutive(assessment, sections) {
   };
 }
 
-function legacyDimension(dimension, assessment, solutions) {
+function legacyDimension(dimension, assessment) {
   const confidence = (assessment.confidence || []).find(
     (item) => item.dimension.toLowerCase() === dimension.dimension.toLowerCase(),
   );
@@ -228,17 +317,13 @@ function legacyDimension(dimension, assessment, solutions) {
     ...list(confidence?.unknowns),
     ...list(confidence?.assumptions),
   ]);
-  const technical = /technical fit|functional coverage/i.test(dimension.dimension);
-  const response = technical
-    ? solutions.slice(0, 4).map((item) => ({ label: item.product, text: item.rationale }))
-    : [];
-  if (confidence?.scoreChanger) response.push({ label: 'Proof to secure', text: text(confidence.scoreChanger) });
   return {
     name: dimension.dimension,
     takeaway: text(dimension.notes),
     matters: evidence.filter((item) => /customer-document|analyst-context/.test(item.type))
       .slice(0, 4).map((item) => ({ label: text(item.source), text: text(item.claim) })),
-    response,
+    unknowns: list(confidence?.unknowns),
+    assumptions: list(confidence?.assumptions),
     verification,
     nextActions: verification.slice(0, 3),
     evidenceRefs,
@@ -263,13 +348,10 @@ export function assessmentViewFor(assessment, sections = {}) {
     requirements: legacyRequirements(sections.Business),
     competitors: legacyCompetitors(sections.Competition),
     deliveryPath: legacyDelivery(sections.Recommendation),
+    publicReferences: legacyReferences(assessment),
   };
   const dimensionDetails = (assessment.dimensions || []).map((dimension) => ({
-    ...legacyDimension(
-      dimension,
-      assessment,
-      Array.isArray(view.solutions) ? view.solutions : solutions,
-    ),
+    ...legacyDimension(dimension, assessment),
     ...(view.dimensionDetails || []).find(
       (item) => item.name?.toLowerCase() === dimension.dimension.toLowerCase(),
     ),
