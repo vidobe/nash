@@ -52,8 +52,14 @@ function provider({
 test('real completed stages produce a fully validated 166-row assessment in source order', async () => {
   const requirements = sourceRequirements(166);
   const fake = provider();
+  const progress = [];
+  let heartbeats = 0;
   const result = await generateAssessment({
-    stream: fake.stream, messages: [{ role: 'user', content: 'core' }], requirements,
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements,
+    onProgress: (event) => progress.push(event),
+    onHeartbeat: () => { heartbeats += 1; },
   });
   assert.equal(fake.requests.length, 8);
   assert.equal(fake.maxActive(), 2);
@@ -74,6 +80,32 @@ test('real completed stages produce a fully validated 166-row assessment in sour
   assert.equal(result.view.provenance.stages.at(-1).stage, 'integrity-review');
   assert.equal(fake.requests.slice(1).every((request) => request.webSearch === false), true);
   assert.equal(result.view.meta.score, null);
+  assert.equal(progress[0].phase, 'assessment');
+  assert.equal(progress.at(-1).phase, 'review');
+  assert.deepEqual(progress.filter((event) => event.phase === 'requirements')
+    .map((event) => event.reviewed), [0, 32, 64, 96, 128, 160, 166]);
+  assert.ok(progress.every((event) => !('answer' in event) && !('thinking' in event)));
+  assert.ok(heartbeats >= fake.requests.length * 3);
+});
+
+test('every live stage forwards activity heartbeats without leaking its contents as progress', async () => {
+  const fake = provider();
+  const progress = [];
+  let heartbeats = 0;
+  await generateAssessment({
+    stream: async (options) => {
+      options.onThinking?.('private reasoning');
+      options.onActivity?.('internal tool details');
+      await fake.stream(options);
+    },
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: sourceRequirements(),
+    onProgress: (event) => progress.push(event),
+    onHeartbeat: () => { heartbeats += 1; },
+  });
+  assert.equal(fake.requests.length, 3);
+  assert.ok(heartbeats >= 15);
+  assert.doesNotMatch(JSON.stringify(progress), /private reasoning|internal tool details/);
 });
 
 test('mock, failed and prematurely ended responses cannot produce a report', async () => {

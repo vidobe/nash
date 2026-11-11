@@ -3425,21 +3425,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   margin-top: 8px;
 }
 
-/* Live "thinking" run state */
-.nash-session .nash-session-running {
-  margin-top: 8px;
-  text-align: center;
-}
-
-.nash-session .nash-session-running .nash-session-working {
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.nash-session .nash-session-running .nash-session-evidence-steps {
-  margin-bottom: 24px;
-}
-
 .nash-session .nash-session-working {
   display: flex;
   align-items: center;
@@ -3488,13 +3473,111 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   }
 }
 
-.nash-session .nash-session-stream {
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--ink-40, #9a9da6);
-  white-space: pre-wrap;
+.nash-session .nash-session-generation {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 640px;
+  margin: 20px auto;
+  padding: 24px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 16px;
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
   text-align: left;
+}
+
+.nash-session .nash-session-generation [hidden] {
+  display: none;
+}
+
+.nash-session .nash-session-generation__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--blue, #1d4ed8);
+  font: 600 12px/1.5 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session .nash-session-generation__indicator {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: nash-generation-spin 1s linear infinite;
+}
+
+.nash-session .nash-session-generation__title {
+  margin: 14px 0 8px;
+  font: 600 22px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
+  overflow-wrap: anywhere;
+}
+
+.nash-session .nash-session-generation__phase {
+  margin: 0;
+  color: var(--ink-70, #4a4d55);
+  font: 500 14px/1.6 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session .nash-session-generation__note,
+.nash-session .nash-session-generation__details {
+  margin: 12px 0 0;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12px/1.6 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session .nash-session-generation__timing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 20px 0 0;
+  color: var(--ink-40, #9a9da6);
+  font: 400 12px/1.5 var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.nash-session .nash-session-generation__error {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.nash-session .nash-session-generation__retry {
+  margin-top: 18px;
+}
+
+.nash-session .nash-session-generation[data-state="waiting"] .nash-session-generation__status {
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-session-generation[data-state="error"] .nash-session-generation__status {
+  color: var(--red, #eb1000);
+}
+
+.nash-session .nash-session-generation[data-state="complete"] .nash-session-generation__status {
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-session-generation:is([data-state="error"], [data-state="complete"]) .nash-session-generation__indicator {
+  border: 0;
+  background: currentcolor;
+  animation: none;
+}
+
+.nash-session .nash-session-generation__ready {
+  margin: 0 0 16px;
+  color: var(--green, #0d7a45);
+  font: 600 12px/1.5 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+@keyframes nash-generation-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nash-session .nash-session-generation__indicator {
+    animation: none;
+  }
 }
 
 .nash-session .nash-session-results {

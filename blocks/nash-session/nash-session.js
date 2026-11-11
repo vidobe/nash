@@ -25,6 +25,7 @@ import {
 import {
   assessmentWorkspaceFor, disposeAssessmentWorkspace, mountAssessmentWorkspace,
 } from './nash-session-workspace.js';
+import { createGenerationProgress } from './nash-session-generation.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -696,13 +697,6 @@ const SETUP_EVIDENCE_STEPS = [
   'Objectives and requirements identified',
   'Likely Adobe solutions mapped',
   'Summary and questions prepared',
-];
-
-const ASSESSMENT_EVIDENCE_STEPS = [
-  'Customer evidence collected',
-  'Requirements mapped to Adobe',
-  'Testing fit and competitive position',
-  'Preparing the recommendation',
 ];
 
 function evidenceStepsHtml(steps, activeIndex = 0) {
@@ -2735,17 +2729,12 @@ function experimentalDossier(a) {
 function renderExperimentalDossier(a) {
   if (a.experimentalStatus === 'running') {
     return `<div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
-      <div class="nash-session-running">
-        <p class="nash-session-progress-title">Building the experimental report</p>
-        <div class="nash-session-working"><span class="nash-session-working-label">Preparing the five-section assessment…</span></div>
-        ${evidenceStepsHtml(ASSESSMENT_EVIDENCE_STEPS, 1)}
-        <div class="nash-session-stream"></div>
-      </div>`;
+      <div class="nash-session-generation-host"></div>`;
   }
   const experimental = experimentalDossier(a);
+  const error = a.experimentalError
+    ? `<details class="nash-session-experiment-error"><summary>Experimental assessment not completed</summary><p>${escapeHtml(a.experimentalError)}</p></details>` : '';
   if (!experimental.reportMarkdown) {
-    const error = a.experimentalError
-      ? `<p class="nash-session-experiment-error">${escapeHtml(a.experimentalError)}</p>` : '';
     return `<div class="nash-session-experiment-intro">
       <div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
       <h2>Five-section assessment experiment</h2>
@@ -2755,7 +2744,7 @@ function renderExperimentalDossier(a) {
     </div>`;
   }
   const body = dossierBody(experimental);
-  return `<div class="nash-session-experiment-head">
+  return `${error}<div class="nash-session-experiment-head">
       <div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
       <button type="button" class="nash-session-run-experiment nash-session-experiment-rerun">↻ Re-run experiment</button>
     </div>
@@ -3113,6 +3102,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   }
 
   if (!isAuthenticated()) {
+    setSetupAvailability(block, false);
     area.innerHTML = '<div class="nash-session-run"><p class="nash-session-run-text">Connect to FluffyJaws to generate a real assessment. No simulated assessment has been saved.</p><button class="nash-session-connect" type="button">Sign in</button></div>';
     area.querySelector('.nash-session-connect').addEventListener('click', () => login());
     return;
@@ -3124,51 +3114,46 @@ async function runAssessment(block, attempt = 1, insights = '') {
     : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
   const solutionNames = sols.map((s) => s.name).join(' and ');
 
-  let phase = 'Starting the analysis';
-  if (insights) phase = 'Re-running with your latest insights';
-  else if (attempt > 1) phase = 'Retrying';
-  const runningHTML = `
-    <div class="nash-session-running">
-      <p class="nash-session-progress-title">Building your recommendation</p>
-      <div class="nash-session-working">
-        <span class="nash-session-working-label">${phase} — this can take several minutes…</span>
-      </div>
-      ${evidenceStepsHtml(ASSESSMENT_EVIDENCE_STEPS, 1)}
-      <div class="nash-session-stream"></div>
-    </div>`;
-
   // Re-run (a report already exists): show progress as the last chat message so
   // it's visible without scrolling. Initial run: show it in the report area.
   const thread = block.querySelector('.nash-session-thread');
   const inThread = !!assessment.reportMarkdown && !!thread;
-  const host = inThread ? addMessage(thread, 'assistant', runningHTML) : area;
-  if (!inThread) area.innerHTML = runningHTML;
-  const stream = host.querySelector('.nash-session-stream');
-  const label = host.querySelector('.nash-session-working-label');
+  const host = inThread ? addMessage(thread, 'assistant', '') : area;
+  const progress = createGenerationProgress(host, {
+    title: insights ? 'Updating your assessment' : 'Generating your assessment',
+  });
+  const rerunButton = block.querySelector('.nash-session-rerun');
+  if (rerunButton) rerunButton.disabled = true;
+  if (inThread) assessmentWorkspaceFor(block)?.open();
+  isRunning = true;
+  assessment.status = 'running';
+  assessment.runStartedAt = Date.now();
+  persist(assessment);
 
   const scroll = () => { if (inThread) scrollToBottom(thread); };
+  scroll();
   const failMsg = (msg) => {
     // A terminal failure — the run is no longer in flight. Roll the status back so
     // re-opening offers a fresh run rather than trying to resume a dead stream.
     if (current === assessment) isRunning = false;
-    assessment.status = assessment.reportMarkdown ? 'done' : 'draft';
+    assessment.status = assessment.reportMarkdown || assessment.report || assessment.reportHtml
+      ? 'done' : 'draft';
     delete assessment.runStartedAt;
     persist(assessment);
-    if (current !== assessment) return;
+    if (rerunButton) rerunButton.disabled = false;
+    if (current !== assessment) { progress.dispose(); return; }
     setSetupAvailability(block, false);
-    if (inThread) { host.innerHTML = renderMarkdown(msg); scroll(); return; }
-    area.innerHTML = `<div class="nash-session-run"><p class="nash-session-run-text">${msg}</p><button class="nash-session-run-btn" type="button">Run assessment</button></div>`;
-    block.querySelector('.nash-session-run-btn')?.addEventListener('click', () => runAssessment(block));
+    progress.fail(msg, () => runAssessment(block, attempt, insights));
+    scroll();
   };
 
   let skills;
   try {
     skills = await fetchSkillsText(sols.map((s) => s.slug));
   } catch (error) {
-    failMsg(escapeHtml(error.message || 'The solution skills could not be loaded. Try again.'));
+    failMsg(error.message || 'The solution skills could not be loaded. Try again.');
     return;
   }
-  setEvidenceStep(host, 2);
   // FluffyJaws chains an Azure response per tool iteration; long loops expire the
   // chain (previous_response_not_found). Fewer searches → higher completion rate.
   // The retry is tighter still, so it's more likely to finish than the first pass.
@@ -3180,7 +3165,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   try {
     requirements = requirementManifestForFiles(files);
   } catch (error) {
-    failMsg(escapeHtml(error.message));
+    failMsg(error.message);
     return;
   }
   const docText = files.filter((f) => f.text)
@@ -3211,15 +3196,6 @@ async function runAssessment(block, attempt = 1, insights = '') {
     ? [{ type: 'input_text', text: finalPrompt }, ...attachments]
     : finalPrompt;
 
-  // Mark the run in-flight and persist, so re-opening the session mid-run resumes
-  // (rather than restarting the interview) and navigating away warns the user.
-  isRunning = true;
-  assessment.status = 'running';
-  assessment.runStartedAt = Date.now();
-  persist(assessment);
-
-  let answer = '';
-  let thinking = '';
   let result;
   try {
     result = await generateAssessment({
@@ -3235,30 +3211,26 @@ async function runAssessment(block, attempt = 1, insights = '') {
       },
       webSearch: true,
       reasoningEffort: 'medium',
-      onActivity: (text) => {
-        setEvidenceStep(host, 2);
-        if (label) label.textContent = text;
-      },
-      onThinking: (d) => {
-        thinking += d;
-        if (!answer) { stream.textContent = thinking; scroll(); }
-      },
-      onDelta: (d) => {
-        setEvidenceStep(host, 3);
-        if (!answer && label) label.textContent = `Writing the ${solutionNames} qualification…`;
-        answer += d;
-        stream.textContent = answer;
-        scroll();
-      },
+      onProgress: progress.update,
+      onHeartbeat: progress.pulse,
     });
   } catch (error) {
     const message = error.message === 'content_filter'
       ? 'FluffyJaws blocked the output. No report was replaced. Try again with a concise paraphrase of the source material.'
       : error.message || 'The assessment did not complete. No report was replaced.';
-    failMsg(escapeHtml(message));
+    failMsg(message);
     return;
   }
-  Object.assign(assessment, assessmentProjection(result.view), {
+  let projection;
+  let rendered;
+  try {
+    projection = assessmentProjection(result.view);
+    rendered = renderDossier({ ...assessment, ...projection });
+  } catch (error) {
+    failMsg(`The assessment could not be displayed: ${error.message}`);
+    return;
+  }
+  Object.assign(assessment, projection, {
     reportRev: Date.now(), notesSinceRun: false, status: 'done',
   });
   delete assessment.report;
@@ -3267,11 +3239,13 @@ async function runAssessment(block, attempt = 1, insights = '') {
   delete assessment.previousResponseId;
   delete assessment.generationCheckpoint;
   persist(assessment);
-  if (current !== assessment) return;
+  if (current !== assessment) { progress.dispose(); return; }
   isRunning = false;
+  if (rerunButton) rerunButton.disabled = false;
   previousResponseId = null;
   chatGrounded = false;
-  area.innerHTML = renderDossier(assessment);
+  progress.complete();
+  area.innerHTML = `<p class="nash-session-generation__ready" role="status">Assessment complete</p>${rendered}`;
   wireQualificationPanel(area);
   setSetupAvailability(block, false);
   setStatusDone(block);
@@ -3279,7 +3253,6 @@ async function runAssessment(block, attempt = 1, insights = '') {
   logActivity('assessment');
   publishAutomatically(block);
   if (inThread) {
-    host.innerHTML = '<p>Updated all seven assessment dimensions and validated the complete source-question matrix. The report above has been refreshed.</p>';
     scroll();
   }
   reportWorkspace(block, assessment.company)?.refresh();
@@ -3301,9 +3274,11 @@ async function runExperimentalAssessment(block, attempt = 1) {
   refreshExperimentPanel(block);
 
   const panel = block.querySelector('.nash-session-experiment');
-  const stream = panel?.querySelector('.nash-session-stream');
-  const label = panel?.querySelector('.nash-session-working-label');
+  const progress = createGenerationProgress(panel.querySelector('.nash-session-generation-host'), {
+    title: 'Generating the experimental assessment',
+  });
   const fail = (message) => {
+    progress.dispose();
     current.experimentalStatus = 'error';
     current.experimentalError = message;
     persist(current);
@@ -3321,7 +3296,6 @@ async function runExperimentalAssessment(block, attempt = 1) {
       : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
     const solutionNames = sols.map((solution) => solution.name).join(' and ');
     const skills = await fetchSkillsText(sols.map((solution) => solution.slug));
-    setEvidenceStep(panel, 2);
 
     const files = assessmentFiles(current);
     const requirements = requirementManifestForFiles(files);
@@ -3348,7 +3322,6 @@ async function runExperimentalAssessment(block, attempt = 1) {
     const userContent = attachments.length
       ? [{ type: 'input_text', text: prompt }, ...attachments]
       : prompt;
-    let answer = '';
     const result = await generateAssessment({
       stream: streamQualification,
       messages: [{ role: 'user', content: userContent }],
@@ -3357,18 +3330,8 @@ async function runExperimentalAssessment(block, attempt = 1) {
       solutionSlugs: sols.map((solution) => solution.slug),
       webSearch: true,
       reasoningEffort: 'medium',
-      onActivity: (text) => {
-        setEvidenceStep(panel, 2);
-        if (!answer && label) label.textContent = text;
-      },
-      onThinking: (delta) => {
-        if (!answer && stream) stream.textContent += delta;
-      },
-      onDelta: (delta) => {
-        setEvidenceStep(panel, 3);
-        answer += delta;
-        if (stream) stream.textContent = answer;
-      },
+      onProgress: progress.update,
+      onHeartbeat: progress.pulse,
     });
     const { view } = result;
     current.experimentalReportMarkdown = view.reportMarkdown;
@@ -3383,6 +3346,7 @@ async function runExperimentalAssessment(block, attempt = 1) {
     current.experimentalStatus = 'done';
     delete current.experimentalError;
     persist(current);
+    progress.complete();
     refreshExperimentPanel(block);
     logActivity('experimental-assessment');
   } catch (error) {

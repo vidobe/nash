@@ -55,6 +55,7 @@ export async function completedAnswer(stream, options) {
 
 export async function generateAssessment({
   stream, messages, requirements = [], onDelta, onThinking, onActivity,
+  onProgress, onHeartbeat,
   reasoningEffort = 'medium', webSearch = true, onResponse, checkpoint, onCheckpoint,
   integrityReview = true, sourceContext = '', solutionSlugs = [],
 }) {
@@ -74,6 +75,7 @@ export async function generateAssessment({
     onCheckpoint?.({ inputSha256, promptSha256, responses: [...validated.values()] });
   };
   const request = async (stage, options) => {
+    onHeartbeat?.();
     const saved = cached.get(stage);
     if (saved) {
       if (saved.completion?.mock !== false || !saved.completion.responseId
@@ -85,9 +87,16 @@ export async function generateAssessment({
     }
     return completedAnswer(stream, {
       ...options,
-      onResponse: (response) => onResponse?.({ stage, ...response }),
+      onDelta: (delta) => { onHeartbeat?.(); options.onDelta?.(delta); },
+      onThinking: (delta) => { onHeartbeat?.(); options.onThinking?.(delta); },
+      onActivity: (activity) => { onHeartbeat?.(); options.onActivity?.(activity); },
+      onResponse: (response) => {
+        onHeartbeat?.();
+        onResponse?.({ stage, ...response });
+      },
     });
   };
+  onProgress?.({ phase: 'assessment' });
   let core = await request('core', {
     messages,
     onDelta,
@@ -136,7 +145,13 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
   }
   remember('core', core);
   const rows = [];
+  let reviewedCount = 0;
+  const reportReviewed = (count) => {
+    reviewedCount += count;
+    onProgress?.({ phase: 'requirements', reviewed: reviewedCount, total: requirements.length });
+  };
   const batchSize = 32;
+  if (requirements.length) reportReviewed(0);
   // Parallel reviews share explicit evidence rather than relying on response IDs.
   for (let offset = 0; offset < requirements.length; offset += batchSize * 2) {
     const batches = [
@@ -193,6 +208,7 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
         reviewed = parseRows(result.answer);
       }
       remember(stage, result);
+      reportReviewed(reviewed.length);
       return {
         ...result,
         rows: reviewed,
@@ -225,6 +241,7 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
     }));
   }
   let finalView = view;
+  onProgress?.({ phase: 'review' });
   if (integrityReview) {
     onActivity?.('Critically reviewing all seven conclusions and the complete requirement matrix');
     const reviewMessages = buildAssessmentReviewMessages({
