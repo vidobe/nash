@@ -6727,3 +6727,621 @@ html:not([data-theme="dark"]) .nash-session .nash-session-action-list li::before
     margin-top: 5px;
   }
 }
+
+/* Assessment workspace: the real report and composer share normal grid tracks. */
+main.nash-session-workspace--active,
+body.nash-app-page main.nash-session-workspace--active {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 0;
+  padding-right: 44px;
+  overflow: hidden;
+}
+
+main.nash-session-workspace--active::before {
+  display: none;
+}
+
+main.nash-session-workspace--active .nash-session-workspace__host {
+  grid-area: 1 / 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nash-session.nash-session--workspace {
+  --nash-workspace-accent: #6951b0;
+  --nash-workspace-tint: color-mix(in srgb, var(--white, #fff) 94%, var(--nash-workspace-accent) 6%);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.nash-session.nash-session--workspace-open {
+  grid-template-columns: minmax(0, 1fr) 12px var(--nash-workspace-panel-size, 420px);
+}
+
+.nash-session.nash-session--workspace-open.nash-session--workspace-stacked {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 12px var(--nash-workspace-panel-size);
+}
+
+.nash-session.nash-session--workspace > .nash-session-assess {
+  container: nash-session-report / inline-size;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--nash-workspace-frame-border, 1px solid var(--border, #e5e6ea));
+  border-radius: var(--nash-workspace-frame-radius, 24px);
+  background: var(--nash-workspace-frame-background, var(--surface, #f8f8fa));
+  box-shadow: var(--nash-workspace-frame-shadow, none);
+}
+
+.nash-session.nash-session--workspace .nash-session-assess-head {
+  flex-shrink: 0;
+  min-width: 0;
+  margin: 0;
+  padding: clamp(16px, 4cqi, 42px);
+}
+
+.nash-session.nash-session--workspace .nash-session-assess-head > div:first-child {
+  min-width: 0;
+}
+
+.nash-session.nash-session--workspace :is(
+  .nash-session-assess-title,
+  .nash-session-assess-solutions,
+  .nash-session-assess-meta
+) {
+  overflow-wrap: anywhere;
+}
+
+.nash-session.nash-session--workspace .nash-session-panels {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 0 clamp(16px, 4cqi, 42px) clamp(16px, 4cqi, 42px);
+}
+
+.nash-session.nash-session--workspace .nash-session-assess-scroll {
+  min-width: 0;
+  padding-bottom: 0;
+  overscroll-behavior: contain;
+}
+
+.nash-session.nash-session--workspace .nash-session-analysis-table-wrap {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__toggle {
+  position: fixed;
+  z-index: 130;
+  top: var(--nash-workspace-top, 18px);
+  right: 6px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session.nash-session--workspace :is(
+  .nash-session-workspace__toggle,
+  .nash-session-workspace__expand
+) svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4px;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__toggle-pane {
+  fill: currentcolor;
+  stroke: none;
+  opacity: 0.12;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__toggle[aria-expanded="true"] .nash-session-workspace__toggle-pane {
+  opacity: 0.4;
+}
+
+.nash-session.nash-session--workspace :is(
+  .nash-session-workspace__toggle:hover,
+  .nash-session-workspace__toggle[aria-expanded="true"],
+  .nash-session-workspace__expand:hover
+) {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session.nash-session--workspace > .nash-session-workspace__chat {
+  container: nash-session-chat / inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: auto;
+  max-width: none;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--nash-workspace-frame-border, 1px solid var(--border, #e5e6ea));
+  border-radius: var(--nash-workspace-frame-radius, 24px);
+  background: var(--white, #fff);
+  box-shadow: var(--nash-workspace-frame-shadow, none);
+  color: var(--ink, #111318);
+  font: 400 14px/1.65 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session.nash-session--workspace [hidden] {
+  display: none;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 20px 20px 18px 24px;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__identity .nash-session-pix {
+  margin: 0;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__head h2 {
+  margin: 0;
+  font: 600 18px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
+  letter-spacing: -0.3px;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__head p {
+  margin: 3px 0 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__expand {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__context {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  padding: 9px 24px;
+  border-block: 1px solid var(--border, #e5e6ea);
+  background: var(--nash-workspace-tint);
+  color: var(--ink-70, #4a4d55);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__context-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--nash-workspace-accent);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__company {
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__context-divider {
+  opacity: 0.6;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat > .nash-session-thread {
+  flex: 1 1 0;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 22px 24px;
+  overflow: auto;
+  border: 0;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--border, #e5e6ea) transparent;
+  scrollbar-width: thin;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat :is(
+  .nash-session-msg,
+  .nash-session-bubble
+) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat > .nash-session-fluffy-island {
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  padding: 12px 16px max(18px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border, #e5e6ea);
+  background: var(--white, #fff);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-fluffy-island .nash-session-composer {
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 12px 10px 8px;
+  border: 1px solid color-mix(in srgb, var(--nash-workspace-accent) 20%, var(--border, #e5e6ea));
+  border-radius: 16px;
+  background: var(--white, #fff);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-fluffy-island .nash-session-composer:focus-within {
+  border-color: color-mix(in srgb, var(--nash-workspace-accent) 55%, var(--border, #e5e6ea));
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-composer-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-composer-main > .nash-session-pix {
+  display: none;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  max-height: 144px;
+  padding: 2px 6px 6px;
+  overflow-y: auto;
+  color: var(--ink, #111318);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-composer-tools {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding-left: 0;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-fluffy-island :is(
+  .nash-session-footer-btn,
+  .nash-session-model
+) {
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-fluffy-island .nash-session-footer-btn[aria-expanded="true"] {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-fluffy-island .nash-session-model {
+  display: inline-flex;
+  font-size: 10px;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-attachments {
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-chip {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__chat .nash-session-action-popover {
+  box-sizing: border-box;
+  width: min(220px, calc(100cqi - 48px));
+  min-width: 0;
+}
+
+.nash-session.nash-session--workspace > .nash-session-workspace__divider {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__divider::after {
+  position: absolute;
+  inset: 14px auto 14px 5px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border, #e5e6ea);
+  content: '';
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__divider::before {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 4px;
+  width: 4px;
+  height: 36px;
+  border-radius: 3px;
+  background: var(--ink-40, #9a9da6);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.nash-session.nash-session--workspace-stacked .nash-session-workspace__divider {
+  cursor: row-resize;
+}
+
+.nash-session.nash-session--workspace-stacked .nash-session-workspace__divider::after {
+  inset: 5px 14px auto;
+  width: auto;
+  height: 2px;
+}
+
+.nash-session.nash-session--workspace-stacked .nash-session-workspace__divider::before {
+  top: 4px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  transform: translateX(-50%);
+}
+
+.nash-session.nash-session--workspace-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.nash-session.nash-session--workspace-resizing.nash-session--workspace-stacked {
+  cursor: row-resize;
+}
+
+.nash-session.nash-session--workspace .nash-session-workspace__divider:hover::after,
+.nash-session.nash-session--workspace .nash-session-workspace__divider:focus-visible::after,
+.nash-session.nash-session--workspace-resizing .nash-session-workspace__divider::after {
+  background: var(--nash-workspace-accent);
+}
+
+.nash-session.nash-session--workspace :is(
+  .nash-session-workspace__toggle,
+  .nash-session-workspace__expand,
+  .nash-session-workspace__divider
+):focus-visible {
+  outline: 2px solid var(--nash-workspace-accent);
+  outline-offset: 3px;
+}
+
+.nash-session.nash-session--workspace-stacked > .nash-session-assess {
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nash-session.nash-session--workspace-stacked .nash-session-panels,
+.nash-session.nash-session--workspace-stacked .nash-session-panel.active,
+.nash-session.nash-session--workspace-stacked .nash-session-assess-scroll {
+  display: block;
+  flex: none;
+  height: auto;
+  overflow: visible;
+}
+
+@container nash-session-report (width < 720px) {
+  .nash-session.nash-session--workspace .nash-session-assess-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-panels {
+    padding: 0 20px 20px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-actions {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-actions .nash-session-tabs {
+    flex-wrap: wrap;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-title {
+    font-size: 26px;
+  }
+
+  .nash-session.nash-session--workspace :is(
+    .nash-session-assess-solutions,
+    .nash-session-assess-meta
+  ) {
+    font-size: 12px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-actions .nash-session-qual-score {
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-actions .nash-session-qual-ring {
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    font-size: 18px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-actions .nash-session-qual-ring.nash-session__unscored {
+    font-size: 10px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-section-gallery {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: minmax(112px, auto);
+  }
+
+  .nash-session.nash-session--workspace .nash-session-section-gallery > * {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .nash-session.nash-session--workspace :is(
+    .nash-session-overview-context,
+    .nash-session-use-case-grid,
+    .nash-session-reference-grid,
+    .nash-session-brief-grid,
+    .nash-session-dimension-summary,
+    .nash-session-solution-detail-grid,
+    .nash-session-delivery-path,
+    .nash-session-verification-list > ul,
+    .nash-session-score-movement,
+    .nash-session-confidence-body,
+    .nash-session-value-mapping > div
+  ) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nash-session.nash-session--workspace :is(
+    .nash-session-executive-summary,
+    .nash-session-overview-use-cases,
+    .nash-session-public-references,
+    .nash-session-solution-rationale,
+    .nash-session-dimension-reading
+  ) {
+    padding: 20px;
+  }
+
+  .nash-session.nash-session--workspace :is(
+    .nash-session-dimension-title-row,
+    .nash-session-overview-section-head,
+    .nash-session-executive-decision,
+    .nash-session-architecture-boundary,
+    .nash-session-analysis-head,
+    .nash-session-gallery-footer,
+    .nash-session-decision .nash-session-evidence-item
+  ) {
+    display: block;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-decision {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 20px 0;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-coverage-summary {
+    margin-top: 14px;
+    overflow-x: auto;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-value-mapping :is(span, p) {
+    padding: 6px 0;
+    border-left: 0;
+  }
+}
+
+@container nash-session-report (width < 420px) {
+  .nash-session.nash-session--workspace .nash-session-assess-head {
+    padding: 16px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-panels {
+    padding: 0 16px 16px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-title {
+    font-size: 22px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-assess-meta {
+    font-size: 10px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-dimension-filter {
+    min-height: 48px;
+    padding: 6px;
+  }
+
+  .nash-session.nash-session--workspace :is(
+    .nash-session-executive-summary,
+    .nash-session-overview-use-cases,
+    .nash-session-public-references,
+    .nash-session-solution-rationale,
+    .nash-session-dimension-reading
+  ) {
+    padding: 16px;
+  }
+}
+
+@container nash-session-chat (width < 360px) {
+  .nash-session.nash-session--workspace .nash-session-workspace__head {
+    padding: 16px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-workspace__context {
+    padding-inline: 16px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-workspace__chat > .nash-session-thread {
+    padding: 18px;
+  }
+
+  .nash-session.nash-session--workspace .nash-session-workspace__chat > .nash-session-fluffy-island {
+    padding-inline: 12px;
+  }
+}

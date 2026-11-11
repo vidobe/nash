@@ -22,6 +22,9 @@ import { assessmentScore, dimensionPercent } from '../../scripts/nash-scoring.js
 import {
   PILLARS, SOLUTION_PILLARS, SOLUTION_TILES,
 } from '../nash-solutions/nash-solutions.js';
+import {
+  assessmentWorkspaceFor, disposeAssessmentWorkspace, mountAssessmentWorkspace,
+} from './nash-session-workspace.js';
 
 let previousResponseId = null;
 let current = null; // assessment being viewed in chat mode
@@ -36,6 +39,24 @@ let chatGrounded = false;
 // Documents attached in the composer, to fold into the next Fluffy message.
 let pendingDocs = [];
 let publishRetryTimer = null;
+const renderBindings = new WeakMap();
+
+function disposeRenderedSession(block) {
+  renderBindings.get(block)?.abort();
+  renderBindings.delete(block);
+  disposeAssessmentWorkspace(block);
+}
+
+function reportWorkspace(block, company) {
+  const workspace = mountAssessmentWorkspace(block, { company });
+  const bindings = renderBindings.get(block);
+  if (bindings && workspace) {
+    workspace.signal.addEventListener('abort', () => bindings.abort(), {
+      once: true, signal: bindings.signal,
+    });
+  }
+  return workspace;
+}
 
 const ICONS = {
   plus: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -549,6 +570,7 @@ function parseAssessmentView(text) {
 /* ── Launcher ────────────────────────────────────────── */
 
 function renderLauncher(block, name) {
+  disposeRenderedSession(block);
   block.classList.remove('wide');
   block.innerHTML = `
     <div class="nash-session-hero">
@@ -3260,6 +3282,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     host.innerHTML = '<p>Updated all seven assessment dimensions and validated the complete source-question matrix. The report above has been refreshed.</p>';
     scroll();
   }
+  reportWorkspace(block, assessment.company)?.refresh();
 }
 
 async function runExperimentalAssessment(block, attempt = 1) {
@@ -3368,6 +3391,9 @@ async function runExperimentalAssessment(block, attempt = 1) {
 }
 
 export function renderAssessment(block, record, autoRun = false) {
+  disposeRenderedSession(block);
+  const bindings = new AbortController();
+  renderBindings.set(block, bindings);
   const a = record.assessmentView?.contractVersion === 3
     ? { ...record, ...assessmentProjection(record.assessmentView) } : record;
   current = a;
@@ -3415,19 +3441,8 @@ export function renderAssessment(block, record, autoRun = false) {
     : '';
   const hasReport = a.reportMarkdown || a.report || a.reportHtml;
   const inlineThread = hasReport ? '' : '<div class="nash-session-thread" aria-live="polite"></div>';
-  const chatSheet = hasReport ? `
-    <dialog class="nash-session-fluffy-chat" aria-label="Ask Fluffy about this assessment">
-      <header class="nash-session-fluffy-chat-head">
-        <div class="nash-session-fluffy-chat-title">
-          <span class="nash-session-pix" aria-hidden="true">${pixelDots()}</span>
-          <span>Ask Fluffy about this assessment</span>
-        </div>
-        <button type="button" class="nash-session-fluffy-chat-close" aria-label="Close chat" title="Close chat">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
-        </button>
-      </header>
-      <div class="nash-session-thread" aria-live="polite"></div>
-    </dialog>` : '';
+  const reportThread = hasReport
+    ? '<div class="nash-session-thread" aria-live="polite"></div>' : '';
 
   block.innerHTML = `
     <div class="nash-session-assess">
@@ -3459,7 +3474,7 @@ export function renderAssessment(block, record, autoRun = false) {
             ${inlineThread}
           </div>
           <div class="nash-session-fluffy-shell">
-            ${chatSheet}
+            ${reportThread}
             <div class="nash-session-fluffy-island">
               <div class="nash-session-attachments" hidden></div>
               <form class="nash-session-composer" autocomplete="off">
@@ -3500,9 +3515,8 @@ export function renderAssessment(block, record, autoRun = false) {
   renderRerunState(block);
   wireSalesPanel(block);
 
-  const chatSheetElement = block.querySelector('.nash-session-fluffy-chat');
-  const thread = chatSheetElement?.querySelector('.nash-session-thread')
-    || block.querySelector('.nash-session-assess-scroll > .nash-session-thread');
+  if (hasReport) reportWorkspace(block, a.company);
+  const thread = block.querySelector('.nash-session-thread');
   const input = block.querySelector('.nash-session-input');
   const sendBtn = block.querySelector('.nash-session-send');
   const actionToggle = block.querySelector('.nash-session-action-toggle');
@@ -3521,49 +3535,18 @@ export function renderAssessment(block, record, autoRun = false) {
   actionPopover?.addEventListener('click', (event) => event.stopPropagation());
   document.addEventListener('click', () => {
     if (block.isConnected) closeActionPopover();
-  });
-  const fluffyShell = block.querySelector('.nash-session-fluffy-shell');
-  const openChatSheet = () => {
-    if (!chatSheetElement || chatSheetElement.open) return;
-    chatSheetElement.show();
-    fluffyShell?.classList.add('is-chat-open');
-  };
-  const closeChatSheet = () => {
-    if (!chatSheetElement?.open) return;
-    chatSheetElement.close();
-    chatSheetElement.removeAttribute('open');
-    fluffyShell?.classList.remove('is-chat-open');
-    input?.blur();
-  };
-  chatSheetElement?.querySelector('.nash-session-fluffy-chat-close')
-    ?.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      closeChatSheet();
-    });
-  chatSheetElement?.addEventListener('cancel', (event) => {
-    event.preventDefault();
-    closeChatSheet();
-  });
-  chatSheetElement?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeChatSheet();
-  });
+  }, { signal: bindings.signal });
+  const openChat = () => assessmentWorkspaceFor(block)?.open();
   block.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
       closeActionPopover();
-      closeChatSheet();
+      assessmentWorkspaceFor(block)?.close();
     }
-  });
-  document.addEventListener('pointerdown', (event) => {
-    if (!block.isConnected || !chatSheetElement?.open) return;
-    if (!fluffyShell?.contains(event.target)) {
-      closeChatSheet();
-    }
-  });
+  }, { signal: bindings.signal });
 
   // Always open on a clean thread — prior chat history is not replayed (the
-  // report is the focus), but the composer stays so Fluffy can be asked about
-  // the results. Past messages are still kept for re-run context.
+  // report is the focus). Closing the workspace keeps this thread and its draft.
+  // Past messages are still kept for re-run context.
   const willAutoRun = autoRun && !hasReport;
   // An interrupted run (status 'running', no report yet) resumes straight into the
   // assessment; a fresh draft starts with the pre-assessment interview.
@@ -3587,14 +3570,14 @@ export function renderAssessment(block, record, autoRun = false) {
   const syncSend = () => {
     sendBtn.disabled = input.value.trim().length === 0 && pendingDocs.length === 0;
   };
-  input.addEventListener('focus', openChatSheet);
+  input.addEventListener('focus', openChat);
   input.addEventListener('input', () => { autoResize(input); syncSend(); });
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(block, input.value); }
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(block, input.value); }
   });
   block.querySelector('.nash-session-composer').addEventListener('submit', (e) => {
     e.preventDefault();
-    openChatSheet();
+    openChat();
     send(block, input.value);
   });
 
@@ -3662,7 +3645,6 @@ function chatInsightsText() {
 
 /* Switch the active assessment tab (assessment | da | opp). */
 function switchTab(block, name) {
-  if (name !== 'assessment') block.querySelector('.nash-session-fluffy-chat')?.close();
   block.querySelectorAll('.nash-session-tab').forEach((t) => {
     const on = t.dataset.tab === name;
     t.classList.toggle('active', on);
@@ -3671,6 +3653,7 @@ function switchTab(block, name) {
   block.querySelectorAll('.nash-session-panel').forEach((p) => {
     p.classList.toggle('active', p.dataset.panel === name);
   });
+  assessmentWorkspaceFor(block)?.refresh();
 }
 
 function buildChatContext(a) {
@@ -3716,8 +3699,10 @@ async function send(block, text) {
     : '';
 
   const needsContext = !!(current.reportMarkdown || current.report || current.reportHtml);
+  const activeView = assessmentWorkspaceFor(block)?.getContext();
+  const viewContext = activeView ? `\n\nThe analyst is viewing: ${activeView}.` : '';
   const payload = needsContext
-    ? `${buildChatContext(current)}${docsText}\n\n---\n\nMy question: ${question}`
+    ? `${buildChatContext(current)}${viewContext}${docsText}\n\n---\n\nMy question: ${question}`
     : `${question}${docsText}`;
 
   const composer = block.querySelector('.nash-session-composer');
