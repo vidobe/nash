@@ -3473,7 +3473,7 @@ export function renderAssessment(block, record, autoRun = false) {
     : reportPanel(a.report, a.company)}</div>
             ${inlineThread}
           </div>
-          <div class="nash-session-fluffy-shell">
+          <div class="nash-session-fluffy-shell" hidden>
             ${reportThread}
             <div class="nash-session-fluffy-island">
               <div class="nash-session-attachments" hidden></div>

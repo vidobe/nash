@@ -262,6 +262,7 @@ function renderFixture(block, dialog = true) {
   technical.append(technicalLabel);
   scroll.append(all, technical);
   const shell = element(doc, 'div', 'nash-session-fluffy-shell');
+  shell.hidden = true;
   const oldDialog = dialog ? element(doc, 'dialog', 'nash-session-fluffy-chat') : null;
   const thread = element(doc, 'div', 'nash-session-thread');
   const message = element(doc, 'article');
@@ -722,6 +723,26 @@ test('mount/dispose tolerate intake, incomplete and detached markup without addi
   assert.equal(mountAssessmentWorkspace(f.block), null);
   assert.equal(f.main.classList.contains('nash-session-workspace--active'), false);
   assert.equal(f.observers.length, 0);
+});
+
+test('the obsolete floating composer stays hidden until its controls move into the report pane', (t) => {
+  const f = fixture(t, { dialog: false });
+  assert.equal(f.shell.hidden, true);
+  const controller = mountAssessmentWorkspace(f.block);
+  controller.open();
+  assert.equal(f.island.parentNode.hidden, false);
+  assert.equal(f.shell.isConnected, false);
+  assert.equal(f.block.querySelector('.nash-session-input'), f.input);
+  controller.destroy();
+  assert.equal(f.shell.hidden, true);
+
+  const css = readFileSync(new URL('../blocks/nash-session/nash-session.css', import.meta.url), 'utf8');
+  const shell = css.match(/\.nash-session \.nash-session-fluffy-shell \{([^}]+)\}/)[1];
+  assert.match(shell, /display: none/);
+  assert.doesNotMatch(shell, /position: fixed/);
+  assert.doesNotMatch(css, /padding-bottom: (?:112|96)px/);
+  const source = readFileSync(new URL('../blocks/nash-session/nash-session.js', import.meta.url), 'utf8');
+  assert.match(source, /<div class="nash-session-fluffy-shell" hidden>/);
 });
 
 test('workspace CSS defines real grid tracks, reserved gutter and report-container reflow, not an overlay', () => {
