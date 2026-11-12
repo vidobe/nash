@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import {
+  ASSESSMENT_CONTRACT_VERSION,
   assessmentProjection, buildAssessmentChatContext, finalizeRequirementRow, isCanonicalAssessment,
   isCustomerShareableUrl, parseAssessmentResponse, requirementManifestForFiles,
   requirementsFromRows, sourceCitationEvidence, stripRequirementManifest,
@@ -174,9 +175,11 @@ test('follow-up context explicitly retains the complete canonical matrix and AI 
   assert.match(context, /not rely on an expired response thread/);
 });
 
-test('contract v4: Nash computes points, total and verdict from the model ratings', () => {
+test('rubric contract: Nash computes points, total and verdict from the model ratings', () => {
   const core = parseAssessmentResponse(responseText(rubricCore()), {
-    requirements: sourceRequirements(), pendingRequirements: true, expectedVersion: 4,
+    requirements: sourceRequirements(),
+    pendingRequirements: true,
+    expectedVersion: ASSESSMENT_CONTRACT_VERSION,
   });
   assert.equal(core.scoring.status, 'scored');
   assert.equal(core.scoring.method, 'nash-rubric-v1');
@@ -198,7 +201,7 @@ test('contract v4: Nash computes points, total and verdict from the model rating
   assert.deepEqual(validateAssessmentView(stored, { requirements: sourceRequirements() }), []);
   assert.ok(isCanonicalAssessment(stored) && isCanonicalAssessment(canonicalAssessment()));
   assert.equal(isCanonicalAssessment({ contractVersion: 2 }), false);
-  assert.match(validateAssessmentView(canonicalAssessment(), { expectedVersion: 4 }).join(' '), /current assessment contract/);
+  assert.match(validateAssessmentView(canonicalAssessment(), { expectedVersion: ASSESSMENT_CONTRACT_VERSION }).join(' '), /current assessment contract/);
 });
 
 test('contract v4: missing ratings and tampered arithmetic fail closed', () => {
@@ -258,7 +261,14 @@ test('functional coverage weights priority and fit; a Must gap caps the rating',
   });
   assert.equal(coverage.rating, 4);
   assert.equal(coverage.unsourced, 1);
-  assert.equal(coverageRationale(coverage), 'Nash computed 75% priority-weighted coverage across 3 requirements, counting each Must three times and each Should twice. 1 is met out of the box or by configuration; 2 count half (1 custom build, 1 needs clarification). That is in the 75–89% band, so the rating is 4 of 5.');
+  assert.equal(coverageRationale(coverage), 'Nash computed 75% priority-weighted coverage across 3 requirements, counting each Must three times and each Should twice. 1 is met out of the box or by configuration; 2 count half (1 custom build, 1 needs clarification). That is in the 75–89% band, so the rating is 4 of 5. By priority weight, 50% is met as standard or by configuration, 33% needs custom work or a partner and 17% is still open.');
+  assert.deepEqual(coverage.parts, {
+    standard: { rows: 1, percent: 50 },
+    custom: { rows: 1, percent: 33 },
+    open: { rows: 1, percent: 17 },
+    unsupported: { rows: 0, percent: 0 },
+  });
+  assert.equal(coverage.offers, undefined, 'Rows without an offer report no offer split');
   const allMet = functionalCoverage(Array.from({ length: 20 }, (_, index) => ({
     id: `B-${index}`, priority: 'S', fit: 'Configuration', evidenceRefs: ['E1'],
   })));
@@ -271,7 +281,7 @@ test('functional coverage weights priority and fit; a Must gap caps the rating',
   assert.ok(mustGap.percent >= 90);
   assert.equal(mustGap.rating, 4);
   assert.deepEqual(mustGap.mustGaps, ['C-1']);
-  assert.match(coverageRationale(mustGap), /40 are met out of the box or by configuration; 1 is not supported, counting zero\. That would rate 5, but an unsupported Must requirement \(C-1\) caps it at 4 of 5\.$/);
+  assert.match(coverageRationale(mustGap), /40 are met out of the box or by configuration; 1 is not supported, counting zero\. That would rate 5, but an unsupported Must requirement \(C-1\) caps it at 4 of 5\. By priority weight, 96% is met as standard or by configuration and 4% is not supported\.$/);
   assert.equal(functionalCoverage([]), null);
 });
 

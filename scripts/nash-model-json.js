@@ -16,9 +16,9 @@ export function latestGeneration(answer, probeLength = 64) {
   return restart > 0 ? text.slice(restart) : text;
 }
 
-function continuesRoot(source, from, rootKeys) {
+function continuesRoot(source, from, keys) {
   const member = /^\s*,\s*"([^"\\]+)"\s*:/.exec(source.slice(from, from + 200));
-  return !!member && rootKeys.includes(member[1]);
+  return !!member && keys.includes(member[1]);
 }
 
 /**
@@ -29,9 +29,12 @@ function continuesRoot(source, from, rootKeys) {
  * where `]}}], …` was required), an extra closer that ends the root before one is dropped,
  * and so are stray closers after the final root close. The caller must reject unknown root
  * members, so nothing can be silently misplaced. Truncated text returns null.
+ * memberKeys name members of a nested object that the caller relocates itself. Only an extra
+ * closer that ends the root before one is dropped, leaving it at the root for the caller.
  */
-export function repairJsonClosers(text, { rootKeys = [] } = {}) {
+export function repairJsonClosers(text, { rootKeys = [], memberKeys = [] } = {}) {
   const source = String(text || '');
+  const lateKeys = [...rootKeys, ...memberKeys];
   const open = [];
   let output = '';
   let inString = false;
@@ -57,7 +60,7 @@ export function repairJsonClosers(text, { rootKeys = [] } = {}) {
         if (!rootKeys.length || open.length || /[^\s}\]]/.test(source.slice(index))) return null;
         keep = false;
       } else if (character === '}' && open.length === 1
-        && continuesRoot(source, index + 1, rootKeys)) {
+        && continuesRoot(source, index + 1, lateKeys)) {
         keep = false;
       } else {
         while (open.length - 1 > depth) output += open.pop();
@@ -95,9 +98,10 @@ function syntaxHint(text, error) {
 
 /**
  * Parses model JSON, recovering only from gateway restarts and the bracket slips handled by
- * repairJsonClosers. A failure carries `jsonHint`, locating the slip for a correction request.
+ * repairJsonClosers (reported to onRepair). A failure carries `jsonHint`, locating the slip
+ * for a correction request.
  */
-export function parseModelJson(answer, { rootKeys = [] } = {}) {
+export function parseModelJson(answer, { rootKeys = [], memberKeys = [], onRepair } = {}) {
   const original = withoutFence(answer);
   try {
     return JSON.parse(original);
@@ -112,10 +116,15 @@ export function parseModelJson(answer, { rootKeys = [] } = {}) {
         failure = { text: latest, error: latestError };
       }
     }
-    const repaired = repairJsonClosers(latest, { rootKeys });
+    const repaired = repairJsonClosers(latest, { rootKeys, memberKeys });
     if (repaired) {
       try {
-        return JSON.parse(repaired);
+        const value = JSON.parse(repaired);
+        onRepair?.({
+          type: 'json-brackets-repaired',
+          detail: 'Misplaced closing brackets in the JSON were repaired',
+        });
+        return value;
       } catch {
         // Report the model's own text below, not the repair attempt.
       }

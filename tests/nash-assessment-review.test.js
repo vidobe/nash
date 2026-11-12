@@ -25,10 +25,10 @@ test('critical review explicitly receives the whole matrix, original context and
   assert.match(message.content, /Original source with incomplete draft ratings/);
   assert.match(message.content, /REQ-2/);
   assert.match(message.content, /Content Fragment Delivery with OpenAPI first/);
-  assert.match(message.content, /authoring\/storage\/localization/);
+  assert.match(message.content, /Authoring, storage, delivery and sending are different capabilities/);
   assert.match(message.content, /all seven conclusions/);
   assert.match(message.content, /short solution-and-customer title/);
-  assert.match(message.content, /fit conclusion and evidence caveats belong in summary\/conditions/);
+  assert.match(message.content, /Put the fit conclusion in executive\.summary, caveats in executive\.conditions/);
 });
 
 test('a reviewed correction changes only model-supplied content and preserves source locations', () => {

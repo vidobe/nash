@@ -78,7 +78,7 @@ test('real completed stages produce a fully validated 166-row assessment in sour
   assert.equal(result.rawResponses.length, 8);
   assert.equal(result.view.provenance.stages.at(-1).stage, 'integrity-review');
   assert.equal(fake.requests.slice(1).every((request) => request.webSearch === false), true);
-  assert.equal(result.view.contractVersion, 4);
+  assert.equal(result.view.contractVersion, 5);
   assert.equal(result.view.scoring.status, 'scored');
   assert.equal(result.view.scoring.functionalCoverage.percent, 100);
   assert.equal(result.view.dimensionDetails[2].scoreBasis, 'computed');
@@ -222,7 +222,7 @@ test('one model correction replays the full source and must pass the same strict
   const stream = async (options) => {
     requests.push(options);
     const view = rubricCore();
-    if (requests.length === 1) view.publicReferences[0].url += '/mismatch';
+    if (requests.length === 1) view.dimensions[1].rating = 6;
     options.onDelta(responseText(view));
     options.onDone({ responseId: `response-${requests.length}`, model: 'reported', mock: false });
   };
@@ -233,7 +233,7 @@ test('one model correction replays the full source and must pass the same strict
   });
   assert.equal(requests.length, 2);
   assert.equal(requests[1].messages[0].content, 'Full original customer evidence');
-  assert.match(requests[1].messages.at(-1).content, /unverified, private or unlinked/);
+  assert.match(requests[1].messages.at(-1).content, /integer rating from 1 to 5/);
   assert.equal(requests[1].webSearch, false);
   assert.equal(result.view.provenance.stages[1].stage, 'core-correction');
   assert.equal(result.rawResponses.length, 2);
@@ -300,7 +300,7 @@ test('a bounded row correction fixes source references without dropping requirem
   let first = true;
   const fake = provider({
     corruptRows: (rows) => {
-      if (first) { rows[0].evidenceRefs.push('G1'); first = false; }
+      if (first) { rows[0].evidenceRefs.push('E404'); first = false; }
     },
   });
   const result = await generateAssessment({
@@ -311,7 +311,40 @@ test('a bounded row correction fixes source references without dropping requirem
   assert.equal(fake.requests.length, 4);
   assert.equal(result.view.requirements.length, 2);
   assert.equal(result.view.provenance.stages.some((stage) => stage.stage.endsWith('-rejected')), true);
+  assert.equal(result.view.requirements.some((row) => row.evidenceRefs.includes('E404')), false);
+});
+
+test('mechanical slips are repaired by Nash and recorded instead of costing a model round', async () => {
+  const fake = provider({ corruptRows: (rows) => { rows[0].evidenceRefs.push('G1'); } });
+  const result = await generateAssessment({
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: sourceRequirements(),
+  });
+  assert.equal(fake.requests.length, 3, 'core, one batch and the review; no correction');
   assert.equal(result.view.requirements.some((row) => row.evidenceRefs.includes('G1')), false);
+  assert.deepEqual(result.view.provenance.repairs, [{
+    stage: 'requirements:REQ-1',
+    type: 'gate-reference-removed',
+    detail: '1 acceptance-gate reference removed from evidence lists (G1)',
+  }]);
+
+  const requests = [];
+  const stream = async (options) => {
+    requests.push(options);
+    const view = rubricCore();
+    view.publicReferences[0].url += '/mismatch';
+    options.onDelta(responseText(view));
+    options.onDone({ responseId: `response-${requests.length}`, model: 'reported', mock: false });
+  };
+  const core = await generateAssessment({
+    stream, messages: [{ role: 'user', content: 'core' }], integrityReview: false,
+  });
+  assert.equal(requests.length, 1);
+  assert.deepEqual(core.view.publicReferences, []);
+  assert.deepEqual(core.view.provenance.repairs.map(({ stage, type }) => [stage, type]), [
+    ['core', 'public-reference-removed'],
+  ]);
 });
 
 test('a failed batch retains validated sibling stages without reporting overall success', async () => {

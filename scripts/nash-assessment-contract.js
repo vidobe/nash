@@ -1,16 +1,55 @@
 import {
-  ASSESSMENT_DIMENSIONS, FIT_LEVELS, RUBRIC, RUBRIC_METHOD, applyAssessmentRubric,
-  draftAgreement, normalizeFit, statusForFit,
+  ASSESSMENT_DIMENSIONS, FIT_LEVELS, OFFER_LEVELS, RUBRIC, RUBRIC_METHOD, applyAssessmentRubric,
+  draftAgreement, normalizeFit, normalizeOffer, ratingValue, statusForFit,
 } from './nash-rubric.js';
 import { parseModelJson } from './nash-model-json.js';
 
 export { ASSESSMENT_DIMENSIONS };
-export const ASSESSMENT_CONTRACT_VERSION = 4;
-const SUPPORTED_CONTRACT_VERSIONS = [3, 4];
+export const ASSESSMENT_CONTRACT_VERSION = 5;
+const SUPPORTED_CONTRACT_VERSIONS = [3, 4, 5];
 
-/** True for any structured (v3 qualitative or v4 rubric-scored) assessment record. */
+/** True for any structured (v3 qualitative or v4+ rubric-scored) assessment record. */
 export function isCanonicalAssessment(view) {
   return SUPPORTED_CONTRACT_VERSIONS.includes(view?.contractVersion);
+}
+
+/** incumbent: the customer's current vendor; named: named by the customer; typical: not named. */
+export const COMPETITOR_STATUSES = ['incumbent', 'named', 'typical'];
+const COMPETITOR_ALIASES = {
+  'current vendor': 'incumbent',
+  'current platform': 'incumbent',
+  'named by the customer': 'named',
+  'named by customer': 'named',
+  'customer named': 'named',
+  listed: 'named',
+  shortlisted: 'named',
+  'typical alternative': 'typical',
+  'typical competitor': 'typical',
+  'not named': 'typical',
+  'not named by the customer': 'typical',
+};
+
+/** evidence: the rating rests on customer-specific evidence; default: none yet, rated 3. */
+export const CONFIDENCE_BASES = ['evidence', 'default'];
+const BASIS_ALIASES = {
+  evidenced: 'evidence',
+  'evidence based': 'evidence',
+  documented: 'evidence',
+  'no evidence': 'default',
+  'default rating': 'default',
+  missing: 'default',
+};
+
+const phrase = (value) => String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+
+export function normalizeCompetitorStatus(value) {
+  const text = phrase(value);
+  return COMPETITOR_STATUSES.includes(text) ? text : COMPETITOR_ALIASES[text] || null;
+}
+
+export function normalizeConfidenceBasis(value) {
+  const text = phrase(value);
+  return CONFIDENCE_BASES.includes(text) ? text : BASIS_ALIASES[text] || null;
 }
 
 const REQUIREMENT_STATUSES = ['Covered', 'Partially covered', 'Needs clarification', 'Gap'];
@@ -42,6 +81,156 @@ export function isCustomerShareableUrl(value) {
   }
 }
 
+/** Why a public reference cannot be shown to the customer, or '' when it is valid. */
+function publicReferenceProblem(item, evidence, version) {
+  if (!object(item)) return 'it is not a reference record';
+  const source = evidence.find((entry) => key(entry.id) === key(item.id));
+  const linkable = version >= 4 ? LINKABLE_EVIDENCE.includes(source?.type) : source?.type === 'public-source';
+  if (!isCustomerShareableUrl(item.url)) return 'its URL is not public';
+  if (!REFERENCE_KINDS.includes(item.kind)) return 'its kind is not recognized';
+  if (!nonempty(item.title) || !nonempty(item.verification) || !nonempty(item.limitation)) {
+    return 'its title, verification or limitation is blank';
+  }
+  if (!linkable) return 'no public evidence record has its ID';
+  return source.locator === item.url ? '' : 'its URL differs from its evidence record';
+}
+
+const CRITERION_STATUSES = ['supported', 'conditional', 'unknown', 'gap'];
+const CRITERION_ALIASES = {
+  covered: 'supported',
+  met: 'supported',
+  'partially supported': 'conditional',
+  'partially covered': 'conditional',
+  partial: 'conditional',
+  'needs clarification': 'unknown',
+  'not supported': 'gap',
+  unsupported: 'gap',
+};
+
+/** The criterion status for a known spelling or synonym; anything else is returned unchanged. */
+export function normalizeCriterionStatus(value) {
+  const text = key(value).replace(/[\s_-]+/g, ' ');
+  if (CRITERION_STATUSES.includes(text)) return text;
+  return CRITERION_ALIASES[text] || value;
+}
+
+/** Normalizes the criterion statuses of dimension reviews, reporting each changed value. */
+export function normalizeCriteria(details, onRepair) {
+  if (!Array.isArray(details)) return details;
+  return details.map((detail) => {
+    if (!object(detail) || !Array.isArray(detail.criteria)) return detail;
+    return {
+      ...detail,
+      criteria: detail.criteria.map((criterion) => {
+        if (!object(criterion)) return criterion;
+        const status = normalizeCriterionStatus(criterion.status);
+        if (status === criterion.status) return criterion;
+        onRepair?.({ type: 'criterion-status-normalized', detail: `${detail.name}: "${criterion.status}" → ${status}` });
+        return { ...criterion, status };
+      }),
+    };
+  });
+}
+
+/**
+ * Removes acceptance-gate IDs from evidence and fact reference lists: gates are never evidence.
+ * IDs that are also evidence IDs are kept.
+ */
+export function stripGateReferences(value, gateIds, evidenceIds, onRemove) {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripGateReferences(item, gateIds, evidenceIds, onRemove));
+  }
+  if (!object(value)) return value;
+  return Object.fromEntries(Object.entries(value).map(([field, item]) => {
+    if (['evidenceRefs', 'factRefs'].includes(field) && Array.isArray(item)) {
+      const removed = item.filter((id) => gateIds.has(key(id)) && !evidenceIds.has(key(id)));
+      if (removed.length) onRemove?.(removed);
+      return [field, item.filter((id) => !removed.includes(id))];
+    }
+    return [field, stripGateReferences(item, gateIds, evidenceIds, onRemove)];
+  }));
+}
+
+const SEARCH_REDIRECT = /^https:\/\/(?:vertexaisearch\.cloud\.google\.com|www\.google\.[a-z.]+\/url)\b|grounding-api-redirect/i;
+
+/**
+ * A confidence entry whose basis contradicts its dimension: a "default" rating is 3 with Low
+ * confidence, so any other rating rests on evidence and a default rating cannot be confident.
+ */
+function repairConfidence(view, onRepair) {
+  const ratings = new Map((Array.isArray(view.dimensions) ? view.dimensions : [])
+    .map((dimension) => [dimension?.dimension, ratingValue(dimension?.rating)]));
+  // Nash computes Functional Coverage from the matrix, so the model's basis for it is moot.
+  const computed = view.scoring?.functionalCoverage ? 'Functional Coverage' : '';
+  return view.confidence.map((item) => {
+    if (!object(item)) return item;
+    const basis = normalizeConfidenceBasis(item.basis);
+    let repaired = basis && basis !== item.basis ? { ...item, basis } : item;
+    if (repaired.basis !== 'default' || item.dimension === computed) return repaired;
+    const rating = ratings.get(item.dimension);
+    if (rating && rating !== 3) {
+      onRepair?.({ type: 'confidence-basis-corrected', detail: `${item.dimension} is rated ${rating}, so its basis is evidence, not the default rating of 3` });
+      return { ...repaired, basis: 'evidence' };
+    }
+    if (repaired.level !== 'Low') {
+      onRepair?.({ type: 'confidence-level-corrected', detail: `${item.dimension} has no customer-specific evidence, so its confidence is Low (was ${repaired.level})` });
+      repaired = { ...repaired, level: 'Low' };
+    }
+    return repaired;
+  });
+}
+
+/**
+ * Mechanical repairs Nash makes instead of regenerating a stage: references that cannot be shown
+ * to the customer are dropped, gate IDs are removed from evidence lists, criterion status and
+ * other enum synonyms are normalized and contradictory confidence bases are corrected. Each
+ * repair that changes meaning is reported through onRepair.
+ */
+export function repairAssessmentView(view, onRepair) {
+  if (!object(view)) return view;
+  let repaired = view;
+  if (Array.isArray(view.verificationGates)) {
+    const gateIds = new Set(view.verificationGates.map((gate) => key(gate?.id)).filter(Boolean));
+    const evidenceIds = new Set((Array.isArray(view.evidence) ? view.evidence : [])
+      .map((item) => key(item?.id)));
+    const removed = [];
+    repaired = stripGateReferences(view, gateIds, evidenceIds, (ids) => removed.push(...ids));
+    if (removed.length) {
+      onRepair?.({
+        type: 'gate-reference-removed',
+        detail: `${removed.length} acceptance-gate reference${removed.length > 1 ? 's' : ''} removed from evidence lists (${[...new Set(removed)].join(', ')})`,
+      });
+    }
+  }
+  repaired = {
+    ...repaired,
+    dimensionDetails: normalizeCriteria(repaired.dimensionDetails, onRepair),
+  };
+  if (Array.isArray(repaired.publicReferences)) {
+    const evidence = Array.isArray(repaired.evidence) ? repaired.evidence : [];
+    repaired.publicReferences = repaired.publicReferences.filter((item) => {
+      const problem = publicReferenceProblem(item, evidence, repaired.contractVersion)
+        || (SEARCH_REDIRECT.test(String(item.url)) ? 'its URL is a search redirect, not the source page' : '');
+      if (problem) {
+        onRepair?.({ type: 'public-reference-removed', detail: `${item?.id || item?.title || 'Reference'}: ${problem}` });
+      }
+      return !problem;
+    });
+  }
+  if (repaired.contractVersion >= 5) {
+    if (Array.isArray(repaired.competitors)) {
+      repaired.competitors = repaired.competitors.map((item) => {
+        const status = object(item) ? normalizeCompetitorStatus(item.status) : null;
+        return status && status !== item.status ? { ...item, status } : item;
+      });
+    }
+    if (Array.isArray(repaired.confidence)) {
+      repaired.confidence = repairConfidence(repaired, onRepair);
+    }
+  }
+  return repaired;
+}
+
 function assertUnique(items, field, label, errors) {
   const ids = items.map((item) => key(item?.[field]));
   if (items.some((item) => !nonempty(item?.[field])) || new Set(ids).size !== ids.length) {
@@ -57,7 +246,7 @@ function validateRefs(item, allowed, label, errors, required = true) {
   }
 }
 
-/** Canonical fit spelling, the status derived from it and an explicit evidence list. */
+/** Canonical fit and offer spelling, the status derived from the fit and an evidence list. */
 export function normalizeRequirementFit(row) {
   if (!object(row)) return row;
   const fit = normalizeFit(row.fit) || row.fit;
@@ -65,6 +254,7 @@ export function normalizeRequirementFit(row) {
     ...row,
     fit,
     status: statusForFit(fit) || row.status,
+    ...(row.offer !== undefined ? { offer: normalizeOffer(row.offer) || row.offer } : {}),
     evidenceRefs: row.evidenceRefs === undefined ? [] : row.evidenceRefs,
   };
 }
@@ -94,6 +284,9 @@ export function validateRequirementRows(rows, manifest = [], evidence = [], {
       if (!nonempty(row.response) || !nonempty(row.solution)) {
         errors.push(`${row.id || 'Requirement'} needs a response and the delivering solution.`);
       }
+      if (version >= 5 && !OFFER_LEVELS.includes(row.offer)) {
+        errors.push(`${row.id || 'Requirement'} needs one offer value: ${OFFER_LEVELS.join(', ')}.`);
+      }
     } else if (!REQUIREMENT_STATUSES.includes(row.status) || !nonempty(row.response)
       || !nonempty(row.validation) || !nonempty(row.solution)) {
       errors.push(`${row.id || 'Requirement'} needs a valid status, response, solution and validation.`);
@@ -122,8 +315,17 @@ function validateRubric(view) {
   if (errors.length) return errors;
   const expected = applyAssessmentRubric(view);
   const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+  // Records saved before v5 keep their original coverage fields; parts and offers came later.
+  const coverage = (value) => {
+    if (view.contractVersion >= 5 || !object(value)) return value;
+    const { parts, offers, ...original } = value;
+    return original;
+  };
   if (view.scoring?.status !== 'scored' || view.scoring.method !== RUBRIC_METHOD
-    || !same(view.scoring.functionalCoverage, expected.scoring.functionalCoverage)
+    || !same(
+      coverage(view.scoring.functionalCoverage),
+      coverage(expected.scoring.functionalCoverage),
+    )
     || view.meta.score !== expected.meta.score || view.meta.verdict !== expected.meta.verdict
     || view.dimensions.some((dimension, index) => ['rating', 'weight', 'max', 'scored']
       .some((field) => dimension[field] !== expected.dimensions[index][field]))
@@ -255,8 +457,18 @@ export function validateAssessmentView(view, {
       || !nonempty(item.unknowns) || !nonempty(item.scoreChanger)) {
       errors.push(`${item.dimension} needs an evidence-confidence explanation.`);
     }
+    if (version >= 5 && !CONFIDENCE_BASES.includes(item.basis)) {
+      errors.push(`${item.dimension} confidence needs a basis: evidence or default.`);
+    }
     validateRefs({ evidenceRefs: item.factRefs }, allowed, `${item.dimension} confidence`, errors);
   });
+  if (version >= 5) {
+    (Array.isArray(view.competitors) ? view.competitors : []).forEach((item) => {
+      if (!nonempty(item?.name) || !COMPETITOR_STATUSES.includes(item.status)) {
+        errors.push(`${nonempty(item?.name) ? item.name : 'A competitor'} needs a name and one status: ${COMPETITOR_STATUSES.join(', ')}.`);
+      }
+    });
+  }
   const solutions = Array.isArray(view.solutions) ? view.solutions : [];
   if (!solutions.some((item) => item.selection === 'recommended')) errors.push('The proposed baseline is missing.');
   solutions.forEach((item) => {
@@ -317,11 +529,7 @@ export function validateAssessmentView(view, {
       });
   }
   (view.publicReferences || []).forEach((item) => {
-    const source = evidence.find((entry) => key(entry.id) === key(item.id));
-    const linkable = version >= 4 ? LINKABLE_EVIDENCE.includes(source?.type) : source?.type === 'public-source';
-    if (!isCustomerShareableUrl(item.url) || !REFERENCE_KINDS.includes(item.kind)
-      || !nonempty(item.title) || !nonempty(item.verification) || !nonempty(item.limitation)
-      || !linkable || source?.locator !== item.url) {
+    if (publicReferenceProblem(item, evidence, version)) {
       errors.push(`Public reference ${item.id || item.title} is unverified, private or unlinked.`);
     }
   });
@@ -329,6 +537,16 @@ export function validateAssessmentView(view, {
     errors.push(...validateRequirementRows(view.requirements, requirements, evidence, { version }));
   }
   return errors;
+}
+
+/**
+ * Adds Nash-registered evidence (the trust baseline) to a model register; registered wins on
+ * ID clashes.
+ */
+export function registerEvidence(own = [], registered = []) {
+  if (!registered.length || !Array.isArray(own)) return own;
+  const ids = new Set(registered.map((item) => key(item.id)));
+  return [...own.filter((item) => !ids.has(key(item?.id))), ...registered];
 }
 
 export function parseAssessmentResponse(text, options = {}) {
@@ -340,7 +558,7 @@ export function parseAssessmentResponse(text, options = {}) {
   if (start < 0) throw new Error('FluffyJaws did not return the required assessment structure.');
   let view;
   try {
-    view = parseModelJson(source.slice(start + marker.length, end));
+    view = parseModelJson(source.slice(start + marker.length, end), { onRepair: options.onRepair });
   } catch (error) {
     throw new Error('FluffyJaws returned invalid assessment JSON. No report was replaced.', { cause: error });
   }
@@ -348,7 +566,8 @@ export function parseAssessmentResponse(text, options = {}) {
     if (Array.isArray(view.requirements)) {
       view.requirements = view.requirements.map(normalizeRequirementFit);
     }
-    view = applyAssessmentRubric(view);
+    view.evidence = registerEvidence(view.evidence, options.registeredEvidence || []);
+    view = applyAssessmentRubric(repairAssessmentView(view, options.onRepair));
   }
   const errors = validateAssessmentView(view, options);
   if (errors.length) throw new Error(`The assessment is incomplete: ${errors.slice(0, 8).join(' ')}`);
@@ -444,37 +663,196 @@ function draftFor(row, layout) {
   return { answer, ...(note ? { note } : {}), ...(links.length ? { links } : {}) };
 }
 
-export function requirementsFromRows(rows, source, sheet = '') {
+const REQUIREMENT_ID = /^[a-z][a-z0-9_]*-[a-z0-9][a-z0-9_-]*$/i;
+
+/** The requirement table of a sheet (header row and column positions), or null when absent. */
+function requirementTable(rows) {
   const header = rows.findIndex((row) => row.some((cell) => ID_HEADER.test(cellText(cell))));
-  if (header < 0) return [];
+  if (header < 0) return null;
   const columns = rows[header].map(cellText);
-  const idIndex = columns.findIndex((cell) => ID_HEADER.test(cell));
-  const priorityIndex = columns.findIndex((cell) => /^priority$/i.test(cell));
-  const sourceIdIndex = columns.findIndex((cell) => /^source id$/i.test(cell));
-  const questionIndex = columns.findIndex((cell) => /closed.*question|^requirement$|^question$/i.test(cell));
-  const categoryIndex = columns.findIndex((cell) => CATEGORY_HEADER.test(cell));
-  if (priorityIndex < 0 || questionIndex < 0) return [];
-  const known = [idIndex, priorityIndex, sourceIdIndex, questionIndex, categoryIndex];
-  const layout = draftColumns(columns, new Set(known.filter((index) => index >= 0)));
-  return rows.slice(header + 1).map((row, index) => ({ row, number: header + index + 2 }))
-    .filter(({ row }) => (
-      /^[a-z][a-z0-9_]*-[a-z0-9][a-z0-9_-]*$/i.test(cellText(row[idIndex]))
-      && nonempty(cellText(row[questionIndex]))
-    )).map(({ row, number }) => {
+  const table = {
+    header,
+    columns,
+    id: columns.findIndex((cell) => ID_HEADER.test(cell)),
+    priority: columns.findIndex((cell) => /^priority$/i.test(cell)),
+    sourceId: columns.findIndex((cell) => /^source id$/i.test(cell)),
+    question: columns.findIndex((cell) => /closed.*question|^requirement$|^question$/i.test(cell)),
+    category: columns.findIndex((cell) => CATEGORY_HEADER.test(cell)),
+  };
+  if (table.priority < 0 || table.question < 0) return null;
+  return {
+    ...table,
+    known: [table.id, table.priority, table.sourceId, table.question, table.category]
+      .filter((index) => index >= 0),
+    isRequirement: (row) => REQUIREMENT_ID.test(cellText(row[table.id]))
+      && nonempty(cellText(row[table.question])),
+  };
+}
+
+export function requirementsFromRows(rows, source, sheet = '') {
+  const table = requirementTable(rows);
+  if (!table) return [];
+  const layout = draftColumns(table.columns, new Set(table.known));
+  return rows.slice(table.header + 1)
+    .map((row, index) => ({ row, number: table.header + index + 2 }))
+    .filter(({ row }) => table.isRequirement(row)).map(({ row, number }) => {
       const draft = layout ? draftFor(row, layout) : null;
-      const category = categoryIndex >= 0 ? cellText(row[categoryIndex]) : '';
+      const category = table.category >= 0 ? cellText(row[table.category]) : '';
       return {
-        id: cellText(row[idIndex]),
-        question: cellText(row[questionIndex]),
-        priority: cellText(row[priorityIndex]) || 'Unclassified',
+        id: cellText(row[table.id]),
+        question: cellText(row[table.question]),
+        priority: cellText(row[table.priority]) || 'Unclassified',
         source,
         locator: `${sheet || 'Requirement table'}, row ${number}`,
-        ...(sourceIdIndex >= 0 && row[sourceIdIndex] && row[sourceIdIndex] !== row[idIndex]
-          ? { sourceId: cellText(row[sourceIdIndex]) } : {}),
+        ...(table.sourceId >= 0 && row[table.sourceId] && row[table.sourceId] !== row[table.id]
+          ? { sourceId: cellText(row[table.sourceId]) } : {}),
         ...(category ? { category } : {}),
         ...(draft ? { draft: { ...draft, locator: `${sheet || 'Requirement table'}, row ${number}` } } : {}),
       };
     });
+}
+
+/** Rows of a CSV block as written by the spreadsheet extraction; quoted cells may span lines. */
+export function parseCsvRows(text) {
+  const source = String(text || '');
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let quoted = false;
+  let started = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    if (quoted) {
+      if (char === '"' && source[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        cell += char;
+      }
+    } else if (char === '"' && !cell) {
+      quoted = true;
+      started = true;
+    } else if (char === ',') {
+      row.push(cell);
+      cell = '';
+      started = true;
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && source[index + 1] === '\n') index += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+      started = false;
+    } else {
+      cell += char;
+      started = true;
+    }
+  }
+  if (started || cell) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows;
+}
+
+const csvLine = (cells) => cells.map((value) => {
+  const text = cellText(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}).join(',').replace(/,+$/, '');
+const comparable = (value) => cellText(value).replace(/\s+/g, ' ').toLowerCase();
+
+/** Values of a manifest row that SOURCE REQUIREMENTS (or its draft citations) already carry. */
+function capturedValues(row) {
+  const draft = row.draft || {};
+  return [
+    row.id, row.sourceId, row.priority, row.category, row.question || row.requirement,
+    draft.answer, draft.note,
+    ...(draft.links || []).flatMap((link) => [link.url, link.title]),
+  ].filter(nonempty).map(comparable);
+}
+
+function isCaptured(value, captured) {
+  const text = comparable(value);
+  if (captured.some((item) => item === text
+    || (item.endsWith('…') && text.startsWith(item.slice(0, -1)))
+    || (text.length >= 20 && item.startsWith(text)))) return true;
+  const urls = text.split(/[\s;,]+/).filter(Boolean);
+  return urls.every((url) => {
+    const normalized = webUrl(url);
+    return normalized && captured.includes(comparable(normalized));
+  });
+}
+
+/**
+ * A requirement table whose every row is in the manifest, reduced to the cells the manifest does
+ * not already carry. Returns null when the sheet cannot be compacted safely.
+ */
+function compactRequirementSheet(csv, manifest) {
+  const rows = parseCsvRows(csv);
+  const table = requirementTable(rows);
+  if (!table) return null;
+  const body = rows.slice(table.header + 1);
+  const listed = body.filter(table.isRequirement);
+  if (!listed.length
+    || listed.some((row) => !manifest.has(key(cellText(row[table.id]))))) return null;
+  const width = Math.max(table.columns.length, ...listed.map((row) => row.length));
+  const labels = Array.from({ length: width }, (_, index) => {
+    const name = table.columns[index] || `Column ${index + 1}`;
+    return table.columns.filter((other) => other === table.columns[index]).length > 1
+      ? `${name} (column ${index + 1})` : name;
+  });
+  const residual = [];
+  labels.forEach((label, column) => {
+    if (table.known.includes(column)) return;
+    const values = listed.map((row) => ({
+      id: cellText(row[table.id]),
+      value: cellText(row[column]).replace(/\s*\n\s*/g, ' '),
+    })).filter(({ id, value }) => value
+      && !isCaptured(value, capturedValues(manifest.get(key(id)))));
+    const distinct = [...new Set(values.map(({ value }) => value))];
+    if (values.length >= 4 && distinct.length <= 5) {
+      distinct.forEach((value) => residual.push(`${label} = ${JSON.stringify(value)}: ${values
+        .filter((item) => item.value === value).map((item) => item.id).join(', ')}`));
+    } else {
+      values.forEach(({ id, value }) => residual.push(`${id} · ${label}: ${value}`));
+    }
+  });
+  const ids = listed.map((row) => cellText(row[table.id]));
+  return [
+    ...rows.slice(0, table.header + 1).map(csvLine),
+    `[Nash: the ${ids.length} requirement rows of this table (${ids[0]} … ${ids.at(-1)}) are listed once under SOURCE REQUIREMENTS with their ID, priority, category, question and any draft answer and note; links cited in the drafts become evidence for the requirement answers. ${residual.length ? 'Only the cell values not repeated there follow.' : 'Every other cell repeats those values.'}]`,
+    ...residual,
+    ...body.filter((row) => !table.isRequirement(row)).map(csvLine).filter(Boolean),
+  ].join('\n');
+}
+
+/** Removes the machine-readable manifest so prompts carry the source text only once. */
+export function stripRequirementManifest(text) {
+  return String(text || '').replace(/\n?NASH_SOURCE_REQUIREMENTS:[\s\S]*?NASH_SOURCE_REQUIREMENTS_END/g, '');
+}
+
+/**
+ * Customer document text for prompts: the machine-readable manifest is removed and requirement
+ * tables already listed under SOURCE REQUIREMENTS keep only the cells not repeated there, so each
+ * fact reaches the model once.
+ */
+export function promptDocumentText(files = [], requirements = []) {
+  const manifest = new Map(requirements.map((row) => [key(row.id), row]));
+  return files.filter((file) => file.text).map((file) => {
+    let text = stripRequirementManifest(file.text);
+    if (manifest.size) {
+      const marker = text.search(/\n\[NASH: [^\n]*truncated[^\n]*\]\s*$/);
+      const note = marker < 0 ? '' : text.slice(marker);
+      text = (marker < 0 ? text : text.slice(0, marker)).split(/^(?=### Sheet: )/m).map((part) => {
+        const match = part.match(/^(### Sheet: [^\n]*\n)([\s\S]*?)(\n*)$/);
+        const compact = match && compactRequirementSheet(match[2], manifest);
+        return compact ? `${match[1]}${compact}${match[3]}` : part;
+      }).join('') + note;
+    }
+    return `--- ${file.name} ---\n${text}`;
+  }).join('\n\n');
 }
 
 function mergeDraft(previous, next) {
@@ -541,11 +919,6 @@ export function requirementManifestForFiles(files) {
     });
   });
   return [...unique.values()];
-}
-
-/** Removes the machine-readable manifest so prompts carry the source text only once. */
-export function stripRequirementManifest(text) {
-  return String(text || '').replace(/\n?NASH_SOURCE_REQUIREMENTS:[\s\S]*?NASH_SOURCE_REQUIREMENTS_END/g, '');
 }
 
 /**

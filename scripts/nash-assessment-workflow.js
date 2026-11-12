@@ -1,11 +1,12 @@
 import {
   ASSESSMENT_CONTRACT_VERSION, finalizeRequirementRow, parseAssessmentResponse,
-  sourceCitationEvidence, validateAssessmentView, validateRequirementRows,
+  sourceCitationEvidence, stripGateReferences, validateAssessmentView, validateRequirementRows,
 } from './nash-assessment-contract.js';
 import { buildRequirementReviewPrompt } from './nash-assessment-prompts.js';
-import { FIT_LEVELS, applyAssessmentRubric } from './nash-rubric.js';
+import { FIT_LEVELS, OFFER_LEVELS, applyAssessmentRubric } from './nash-rubric.js';
 import { latestGeneration, parseModelJson, syntaxCorrection } from './nash-model-json.js';
 import { solutionGuidanceText } from './nash-assessment-guidance.js';
+import { isNashOwnedEvidence, isTrustBaselineEvidence } from './nash-trust-baseline.js';
 import {
   applyAssessmentReview, buildAssessmentReviewCorrectionMessages, buildAssessmentReviewMessages,
 } from './nash-assessment-review.js';
@@ -32,13 +33,13 @@ export async function fetchSkillsText(slugs) {
   return `${parts.map((part) => `## ${part.slug}\n${part.text}`).join('\n\n')}\n\n${solutionGuidanceText(slugs)}`;
 }
 
-/** Drops draft citations that no finding ended up using, keeping the register meaningful. */
+/** Drops Nash-owned evidence (draft citations, trust baseline) that no finding ended up using. */
 function pruneUnusedCitations(view) {
   const { evidence, ...rest } = view;
   const used = JSON.stringify(rest);
   return {
     ...view,
-    evidence: evidence.filter((item) => item.type !== 'source-citation' || used.includes(`"${item.id}"`)),
+    evidence: evidence.filter((item) => !isNashOwnedEvidence(item) || used.includes(`"${item.id}"`)),
   };
 }
 
@@ -90,10 +91,18 @@ export async function generateAssessment({
   onProgress, onHeartbeat, onRetry, retryDelaysMs = [5000, 20000],
   reasoningEffort = 'medium', webSearch = true, onResponse, checkpoint, onCheckpoint,
   integrityReview = true, sourceContext = '', solutionSlugs = [], skills = '',
+  trustBaseline = { evidence: [], sources: [] },
 }) {
+  const baselineEvidence = trustBaseline?.evidence || [];
   const promptSha256 = await sha256(JSON.stringify(messages));
   const inputSha256 = await sha256(JSON.stringify({
-    messages, requirements, integrityReview, sourceContext, solutionSlugs, skills,
+    messages,
+    requirements,
+    integrityReview,
+    sourceContext,
+    solutionSlugs,
+    skills,
+    ...(baselineEvidence.length ? { trustBaseline: baselineEvidence } : {}),
   }));
   const matches = checkpoint?.inputSha256 === inputSha256;
   if (checkpoint && !matches) onActivity?.('The source inputs changed; starting a fresh assessment');
@@ -157,6 +166,7 @@ export async function generateAssessment({
     requirements,
     pendingRequirements: requirements.length > 0,
     expectedVersion: ASSESSMENT_CONTRACT_VERSION,
+    registeredEvidence: baselineEvidence,
   };
   const stages = [{
     stage: 'core',
@@ -165,9 +175,19 @@ export async function generateAssessment({
     rawSha256: await sha256(core.answer),
   }];
   const rawResponses = [{ stage: 'core', text: core.answer }];
+  // Mechanical repairs replace regeneration; only those of an accepted response are recorded.
+  const repairs = [];
+  const recorded = (stage, accept) => {
+    const found = [];
+    const result = accept((repair) => found.push({ stage, ...repair }));
+    repairs.push(...found);
+    return result;
+  };
+  const parseCore = (answer, stage) => recorded(stage, (onRepair) => (
+    parseAssessmentResponse(answer, { ...validation, onRepair })));
   let view;
   try {
-    view = parseAssessmentResponse(core.answer, validation);
+    view = parseCore(core.answer, 'core');
   } catch (error) {
     onActivity?.('Checking the assessment structure and source links');
     const correction = [
@@ -177,7 +197,7 @@ export async function generateAssessment({
         role: 'user',
         content: `The application rejected the assessment: ${error.message}${syntaxCorrection(error)}
 Return the COMPLETE corrected canonical assessment between the original exact markers, not a patch or explanation. Preserve substantive findings unless a correction is needed for evidence integrity. All seven reviews are required, each with an integer rating from 1 to 5; Nash computes the points, total and verdict.
-Every public-source evidence locator must be ONE exact https URL, with no prose or semicolon-separated links. Split multiple sources into separate evidence IDs, assign each claim to the correct source, and update affected evidenceRefs/publicReferences. Each public reference URL must equal its matching public-source locator exactly. Keep internal or unverified material out of publicReferences.
+Every public-source evidence locator must be ONE exact https URL, with no prose or semicolon-separated links. Split multiple sources into separate evidence IDs, assign each claim to the correct source, and update the affected evidenceRefs.
 Use the full original evidence supplied above, not previousResponseId. No further research/tool calls. This is the only correction attempt.`,
       },
     ];
@@ -186,7 +206,7 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
       webSearch: false,
       reasoningEffort,
     });
-    view = parseAssessmentResponse(core.answer, validation);
+    view = parseCore(core.answer, 'core-correction');
     stages.push({
       stage: 'core-correction',
       ...core.completion,
@@ -199,6 +219,8 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
   const citations = sourceCitationEvidence(requirements, view.evidence);
   view = { ...view, evidence: [...view.evidence, ...citations.evidence] };
   const coreView = view;
+  const gateIds = new Set(coreView.verificationGates.map((gate) => gate.id.toLowerCase()));
+  const evidenceIds = new Set(coreView.evidence.map((item) => item.id.toLowerCase()));
   const rows = [];
   let reviewedCount = 0;
   const reportReviewed = (count) => {
@@ -229,30 +251,44 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
         reasoningEffort,
       });
       const sources = new Map(batch.map((row) => [row.id.toLowerCase(), row]));
-      const parseRows = (answer) => {
+      const parseRows = (answer, attemptStage) => recorded(attemptStage, (onRepair) => {
         let payload;
         try {
-          payload = parseModelJson(answer);
+          payload = parseModelJson(answer, { onRepair });
         } catch (error) {
           throw new Error(`Requirement review ${batch[0].id} returned invalid JSON. No report was replaced.`, { cause: error });
         }
         if (!Array.isArray(payload?.requirements)) {
           throw new Error(`Requirement review ${batch[0].id} returned no requirements array.`);
         }
+        const removed = [];
         const finalized = payload.requirements.map((row) => {
           const source = sources.get(String(row?.id || '').toLowerCase());
           if (!source) return row;
-          return finalizeRequirementRow(row, source, citations.refs.get(source.id.toLowerCase()));
+          const cleaned = stripGateReferences(
+            row,
+            gateIds,
+            evidenceIds,
+            (ids) => removed.push(...ids),
+          );
+          const refs = citations.refs.get(source.id.toLowerCase());
+          return finalizeRequirementRow(cleaned, source, refs);
         });
         const errors = validateRequirementRows(finalized, batch, coreView.evidence, {
           version: coreView.contractVersion,
         });
         if (errors.length) throw new Error(`Requirement review failed: ${errors.slice(0, 4).join(' ')}`);
+        if (removed.length) {
+          onRepair({
+            type: 'gate-reference-removed',
+            detail: `${removed.length} acceptance-gate reference${removed.length > 1 ? 's' : ''} removed from evidence lists (${[...new Set(removed)].join(', ')})`,
+          });
+        }
         return finalized;
-      };
+      });
       let reviewed;
       try {
-        reviewed = parseRows(result.answer);
+        reviewed = parseRows(result.answer, stage);
       } catch (error) {
         const corrected = await request(`${stage}-correction`, {
           messages: [
@@ -261,8 +297,8 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
             {
               role: 'user',
               content: `The requirement validator rejected the response: ${error.message}${syntaxCorrection(error)}
-Return the COMPLETE corrected requirements JSON for this exact batch, not a patch. Include every source ID once, each with exactly one fit: ${FIT_LEVELS.map((level) => level.fit).join(', ')}. Use only these evidence IDs: ${coreView.evidence.map((item) => item.id).join(', ')}.
-Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRefs. Do not invent evidence or remove a source question. No research/tools and no previousResponseId. This is the only correction attempt.`,
+Return the COMPLETE corrected requirements JSON for this exact batch, not a patch. Include every source ID once, each with exactly one fit (${FIT_LEVELS.map((level) => level.fit).join(', ')}) and one offer (${OFFER_LEVELS.join(', ')}). Use only these evidence IDs: ${coreView.evidence.map((item) => item.id).join(', ')}.
+Do not invent evidence or remove a source question. No research/tools and no previousResponseId. This is the only correction attempt.`,
             },
           ],
           webSearch: false,
@@ -276,7 +312,7 @@ Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRe
         });
         rawResponses.push({ stage: `${stage}-rejected`, text: result.answer });
         result = corrected;
-        reviewed = parseRows(result.answer);
+        reviewed = parseRows(result.answer, `${stage}-correction`);
       }
       remember(stage, result);
       reportReviewed(reviewed.length);
@@ -319,8 +355,10 @@ Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRe
       webSearch: false,
       reasoningEffort,
     });
+    const applyReview = (answer, stage) => recorded(stage, (onRepair) => (
+      applyAssessmentReview(view, answer, requirements, citations.refs, { onRepair })));
     try {
-      finalView = applyAssessmentReview(view, review.answer, requirements, citations.refs);
+      finalView = applyReview(review.answer, 'integrity-review');
     } catch (error) {
       stages.push({
         stage: 'integrity-review-rejected',
@@ -333,7 +371,7 @@ Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRe
         webSearch: false,
         reasoningEffort,
       });
-      finalView = applyAssessmentReview(view, review.answer, requirements, citations.refs);
+      finalView = applyReview(review.answer, 'integrity-correction');
     }
     remember('integrity-review', review);
     stages.push({
@@ -361,6 +399,13 @@ Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRe
     promptSha256,
     inputSha256,
     stages,
+    ...(repairs.length ? { repairs } : {}),
+    ...(trustBaseline?.sources?.length ? {
+      trustBaseline: {
+        sources: trustBaseline.sources,
+        cited: finalView.evidence.filter(isTrustBaselineEvidence).map((item) => item.id),
+      },
+    } : {}),
   };
   const errors = validateAssessmentView(finalView, {
     requirements, expectedVersion: ASSESSMENT_CONTRACT_VERSION,

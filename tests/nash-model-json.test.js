@@ -66,6 +66,28 @@ test('an early close before a nested member is never moved to the root', () => {
   );
 });
 
+test('a declared nested member after an early root close is left at the root for its caller', () => {
+  const options = { rootKeys: ['coreUpdates', 'dimensionUpdates'], memberKeys: ['context'] };
+  const repairs = [];
+  const nested = '{"coreUpdates":{"executive":"x"}},"context":"y"}}';
+  assert.deepEqual(
+    parseModelJson(nested, { ...options, onRepair: (item) => repairs.push(item) }),
+    { coreUpdates: { executive: 'x' }, context: 'y' },
+  );
+  assert.deepEqual(repairs.map((item) => item.type), ['json-brackets-repaired']);
+  const skipped = '{"coreUpdates":{"meta":{"a":[1},"context":"y"},"dimensionUpdates":[]}';
+  assert.equal(
+    repairJsonClosers(skipped, options),
+    '{"coreUpdates":{"meta":{"a":[1]},"context":"y"},"dimensionUpdates":[]}',
+    'A nested member never closes the containers before it',
+  );
+  const valid = '{"coreUpdates":{"context":"y"}}';
+  repairs.length = 0;
+  const parsed = parseModelJson(valid, { ...options, onRepair: (item) => repairs.push(item) });
+  assert.deepEqual(parsed, JSON.parse(valid));
+  assert.deepEqual(repairs, [], 'Valid JSON reports no repair');
+});
+
 test('an unrepairable answer reports exactly where it stopped being valid JSON', () => {
   const broken = COMPLETE.replace('"name":"AI & Agentic Fit"', '"name""AI & Agentic Fit"');
   let failure;

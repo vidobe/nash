@@ -1,33 +1,62 @@
-const COMMON_GUIDANCE = [
+/**
+ * The shared assessment policy: one rulebook for every solution, stage and prompt. Stage prompts
+ * add only stage-specific instructions and output shapes.
+ */
+const ASSESSMENT_POLICY = [
   {
-    title: 'One answer format, authored solution knowledge',
-    text: 'Use the same assessment schema and reason-explanation format for every solution and mixed-solution assessment, with domain-specific criteria inside that schema. Review Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk and AI & Agentic Fit explicitly. Use fetched DA-authored solution knowledge and domain criteria, but current official documentation takes precedence over stale capability claims or default stack advice. Rate every dimension against the Nash rubric anchors; weights or blank scorecards in a customer template belong to the buyer and are not ratings. AI & Agentic Fit is upside and never a purchase prerequisite. Identify material source conflicts rather than silently treating old claims as product proof.',
+    title: 'Purpose and one answer format',
+    text: 'Show the Adobe account team how well the selected Adobe solutions fit this opportunity across Strategic Fit, Technical Fit, Functional Coverage, Commercial Viability, Competitive Position, Delivery Risk and AI & Agentic Fit, why, and what would change the picture. Use the same schema and explanation format for every solution and mixed-solution assessment. Map the criteria of ALL selected solution skills into the seven dimensions; do not silently replace another product\'s criteria with AEM criteria. Use the fetched DA-authored solution knowledge, but current official documentation takes precedence over stale capability claims or default stack advice. Rate every dimension against the Nash rubric anchors; weights or blank scorecards in a customer template belong to the buyer and are not ratings. Identify material source conflicts rather than silently treating old claims as product proof.',
   },
   {
-    title: 'Modern-first, supported architecture',
-    text: 'Evaluate current generally available, supported approaches first. Verify the applicable version, availability, entitlement and constraints from current official sources. Latest, preview, beta and early access do not imply safe production availability. Product age alone does not make a product legacy. Recommend only components needed for the customer requirements; do not add every possible deployment mode or adjacent product.',
+    title: 'Keep six questions apart',
+    text: 'For every requirement and conclusion, keep these questions apart: does the product have the capability; how well does it meet this exact requirement (fit); is it part of the Adobe offer being proposed (offer); is the customer ready to adopt it; does the customer still have to accept it through their own tests, security review or contract; and how strong is the evidence (confidence). Customer-specific acceptance is normal procurement work, not a product weakness, and a customer approval that has not happened yet is not a product deficiency. A choice the customer has not made yet, such as an add-on, edition, plan or deployment option, is an item for the proposal, not a capability gap. A bank or other regulated buyer is not a negative signal: Adobe serves many regulated customers, so check the specific controls asked for instead of assuming a gap. An unknown is neither a zero nor a proven weakness.',
   },
   {
-    title: 'Explicit architecture choices and older-stack exceptions',
-    text: 'Classify every solution or component as recommended, conditional, alternative, excluded or external. Only recommended components form the proposed baseline; name the condition for conditional components and keep alternatives and exclusions out of recommended architecture cards and diagrams. External customer systems are integration boundaries, not Adobe recommendations. An older stack may be appropriate, but every exception must record the exact requirement, modern approach evaluated, older approach required, why the modern approach cannot meet it, evidence and trade-off. Unsupported preference or industry stereotypes are not blockers.',
+    title: 'Evidence and customer-shareable references',
+    text: 'Cite only sources actually read, and say what was cut off or not read. Separate documented capabilities, customer-specific acceptance, proven limitations and unknowns; support capability claims and limitations with traceable evidence and never turn an unknown into an asserted gap. A published standard that is weaker than a stricter customer requirement does not meet it: state what Adobe documents and treat the difference as a contract point to confirm. Never invent certifications, SLAs, prices, benchmarks, ROI, customer approvals, customer stories, page or sheet locations, dates or roadmap commitments. Customer-shareable references use the exact public https URL of the page itself, never a search or redirect link, and are grouped as customer stories, product documentation and trust/compliance, with other only when none fits. Product documentation is not a customer story, and a customer story shows relevant experience, not proof of a contract requirement. Never invent sector references; an empty group is honest. Internal Highspot, SharePoint, wiki and Fluffy sources stay internal; NEVER place them in customer-shareable references. Keep product-specific compliance facts within their product and scope, and never put confidential customer details into web searches.',
   },
   {
-    title: 'Explain conclusions, not repeated sales narratives',
-    text: 'For each dimension, explain the actual conclusion through scoreRationale and concrete criteria with rationale and evidenceRefs. Keep product fit, implementation readiness, evidence confidence and commercial qualification distinct. Do not treat absent customer-specific approval as demonstrated product deficiency. Missing information is rated 3 with Low confidence: an unknown is neither a zero nor a proven weakness. Record unknowns separately in unknowns and name what would move the rating. Banking use is not itself a negative signal. Keep the decision and next action at overview level rather than repeating matters, response, verification and next-action templates in every dimension.',
+    title: 'One supported architecture baseline',
+    text: 'Evaluate current generally available, supported approaches first and verify version, availability, entitlement and constraints from current official sources. Latest, preview, beta and early access are not proof of production readiness, and product age alone does not make a product legacy. Recommend ONE baseline with only the components the requirements need, and give every solution or component a selection: recommended, conditional (with its precise trigger), alternative, excluded or external. Customer-owned identity, applications, data and transactions are external integration boundaries, not Adobe recommendations. Only recommended entries form the baseline; keep alternatives and exclusions out of the recommended architecture. Required capability is not optional just because its specific offering/entitlement is undecided. An older stack may be appropriate, but each exception records the exact requirement, the modern approach evaluated, the older approach required, why the modern approach cannot meet it, the evidence and the trade-off; preference or industry stereotypes are not blockers. Link recommended components and use cases to real source requirement IDs.',
   },
   {
-    title: 'Evidence, uncertainty and public reference kinds',
-    text: 'Separate documented product capabilities, customer-specific integration/security/contract acceptance, actual proven limitations and unknowns. Support capability claims and limitations with traceable evidence; do not turn an unknown into an asserted capability gap. Use only sourced, public, customer-shareable URLs and classify each reference as customer-story, product-documentation, trust-compliance or other. Product documentation is not a customer story. Customer stories demonstrate relevant experience, not proof of every customer contract requirement. Do not invent sector references; categories without verified references may remain empty. Keep product-specific compliance facts within the relevant product and scope.',
+    title: 'Conclusions, headline and acceptance gates',
+    text: 'Each dimension explains why it has this rating and not one higher or lower, with customer-specific criteria, evidence, unknowns and what would move the rating. A dimension without customer-specific evidence is rated 3 with Low confidence and marked as having no evidence yet; say exactly what to find out. Explain the actual reasons for each dimension. Do not repeat "what matters/how Adobe should respond" or action templates in every dimension. The executive headline is a short solution-and-customer title of about 6-10 words, for example "Unified CMS and DAM for Acme Bank" or "Customer journey orchestration for Acme"; adapt the scope to the selected solutions, because these are examples, not defaults. Never put fit judgments, risk statements, evidence caveats or approval/discovery instructions in the title. Put the fit conclusion in executive.summary, caveats in executive.conditions and one best next action in executive.nextAction. Keep one acceptance-gate register for the genuinely open items, refer to gates by ID instead of repeating lists, and make sure every cited gate exists. Supporting Markdown must not duplicate the structured matrices.',
   },
   {
-    title: 'Customer-specific decision and supporting analysis',
-    text: 'The executive headline is a short solution-and-customer title, such as Unified CMS and DAM for Acme Bank. Name the proposed solution scope in plain language; do not make the heading a fit judgment, risk statement, evidence caveat or instruction to discover, approve or validate something. Put the fit conclusion in the summary, material conditions below it and the single best next action in the overview. Dimension details explain their conclusions and criteria. Deep Markdown supports source analysis and must not duplicate complete structured requirement, competitor, delivery or scoring matrices. Use one linked acceptance-gate register. AI review must distinguish native AI, named product agents, Coworker/MCP, availability, entitlement, sensitive-data controls and measurable workflow value; optional AI must not become a core-production prerequisite.',
+    title: 'Competitors',
+    text: 'Mark each competitor as incumbent (the customer\'s current vendor for this scope), named (named by the customer in its documents or conversations) or typical (a common alternative the customer has not named). A vendor list in an evaluation template is not proof of an active bid or ranking. Explain where Adobe wins or loses against THIS customer\'s requirements, using the competitive knowledge provided. Do not claim competitor prices or weaknesses without evidence. Blank scorecards and prices are unknown, not zero.',
   },
   {
-    title: 'Build on draft answers and preserve requirement traceability',
-    text: 'A draft answer already prepared in the customer workbook is prior work by the account team: keep it when the evidence and product knowledge support it and change it only with a stated reason. Reassess a draft No against the actual question; when customization, a partner or another Adobe product can deliver it, say which instead of copying it into Not supported. Keep required capabilities in the baseline even when the particular offering, license or implementation route remains conditional. Link recommended components and use cases to real source requirement IDs when a manifest exists. Every cited acceptance-gate ID, including references in prose and dependencies, must exist in the single gate register.',
+    title: 'AI and agentic upside',
+    text: 'AI & Agentic Fit is upside: it is rated and shown but not counted in the total. Rate the realistic value of native product AI, named product agents, Adobe Coworker and MCP for this customer\'s workflows, including value beyond literal RFI wording, without inventing buyer demand. Check availability, exact entitlement, regional scope, governance, human review and sensitive-data boundaries, and mark unavailable or unverified agents honestly. AI purchase or adoption is never a prerequisite for the core project.',
+  },
+  {
+    title: 'Build on draft answers and keep traceability',
+    text: 'Answers already drafted in the customer workbook are prior work by the account team: keep them when the evidence and product knowledge support them and change them only with a stated reason. Preserve source question IDs, wording, priorities and unclassified priorities; repeated questions with distinct IDs stay distinct, without a double penalty. Procurement implications need buyer confirmation; never invent automatic disqualification. RTO/RPO, cache freshness, throughput and support terms keep their exact documented scope and measurement boundaries.',
   },
 ];
+
+/** How each requirement row is judged: one fit and one offer value. Shared by every stage. */
+export const FIT_POLICY = `REQUIREMENT FIT AND OFFER
+Judge each requirement on capability: can the proposed Adobe solutions meet it, and how? Choose exactly one fit:
+- Out of the box: a standard capability of the proposed product, available without custom work.
+- Configuration: delivered by configuring the product (settings, workflows, templates, permissions, metadata, supported integrations).
+- Custom build: achievable on the platform with custom code or significant implementation work; name the route in solution.
+- Partner or third party: needs a named partner solution, marketplace extension or product outside the proposed scope.
+- Not supported: the proposed products cannot reasonably deliver it.
+- Needs clarification: the question is genuinely ambiguous or depends on a fact about the customer that you cannot infer; name what is missing in caveat. Use it rarely.
+Then choose exactly one offer:
+- Included: part of the Adobe offer being proposed.
+- Add-on: needs an Adobe add-on, edition, plan or option that the proposal must include.
+- Not included: delivered outside the Adobe offer (by a partner, a third party or the customer), or not delivered at all.
+- Unknown: the evidence does not show which.
+Rules:
+- When an add-on, edition, plan or option delivers the requirement, give the fit of that capability and set offer to Add-on. An undecided purchase is never a reason for Needs clarification.
+- Customer-specific acceptance (their tests, security review or contract) is normal procurement work, not a reason for Needs clarification or a lower fit.
+- When a row has a draft, start from its answer, note and evidence. Keep it when the evidence and the solution knowledge support it, and change it only with the reason stated in response. A documented draft "Yes" is normally Out of the box or Configuration; choose Custom build or Partner or third party when the note shows implementation work or another product. A draft "No" is Not supported only when the product genuinely lacks the capability; if customization, a partner or another Adobe product can deliver it, choose that fit and say which.
+- Service terms (security, privacy, availability, recovery, performance, support and exit): when Adobe's documented standard meets the request, choose Out of the box and name any plan or option condition. When the request asks for more than Adobe documents, give what Adobe documents and put the difference in caveat as a contract point to confirm; the fit is then Needs clarification, or Not supported when Adobe states that the term is not offered.
+- Answer the exact responsibility asked. Authoring, storage, delivery and sending are different capabilities: a product that does not send messages can still author and govern their content.`;
 
 const FAMILY_GUIDANCE = [
   {
@@ -87,11 +116,24 @@ export function solutionGuidance(slugs = []) {
     .filter((slug) => typeof slug === 'string')
     .map((slug) => slug.trim().toLowerCase()));
   return [
-    ...COMMON_GUIDANCE,
+    ...ASSESSMENT_POLICY,
     ...FAMILY_GUIDANCE.filter((family) => family.slugs.some((slug) => selected.has(slug))),
   ].map(({ title, text }) => ({ title, text }));
 }
 
 export function solutionGuidanceText(slugs = []) {
   return solutionGuidance(slugs).map(({ title, text }) => `${title}\n${text}`).join('\n\n');
+}
+
+/**
+ * Splits the shared policy out of fetched skills text, so a prompt can state it once, ahead of
+ * the solution knowledge, whether or not the skills text already carries it.
+ */
+export function separatePolicy(skills = '') {
+  const policy = solutionGuidanceText();
+  const index = skills.indexOf(policy);
+  if (index < 0) return { policy, knowledge: skills };
+  const before = skills.slice(0, index).trimEnd();
+  const after = skills.slice(index + policy.length).trimStart();
+  return { policy, knowledge: [before, after].filter(Boolean).join('\n\n') };
 }

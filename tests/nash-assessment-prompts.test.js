@@ -5,7 +5,9 @@ import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { SOLUTION_PILLARS } from '../blocks/nash-solutions/nash-solutions.js';
 import { solutionGuidance, solutionGuidanceText } from '../scripts/nash-assessment-guidance.js';
-import { ASSESSMENT_DIMENSIONS, sourceCitationEvidence } from '../scripts/nash-assessment-contract.js';
+import {
+  ASSESSMENT_CONTRACT_VERSION, ASSESSMENT_DIMENSIONS, sourceCitationEvidence,
+} from '../scripts/nash-assessment-contract.js';
 import { buildQualPrompt, buildRequirementReviewPrompt } from '../scripts/nash-assessment-prompts.js';
 import {
   DOC_URL, draftedRequirements, rubricCore, sourceRequirements,
@@ -58,7 +60,9 @@ test('all registered solutions share one schema while retaining their actual dom
     assert.ok(prompt.includes(facts), slug);
     ASSESSMENT_DIMENSIONS.forEach((name) => assert.ok(prompt.includes(name), `${slug}: ${name}`));
   });
-  assert.equal(expected.contractVersion, 4);
+  assert.equal(expected.contractVersion, ASSESSMENT_CONTRACT_VERSION);
+  assert.equal(expected.competitors[0].status, '<incumbent|named|typical>');
+  assert.equal(expected.confidence[0].basis, '<evidence|default>');
   assert.deepEqual(Object.keys(expected.meta), ['cms'], 'Nash computes the score and verdict');
   assert.match(expected.dimensions[0].rating, /integer 1-5/);
   assert.equal(expected.dimensions[0].scored, undefined);
@@ -81,7 +85,7 @@ test('one authoritative canonical object replaces contradictory independently ge
 test('every dimension needs its reasons, criteria and evidence rather than repeated sales templates', () => {
   const prompt = promptFor();
   assert.match(prompt, /criteria of ALL selected solution skills/);
-  assert.match(prompt, /Keep product capability, requirement fit, customer readiness and commercial evidence apart/);
+  assert.match(prompt, /keep these questions apart: does the product have the capability; how well does it meet this exact requirement \(fit\); is it part of the Adobe offer/);
   assert.match(prompt, /A bank or other regulated buyer is not a negative signal/);
   assert.match(prompt, /Do not repeat "what matters\/how Adobe should respond"/);
   assert.match(schemaFor(prompt).dimensionDetails[0].scoreRationale, /why this rating and not one higher or lower/);

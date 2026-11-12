@@ -1,5 +1,5 @@
 import {
-  ASSESSMENT_DIMENSIONS, finalizeRequirementRow,
+  ASSESSMENT_CONTRACT_VERSION, ASSESSMENT_DIMENSIONS, finalizeRequirementRow,
 } from '../../scripts/nash-assessment-contract.js';
 import { applyAssessmentRubric } from '../../scripts/nash-rubric.js';
 
@@ -208,11 +208,12 @@ export function draftedRequirements(count = 2) {
   }));
 }
 
-/** A requirement row exactly as the model returns it in a v4 batch. */
-export function fitResponse(source, fit = 'Configuration') {
+/** A requirement row exactly as the model returns it in a batch; v4 rows have no offer. */
+export function fitResponse(source, fit = 'Configuration', offer = 'Included') {
   return {
     id: source.id,
     fit,
+    ...(offer ? { offer } : {}),
     requirement: `Approved content for workflow ${source.id}`,
     response: 'Content Fragments with workflow approval deliver reviewed reusable content.',
     solution: 'AEM Sites: Content Fragments',
@@ -221,11 +222,15 @@ export function fitResponse(source, fit = 'Configuration') {
   };
 }
 
-/** The core-stage model output for contract v4: ratings only, nothing computed. */
-export function rubricCore() {
+/** The core-stage model output: ratings only, nothing computed. v5 adds statuses and bases. */
+export function rubricCore(version = ASSESSMENT_CONTRACT_VERSION) {
   const view = canonicalAssessment();
-  view.contractVersion = 4;
+  view.contractVersion = version;
   view.meta = { cms: 'n/a' };
+  if (version >= 5) {
+    view.competitors = view.competitors.map((item) => ({ ...item, status: 'named' }));
+    view.confidence = view.confidence.map((item) => ({ ...item, basis: 'evidence' }));
+  }
   delete view.scoring;
   view.dimensions = view.dimensions.map(({
     scored, max, weight, ...dimension
@@ -238,11 +243,16 @@ export function rubricCore() {
   return view;
 }
 
-/** A stored, complete v4 assessment with its rubric applied. */
-export function rubricAssessment(requirements = sourceRequirements(), fit = 'Configuration') {
+/** A stored, complete assessment with its rubric applied. */
+export function rubricAssessment(
+  requirements = sourceRequirements(),
+  fit = 'Configuration',
+  version = ASSESSMENT_CONTRACT_VERSION,
+) {
+  const offer = version >= 5 ? 'Included' : null;
   return applyAssessmentRubric({
-    ...rubricCore(),
+    ...rubricCore(version),
     requirements: requirements
-      .map((source) => finalizeRequirementRow(fitResponse(source, fit), source)),
+      .map((source) => finalizeRequirementRow(fitResponse(source, fit, offer), source)),
   });
 }

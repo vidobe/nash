@@ -15,11 +15,13 @@ import { solutionGuidanceText } from '../../scripts/nash-assessment-guidance.js'
 import { buildQualPrompt } from '../../scripts/nash-assessment-prompts.js';
 import {
   assessmentProjection, buildAssessmentChatContext, intakeDocumentText, isCanonicalAssessment,
-  isCustomerShareableUrl, requirementManifestForFiles, requirementsFromRows,
-  stripRequirementManifest,
+  isCustomerShareableUrl, promptDocumentText, requirementManifestForFiles, requirementsFromRows,
 } from '../../scripts/nash-assessment-contract.js';
-import { RUBRIC_METHOD, draftAgreement } from '../../scripts/nash-rubric.js';
+import {
+  RUBRIC_METHOD, coverageShares, draftAgreement, functionalCoverage, ratingsWithoutEvidence,
+} from '../../scripts/nash-rubric.js';
 import { completedAnswer, fetchSkillsText, generateAssessment } from '../../scripts/nash-assessment-workflow.js';
+import { fetchTrustBaseline, isTrustBaselineEvidence } from '../../scripts/nash-trust-baseline.js';
 import { assessmentScore, dimensionPercent } from '../../scripts/nash-scoring.js';
 import {
   PILLARS, SOLUTION_PILLARS, SOLUTION_TILES,
@@ -1457,6 +1459,9 @@ const EVIDENCE_TYPE_LABELS = {
   'source-citation': 'Cited in source document',
 };
 
+const evidenceTypeLabel = (item) => (isTrustBaselineEvidence(item)
+  ? 'Adobe trust baseline' : EVIDENCE_TYPE_LABELS[item.type] || 'Supporting evidence');
+
 function evidencePanelHtml(evidence) {
   if (!Array.isArray(evidence) || !evidence.length) return '';
   return `<section class="nash-session-evidence" aria-label="Evidence used">
@@ -1468,7 +1473,7 @@ function evidencePanelHtml(evidence) {
       <span class="nash-session-evidence-count">${evidence.length} ${evidence.length === 1 ? 'source' : 'sources'}</span>
     </div>
     <div class="nash-session-evidence-list">${evidence.map((item) => {
-    const type = EVIDENCE_TYPE_LABELS[item.type] || 'Supporting evidence';
+    const type = evidenceTypeLabel(item);
     const locator = /^https?:\/\//i.test(item.locator)
       ? `<a href="${escapeHtml(item.locator)}" target="_blank" rel="noopener">Open source</a>`
       : escapeHtml(item.locator);
@@ -1507,7 +1512,7 @@ function dimensionEvidenceHtml(dimension, evidence) {
   return `<ul>${items.map((item) => `<li>
       <strong>${escapeHtml(item.source)}</strong>
       <p>${escapeHtml(item.claim)}</p>
-      <span>${escapeHtml(EVIDENCE_TYPE_LABELS[item.type] || 'Supporting evidence')}${item.locator ? ` · ${escapeHtml(item.locator)}` : ''}</span>
+      <span>${escapeHtml(evidenceTypeLabel(item))}${item.locator ? ` · ${escapeHtml(item.locator)}` : ''}</span>
     </li>`).join('')}</ul>`;
 }
 
@@ -1546,11 +1551,36 @@ function requirementSourcesHtml(refs, evidence = []) {
   }).join('');
 }
 
+const COVERAGE_PARTS = [
+  ['standard', 'covered', 'Standard / config', 'met as standard or by configuration'],
+  ['custom', 'partial', 'Custom / partner', 'custom work or a partner'],
+  ['open', 'clarify', 'Open', 'still open'],
+  ['unsupported', 'gap', 'Not supported', 'not supported'],
+];
+
+const OFFER_LABELS = {
+  'Add-on': 'Add-on',
+  'Not included': 'Outside the Adobe offer',
+  Unknown: 'Offer unknown',
+};
+
+/* The four parts of coverage by priority weight: chips with row counts and one stacked bar. */
+function coveragePartsHtml(parts) {
+  const label = COVERAGE_PARTS.map(([key, , , phrase]) => `${parts[key].percent}% ${phrase}`).join(', ');
+  return {
+    chips: COVERAGE_PARTS.map(([key, tone, name]) => `<span class="${tone}"><b>${parts[key].percent}%</b>${name}<small>${parts[key].rows} ${parts[key].rows === 1 ? 'row' : 'rows'}</small></span>`).join(''),
+    bar: `<div class="nash-session-coverage-bar" role="img" aria-label="By priority weight: ${escapeHtml(label)}">${COVERAGE_PARTS
+      .filter(([key]) => parts[key].percent)
+      .map(([key, tone]) => `<i class="${tone}" style="width:${parts[key].percent}%"></i>`).join('')}</div>`,
+  };
+}
+
 function coverageBreakdownHtml(functional) {
   if (!functional?.counts) return '';
   const parts = Object.entries(functional.counts).filter(([, count]) => count)
     .map(([fit, count]) => `${escapeHtml(fit)} ${count}`);
-  return `<p class="nash-session__coverage-note">${parts.join(' · ')}${functional.unsourced ? ` · ${functional.unsourced} without a cited source` : ''}${functional.mustGaps?.length ? `<br><b>Must requirements not supported:</b> ${escapeHtml(functional.mustGaps.join(', '))}` : ''}</p>`;
+  const addOns = functional.offers?.addOns || [];
+  return `<p class="nash-session__coverage-note">Shares are by priority weight (Must ×3, Should ×2); the coverage score counts custom, partner and open requirements as half.<br>${parts.join(' · ')}${functional.unsourced ? ` · ${functional.unsourced} without a cited source` : ''}${addOns.length ? `<br><b>Add-ons the proposal must include (${addOns.length}):</b> ${escapeHtml(addOns.join(', '))}` : ''}${functional.mustGaps?.length ? `<br><b>Must requirements not supported:</b> ${escapeHtml(functional.mustGaps.join(', '))}` : ''}</p>`;
 }
 
 function requirementsAnalysisHtml(requirements, coverage, evidence, scoring) {
@@ -1565,21 +1595,26 @@ function requirementsAnalysisHtml(requirements, coverage, evidence, scoring) {
     covered: 0, partial: 0, clarify: 0, gap: 0,
   });
   let label = coverage?.status === 'verified-manifest' ? 'Complete source-question traceability' : 'Recorded requirement review';
-  if (fitted && functional) label = `${functional.percent}% weighted coverage · rating ${functional.rating} / 5`;
+  if (fitted && functional) label = `Coverage score ${functional.percent}% · rating ${functional.rating} / 5`;
+  // Records saved before the four-part split get it from their rows.
+  const parts = fitted && (functional?.parts || functionalCoverage(requirements)?.parts);
+  const split = parts ? coveragePartsHtml(parts) : null;
   const fitCell = (item) => {
     const agreement = DRAFT_AGREEMENT_LABELS[draftAgreement(item)];
-    return `<span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.fit || item.status || 'Needs clarification')}</span>${item.draft?.answer ? `<small>Draft: ${escapeHtml(item.draft.answer)}${agreement ? ` · ${escapeHtml(agreement)}` : ''}</small>` : ''}`;
+    const offer = OFFER_LABELS[item.offer];
+    return `<span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.fit || item.status || 'Needs clarification')}</span>${offer ? `<span class="nash-session-offer-tag${item.offer === 'Add-on' ? ' add-on' : ''}">${escapeHtml(offer)}</span>` : ''}${item.draft?.answer ? `<small>Draft: ${escapeHtml(item.draft.answer)}${agreement ? ` · ${escapeHtml(agreement)}` : ''}</small>` : ''}`;
   };
   return `<section class="nash-session-special-analysis">
     <div class="nash-session-analysis-head">
       <div><span>${escapeHtml(label)}</span><h3>Functional coverage · ${requirements.length} requirements</h3></div>
       <div class="nash-session-coverage-summary">
-        <span><b>${counts.covered}</b>Covered</span>
+        ${split ? split.chips : `<span><b>${counts.covered}</b>Covered</span>
         <span><b>${counts.partial}</b>Partial</span>
         <span><b>${counts.clarify}</b>Clarify</span>
-        <span><b>${counts.gap}</b>Gap</span>
+        <span><b>${counts.gap}</b>Gap</span>`}
       </div>
     </div>
+    ${split ? split.bar : ''}
     ${fitted ? coverageBreakdownHtml(functional) : ''}
     <div class="nash-session-analysis-table-wrap"><table>
       <thead><tr><th>ID</th><th>${fitted ? 'Fit' : 'Status'}</th><th>Requirement</th><th>Adobe response</th><th>Solution / deployment</th><th>${fitted ? 'Sources' : 'Validation'}</th></tr></thead>
@@ -1595,14 +1630,31 @@ function requirementsAnalysisHtml(requirements, coverage, evidence, scoring) {
   </section>`;
 }
 
+/* [row label, summary singular, summary plural] */
+const COMPETITOR_STATUSES = {
+  incumbent: ['Incumbent', 'incumbent', 'incumbents'],
+  named: ['Named by the customer', 'named by the customer', 'named by the customer'],
+  typical: ['Typical alternative · not named by the customer', 'typical alternative', 'typical alternatives'],
+};
+
+/* Incumbents first, then competitors the customer named, then typical alternatives. */
 function competitorAnalysisHtml(competitors) {
   if (!Array.isArray(competitors) || !competitors.length) return '';
+  const order = Object.keys(COMPETITOR_STATUSES);
+  const rank = (item) => (order.includes(item.status) ? order.indexOf(item.status) : order.length);
+  const sorted = [...competitors].sort((a, b) => rank(a) - rank(b));
+  const known = competitors.every((item) => COMPETITOR_STATUSES[item.status]);
+  const summary = known ? order.map((status) => {
+    const count = competitors.filter((item) => item.status === status).length;
+    const [, one, many] = COMPETITOR_STATUSES[status];
+    return count ? `${count} ${count > 1 ? many : one}` : '';
+  }).filter(Boolean).join(' · ') : 'Named alternatives';
   return `<section class="nash-session-special-analysis">
-    <div class="nash-session-analysis-head"><div><span>Named alternatives</span><h3>Competitive proof plan</h3></div></div>
+    <div class="nash-session-analysis-head"><div><span>${escapeHtml(summary)}</span><h3>Competitive proof plan</h3></div></div>
     <div class="nash-session-analysis-table-wrap"><table>
       <thead><tr><th>Competitor</th><th>Adobe can win</th><th>Adobe may lose</th><th>Proof required</th></tr></thead>
-      <tbody>${competitors.map((item) => `<tr>
-        <td><strong>${escapeHtml(item.name || '')}</strong>${item.status ? `<small>${escapeHtml(item.status)}</small>` : ''}</td>
+      <tbody>${sorted.map((item) => `<tr>
+        <td><strong>${escapeHtml(item.name || '')}</strong>${item.status ? `<small>${escapeHtml(COMPETITOR_STATUSES[item.status]?.[0] || item.status)}</small>` : ''}</td>
         <td>${escapeHtml(item.win || '')}</td>
         <td>${escapeHtml(item.lose || '')}</td>
         <td>${escapeHtml(item.proof || '')}</td>
@@ -1718,6 +1770,8 @@ function dimensionReadingHtml(dimension, index, assessment) {
       ? 'Computed from the requirement matrix' : 'Rated against the Nash rubric';
     if (!upside) basis += ` · ${dimension.scored} of ${dimension.max} points`;
   }
+  const unevidenced = ratingsWithoutEvidence(assessment.assessmentView)
+    .some((item) => item.dimension === dimension.dimension);
   return `<article class="nash-session-dimension-reading" data-dimension-index="${index}" hidden>
     <div class="nash-session-dimension-kicker"><i></i><span>Assessment dimension${kicker}</span></div>
     <div class="nash-session-dimension-title-row">
@@ -1727,6 +1781,7 @@ function dimensionReadingHtml(dimension, index, assessment) {
     <div class="nash-session__score-meta">
       <span>${basis}</span>
       ${confidence?.level ? `<span>${escapeHtml(confidence.level)} evidence confidence</span>` : ''}
+      ${unevidenced ? '<span>No customer-specific evidence yet · rated 3 by default</span>' : ''}
       ${confidence?.swing ? `<span>Score sensitivity: ${escapeHtml(confidence.swing)}</span>` : ''}
     </div>
     <p class="nash-session-dimension-lead">${escapeHtml(rationale || 'No explanation was recorded for this score.')}</p>
@@ -1745,7 +1800,7 @@ function dimensionReadingHtml(dimension, index, assessment) {
   </article>`;
 }
 
-function dimensionGalleryCard(dimension, index, confidence) {
+function dimensionGalleryCard(dimension, index, confidence, unevidenced = new Set()) {
   const layout = GALLERY_CARD_LAYOUT[index % GALLERY_CARD_LAYOUT.length];
   const accent = GALLERY_ACCENTS[index % GALLERY_ACCENTS.length];
   const pct = dimensionPercent(dimension);
@@ -1758,7 +1813,8 @@ function dimensionGalleryCard(dimension, index, confidence) {
   if (rated) {
     value = `${dimension.rating}<span>/5</span>`;
     meta = [dimension.max ? `${dimension.scored} of ${dimension.max} pts` : 'Upside',
-      confidenceItem?.level && `${confidenceItem.level} confidence`].filter(Boolean).join(' · ');
+      unevidenced.has(dimension.dimension) ? 'No evidence yet'
+        : confidenceItem?.level && `${confidenceItem.level} confidence`].filter(Boolean).join(' · ');
   }
   return `<button type="button" class="nash-session-section-card ${layout}" style="--gallery-accent:${accent}" data-dimension-index="${index}">
     <div class="nash-session-section-card-top">
@@ -1931,7 +1987,12 @@ function scoringNoteHtml(view) {
   const coverage = view.scoring.functionalCoverage;
   const parts = (view.dimensions || []).filter((item) => item.max)
     .map((item) => `${item.dimension} ${item.scored}/${item.max}`);
-  return `<p class="nash-session__scoring-note"><b>${view.meta.score}/100 · ${escapeHtml(view.meta.verdict)}.</b> Each dimension is rated 1–5 against the Nash rubric and weighted: ${escapeHtml(parts.join(', '))}.${coverage ? ` Functional Coverage is computed from ${coverage.rows} requirement answers (${coverage.percent}% weighted coverage).` : ''} AI &amp; Agentic Fit is shown as upside and not counted. 70+ is Go, 50–69 Conditional-Go, below 50 No-go.</p>`;
+  const split = coverage && (coverage.parts || functionalCoverage(view.requirements)?.parts);
+  const unevidenced = ratingsWithoutEvidence(view).filter((item) => item.weight);
+  const weight = unevidenced.reduce((sum, item) => sum + item.weight, 0);
+  const names = unevidenced.map((item) => item.dimension);
+  const listed = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
+  return `<p class="nash-session__scoring-note"><b>${view.meta.score}/100 · ${escapeHtml(view.meta.verdict)}.</b> Each dimension is rated 1–5 against the Nash rubric and weighted: ${escapeHtml(parts.join(', '))}.${coverage ? ` Functional Coverage is computed from ${coverage.rows} requirement answers (coverage score ${coverage.percent}%${split ? `; by priority weight ${coverageShares(split)}` : ''}).` : ''}${names.length ? ` ${escapeHtml(listed)} ${names.length > 1 ? 'have' : 'has'} no customer-specific evidence yet and ${names.length > 1 ? 'are' : 'is'} rated 3 by default (${weight}% of the weight).` : ''} AI &amp; Agentic Fit is shown as upside and not counted. 70+ is Go, 50–69 Conditional-Go, below 50 No-go.</p>`;
 }
 
 function assessmentOverviewHtml(a) {
@@ -2005,6 +2066,8 @@ function daPreviewHtml(a) {
       )),
   };
   const dimensions = a.dimensions || [];
+  const unevidenced = new Set(ratingsWithoutEvidence(assessment.assessmentView)
+    .map((item) => item.dimension));
   const dimensionButtons = dimensions.map((dimension, index) => {
     const accent = GALLERY_ACCENTS[index % GALLERY_ACCENTS.length];
     const icon = GALLERY_ICONS[index % GALLERY_ICONS.length];
@@ -2029,7 +2092,7 @@ function daPreviewHtml(a) {
           <p>Open a dimension for the reasons behind its conclusion, supporting evidence and relevant analysis.</p>
         </div>
         <div class="nash-session-section-gallery">
-          ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence)).join('')}
+          ${dimensions.map((dimension, index) => dimensionGalleryCard(dimension, index, a.confidence, unevidenced)).join('')}
         </div>
         ${customerReferencesHtml(assessment)}
         ${a.reportMarkdown ? `<details class="nash-session__source-analysis">
@@ -3243,6 +3306,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     failMsg(error.message || 'The solution skills could not be loaded. Try again.');
     return;
   }
+  const trustBaseline = await fetchTrustBaseline(sols.map((s) => s.slug));
   // FluffyJaws chains an Azure response per tool iteration; long loops expire the
   // chain (previous_response_not_found). Fewer searches → higher completion rate.
   // The retry is tighter still, so it's more likely to finish than the first pass.
@@ -3257,8 +3321,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     failMsg(error.message);
     return;
   }
-  const docText = files.filter((f) => f.text)
-    .map((f) => `--- ${f.name} ---\n${stripRequirementManifest(f.text)}`).join('\n\n');
+  const docText = promptDocumentText(files, requirements);
   const attachments = files.filter((f) => f.data).map((f) => ({
     type: 'input_file',
     filename: f.name,
@@ -3275,6 +3338,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     interview: interviewText(assessment),
     requirements,
     deferRequirements: requirements.length > 0,
+    trustBaseline: trustBaseline.evidence,
   });
   // On a re-run, fold in the analyst's chat discussion so the model updates the
   // report, score, and recommendation with the new insights.
@@ -3292,6 +3356,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       messages: [{ role: 'user', content: userContent }],
       requirements,
       skills,
+      trustBaseline,
       sourceContext: `${docText}\n\n${interviewText(assessment)}\n\n${insights || ''}`,
       solutionSlugs: sols.map((solution) => solution.slug),
       checkpoint: assessment.generationCheckpoint,
@@ -3387,11 +3452,11 @@ async function runExperimentalAssessment(block, attempt = 1) {
       : [{ slug: 'aem', name: 'Adobe Experience Manager' }];
     const solutionNames = sols.map((solution) => solution.name).join(' and ');
     const skills = await fetchSkillsText(sols.map((solution) => solution.slug));
+    const trustBaseline = await fetchTrustBaseline(sols.map((solution) => solution.slug));
 
     const files = assessmentFiles(current);
     const requirements = requirementManifestForFiles(files);
-    const docText = files.filter((file) => file.text)
-      .map((file) => `--- ${file.name} ---\n${stripRequirementManifest(file.text)}`).join('\n\n');
+    const docText = promptDocumentText(files, requirements);
     const attachments = files.filter((file) => file.data).map((file) => ({
       type: 'input_file',
       filename: file.name,
@@ -3409,6 +3474,7 @@ async function runExperimentalAssessment(block, attempt = 1) {
       format: 'experimental',
       requirements,
       deferRequirements: requirements.length > 0,
+      trustBaseline: trustBaseline.evidence,
     });
     const userContent = attachments.length
       ? [{ type: 'input_text', text: prompt }, ...attachments]
@@ -3418,6 +3484,7 @@ async function runExperimentalAssessment(block, attempt = 1) {
       messages: [{ role: 'user', content: userContent }],
       requirements,
       skills,
+      trustBaseline,
       sourceContext: `${docText}\n\n${interviewText(current)}`,
       solutionSlugs: sols.map((solution) => solution.slug),
       webSearch: true,
