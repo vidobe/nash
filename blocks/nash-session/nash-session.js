@@ -14,9 +14,11 @@ import {
 import { solutionGuidanceText } from '../../scripts/nash-assessment-guidance.js';
 import { buildQualPrompt } from '../../scripts/nash-assessment-prompts.js';
 import {
-  assessmentProjection, buildAssessmentChatContext, intakeDocumentText, isCustomerShareableUrl,
-  requirementManifestForFiles, requirementsFromRows,
+  assessmentProjection, buildAssessmentChatContext, intakeDocumentText, isCanonicalAssessment,
+  isCustomerShareableUrl, requirementManifestForFiles, requirementsFromRows,
+  stripRequirementManifest,
 } from '../../scripts/nash-assessment-contract.js';
+import { RUBRIC_METHOD, draftAgreement } from '../../scripts/nash-rubric.js';
 import { completedAnswer, fetchSkillsText, generateAssessment } from '../../scripts/nash-assessment-workflow.js';
 import { assessmentScore, dimensionPercent } from '../../scripts/nash-scoring.js';
 import {
@@ -138,10 +140,14 @@ function greeting() {
   return 'Good evening';
 }
 
+/* Safe for text and quoted attributes: source workbooks are untrusted input. */
 function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function inlineMd(s) {
@@ -1117,7 +1123,7 @@ const MAX_DOC_CHARS = 120000;
  * for formats we don't parse here (e.g. legacy binary .doc) — those still go to
  * the model as an input_file attachment.
  */
-async function extractFileText(file) {
+export async function extractFileText(file) {
   const name = (file.name || '').toLowerCase();
   const isText = name.endsWith('.csv') || name.endsWith('.txt')
     || name.endsWith('.json') || name.endsWith('.md')
@@ -1131,10 +1137,17 @@ async function extractFileText(file) {
       const sheetjsUrl = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';
       const XLSX = await import(sheetjsUrl);
       const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-      const text = wb.SheetNames
-        .map((n) => `### Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`)
+      const sheets = wb.SheetNames.map((sheetName) => ({
+        name: sheetName,
+        requirements: requirementsFromRows(XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' }), file.name, sheetName),
+      }));
+      const requirements = sheets.flatMap((sheet) => sheet.requirements);
+      // Context sheets first: requirement sheets are also captured in the manifest below,
+      // so truncation removes duplicated rows rather than pricing, scope or decision context.
+      const text = [...sheets.filter((sheet) => !sheet.requirements.length),
+        ...sheets.filter((sheet) => sheet.requirements.length)]
+        .map((sheet) => `### Sheet: ${sheet.name}\n${XLSX.utils.sheet_to_csv(wb.Sheets[sheet.name], { blankrows: false, strip: true })}`)
         .join('\n\n');
-      const requirements = wb.SheetNames.flatMap((sheet) => requirementsFromRows(XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, defval: '' }), file.name, sheet));
       const partial = text.length > MAX_DOC_CHARS
         ? '\n[NASH: auxiliary extracted text was truncated; the source question manifest below is separate.]' : '';
       return `${text.slice(0, MAX_DOC_CHARS)}${partial}${requirements.length
@@ -1209,7 +1222,7 @@ function reportHtmlForPublish(a) {
   } else if (a.assessmentView?.scoring) {
     header += `<p><strong>Assessment:</strong> ${escapeHtml(a.verdict || 'Not scored')} · Not numerically scored</p>`;
   }
-  if (a.assessmentView?.contractVersion === 3) {
+  if (isCanonicalAssessment(a.assessmentView)) {
     const content = assessmentOverviewHtml(a)
       + a.dimensions.map((dimension, index) => dimensionReadingHtml(dimension, index, a)
         .replace(' hidden>', '>')).join('')
@@ -1441,6 +1454,7 @@ const EVIDENCE_TYPE_LABELS = {
   'adobe-knowledge': 'Adobe knowledge',
   'public-source': 'Public source',
   'internal-source': 'Internal source',
+  'source-citation': 'Cited in source document',
 };
 
 function evidencePanelHtml(evidence) {
@@ -1512,8 +1526,37 @@ function requirementStatusClass(status) {
   return 'clarify';
 }
 
-function requirementsAnalysisHtml(requirements, coverage, evidence) {
+const DRAFT_AGREEMENT_LABELS = {
+  agrees: 'matches the draft',
+  upgraded: 'improves on the draft',
+  downgraded: 'below the draft',
+  answered: 'answers an open draft',
+  open: 'still open',
+};
+
+/* Requirement sources: public links open directly; other evidence opens the register. */
+function requirementSourcesHtml(refs, evidence = []) {
+  if (!Array.isArray(refs) || !refs.length) return '<span class="nash-session__unsourced">No source cited</span>';
+  return refs.map((id) => {
+    const item = evidence.find((entry) => entry.id.toLowerCase() === String(id).toLowerCase());
+    if (item && isCustomerShareableUrl(item.locator)) {
+      return `<a class="nash-session__source-link" href="${escapeHtml(item.locator)}" target="_blank" rel="noopener" title="${escapeHtml(item.claim || item.source)}">${escapeHtml(item.source)}</a>`;
+    }
+    return scoreEvidenceHtml([id], evidence);
+  }).join('');
+}
+
+function coverageBreakdownHtml(functional) {
+  if (!functional?.counts) return '';
+  const parts = Object.entries(functional.counts).filter(([, count]) => count)
+    .map(([fit, count]) => `${escapeHtml(fit)} ${count}`);
+  return `<p class="nash-session__coverage-note">${parts.join(' · ')}${functional.unsourced ? ` · ${functional.unsourced} without a cited source` : ''}${functional.mustGaps?.length ? `<br><b>Must requirements not supported:</b> ${escapeHtml(functional.mustGaps.join(', '))}` : ''}</p>`;
+}
+
+function requirementsAnalysisHtml(requirements, coverage, evidence, scoring) {
   if (!Array.isArray(requirements) || !requirements.length) return '';
+  const fitted = requirements.some((item) => item.fit);
+  const functional = scoring?.functionalCoverage;
   const counts = requirements.reduce((totals, requirement) => {
     const key = requirementStatusClass(requirement.status);
     totals[key] += 1;
@@ -1521,9 +1564,15 @@ function requirementsAnalysisHtml(requirements, coverage, evidence) {
   }, {
     covered: 0, partial: 0, clarify: 0, gap: 0,
   });
+  let label = coverage?.status === 'verified-manifest' ? 'Complete source-question traceability' : 'Recorded requirement review';
+  if (fitted && functional) label = `${functional.percent}% weighted coverage · rating ${functional.rating} / 5`;
+  const fitCell = (item) => {
+    const agreement = DRAFT_AGREEMENT_LABELS[draftAgreement(item)];
+    return `<span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.fit || item.status || 'Needs clarification')}</span>${item.draft?.answer ? `<small>Draft: ${escapeHtml(item.draft.answer)}${agreement ? ` · ${escapeHtml(agreement)}` : ''}</small>` : ''}`;
+  };
   return `<section class="nash-session-special-analysis">
     <div class="nash-session-analysis-head">
-      <div><span>${coverage?.status === 'verified-manifest' ? 'Complete source-question traceability' : 'Recorded requirement review'}</span><h3>Functional coverage · ${requirements.length} requirements</h3></div>
+      <div><span>${escapeHtml(label)}</span><h3>Functional coverage · ${requirements.length} requirements</h3></div>
       <div class="nash-session-coverage-summary">
         <span><b>${counts.covered}</b>Covered</span>
         <span><b>${counts.partial}</b>Partial</span>
@@ -1531,15 +1580,16 @@ function requirementsAnalysisHtml(requirements, coverage, evidence) {
         <span><b>${counts.gap}</b>Gap</span>
       </div>
     </div>
+    ${fitted ? coverageBreakdownHtml(functional) : ''}
     <div class="nash-session-analysis-table-wrap"><table>
-      <thead><tr><th>ID</th><th>Status</th><th>Requirement</th><th>Adobe response</th><th>Solution / deployment</th><th>Validation</th></tr></thead>
+      <thead><tr><th>ID</th><th>${fitted ? 'Fit' : 'Status'}</th><th>Requirement</th><th>Adobe response</th><th>Solution / deployment</th><th>${fitted ? 'Sources' : 'Validation'}</th></tr></thead>
       <tbody>${requirements.map((item) => `<tr>
         <td>${escapeHtml(item.id || '—')}${item.priority ? `<small>Priority: ${escapeHtml(item.priority)}</small>` : ''}${item.sourceId && item.sourceId !== item.id ? `<small>Source ID: ${escapeHtml(item.sourceId)}</small>` : ''}</td>
-        <td><span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.status || 'Needs clarification')}</span></td>
-        <td><strong>${escapeHtml(item.requirement || '')}</strong>${item.source ? `<small>${escapeHtml(item.source)}${item.sourceLocator ? ` · ${escapeHtml(item.sourceLocator)}` : ''}</small>` : ''}</td>
-        <td>${escapeHtml(item.response || '')}${item.caveat ? `<small>${escapeHtml(item.caveat)}</small>` : ''}${item.evidenceRefs?.length ? `<small>${scoreEvidenceHtml(item.evidenceRefs, evidence)}</small>` : ''}</td>
+        <td>${fitted ? fitCell(item) : `<span class="nash-session-coverage-status ${requirementStatusClass(item.status)}">${escapeHtml(item.status || 'Needs clarification')}</span>`}</td>
+        <td><strong>${escapeHtml(item.requirement || '')}</strong>${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}${item.source ? `<small>${escapeHtml(item.source)}${item.sourceLocator ? ` · ${escapeHtml(item.sourceLocator)}` : ''}</small>` : ''}</td>
+        <td>${escapeHtml(item.response || '')}${item.caveat ? `<small>${escapeHtml(item.caveat)}</small>` : ''}${!fitted && item.evidenceRefs?.length ? `<small>${scoreEvidenceHtml(item.evidenceRefs, evidence)}</small>` : ''}</td>
         <td>${escapeHtml(item.solution || '')}</td>
-        <td>${escapeHtml(item.validation || '')}${item.owner ? `<small>Owner: ${escapeHtml(item.owner)}</small>` : ''}</td>
+        <td>${fitted ? requirementSourcesHtml(item.evidenceRefs, evidence) : `${escapeHtml(item.validation || '')}${item.owner ? `<small>Owner: ${escapeHtml(item.owner)}</small>` : ''}`}</td>
       </tr>`).join('')}</tbody>
     </table></div>
   </section>`;
@@ -1582,7 +1632,8 @@ function dimensionSpecialAnalysisHtml(dimension, assessment) {
   const name = dimension.dimension.toLowerCase();
   const view = assessment.assessmentView || {};
   if (name === 'functional coverage') {
-    return requirementsAnalysisHtml(view.requirements, view.inputCoverage, assessment.evidence);
+    const { requirements, inputCoverage, scoring } = view;
+    return requirementsAnalysisHtml(requirements, inputCoverage, assessment.evidence, scoring);
   }
   if (name === 'competitive position') return competitorAnalysisHtml(view.competitors);
   if (name === 'delivery risk') return deliveryAnalysisHtml(view.deliveryPath);
@@ -1600,12 +1651,21 @@ function scoreEvidenceHtml(refs, evidence = []) {
 function scoreBreakdownHtml(dimension, detail, evidence) {
   const breakdown = scoreBreakdownFor(dimension, detail);
   if (breakdown.status === 'missing') return '';
-  if (!['valid', 'unscored'].includes(breakdown.status)) {
+  if (!['valid', 'unscored', 'rubric'].includes(breakdown.status)) {
     return '<p class="nash-session__score-warning" role="alert">The supplied criterion breakdown does not reconcile with the recorded score or contains invalid values. The recorded score is unchanged; the points breakdown cannot be verified.</p>';
   }
-  const unscored = breakdown.status === 'unscored';
+  const unscored = breakdown.status !== 'valid';
+  let label = escapeHtml(`${breakdown.scored} / ${breakdown.max} weighted points`);
+  let title = 'Score breakdown';
+  if (breakdown.status === 'unscored') {
+    label = 'Evidence-led qualitative review';
+    title = 'Reasons behind the conclusion';
+  } else if (breakdown.status === 'rubric') {
+    label = breakdown.rating === null ? 'Rubric review' : `Rated ${breakdown.rating} / 5`;
+    title = 'Reasons for this rating';
+  }
   return `<section class="nash-session-special-analysis nash-session__score-breakdown">
-    <div class="nash-session-analysis-head"><div><span>${unscored ? 'Evidence-led qualitative review' : escapeHtml(`${breakdown.scored} / ${breakdown.max} weighted points`)}</span><h3>${unscored ? 'Reasons behind the conclusion' : 'Score breakdown'}</h3></div></div>
+    <div class="nash-session-analysis-head"><div><span>${label}</span><h3>${title}</h3></div></div>
     <div class="nash-session-analysis-table-wrap"><table>
       <thead><tr><th>Criterion</th><th>${unscored ? 'Finding' : 'Points'}</th><th>${unscored ? 'Reason' : 'Why these points'}</th><th>Evidence</th></tr></thead>
       <tbody>${breakdown.criteria.map((item) => `<tr>
@@ -1645,15 +1705,24 @@ function dimensionReadingHtml(dimension, index, assessment) {
   const provisional = detail?.scoreBasis === 'provisional'
     || confidence?.level?.toLowerCase() === 'low';
   const uncertainty = unknowns.length || assumptions.length || confidence?.scoreChanger;
+  const rated = Number.isInteger(dimension.rating);
+  const upside = rated && !dimension.max;
   let basis = provisional ? 'Provisional assessment' : 'Recorded assessment';
+  let kicker = pct !== null && dimension.weight ? ` · ${escapeHtml(dimension.weight)}` : '';
   if (detail?.scoreBasis === 'unscored') {
     basis = 'Qualitative assessment · no calibrated numerical rubric';
   }
+  if (rated) {
+    kicker = upside ? ' · Upside, not counted in the total' : ` · Weight ${escapeHtml(dimension.max)}%`;
+    basis = detail?.scoreBasis === 'computed'
+      ? 'Computed from the requirement matrix' : 'Rated against the Nash rubric';
+    if (!upside) basis += ` · ${dimension.scored} of ${dimension.max} points`;
+  }
   return `<article class="nash-session-dimension-reading" data-dimension-index="${index}" hidden>
-    <div class="nash-session-dimension-kicker"><i></i><span>Assessment dimension${pct !== null && dimension.weight ? ` · ${escapeHtml(dimension.weight)}` : ''}</span></div>
+    <div class="nash-session-dimension-kicker"><i></i><span>Assessment dimension${kicker}</span></div>
     <div class="nash-session-dimension-title-row">
       <h2>${escapeHtml(dimension.dimension)}</h2>
-      <div class="nash-session-dimension-score" style="color:${pct === null ? 'var(--ink-40)' : dimColor(pct)}"><strong>${pct === null ? '—' : pct}</strong><span>${pct === null ? 'Not scored' : '/ 100'}</span></div>
+      <div class="nash-session-dimension-score" style="color:${pct === null ? 'var(--ink-40)' : dimColor(pct)}"><strong>${rated ? dimension.rating : (pct ?? '—')}</strong><span>${rated ? '/ 5' : (pct === null && 'Not scored') || '/ 100'}</span></div>
     </div>
     <div class="nash-session__score-meta">
       <span>${basis}</span>
@@ -1670,7 +1739,7 @@ function dimensionReadingHtml(dimension, index, assessment) {
       <summary>Uncertainty and customer validation</summary>
       ${unknowns.length ? `<h3>Customer-specific unknowns</h3>${listItemsHtml(unknowns, '')}` : ''}
       ${assumptions.length ? `<h3>Assumptions behind the assessment</h3>${listItemsHtml(assumptions, '')}` : ''}
-      ${confidence?.scoreChanger ? `<h3>Highest-impact validation</h3><p>${escapeHtml(confidence.scoreChanger)}</p>` : ''}
+      ${confidence?.scoreChanger ? `<h3>${rated ? 'What would change the rating' : 'Highest-impact validation'}</h3><p>${escapeHtml(confidence.scoreChanger)}</p>` : ''}
     </details>` : ''}
     <details class="nash-session-dimension-disclosure"><summary>Evidence and sources</summary><div class="nash-session-dimension-evidence">${dimensionEvidenceHtml(dimensionWithDetail, assessment.evidence)}</div></details>
   </article>`;
@@ -1683,6 +1752,14 @@ function dimensionGalleryCard(dimension, index, confidence) {
   const confidenceItem = (confidence || []).find(
     (item) => item.dimension.toLowerCase() === dimension.dimension.toLowerCase(),
   );
+  const rated = Number.isInteger(dimension.rating);
+  let value = pct === null ? 'Not scored' : `${pct}<span>/100</span>`;
+  let meta = confidenceItem?.level ? `${confidenceItem.level} confidence` : dimension.weight || 'Evidence-led review';
+  if (rated) {
+    value = `${dimension.rating}<span>/5</span>`;
+    meta = [dimension.max ? `${dimension.scored} of ${dimension.max} pts` : 'Upside',
+      confidenceItem?.level && `${confidenceItem.level} confidence`].filter(Boolean).join(' · ');
+  }
   return `<button type="button" class="nash-session-section-card ${layout}" style="--gallery-accent:${accent}" data-dimension-index="${index}">
     <div class="nash-session-section-card-top">
       <span class="nash-session-section-number">${String(index + 1).padStart(2, '0')}</span>
@@ -1691,8 +1768,8 @@ function dimensionGalleryCard(dimension, index, confidence) {
     <h2>${escapeHtml(dimension.dimension)}</h2>
     <p>${escapeHtml(dimension.notes || 'Open this dimension to review its evidence and full assessment content.')}</p>
     <div class="nash-session-dimension-card-meta">
-      <strong${pct === null ? ' class="nash-session__unscored"' : ''} style="color:${pct === null ? 'var(--ink-40)' : dimColor(pct)}">${pct === null ? 'Not scored' : `${pct}<span>/100</span>`}</strong>
-      <span>${escapeHtml(confidenceItem?.level ? `${confidenceItem.level} confidence` : dimension.weight || 'Evidence-led review')}</span>
+      <strong${pct === null ? ' class="nash-session__unscored"' : ''} style="color:${pct === null ? 'var(--ink-40)' : dimColor(pct)}">${value}</strong>
+      <span>${escapeHtml(meta)}</span>
     </div>
     <span class="nash-session-section-open">View dimension &rarr;</span>
   </button>`;
@@ -1845,6 +1922,18 @@ function useCaseCardsHtml(useCases, evidence) {
   </article>`).join('')}</div>`;
 }
 
+/* How the overall score was produced, so the number is never a black box. */
+function scoringNoteHtml(view) {
+  if (view.scoring?.reason) {
+    return `<p class="nash-session__scoring-note"><b>Qualitative assessment.</b> ${escapeHtml(view.scoring.reason)}</p>`;
+  }
+  if (view.scoring?.method !== RUBRIC_METHOD || typeof view.meta?.score !== 'number') return '';
+  const coverage = view.scoring.functionalCoverage;
+  const parts = (view.dimensions || []).filter((item) => item.max)
+    .map((item) => `${item.dimension} ${item.scored}/${item.max}`);
+  return `<p class="nash-session__scoring-note"><b>${view.meta.score}/100 · ${escapeHtml(view.meta.verdict)}.</b> Each dimension is rated 1–5 against the Nash rubric and weighted: ${escapeHtml(parts.join(', '))}.${coverage ? ` Functional Coverage is computed from ${coverage.rows} requirement answers (${coverage.percent}% weighted coverage).` : ''} AI &amp; Agentic Fit is shown as upside and not counted. 70+ is Go, 50–69 Conditional-Go, below 50 No-go.</p>`;
+}
+
 function assessmentOverviewHtml(a) {
   const view = a.assessmentView || {};
   const executive = view.executive || {};
@@ -1867,7 +1956,7 @@ function assessmentOverviewHtml(a) {
       <span class="nash-session-overview-kicker">Executive summary</span>
       <h2>${escapeHtml(headline)}</h2>
       ${summary ? `<p class="nash-session-executive-lead">${escapeHtml(summary)}</p>` : '<p class="nash-session-gallery-empty">No executive summary was recorded in this assessment.</p>'}
-      ${view.scoring?.reason ? `<p class="nash-session__scoring-note"><b>Qualitative assessment.</b> ${escapeHtml(view.scoring.reason)}</p>` : ''}
+      ${scoringNoteHtml(view)}
       ${verdict || nextAction ? `<div class="nash-session-executive-decision">
         ${verdict ? `<strong>${escapeHtml(verdict)}</strong>` : ''}
         ${nextAction ? `<p><b>Next best action</b>${escapeHtml(nextAction)}</p>` : ''}
@@ -1910,7 +1999,7 @@ function daPreviewHtml(a) {
   const sections = splitReportSections(a.reportMarkdown);
   const assessment = {
     ...a,
-    assessmentView: a.assessmentView?.contractVersion === 3
+    assessmentView: isCanonicalAssessment(a.assessmentView)
       ? a.assessmentView : assessmentViewFor(a, Object.fromEntries(
         sections.map((section) => [sectionLabel(section.title), section.md]),
       )),
@@ -2044,7 +2133,7 @@ function decisionQualityHtml(a) {
     ${a.assessmentView?.inputCoverage ? `<section class="nash-session-special-analysis"><h3>Source coverage</h3>
       <p>${escapeHtml(a.assessmentView.inputCoverage.note)}</p>
       <p>${a.assessmentView.inputCoverage.reviewed} requirement rows reviewed${a.assessmentView.inputCoverage.expected ? ` / ${a.assessmentView.inputCoverage.expected} source questions` : ''}.</p>
-      ${a.assessmentView.scoring ? `<p>${escapeHtml(a.assessmentView.scoring.reason)}</p>` : ''}
+      ${a.assessmentView.scoring?.reason ? `<p>${escapeHtml(a.assessmentView.scoring.reason)}</p>` : ''}
     </section>` : ''}
     ${a.assessmentView?.verificationGates?.length ? `<section class="nash-session-special-analysis">
       <div class="nash-session-analysis-head"><div><span>Single acceptance register</span><h3>Verification gates</h3></div></div>
@@ -2748,7 +2837,7 @@ function renderExperimentalDossier(a) {
       <div class="nash-session-experiment-note" role="note">Private lab · visible only to you</div>
       <button type="button" class="nash-session-run-experiment nash-session-experiment-rerun">↻ Re-run experiment</button>
     </div>
-    ${experimental.assessmentView?.contractVersion === 3 ? daPreviewHtml(experimental)
+    ${isCanonicalAssessment(experimental.assessmentView) ? daPreviewHtml(experimental)
     : `<div class="nash-session-report nash-md">${resultTabsHtml(experimental, dossierHeader(experimental), body)}</div>`}`;
 }
 
@@ -2942,7 +3031,7 @@ function finalReviewHtml(a) {
         <div><small>Adobe scope</small><strong>${escapeHtml(solutionsLabel(a) || 'To be inferred')}</strong></div>
         <div><small>Open questions</small><strong>${Object.keys(answers).length} questions${unknowns ? ` · ${unknowns} unknown` : ''}</strong></div>
       </div>
-      <p>Nash will review all seven qualification dimensions, map the source requirements to specific Adobe capabilities and explain the proposed architecture. Numerical scoring remains unavailable without an approved calibrated rubric.</p>
+      <p>Nash will answer every source requirement, building on any draft answers in your files, rate all seven qualification dimensions against its rubric and explain the proposed architecture. The score and verdict are computed from those ratings.</p>
       <button type="button" class="nash-session-run-final">Run assessment</button>
     </div>`;
 }
@@ -3169,7 +3258,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
     return;
   }
   const docText = files.filter((f) => f.text)
-    .map((f) => `--- ${f.name} ---\n${f.text}`).join('\n\n');
+    .map((f) => `--- ${f.name} ---\n${stripRequirementManifest(f.text)}`).join('\n\n');
   const attachments = files.filter((f) => f.data).map((f) => ({
     type: 'input_file',
     filename: f.name,
@@ -3190,7 +3279,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
   // On a re-run, fold in the analyst's chat discussion so the model updates the
   // report, score, and recommendation with the new insights.
   const finalPrompt = insights
-    ? `${prompt}\n\n=== ANALYST DISCUSSION & NEW INSIGHTS TO INCORPORATE ===\nRegenerate the complete canonical assessment. Reassess the conclusions using these insights without inventing numerical scores.\n\n${insights}`
+    ? `${prompt}\n\n=== ANALYST DISCUSSION & NEW INSIGHTS TO INCORPORATE ===\nRegenerate the complete canonical assessment. Reassess the ratings and conclusions using these insights, grounded in the rubric and the evidence.\n\n${insights}`
     : prompt;
   const userContent = attachments.length
     ? [{ type: 'input_text', text: finalPrompt }, ...attachments]
@@ -3202,6 +3291,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       stream: streamQualification,
       messages: [{ role: 'user', content: userContent }],
       requirements,
+      skills,
       sourceContext: `${docText}\n\n${interviewText(assessment)}\n\n${insights || ''}`,
       solutionSlugs: sols.map((solution) => solution.slug),
       checkpoint: assessment.generationCheckpoint,
@@ -3213,6 +3303,7 @@ async function runAssessment(block, attempt = 1, insights = '') {
       reasoningEffort: 'medium',
       onProgress: progress.update,
       onHeartbeat: progress.pulse,
+      onRetry: progress.reconnecting,
     });
   } catch (error) {
     const message = error.message === 'content_filter'
@@ -3300,7 +3391,7 @@ async function runExperimentalAssessment(block, attempt = 1) {
     const files = assessmentFiles(current);
     const requirements = requirementManifestForFiles(files);
     const docText = files.filter((file) => file.text)
-      .map((file) => `--- ${file.name} ---\n${file.text}`).join('\n\n');
+      .map((file) => `--- ${file.name} ---\n${stripRequirementManifest(file.text)}`).join('\n\n');
     const attachments = files.filter((file) => file.data).map((file) => ({
       type: 'input_file',
       filename: file.name,
@@ -3326,12 +3417,14 @@ async function runExperimentalAssessment(block, attempt = 1) {
       stream: streamQualification,
       messages: [{ role: 'user', content: userContent }],
       requirements,
+      skills,
       sourceContext: `${docText}\n\n${interviewText(current)}`,
       solutionSlugs: sols.map((solution) => solution.slug),
       webSearch: true,
       reasoningEffort: 'medium',
       onProgress: progress.update,
       onHeartbeat: progress.pulse,
+      onRetry: progress.reconnecting,
     });
     const { view } = result;
     current.experimentalReportMarkdown = view.reportMarkdown;
@@ -3358,7 +3451,7 @@ export function renderAssessment(block, record, autoRun = false) {
   disposeRenderedSession(block);
   const bindings = new AbortController();
   renderBindings.set(block, bindings);
-  const a = record.assessmentView?.contractVersion === 3
+  const a = isCanonicalAssessment(record.assessmentView)
     ? { ...record, ...assessmentProjection(record.assessmentView) } : record;
   current = a;
   if (hasExperimentalReportShape(current.reportMarkdown)

@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateAssessment } from '../scripts/nash-assessment-workflow.js';
 import {
-  canonicalAssessment, requirementResponse, responseText, sourceRequirements,
+  DOC_URL, draftedRequirements, fitResponse, responseText, rubricCore, sourceRequirements,
 } from './fixtures/nash-assessment.fixture.js';
 
+const BATCH_MARKER = '=== SOURCE ROWS (draft = answer already prepared in the customer\'s workbook) ===\n';
+
 function provider({
-  failure, incomplete = false, mock = false, corruptRows, corruptReview,
+  failure, incomplete = false, mock = false, corruptRows, corruptReview, fitFor,
 } = {}) {
   const requests = [];
   let active = 0;
@@ -19,9 +21,7 @@ function provider({
     const message = options.messages[0].content;
     if (failure) options.onError?.(new Error(failure));
     else if (message === 'core') {
-      const view = canonicalAssessment();
-      view.requirements = [];
-      options.onDelta(responseText(view));
+      options.onDelta(responseText(rubricCore()));
     } else if (message.startsWith('Perform a final critical integrity review')) {
       const marker = 'COMPLETE CURRENT ASSESSMENT TO REVIEW\n';
       const view = JSON.parse(message.slice(message.indexOf(marker) + marker.length));
@@ -33,9 +33,8 @@ function provider({
       corruptReview?.(review);
       options.onDelta(JSON.stringify(review));
     } else {
-      const marker = '=== SOURCE QUESTIONS (including preliminary draft intelligence, not accepted ratings) ===\n';
-      const rows = JSON.parse(message.slice(message.indexOf(marker) + marker.length))
-        .map(requirementResponse).reverse();
+      const rows = JSON.parse(message.slice(message.indexOf(BATCH_MARKER) + BATCH_MARKER.length))
+        .map((row) => fitResponse(row, fitFor?.(row))).reverse();
       corruptRows?.(rows);
       options.onDelta(JSON.stringify({ requirements: rows }));
     }
@@ -79,7 +78,12 @@ test('real completed stages produce a fully validated 166-row assessment in sour
   assert.equal(result.rawResponses.length, 8);
   assert.equal(result.view.provenance.stages.at(-1).stage, 'integrity-review');
   assert.equal(fake.requests.slice(1).every((request) => request.webSearch === false), true);
-  assert.equal(result.view.meta.score, null);
+  assert.equal(result.view.contractVersion, 4);
+  assert.equal(result.view.scoring.status, 'scored');
+  assert.equal(result.view.scoring.functionalCoverage.percent, 100);
+  assert.equal(result.view.dimensionDetails[2].scoreBasis, 'computed');
+  assert.equal(result.view.meta.score, 78);
+  assert.equal(result.view.meta.verdict, 'Go');
   assert.equal(progress[0].phase, 'assessment');
   assert.equal(progress.at(-1).phase, 'review');
   assert.deepEqual(progress.filter((event) => event.phase === 'requirements')
@@ -108,6 +112,87 @@ test('every live stage forwards activity heartbeats without leaking its contents
   assert.doesNotMatch(JSON.stringify(progress), /private reasoning|internal tool details/);
 });
 
+test('a dropped connection restarts only that stage and the run still completes', async () => {
+  const fake = provider();
+  let dropped = false;
+  const retries = [];
+  const responses = [];
+  const result = await generateAssessment({
+    stream: async (options) => {
+      if (!dropped && options.messages[0].content === 'core') {
+        dropped = true;
+        options.onDelta('{"partial": ');
+        options.onError(new TypeError('network error'));
+        return;
+      }
+      await fake.stream(options);
+    },
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: sourceRequirements(),
+    retryDelaysMs: [0, 0],
+    onRetry: (event) => retries.push(event),
+    onResponse: (event) => responses.push(event),
+  });
+  assert.deepEqual(retries, [{
+    stage: 'core', attempt: 2, maxAttempts: 3, reason: 'network error',
+  }]);
+  assert.equal(fake.requests.length, 3);
+  assert.deepEqual(
+    responses.filter((event) => event.stage === 'core').map((event) => [event.attempt, event.error]),
+    [[1, 'network error'], [2, null]],
+  );
+  assert.equal(result.view.requirements.length, 2);
+});
+
+test('a dropped requirement batch is resent alone while its sibling completes once', async () => {
+  const fake = provider();
+  const firstId = (options) => {
+    const message = options.messages[0].content;
+    const index = message.indexOf(BATCH_MARKER);
+    return index < 0 ? null : JSON.parse(message.slice(index + BATCH_MARKER.length))[0].id;
+  };
+  let dropped = false;
+  const result = await generateAssessment({
+    stream: async (options) => {
+      if (!dropped && firstId(options) === 'REQ-1') {
+        dropped = true;
+        options.onError(new Error('FluffyJaws stream ended before response.completed.'));
+        return;
+      }
+      await fake.stream(options);
+    },
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: sourceRequirements(66),
+    retryDelaysMs: [0, 0],
+  });
+  assert.equal(result.view.requirements.length, 66);
+  assert.equal(fake.requests.filter((options) => firstId(options) === 'REQ-1').length, 1);
+  assert.equal(fake.requests.filter((options) => firstId(options) === 'REQ-33').length, 1);
+});
+
+test('connection retries are bounded and never repeat cancelled or rejected requests', async () => {
+  const cases = [
+    [new TypeError('network error'), 3, /network error/],
+    [new TypeError('Failed to fetch'), 3, /Failed to fetch/],
+    [new Error('FluffyJaws stream ended before response.completed.'), 3, /ended before/],
+    [new Error('FluffyJaws request failed (503)'), 3, /\(503\)/],
+    [new Error('FluffyJaws request failed (401)'), 1, /\(401\)/],
+    [new DOMException('The operation was aborted.', 'AbortError'), 1, /aborted/],
+    [new Error('content_filter'), 1, /content_filter/],
+    [new Error('Run stopped early (max_output_tokens).'), 1, /stopped early/],
+  ];
+  await Promise.all(cases.map(async ([error, expected, pattern]) => {
+    let calls = 0;
+    await assert.rejects(() => generateAssessment({
+      stream: async (options) => { calls += 1; options.onError(error); },
+      messages: [{ role: 'user', content: 'core' }],
+      requirements: sourceRequirements(),
+      retryDelaysMs: [0, 0],
+    }), pattern);
+    assert.equal(calls, expected, error.message);
+  }));
+});
+
 test('mock, failed and prematurely ended responses cannot produce a report', async () => {
   await Promise.all([{ mock: true }, { incomplete: true }, { failure: 'gateway failed' }].map(async (options) => {
     const fake = provider(options);
@@ -118,11 +203,11 @@ test('mock, failed and prematurely ended responses cannot produce a report', asy
   }));
 });
 
-test('missing, duplicate, reprioritized and unlinked requirement responses fail closed', async () => {
+test('missing, duplicate, unfitted and unlinked requirement responses fail closed', async () => {
   await Promise.all([
     (rows) => { rows.pop(); },
     (rows) => { [rows[1]] = rows; },
-    (rows) => { rows.find((row) => row.id === 'REQ-1').priority = 'M'; },
+    (rows) => { rows.find((row) => row.id === 'REQ-1').fit = 'Mostly'; },
     (rows) => { rows[0].evidenceRefs = ['invented']; },
   ].map(async (corruptRows) => {
     const fake = provider({ corruptRows });
@@ -136,7 +221,7 @@ test('one model correction replays the full source and must pass the same strict
   const requests = [];
   const stream = async (options) => {
     requests.push(options);
-    const view = canonicalAssessment();
+    const view = rubricCore();
     if (requests.length === 1) view.publicReferences[0].url += '/mismatch';
     options.onDelta(responseText(view));
     options.onDone({ responseId: `response-${requests.length}`, model: 'reported', mock: false });
@@ -255,4 +340,85 @@ test('a failed critical review cannot save an otherwise structurally complete as
     requirements: sourceRequirements(),
   }), /did not cover every requirement/);
   assert.equal(fake.requests.length, 4);
+});
+
+test('the source owns priority, status, location and category even when a model row changes them', async () => {
+  const fake = provider({
+    corruptRows: (rows) => {
+      Object.assign(rows.find((row) => row.id === 'REQ-1'), {
+        priority: 'M', status: 'Gap', sourceLocator: 'Invented', category: 'Invented',
+      });
+    },
+  });
+  const result = await generateAssessment({
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: draftedRequirements(),
+  });
+  const [row] = result.view.requirements;
+  assert.deepEqual([row.priority, row.status, row.sourceLocator, row.category], [
+    'Unclassified', 'Covered', 'Requirements, row 2', 'Content',
+  ]);
+  assert.equal(fake.requests.length, 3, 'No correction round-trip was needed');
+});
+
+test('draft answers become cited rows and Functional Coverage is computed from the matrix', async () => {
+  const fake = provider({
+    fitFor: (row) => (row.draft?.answer === 'Yes' ? 'Out of the box' : 'Needs clarification'),
+  });
+  const result = await generateAssessment({
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: draftedRequirements(4),
+    skills: 'Authored AEM knowledge.',
+  });
+  const batch = fake.requests[1].messages[0].content;
+  assert.match(batch, /Authored AEM knowledge\./);
+  assert.match(batch, /C1: Introduction to AEM headless/);
+  const citations = result.view.evidence.filter((item) => item.type === 'source-citation');
+  assert.deepEqual(citations.map((item) => [item.id, item.locator]), [['C1', DOC_URL]]);
+  assert.deepEqual(result.view.requirements.map((row) => row.evidenceRefs), [
+    ['E1', 'C1'], ['E1'], ['E1', 'C1'], ['E1'],
+  ]);
+  assert.deepEqual(result.view.requirements.map((row) => row.draft?.answer), ['Yes', 'OPEN', 'Yes', 'OPEN']);
+  const coverage = result.view.scoring.functionalCoverage;
+  assert.equal(coverage.percent, 75, 'Must rows weigh three times an unclassified row');
+  assert.equal(coverage.rating, 4);
+  assert.equal(result.view.dimensions[2].rating, 4);
+  assert.equal(result.view.meta.score, 74);
+  assert.equal(result.view.meta.verdict, 'Go');
+});
+
+test('draft sources that no conclusion uses are dropped from the evidence register', async () => {
+  const fake = provider({ fitFor: () => 'Not supported' });
+  const result = await generateAssessment({
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: draftedRequirements(),
+  });
+  assert.equal(result.view.evidence.some((item) => item.type === 'source-citation'), false);
+  assert.ok(result.view.requirements.every((row) => !row.evidenceRefs.includes('C1')));
+  assert.equal(result.view.scoring.functionalCoverage.rating, 1);
+  assert.deepEqual(result.view.scoring.functionalCoverage.mustGaps, ['REQ-2']);
+});
+
+test('the critical review can move a rating and Nash recomputes the total and verdict', async () => {
+  const fake = provider({
+    corruptReview: (review) => {
+      review.dimensionUpdates = [{
+        name: 'Commercial Viability',
+        rating: 5,
+        details: { scoreRationale: 'An existing Adobe agreement covers the expected investment.' },
+      }];
+    },
+  });
+  const result = await generateAssessment({
+    stream: fake.stream,
+    messages: [{ role: 'user', content: 'core' }],
+    requirements: sourceRequirements(),
+  });
+  const commercial = result.view.dimensions.find((item) => item.dimension === 'Commercial Viability');
+  assert.deepEqual([commercial.rating, commercial.scored], [5, 15]);
+  assert.equal(result.view.meta.score, 84);
+  assert.match(result.view.dimensionDetails[3].scoreRationale, /existing Adobe agreement/);
 });

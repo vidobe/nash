@@ -19,7 +19,10 @@ function dimensionPoints(dimension) {
  */
 export function dimensionPercent(dimension) {
   const points = dimensionPoints(dimension);
-  return points ? (points.scored / points.max) * 100 : null;
+  if (points) return (points.scored / points.max) * 100;
+  // Rubric-rated dimensions outside the total (AI & Agentic Fit) still show their 1-5 rating.
+  const { rating } = dimension || {};
+  return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating * 20 : null;
 }
 
 /**

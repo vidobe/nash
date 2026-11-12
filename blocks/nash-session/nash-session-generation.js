@@ -11,11 +11,14 @@ export function generationDuration(milliseconds) {
 }
 
 export function generationStatus({
-  phase = 'preparing', reviewed = 0, total = 0, startedAt, lastActivityAt, now,
+  phase = 'preparing', reviewed = 0, total = 0, startedAt, lastActivityAt, now, retry,
 }) {
   if (!Object.hasOwn(PHASES, phase)) throw new Error(`Unknown generation phase: ${phase}`);
   const idle = Math.max(0, now - lastActivityAt);
   const waiting = idle >= 90000;
+  let note = 'Keep this page open. Your assessment will appear here when it is ready.';
+  if (waiting) note = 'No recent update has arrived. Keep this page open while we wait for the next update.';
+  else if (retry) note = `The connection dropped, so this step restarted automatically (attempt ${retry.attempt} of ${retry.maxAttempts}). Keep this page open.`;
   return {
     phase: phase === 'requirements' && total > 0
       ? `${PHASES[phase]} (${reviewed} of ${total})` : PHASES[phase],
@@ -23,6 +26,7 @@ export function generationStatus({
     status: waiting ? 'Waiting for an update' : 'Running',
     elapsed: `${generationDuration(now - startedAt)} elapsed`,
     updated: idle < 2000 ? 'Updated just now' : `Last update ${generationDuration(idle)} ago`,
+    note,
   };
 }
 
@@ -61,6 +65,7 @@ export function createGenerationProgress(host, { title = 'Generating your assess
   const startedAt = Date.now();
   let lastActivityAt = startedAt;
   let progress = { phase: 'preparing' };
+  let retryState = null;
   let terminal = false;
   let disposed = false;
   let timer;
@@ -77,7 +82,7 @@ export function createGenerationProgress(host, { title = 'Generating your assess
     if (disposed || terminal) return;
     if (!root.isConnected) { dispose(); return; }
     const state = generationStatus({
-      ...progress, startedAt, lastActivityAt, now: Date.now(),
+      ...progress, startedAt, lastActivityAt, now: Date.now(), retry: retryState,
     });
     root.dataset.state = state.waiting ? 'waiting' : 'running';
     root.setAttribute('aria-busy', 'true');
@@ -85,9 +90,7 @@ export function createGenerationProgress(host, { title = 'Generating your assess
     text(phaseNode, state.phase);
     text(elapsed, state.elapsed);
     text(updated, state.updated);
-    text(note, state.waiting
-      ? 'No recent update has arrived. Keep this page open while we wait for the next update.'
-      : 'Keep this page open. Your assessment will appear here when it is ready.');
+    text(note, state.note);
   };
   const pulse = () => {
     if (terminal || disposed) return;
@@ -112,6 +115,13 @@ export function createGenerationProgress(host, { title = 'Generating your assess
     update(value) {
       if (terminal || disposed) return;
       progress = value;
+      retryState = null;
+      pulse();
+      render();
+    },
+    reconnecting({ attempt, maxAttempts }) {
+      if (terminal || disposed) return;
+      retryState = { attempt, maxAttempts };
       pulse();
       render();
     },

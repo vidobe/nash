@@ -48,6 +48,21 @@ test('both assessment renderers use progress events rather than displaying model
   assert.doesNotMatch(generation, /onThinking:|onDelta:|nash-session-stream/);
   assert.equal((generation.match(/onProgress: progress.update/g) || []).length, 2);
   assert.equal((generation.match(/onHeartbeat: progress.pulse/g) || []).length, 2);
+  assert.equal((generation.match(/onRetry: progress.reconnecting/g) || []).length, 2);
   assert.match(generation, /progress\.fail\(msg/);
   assert.match(generation, /progress\.complete\(\)/);
+});
+
+test('an automatic reconnect is explained without hiding a longer wait', () => {
+  const base = {
+    phase: 'assessment', startedAt: 0, lastActivityAt: 0, now: 1000,
+  };
+  const retry = { attempt: 2, maxAttempts: 3 };
+  assert.equal(generationStatus(base).note, 'Keep this page open. Your assessment will appear here when it is ready.');
+  assert.equal(
+    generationStatus({ ...base, retry }).note,
+    'The connection dropped, so this step restarted automatically (attempt 2 of 3). Keep this page open.',
+  );
+  assert.equal(generationStatus({ ...base, retry }).status, 'Running');
+  assert.match(generationStatus({ ...base, retry, now: 90000 }).note, /No recent update has arrived/);
 });

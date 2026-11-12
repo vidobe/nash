@@ -1,7 +1,10 @@
 import {
-  parseAssessmentResponse, validateAssessmentView, validateRequirementRows,
+  ASSESSMENT_CONTRACT_VERSION, finalizeRequirementRow, parseAssessmentResponse,
+  sourceCitationEvidence, validateAssessmentView, validateRequirementRows,
 } from './nash-assessment-contract.js';
 import { buildRequirementReviewPrompt } from './nash-assessment-prompts.js';
+import { FIT_LEVELS, applyAssessmentRubric } from './nash-rubric.js';
+import { latestGeneration, parseModelJson, syntaxCorrection } from './nash-model-json.js';
 import { solutionGuidanceText } from './nash-assessment-guidance.js';
 import {
   applyAssessmentReview, buildAssessmentReviewCorrectionMessages, buildAssessmentReviewMessages,
@@ -29,10 +32,39 @@ export async function fetchSkillsText(slugs) {
   return `${parts.map((part) => `## ${part.slug}\n${part.text}`).join('\n\n')}\n\n${solutionGuidanceText(slugs)}`;
 }
 
+/** Drops draft citations that no finding ended up using, keeping the register meaningful. */
+function pruneUnusedCitations(view) {
+  const { evidence, ...rest } = view;
+  const used = JSON.stringify(rest);
+  return {
+    ...view,
+    evidence: evidence.filter((item) => item.type !== 'source-citation' || used.includes(`"${item.id}"`)),
+  };
+}
+
 async function sha256(value) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
+
+const TRANSIENT_STREAM_ERRORS = [
+  /network ?error/i,
+  /failed to fetch/i,
+  /load failed/i,
+  /network connection was lost/i,
+  /stream ended before response\.completed/i,
+  /malformed fluffyjaws stream event/i,
+  /FluffyJaws request failed \((?:408|425|429|500|502|503|504)\)/,
+];
+
+/** True for dropped connections and gateway hiccups that resending the same stage can recover. */
+export function isTransientStreamError(error) {
+  if (!error || error.name === 'AbortError') return false;
+  const message = String(error.message || '');
+  return TRANSIENT_STREAM_ERRORS.some((pattern) => pattern.test(message));
+}
+
+const wait = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 
 export async function completedAnswer(stream, options) {
   let answer = '';
@@ -55,13 +87,13 @@ export async function completedAnswer(stream, options) {
 
 export async function generateAssessment({
   stream, messages, requirements = [], onDelta, onThinking, onActivity,
-  onProgress, onHeartbeat,
+  onProgress, onHeartbeat, onRetry, retryDelaysMs = [5000, 20000],
   reasoningEffort = 'medium', webSearch = true, onResponse, checkpoint, onCheckpoint,
-  integrityReview = true, sourceContext = '', solutionSlugs = [],
+  integrityReview = true, sourceContext = '', solutionSlugs = [], skills = '',
 }) {
   const promptSha256 = await sha256(JSON.stringify(messages));
   const inputSha256 = await sha256(JSON.stringify({
-    messages, requirements, integrityReview, sourceContext, solutionSlugs,
+    messages, requirements, integrityReview, sourceContext, solutionSlugs, skills,
   }));
   const matches = checkpoint?.inputSha256 === inputSha256;
   if (checkpoint && !matches) onActivity?.('The source inputs changed; starting a fresh assessment');
@@ -85,16 +117,32 @@ export async function generateAssessment({
       onResponse?.({ ...saved, stage, fromCheckpoint: true });
       return { answer: saved.answer, completion: saved.completion, fromCheckpoint: true };
     }
-    return completedAnswer(stream, {
-      ...options,
-      onDelta: (delta) => { onHeartbeat?.(); options.onDelta?.(delta); },
-      onThinking: (delta) => { onHeartbeat?.(); options.onThinking?.(delta); },
-      onActivity: (activity) => { onHeartbeat?.(); options.onActivity?.(activity); },
-      onResponse: (response) => {
+    const maxAttempts = retryDelaysMs.length + 1;
+    // Each attempt resends the stage's complete messages, so a dropped stream is safe to repeat.
+    const attempt = async (number) => {
+      try {
+        return await completedAnswer(stream, {
+          ...options,
+          onDelta: (delta) => { onHeartbeat?.(); options.onDelta?.(delta); },
+          onThinking: (delta) => { onHeartbeat?.(); options.onThinking?.(delta); },
+          onActivity: (activity) => { onHeartbeat?.(); options.onActivity?.(activity); },
+          onResponse: (response) => {
+            onHeartbeat?.();
+            onResponse?.({ stage, attempt: number, ...response });
+          },
+        });
+      } catch (error) {
+        if (number >= maxAttempts || !isTransientStreamError(error)) throw error;
+        onRetry?.({
+          stage, attempt: number + 1, maxAttempts, reason: error.message,
+        });
+        onActivity?.(`The FluffyJaws connection dropped; restarting ${stage} (attempt ${number + 1} of ${maxAttempts})`);
+        await wait(retryDelaysMs[number - 1]);
         onHeartbeat?.();
-        onResponse?.({ stage, ...response });
-      },
-    });
+        return attempt(number + 1);
+      }
+    };
+    return attempt(1);
   };
   onProgress?.({ phase: 'assessment' });
   let core = await request('core', {
@@ -105,7 +153,11 @@ export async function generateAssessment({
     webSearch,
     reasoningEffort,
   });
-  const validation = { requirements, pendingRequirements: requirements.length > 0 };
+  const validation = {
+    requirements,
+    pendingRequirements: requirements.length > 0,
+    expectedVersion: ASSESSMENT_CONTRACT_VERSION,
+  };
   const stages = [{
     stage: 'core',
     ...core.completion,
@@ -120,11 +172,11 @@ export async function generateAssessment({
     onActivity?.('Checking the assessment structure and source links');
     const correction = [
       ...messages,
-      { role: 'assistant', content: core.answer },
+      { role: 'assistant', content: latestGeneration(core.answer) },
       {
         role: 'user',
-        content: `The application rejected the assessment: ${error.message}
-Return the COMPLETE corrected canonical assessment between the original exact markers, not a patch or explanation. Preserve substantive findings unless a correction is needed for evidence integrity. Do not invent verification or numerical scores. All seven reviews are required.
+        content: `The application rejected the assessment: ${error.message}${syntaxCorrection(error)}
+Return the COMPLETE corrected canonical assessment between the original exact markers, not a patch or explanation. Preserve substantive findings unless a correction is needed for evidence integrity. All seven reviews are required, each with an integer rating from 1 to 5; Nash computes the points, total and verdict.
 Every public-source evidence locator must be ONE exact https URL, with no prose or semicolon-separated links. Split multiple sources into separate evidence IDs, assign each claim to the correct source, and update affected evidenceRefs/publicReferences. Each public reference URL must equal its matching public-source locator exactly. Keep internal or unverified material out of publicReferences.
 Use the full original evidence supplied above, not previousResponseId. No further research/tool calls. This is the only correction attempt.`,
       },
@@ -144,6 +196,9 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
     rawResponses.push({ stage: 'core-correction', text: core.answer });
   }
   remember('core', core);
+  const citations = sourceCitationEvidence(requirements, view.evidence);
+  view = { ...view, evidence: [...view.evidence, ...citations.evidence] };
+  const coreView = view;
   const rows = [];
   let reviewedCount = 0;
   const reportReviewed = (count) => {
@@ -162,22 +217,38 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
     // eslint-disable-next-line no-await-in-loop
     const results = await Promise.allSettled(batches.map(async (batch) => {
       const stage = `requirements:${batch[0].id}`;
-      const reviewMessages = [{ role: 'user', content: buildRequirementReviewPrompt(view, batch) }];
+      const reviewMessages = [{
+        role: 'user',
+        content: buildRequirementReviewPrompt(coreView, batch, {
+          skills, citationRefs: citations.refs,
+        }),
+      }];
       let result = await request(stage, {
         messages: reviewMessages,
         webSearch: false,
         reasoningEffort,
       });
+      const sources = new Map(batch.map((row) => [row.id.toLowerCase(), row]));
       const parseRows = (answer) => {
         let payload;
         try {
-          payload = JSON.parse(answer);
-        } catch {
-          throw new Error(`Requirement review ${batch[0].id} returned invalid JSON. No report was replaced.`);
+          payload = parseModelJson(answer);
+        } catch (error) {
+          throw new Error(`Requirement review ${batch[0].id} returned invalid JSON. No report was replaced.`, { cause: error });
         }
-        const errors = validateRequirementRows(payload.requirements, batch, view.evidence);
+        if (!Array.isArray(payload?.requirements)) {
+          throw new Error(`Requirement review ${batch[0].id} returned no requirements array.`);
+        }
+        const finalized = payload.requirements.map((row) => {
+          const source = sources.get(String(row?.id || '').toLowerCase());
+          if (!source) return row;
+          return finalizeRequirementRow(row, source, citations.refs.get(source.id.toLowerCase()));
+        });
+        const errors = validateRequirementRows(finalized, batch, coreView.evidence, {
+          version: coreView.contractVersion,
+        });
         if (errors.length) throw new Error(`Requirement review failed: ${errors.slice(0, 4).join(' ')}`);
-        return payload.requirements;
+        return finalized;
       };
       let reviewed;
       try {
@@ -186,12 +257,12 @@ Use the full original evidence supplied above, not previousResponseId. No furthe
         const corrected = await request(`${stage}-correction`, {
           messages: [
             ...reviewMessages,
-            { role: 'assistant', content: result.answer },
+            { role: 'assistant', content: latestGeneration(result.answer) },
             {
               role: 'user',
-              content: `The requirement validator rejected the response: ${error.message}
-Return the COMPLETE corrected requirements JSON for this exact batch, not a patch. Preserve all source IDs and priorities. Use only these evidence IDs: ${view.evidence.map((item) => item.id).join(', ')}.
-Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do not put them in evidenceRefs. Mention relevant gates in validation. Do not invent evidence or remove a source question. No research/tools and no previousResponseId. This is the only correction attempt.`,
+              content: `The requirement validator rejected the response: ${error.message}${syntaxCorrection(error)}
+Return the COMPLETE corrected requirements JSON for this exact batch, not a patch. Include every source ID once, each with exactly one fit: ${FIT_LEVELS.map((level) => level.fit).join(', ')}. Use only these evidence IDs: ${coreView.evidence.map((item) => item.id).join(', ')}.
+Acceptance-gate IDs such as G1/G2 are NOT evidence; never put them in evidenceRefs. Do not invent evidence or remove a source question. No research/tools and no previousResponseId. This is the only correction attempt.`,
             },
           ],
           webSearch: false,
@@ -231,14 +302,10 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
   }
   if (requirements.length) {
     const byId = new Map(rows.map((row) => [row.id.toLowerCase(), row]));
-    view.requirements = requirements.map((source) => ({
-      ...byId.get(source.id.toLowerCase()),
-      id: source.id,
-      priority: source.priority,
-      source: source.source,
-      sourceId: source.sourceId || source.id,
-      sourceLocator: source.locator,
-    }));
+    view = applyAssessmentRubric({
+      ...view,
+      requirements: requirements.map((source) => byId.get(source.id.toLowerCase())),
+    });
   }
   let finalView = view;
   onProgress?.({ phase: 'review' });
@@ -253,7 +320,7 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
       reasoningEffort,
     });
     try {
-      finalView = applyAssessmentReview(view, review.answer, requirements);
+      finalView = applyAssessmentReview(view, review.answer, requirements, citations.refs);
     } catch (error) {
       stages.push({
         stage: 'integrity-review-rejected',
@@ -266,7 +333,7 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
         webSearch: false,
         reasoningEffort,
       });
-      finalView = applyAssessmentReview(view, review.answer, requirements);
+      finalView = applyAssessmentReview(view, review.answer, requirements, citations.refs);
     }
     remember('integrity-review', review);
     stages.push({
@@ -278,6 +345,7 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
     });
     rawResponses.push({ stage: 'integrity-review', text: review.answer });
   }
+  finalView = pruneUnusedCitations(finalView);
   finalView.inputCoverage = {
     status: requirements.length ? 'verified-manifest' : 'no-independent-manifest',
     requirementIds: requirements.map((row) => row.id),
@@ -294,7 +362,9 @@ Acceptance-gate IDs such as G1/G2 are validation plans, NOT source evidence. Do 
     inputSha256,
     stages,
   };
-  const errors = validateAssessmentView(finalView, { requirements });
+  const errors = validateAssessmentView(finalView, {
+    requirements, expectedVersion: ASSESSMENT_CONTRACT_VERSION,
+  });
   if (errors.length) throw new Error(`Final assessment validation failed: ${errors.slice(0, 6).join(' ')}`);
   return { view: finalView, completion: core.completion, rawResponses };
 }

@@ -172,12 +172,24 @@ export function scoreBreakdownFor(dimension, detail = {}) {
     return { status: 'missing', criteria: [] };
   }
   if (!Array.isArray(criteria)) return { status: 'invalid', criteria: [] };
+  const qualitative = (item) => item && typeof item.criterion === 'string'
+    && item.criterion.trim() && typeof item.rationale === 'string' && item.rationale.trim()
+    && ['supported', 'conditional', 'unknown', 'gap'].includes(item.status);
   if (detail.scoreBasis === 'unscored' && dimension.scored === null && dimension.max === null) {
-    const qualitative = criteria.every((item) => item && typeof item.criterion === 'string'
-      && item.criterion.trim() && typeof item.rationale === 'string' && item.rationale.trim()
-      && ['supported', 'conditional', 'unknown', 'gap'].includes(item.status)
+    const valid = criteria.every((item) => qualitative(item)
       && item.scored === null && item.max === null);
-    return { status: qualitative ? 'unscored' : 'invalid', criteria: qualitative ? criteria : [] };
+    return { status: valid ? 'unscored' : 'invalid', criteria: valid ? criteria : [] };
+  }
+  if (['rubric', 'computed'].includes(detail.scoreBasis)) {
+    // Rubric ratings are explained by criteria; points belong to the dimension, not each criterion.
+    const valid = criteria.every(qualitative);
+    return {
+      status: valid ? 'rubric' : 'invalid',
+      criteria: valid ? criteria : [],
+      rating: Number.isInteger(dimension.rating) ? dimension.rating : null,
+      scored: Number.isFinite(dimension.scored) ? dimension.scored : null,
+      max: Number.isFinite(dimension.max) ? dimension.max : null,
+    };
   }
   const valid = criteria.every((item) => item && typeof item.criterion === 'string'
     && item.criterion.trim() && typeof item.rationale === 'string' && item.rationale.trim()

@@ -5905,6 +5905,32 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   color: #ff594d;
 }
 
+.nash-session .nash-session__coverage-note {
+  margin: 0 0 12px;
+  color: var(--gallery-muted);
+}
+
+.nash-session .nash-session__coverage-note b {
+  color: var(--gallery-copy);
+}
+
+.nash-session .nash-session-analysis-table-wrap .nash-session__source-link {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--gallery-copy);
+  text-decoration: underline;
+  text-decoration-color: var(--gallery-line);
+  text-underline-offset: 3px;
+}
+
+.nash-session .nash-session-analysis-table-wrap .nash-session__source-link:hover {
+  text-decoration-color: currentcolor;
+}
+
+.nash-session .nash-session__unsourced {
+  color: #747985;
+}
+
 .nash-session .nash-session-delivery-path,
 .nash-session .nash-session-solution-detail-grid {
   display: grid;
@@ -6268,6 +6294,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   .nash-session__solution-dependencies summary,
   .nash-session__use-case-details,
   .nash-session__scoring-note,
+  .nash-session__coverage-note,
   .nash-session__architecture-details > summary,
   .nash-session-use-case-grid p,
   .nash-session-use-case-grid article > strong,

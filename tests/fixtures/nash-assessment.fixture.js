@@ -1,4 +1,7 @@
-import { ASSESSMENT_DIMENSIONS } from '../../scripts/nash-assessment-contract.js';
+import {
+  ASSESSMENT_DIMENSIONS, finalizeRequirementRow,
+} from '../../scripts/nash-assessment-contract.js';
+import { applyAssessmentRubric } from '../../scripts/nash-rubric.js';
 
 export function sourceRequirements(count = 2) {
   return Array.from({ length: count }, (_, index) => ({
@@ -171,4 +174,75 @@ export function canonicalAssessment() {
 
 export function responseText(view = canonicalAssessment()) {
   return `NASH_ASSESSMENT_V2:\n${JSON.stringify(view)}\nNASH_ASSESSMENT_V2_END`;
+}
+
+/* ---- Contract v4: rubric ratings, requirement fit and source drafts ---- */
+
+export const RATINGS = {
+  'Strategic Fit': 4,
+  'Technical Fit': 4,
+  'Functional Coverage': 3,
+  'Commercial Viability': 3,
+  'Competitive Position': 3,
+  'Delivery Risk': 4,
+  'AI & Agentic Fit': 4,
+};
+
+export const DOC_URL = 'https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/headless/introduction';
+
+/** Source rows as extracted from a workbook that already holds Adobe draft answers. */
+export function draftedRequirements(count = 2) {
+  return sourceRequirements(count).map((row, index) => ({
+    ...row,
+    category: index % 2 ? 'Integration' : 'Content',
+    draft: index % 2 ? {
+      answer: 'OPEN',
+      note: 'Depends on the consuming application contract.',
+      locator: `Adobe Evidence, row ${index + 2}`,
+    } : {
+      answer: 'Yes',
+      note: 'Content Fragments provide governed reusable content.',
+      links: [{ url: DOC_URL, title: 'Introduction to AEM headless' }],
+      locator: `Adobe Evidence, row ${index + 2}`,
+    },
+  }));
+}
+
+/** A requirement row exactly as the model returns it in a v4 batch. */
+export function fitResponse(source, fit = 'Configuration') {
+  return {
+    id: source.id,
+    fit,
+    requirement: `Approved content for workflow ${source.id}`,
+    response: 'Content Fragments with workflow approval deliver reviewed reusable content.',
+    solution: 'AEM Sites: Content Fragments',
+    caveat: '',
+    evidenceRefs: ['E1'],
+  };
+}
+
+/** The core-stage model output for contract v4: ratings only, nothing computed. */
+export function rubricCore() {
+  const view = canonicalAssessment();
+  view.contractVersion = 4;
+  view.meta = { cms: 'n/a' };
+  delete view.scoring;
+  view.dimensions = view.dimensions.map(({
+    scored, max, weight, ...dimension
+  }) => ({ ...dimension, rating: RATINGS[dimension.dimension] }));
+  view.dimensionDetails = view.dimensionDetails.map(({ scoreBasis, sections, ...detail }) => ({
+    ...detail,
+    criteria: detail.criteria.map(({ scored, max, ...criterion }) => criterion),
+  }));
+  view.requirements = [];
+  return view;
+}
+
+/** A stored, complete v4 assessment with its rubric applied. */
+export function rubricAssessment(requirements = sourceRequirements(), fit = 'Configuration') {
+  return applyAssessmentRubric({
+    ...rubricCore(),
+    requirements: requirements
+      .map((source) => finalizeRequirementRow(fitResponse(source, fit), source)),
+  });
 }
