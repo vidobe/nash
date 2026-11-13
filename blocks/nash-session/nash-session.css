@@ -2820,34 +2820,58 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   height: 18px;
 }
 
-.nash-session .nash-session-rerun:not(.nash-session-action-item) {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 8px;
-  background: none;
+/* Re-run in the report header: a quiet pill, centred on the tab row. */
+.nash-session .nash-session-head-rerun {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  margin-top: 4px;
+  padding: 0 14px 0 11px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 999px;
+  background: var(--white, #fff);
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--ink-70, #4a4d55);
+  line-height: 1;
+  color: var(--ink, #111318);
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.nash-session .nash-session-rerun:not(.nash-session-action-item):hover {
-  background: var(--ink-08, #f4f4f6);
-  color: var(--ink, #111318);
+.nash-session .nash-session-head-rerun svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.nash-session .nash-session-head-rerun:hover {
+  border-color: var(--ink-40, #9a9da6);
+  background: var(--ink-04, #fafafb);
+}
+
+.nash-session .nash-session-head-rerun:focus-visible {
+  outline: 2px solid var(--blue, #1d4ed8);
+  outline-offset: 2px;
+}
+
+.nash-session .nash-session-head-rerun:disabled {
+  opacity: 0.55;
+  cursor: progress;
 }
 
 /* Chat notes have been added but not yet folded into the report. */
-.nash-session .nash-session-rerun.has-notes:not(.nash-session-action-item) {
-  color: var(--amber, #b45309);
-  background: color-mix(in srgb, var(--amber, #b45309) 14%, transparent);
+.nash-session .nash-session-head-rerun.has-notes {
+  border-color: color-mix(in srgb, var(--amber, #b45309) 45%, transparent);
+  background: var(--amber-lt, #fef3c7);
   font-weight: 600;
+  color: var(--amber, #b45309);
 }
 
-.nash-session .nash-session-rerun.has-notes:not(.nash-session-action-item):hover {
-  background: color-mix(in srgb, var(--amber, #b45309) 22%, transparent);
-  color: var(--amber, #b45309);
+.nash-session .nash-session-head-rerun.has-notes:hover {
+  background: color-mix(in srgb, var(--amber, #b45309) 22%, var(--amber-lt, #fef3c7));
 }
 
 .nash-session .nash-session-model {

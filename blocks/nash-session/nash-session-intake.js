@@ -1033,8 +1033,11 @@ export function mountIntake(block, {
       return;
     }
     let intro = 'Pick the Adobe solutions to assess, then confirm.';
-    if ((a.solutions || []).length && iv.scope.length) intro = 'These are the Adobe solutions you picked before. Add or remove any, then confirm.';
-    else if (iv.scope.length) intro = `${iv.scope.length === 1 ? 'This Adobe solution matches' : 'These Adobe solutions match'} what the customer needs. Add or remove any, then confirm.`;
+    if ((a.solutions || []).length && iv.scope.length) {
+      intro = a.rerunOf
+        ? 'These are the Adobe solutions from the earlier report. Add or remove any, then confirm.'
+        : 'These are the Adobe solutions you picked before. Add or remove any, then confirm.';
+    } else if (iv.scope.length) intro = `${iv.scope.length === 1 ? 'This Adobe solution matches' : 'These Adobe solutions match'} what the customer needs. Add or remove any, then confirm.`;
     postScopeCard(intro);
   }
 
@@ -1627,14 +1630,36 @@ export function mountIntake(block, {
     input.focus({ preventScroll: true });
   }
 
+  function heroCopy() {
+    if (!a.rerunOf) {
+      return {
+        title: 'Start with the customer’s documents',
+        body: 'RFI, RFP, requirement workbooks or discovery notes. Fluffy reads them, matches the Adobe solutions and asks only what the documents can’t answer.',
+      };
+    }
+    // A new run of a published report: say what carried over and what didn't.
+    const carried = ['customer', a.dr ? 'DR' : '', (a.solutions || []).length ? 'Adobe solutions' : '']
+      .filter(Boolean);
+    let link = 'earlier report';
+    try {
+      const url = new URL(a.rerunOf.url, window.location.href);
+      if (/^https?:$/.test(url.protocol)) link = `<a href="${esc(url.href)}">earlier report</a>`;
+    } catch { /* no usable link; name it in plain text */ }
+    return {
+      title: 'Add the customer’s documents again',
+      body: `The ${listText(carried)} ${carried.length > 1 ? 'come' : 'comes'} from the ${link}, which stays published as it is. Documents and answers don’t carry over, so this run reads them fresh.`,
+    };
+  }
+
   function mountChat() {
     const connect = isAuthenticated() ? '' : `<p class="nash-intake__connect">Fluffy reads documents through FluffyJaws.
         <button type="button" class="nash-intake__link" data-act="connect">Connect to FluffyJaws</button></p>`;
+    const hero = heroCopy();
     area.innerHTML = `<section class="nash-intake is-empty" aria-label="New assessment with Fluffy">
         <div class="nash-intake__hero">
           ${PIX}
-          <h2>Start with the customer’s documents</h2>
-          <p>RFI, RFP, requirement workbooks or discovery notes. Fluffy reads them, matches the Adobe solutions and asks only what the documents can’t answer.</p>
+          <h2>${hero.title}</h2>
+          <p>${hero.body}</p>
           <div class="nash-intake__hero-dock"></div>
           <p class="nash-intake__hero-hint">PDF, Word, Excel, CSV or text. No documents yet? Describe the opportunity instead.</p>
           ${connect}

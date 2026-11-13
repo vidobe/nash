@@ -2,7 +2,7 @@
 
 import { streamQualification } from '../../scripts/fluffyjaws.js';
 import {
-  saveAssessment, getAssessment, newAssessmentId,
+  saveAssessment, getAssessment, newAssessmentId, rerunDraftFrom,
 } from '../../scripts/nash-assessments.js';
 import { isAuthenticated, login, getUserInfo } from '../../scripts/nash-auth.js';
 import { publishAssessment } from '../../scripts/da-publish.js';
@@ -41,6 +41,9 @@ let isRunning = false;
 let chatGrounded = false;
 // Documents attached in the composer, to fold into the next Fluffy message.
 let pendingDocs = [];
+// Set when the analyst asked to re-run but had to reattach the source documents
+// first: the next completed reattachment continues the re-run.
+let rerunAfterReattach = false;
 let publishRetryTimer = null;
 const renderBindings = new WeakMap();
 const chatIntakes = new WeakMap();
@@ -76,6 +79,7 @@ const ICONS = {
   quality: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-3z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>',
   experiment: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6"/><path d="M10 3v6.2l-5.3 8.6A2.1 2.1 0 0 0 6.5 21h11a2.1 2.1 0 0 0 1.8-3.2L14 9.2V3"/><path d="M8 15h8"/></svg>',
   plusadd: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  rerun: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>',
 };
 
 const EXPERIMENT_USER_EMAIL = 'vgabriel@adobe.com';
@@ -888,28 +892,83 @@ function reportHtmlForPublish(a) {
   return header + body;
 }
 
-/* Reflect on the Re-run button whether chat notes still need folding in. */
+/* Reflect on every Re-run control (header + composer menu) whether chat notes
+   still need folding in, or the source documents must be reattached first. */
 function renderRerunState(block) {
-  const btn = block?.querySelector('.nash-session-rerun');
-  if (!btn || !current) return;
+  const buttons = block?.querySelectorAll?.('.nash-session-rerun') || [];
+  if (!buttons.length || !current) return;
   const pending = !!current.notesSinceRun;
   const missing = missingSourceFiles(current);
-  const label = btn.querySelector('.nash-session-action-label');
-  btn.classList.toggle('has-notes', pending);
-  btn.classList.toggle('needs-sources', missing.length > 0);
-  if (label) {
-    let rerunLabel = 'Re-run assessment';
-    if (missing.length) rerunLabel = 'Reattach source documents';
-    else if (pending) rerunLabel = 'Re-run to update';
-    label.textContent = rerunLabel;
-  }
   let title = 'Re-run the assessment, folding in your chat with Fluffy';
   if (missing.length) {
     title = `Reattach ${missing.map((file) => file.name).join(', ')} before re-running`;
   } else if (pending) {
     title = 'You added notes in chat — re-run to fold them into the report';
   }
-  btn.title = title;
+  buttons.forEach((btn) => {
+    const inMenu = btn.classList.contains('nash-session-action-item');
+    const label = btn.querySelector('.nash-session-action-label');
+    btn.classList.toggle('has-notes', pending);
+    btn.classList.toggle('needs-sources', missing.length > 0);
+    if (label) {
+      let text = inMenu ? 'Re-run assessment' : 'Re-run';
+      if (missing.length && inMenu) text = 'Reattach source documents';
+      else if (pending) text = 'Re-run to update';
+      label.textContent = text;
+    }
+    btn.title = title;
+  });
+}
+
+function setRerunBusy(block, busy) {
+  block.querySelectorAll('.nash-session-rerun').forEach((btn) => { btn.disabled = busy; });
+}
+
+/* This browser's own editable copy of a published report, when it has one. */
+function ownLocalCopy(a) {
+  const own = a?.published && a.id ? getAssessment(a.id) : null;
+  return own && !own.published ? own : null;
+}
+
+/* The header's Re-run control. A local report re-runs in place. A published
+   report is read-only: it re-runs the viewer's own copy when this browser has
+   it, otherwise it starts a new assessment pre-filled from the report. */
+function headRerunHtml(a) {
+  if (!(a.reportMarkdown || a.report || a.reportHtml)) return '';
+  if (a.published) {
+    const who = a.company || a.opportunity || 'this customer';
+    const carried = ['customer', a.dr ? 'DR' : '', a.solutions?.length ? 'Adobe solutions' : '']
+      .filter(Boolean);
+    const same = carried.length < 2 ? carried.join('')
+      : `${carried.slice(0, -1).join(', ')} and ${carried.at(-1)}`;
+    const title = ownLocalCopy(a)
+      ? 'Open your copy of this assessment and re-run it'
+      : `This published report is read-only. Start a new assessment for ${who} with the same ${same}`;
+    return `<button type="button" class="nash-session-head-rerun nash-session-rerun-new" title="${escapeHtml(title)}">${ICONS.rerun}<span>Re-run</span></button>`;
+  }
+  return `<button type="button" class="nash-session-head-rerun nash-session-rerun">${ICONS.rerun}<span class="nash-session-action-label">Re-run</span></button>`;
+}
+
+function headScoreHtml(a) {
+  const score = assessmentScore(a);
+  if (score === null && !a.assessmentView?.scoring) return '';
+  const verdict = verdictFor(score, a.verdict);
+  return `<div class="nash-session-qual-score">
+            <div class="nash-session-qual-ring${score === null ? ' nash-session__unscored' : ''}" style="color:${dimColor(score)}">${score === null ? 'Not scored' : `${score}<span>/ 100</span>`}</div>
+            <span class="nash-session-verdict ${verdict.cls}">${escapeHtml(a.verdict || verdict.label)}</span>
+          </div>`;
+}
+
+/* After a run, the header shows the new score and offers Re-run (a first run
+   started without either). */
+function refreshHeadActions(block) {
+  const actions = block.querySelector('.nash-session-assess-actions');
+  if (!actions || !current) return;
+  actions.querySelector('.nash-session-head-rerun')?.remove();
+  actions.querySelector('.nash-session-qual-score')?.remove();
+  actions.insertAdjacentHTML('afterbegin', headRerunHtml(current));
+  actions.insertAdjacentHTML('beforeend', headScoreHtml(current));
+  renderRerunState(block);
 }
 
 async function publishAutomatically(block, attempt = 0) {
@@ -2673,8 +2732,10 @@ async function runAssessment(block, attempt = 1, insights = '', options = {}) {
       ? addMessage(thread, 'assistant', missingSourcesHtml(missing))
       : area;
     if (!thread) area.insertAdjacentHTML('afterbegin', missingSourcesHtml(missing));
+    else assessmentWorkspaceFor(block)?.open();
     const scope = warning || area;
     scope.querySelector('.nash-session-source-attach')?.addEventListener('click', () => {
+      rerunAfterReattach = true;
       block.querySelector('.nash-session-attach-input')?.click();
     });
     return;
@@ -2702,8 +2763,7 @@ async function runAssessment(block, attempt = 1, insights = '', options = {}) {
   const progress = createGenerationProgress(host, {
     title: insights ? 'Updating your assessment' : 'Generating your assessment',
   });
-  const rerunButton = block.querySelector('.nash-session-rerun');
-  if (rerunButton) rerunButton.disabled = true;
+  setRerunBusy(block, true);
   if (inThread) assessmentWorkspaceFor(block)?.open();
   isRunning = true;
   assessment.status = 'running';
@@ -2720,8 +2780,8 @@ async function runAssessment(block, attempt = 1, insights = '', options = {}) {
       ? 'done' : 'draft';
     delete assessment.runStartedAt;
     persist(assessment);
-    if (rerunButton) rerunButton.disabled = false;
     if (current !== assessment) { progress.dispose(); return; }
+    setRerunBusy(block, false);
     setSetupAvailability(block, false);
     progress.fail(msg, options.retry || (() => runAssessment(block, attempt, insights, options)));
     scroll();
@@ -2825,7 +2885,6 @@ async function runAssessment(block, attempt = 1, insights = '', options = {}) {
   persist(assessment);
   if (current !== assessment) { progress.dispose(); return; }
   isRunning = false;
-  if (rerunButton) rerunButton.disabled = false;
   previousResponseId = null;
   chatGrounded = false;
   progress.complete();
@@ -2833,7 +2892,8 @@ async function runAssessment(block, attempt = 1, insights = '', options = {}) {
   wireQualificationPanel(area);
   setSetupAvailability(block, false);
   setStatusDone(block);
-  renderRerunState(block);
+  refreshHeadActions(block);
+  setRerunBusy(block, false);
   logActivity('assessment');
   publishAutomatically(block);
   if (inThread) {
@@ -3015,6 +3075,7 @@ export function renderAssessment(block, record, autoRun = false) {
   previousResponseId = null;
   chatGrounded = false;
   pendingDocs = [];
+  rerunAfterReattach = false;
   block.classList.add('wide');
   const date = a.createdAt
     ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -3028,8 +3089,6 @@ export function renderAssessment(block, record, autoRun = false) {
     .map((solution) => (typeof solution === 'string' ? solution : solution.name))
     .filter(Boolean).join(', ')
     || a.solutionNames || '';
-  const score = assessmentScore(a);
-  const verdict = verdictFor(score, a.verdict);
   const tabs = visibleTabs();
   const experimentPanel = canViewReportExperiment()
     ? `<div class="nash-session-panel nash-session-experiment" data-panel="experiment">${renderExperimentalDossier(a)}</div>`
@@ -3048,16 +3107,14 @@ export function renderAssessment(block, record, autoRun = false) {
           ${meta ? `<p class="nash-session-assess-meta">${meta}</p>` : ''}
         </div>
         <div class="nash-session-assess-actions">
+          ${headRerunHtml(a)}
           <div class="nash-session-tabs" role="tablist">
             ${tabs.map((t, i) => `
               <button type="button" class="nash-session-tab${i === 0 ? ' active' : ''}" data-tab="${t.tab}" role="tab" aria-selected="${i === 0}" title="${t.label}" aria-label="${t.label}">
                 ${ICONS[t.icon]}
               </button>`).join('')}
           </div>
-          ${score !== null || a.assessmentView?.scoring ? `<div class="nash-session-qual-score">
-            <div class="nash-session-qual-ring${score === null ? ' nash-session__unscored' : ''}" style="color:${dimColor(score)}">${score === null ? 'Not scored' : `${score}<span>/ 100</span>`}</div>
-            <span class="nash-session-verdict ${verdict.cls}">${escapeHtml(a.verdict || verdict.label)}</span>
-          </div>` : ''}
+          ${headScoreHtml(a)}
         </div>
       </div>
       <div class="nash-session-panels">
@@ -3187,14 +3244,23 @@ export function renderAssessment(block, record, autoRun = false) {
     closeActionPopover();
     attachInput.click();
   });
+  attachInput.addEventListener('cancel', () => { rerunAfterReattach = false; });
   attachInput.addEventListener('change', async () => {
+    const resumeRerun = rerunAfterReattach;
+    rerunAfterReattach = false;
     const picked = [...attachInput.files];
     attachInput.value = '';
     const extracted = await processFiles(picked);
-    pendingDocs.push(...extracted);
     current.files = mergeAssessmentFiles(assessmentFiles(current), extracted);
     persist(current);
     renderRerunState(block);
+    // Reattached for a re-run: the documents feed the run itself, not the next
+    // chat message. The run re-checks and asks again if any are still missing.
+    if (resumeRerun && current === a && !isRunning) {
+      runAssessment(block, 1, chatInsightsText());
+      return;
+    }
+    pendingDocs.push(...extracted);
     renderChips();
   });
 
@@ -3208,11 +3274,39 @@ export function renderAssessment(block, record, autoRun = false) {
     publishAutomatically(block);
   }
 
-  block.querySelector('.nash-session-rerun')?.addEventListener('click', () => {
+  // Re-run from the header or the composer menu. Delegated, because a first run
+  // only adds the header button once its report exists; capture, because the
+  // composer menu stops its clicks from bubbling.
+  block.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('.nash-session-rerun-new')) {
+      rerunPublished(a);
+      return;
+    }
+    const rerun = target?.closest('.nash-session-rerun');
+    if (!rerun || rerun.disabled || isRunning) return;
     closeActionPopover();
     switchTab(block, 'assessment');
+    openChat();
     runAssessment(block, 1, chatInsightsText());
-  });
+  }, { capture: true, signal: bindings.signal });
+}
+
+/* A published report is read-only. Re-run this browser's own copy when it has
+   one; otherwise start a new assessment with the customer, DR and solutions
+   filled in (the published report stays as it is). */
+function rerunPublished(a) {
+  const own = ownLocalCopy(a);
+  if (own) {
+    window.location.href = `/indextest?a=${encodeURIComponent(own.id)}&rerun=1`;
+    return;
+  }
+  const source = new URL(a.publishedUrl || window.location.href, window.location.href);
+  source.search = '';
+  source.hash = '';
+  const draft = rerunDraftFrom(a, { url: source.href });
+  saveAssessment(draft, getUserInfo()?.email || '');
+  window.location.href = `/indextest?a=${encodeURIComponent(draft.id)}`;
 }
 
 /* The chat discussion as plain text, to fold into a re-run. */
@@ -3379,6 +3473,14 @@ export default async function decorate(block) {
     // autoRun only takes effect when there's no report yet, so a finished
     // assessment just re-opens, while an unfinished one restarts automatically.
     renderAssessment(block, assessment, true);
+    // Re-run requested from the published copy of this report. Consume the flag
+    // first so a reload doesn't start another run.
+    if (params.get('rerun') === '1') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('rerun');
+      window.history.replaceState(window.history.state, '', url);
+      block.querySelector('.nash-session-head-rerun.nash-session-rerun')?.click();
+    }
   } else if (opportunity) {
     startNewAnalysis(block);
   } else {

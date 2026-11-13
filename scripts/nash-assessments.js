@@ -66,6 +66,32 @@ export function newAssessmentId() {
   return `a-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/* A new draft that re-runs a published (read-only) report. Only who and what is
+   being assessed carries over: documents, answers and the report itself don't, so
+   the new run can't silently reuse stale material. The published report stays. */
+export function rerunDraftFrom(source, { id = newAssessmentId(), now = Date.now(), url = '' } = {}) {
+  const solutions = (Array.isArray(source?.solutions) ? source.solutions : [])
+    .map((solution) => (typeof solution === 'string'
+      ? { slug: solution, name: solution }
+      : { slug: solution?.slug || '', name: solution?.name || solution?.slug || '' }))
+    .filter((solution) => solution.slug);
+  const company = String(source?.company || '').trim();
+  const opportunity = String(source?.opportunity || '').trim() || company;
+  const dr = String(source?.dr || '').trim();
+  return {
+    id,
+    company,
+    opportunity,
+    ...(dr ? { dr } : {}),
+    solutions,
+    status: 'draft',
+    createdAt: now,
+    files: [],
+    messages: [],
+    rerunOf: { id: source?.id || '', url },
+  };
+}
+
 /* ── Bookmarks & hidden-from-sidebar (per-browser, keyed by a stable string) ── */
 
 const BOOKMARKS_KEY = 'nash-bookmarks';
