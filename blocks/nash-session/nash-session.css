@@ -278,79 +278,7 @@
   box-shadow: 0 0 0 3px rgb(20 115 230 / 15%);
 }
 
-.nash-session .nash-session-drop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 20px 16px;
-  border: 1.5px dashed var(--ink-15, #e8e9ec);
-  border-radius: 12px;
-  background: var(--surface, #f8f8fa);
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.nash-session .nash-session-drop:hover,
-.nash-session .nash-session-drop.dragging {
-  border-color: var(--red, #eb1000);
-  background: var(--red-lt, #fff0ef);
-}
-
-.nash-session .nash-session-drop.has-file {
-  border-style: solid;
-  border-color: var(--ink-15, #e8e9ec);
-  background: var(--white, #fff);
-}
-
-.nash-session .nash-session-drop-icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--white, #fff);
-  color: var(--ink-40, #9a9da6);
-}
-
-.nash-session .nash-session-drop.has-file .nash-session-drop-icon {
-  background: var(--red-lt, #fff0ef);
-  color: var(--red, #eb1000);
-}
-
-.nash-session .nash-session-drop-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.nash-session .nash-session-drop-text {
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--ink, #111318);
-  overflow-wrap: anywhere;
-}
-
-.nash-session .nash-session-drop-sub {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--ink-40, #9a9da6);
-}
-
 /* Document-first intake: one clear action before any metadata or product work. */
-.nash-session .nash-session-intake-focused {
-  width: min(760px, 100%);
-  margin: clamp(24px, 8vh, 84px) auto 0;
-  text-align: center;
-}
-
-.nash-session .nash-session-intake-copy {
-  max-width: 620px;
-  margin: 0 auto 28px;
-}
 
 .nash-session .nash-session-kicker {
   display: block;
@@ -360,60 +288,6 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.nash-session .nash-session-intake-copy h2,
-.nash-session .nash-session-setup-review h2,
-.nash-session .nash-session-empty-start h2,
-.nash-session .nash-session-final-review h2 {
-  margin: 0 0 10px;
-  color: var(--ink, #111318);
-  font-family: var(--serif, 'DM Serif Display', georgia, serif);
-  font-size: clamp(28px, 4vw, 42px);
-  font-weight: 400;
-}
-
-.nash-session .nash-session-intake-copy p,
-.nash-session .nash-session-setup-review header p,
-.nash-session .nash-session-empty-start p,
-.nash-session .nash-session-final-review > p {
-  margin: 0;
-  color: var(--ink-70, #4a4d55);
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-.nash-session .nash-session-drop-hero {
-  min-height: 160px;
-  justify-content: center;
-  padding: 28px;
-  border-color: color-mix(in srgb, var(--ink-40, #9a9da6) 55%, transparent);
-  background: color-mix(in srgb, var(--surface, #f8f8fa) 65%, transparent);
-}
-
-.nash-session .nash-session-drop-hero .nash-session-drop-icon {
-  width: 46px;
-  height: 46px;
-}
-
-.nash-session .nash-session-drop-hero .nash-session-drop-text {
-  font-size: 16px;
-}
-
-.nash-session .nash-session-start-empty {
-  margin-top: 16px;
-  border: 0;
-  background: none;
-  color: var(--ink-40, #9a9da6);
-  font: inherit;
-  font-size: 13px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.nash-session .nash-session-start-empty:hover {
-  color: var(--ink, #111318);
 }
 
 .nash-session.is-setting-up .nash-session-tab:disabled,
@@ -429,91 +303,6 @@
   box-shadow: none;
 }
 
-.nash-session .nash-session-setup-progress {
-  display: grid;
-  place-items: center;
-  width: min(680px, 100%);
-  min-height: 280px;
-  margin: clamp(20px, 7vh, 72px) auto 0;
-  text-align: center;
-}
-
-.nash-session .nash-session-progress-title {
-  margin: 0;
-  color: var(--ink, #111318);
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-}
-
-.nash-session .nash-session-progress-message {
-  margin: 10px 0 0;
-  color: var(--ink-40, #9a9da6);
-  font-size: 13px;
-}
-
-.nash-session .nash-session-evidence-steps {
-  width: min(540px, 100%);
-  margin: 32px auto 0;
-  text-align: left;
-}
-
-.nash-session .nash-session-evidence-step {
-  display: grid;
-  grid-template-columns: 22px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  min-height: 48px;
-  color: var(--ink-40, #9a9da6);
-  border-bottom: 1px solid var(--ink-08, #f4f4f6);
-}
-
-.nash-session .nash-session-evidence-step:last-child {
-  border-bottom: 0;
-}
-
-.nash-session .nash-session-evidence-dot {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  border: 1px solid var(--border, #e5e6ea);
-  border-radius: 50%;
-  font-size: 10px;
-}
-
-.nash-session .nash-session-evidence-step.done,
-.nash-session .nash-session-evidence-step.current {
-  color: var(--ink, #111318);
-}
-
-.nash-session .nash-session-evidence-step.done .nash-session-evidence-dot {
-  border-color: color-mix(in srgb, var(--green, #0d7a45) 35%, transparent);
-  background: color-mix(in srgb, var(--green, #0d7a45) 12%, transparent);
-  color: var(--green, #0d7a45);
-}
-
-.nash-session .nash-session-evidence-step.current .nash-session-evidence-dot {
-  border-color: color-mix(in srgb, var(--red, #eb1000) 35%, transparent);
-  background: color-mix(in srgb, var(--red, #eb1000) 10%, transparent);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--red, #eb1000) 5%, transparent);
-}
-
-.nash-session .nash-session-evidence-state {
-  color: var(--ink-40, #9a9da6);
-  font-size: 11px;
-}
-
-.nash-session .nash-session-setup-review {
-  width: min(1080px, 100%);
-  margin: 12px auto 40px;
-}
-
-.nash-session .nash-session-setup-review > header {
-  max-width: 760px;
-  margin-bottom: 28px;
-}
-
 .nash-session .nash-session-identity-row {
   display: grid;
   grid-template-columns: 1.4fr 1.2fr 0.8fr;
@@ -522,8 +311,7 @@
   border-block: 1px solid var(--ink-08, #f4f4f6);
 }
 
-.nash-session .nash-session-identity-row label,
-.nash-session .nash-session-empty-start label {
+.nash-session .nash-session-identity-row label {
   color: var(--ink-70, #4a4d55);
   font-size: 12px;
   font-weight: 600;
@@ -534,8 +322,7 @@
   font-weight: 400;
 }
 
-.nash-session .nash-session-identity-row input,
-.nash-session .nash-session-empty-start input {
+.nash-session .nash-session-identity-row input {
   display: block;
   width: 100%;
   margin-top: 6px;
@@ -550,53 +337,8 @@
   box-sizing: border-box;
 }
 
-.nash-session .nash-session-identity-row input:focus,
-.nash-session .nash-session-empty-start input:focus {
+.nash-session .nash-session-identity-row input:focus {
   border-color: var(--spectrum-accent, #1473e6);
-}
-
-.nash-session .nash-session-extracted-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px 28px;
-  padding: 26px 0 18px;
-}
-
-.nash-session .nash-session-extracted-summary h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-}
-
-.nash-session .nash-session-extracted-summary ul {
-  margin: 0;
-  padding-left: 17px;
-}
-
-.nash-session .nash-session-extracted-summary li {
-  margin-bottom: 5px;
-  color: var(--ink-70, #4a4d55);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.nash-session .nash-session-scope-head {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 28px 0 14px;
-}
-
-.nash-session .nash-session-scope-head h2 {
-  margin-bottom: 0;
-  font-size: 28px;
-}
-
-.nash-session .nash-session-scope-head p {
-  max-width: 390px;
-  margin: 0;
-  color: var(--ink-40, #9a9da6);
-  font-size: 12.5px;
 }
 
 .nash-session .nash-session-solution-groups {
@@ -702,25 +444,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   font-size: 8px;
 }
 
-.nash-session .nash-session-scope-reasons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 7px 24px;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.nash-session .nash-session-scope-reasons li {
-  color: var(--ink-70, #4a4d55);
-  font-size: 11.5px;
-  line-height: 1.45;
-}
-
-.nash-session .nash-session-scope-reasons span {
-  color: var(--ink-40, #9a9da6);
-}
-
 .nash-session .nash-session-solution-tile.is-recommended:hover small,
 .nash-session .nash-session-solution-tile.is-recommended:focus-within small {
   position: absolute;
@@ -736,22 +459,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   font-size: 10px;
   line-height: 1.35;
   box-shadow: 0 6px 20px rgb(17 19 24 / 22%);
-}
-
-.nash-session .nash-session-setup-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 22px;
-}
-
-.nash-session .nash-session-empty-start,
-.nash-session .nash-session-final-review {
-  width: min(620px, 100%);
-  margin: clamp(28px, 8vh, 88px) auto 0;
-}
-
-.nash-session .nash-session-empty-start .nash-session-btn-primary {
-  margin-top: 18px;
 }
 
 .nash-session .nash-session-solgrid {
@@ -1124,134 +831,7 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   color: #eb1000;
 }
 
-/* Pre-assessment interview: extract from docs, ask the analyst about the gaps. */
-.nash-session .nash-session-interview {
-  display: flex;
-  flex-direction: column;
-  width: min(980px, 100%);
-  gap: 0;
-  margin: 8px auto 40px;
-  padding: 0;
-}
-
-.nash-session .nash-session-interview-head {
-  margin-bottom: 18px;
-}
-
-.nash-session .nash-session-interview-head h2 {
-  margin: 8px 0 6px;
-  font-size: clamp(24px, 3vw, 34px);
-  letter-spacing: -0.035em;
-}
-
-.nash-session .nash-session-interview-head p {
-  max-width: 620px;
-  margin: 0;
-  color: var(--ink-40, #9a9da6);
-  line-height: 1.55;
-}
-
-.nash-session .nash-session-interview-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.nash-session .nash-session-interview-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 13px;
-  border: 1px solid var(--ink-15, #e8e9ec);
-  border-radius: 9px;
-  background: var(--white, #fff);
-}
-
-.nash-session .nash-session-interview-question {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  gap: 6px;
-  align-items: start;
-}
-
-.nash-session .nash-session-interview-question > span {
-  padding-top: 2px;
-  color: var(--ink-40, #9a9da6);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.nash-session .nash-session-interview-q {
-  font-weight: 600;
-  font-size: 12.5px;
-  line-height: 1.35;
-}
-
-.nash-session .nash-session-interview-a {
-  width: 100%;
-  min-height: 56px;
-  padding: 9px 10px;
-  border: 0;
-  border-radius: 8px;
-  font: inherit;
-  color: var(--ink, #111318);
-  background: var(--ink-08, #f4f4f6);
-  resize: vertical;
-  box-sizing: border-box;
-  font-size: 12.5px;
-  line-height: 1.4;
-  transition: box-shadow 0.15s ease;
-}
-
-.nash-session .nash-session-question-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 16px;
-  color: var(--ink-40, #9a9da6);
-  font-size: 11px;
-}
-
-.nash-session .nash-session-question-actions .nash-session-interview-run {
-  padding: 10px 18px;
-  border: 0;
-  border-radius: 9px;
-  background: var(--red, #eb1000);
-  color: var(--white, #fff);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.nash-session .nash-session-final-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px 28px;
-  margin: 28px 0;
-  padding-block: 20px;
-  border-block: 1px solid var(--ink-08, #f4f4f6);
-}
-
-.nash-session .nash-session-final-grid div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nash-session .nash-session-final-grid small {
-  color: var(--ink-40, #9a9da6);
-  font-size: 11px;
-  text-transform: uppercase;
-}
-
-.nash-session .nash-session-final-grid strong {
-  color: var(--ink, #111318);
-  font-size: 14px;
-}
+/* Primary action that starts the experimental report. */
 
 .nash-session .nash-session-run-final {
   margin-top: 22px;
@@ -1263,19 +843,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-}
-
-.nash-session .nash-session-interview-a::placeholder {
-  color: var(--ink-40, #9a9da6);
-}
-
-.nash-session .nash-session-interview-a:focus {
-  outline: none;
-  box-shadow: 0 6px 7px -6px var(--spectrum-accent, #1473e6);
-}
-
-.nash-session .nash-session-question-actions .nash-session-interview-run:hover {
-  background: #c90e00;
 }
 
 /* Placeholder shown in audience tabs that have no generation logic yet. */
@@ -3896,17 +3463,8 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 }
 
 @media (width < 700px) {
-  .nash-session .nash-session-identity-row,
-  .nash-session .nash-session-extracted-summary,
-  .nash-session .nash-session-final-grid,
-  .nash-session .nash-session-scope-reasons,
-  .nash-session .nash-session-interview-list {
+  .nash-session .nash-session-identity-row {
     grid-template-columns: 1fr;
-  }
-
-  .nash-session .nash-session-scope-head {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .nash-session .nash-session-periodic {
@@ -3915,11 +3473,6 @@ html[data-theme='dark'] .nash-session .nash-session-solution-group {
 
   .nash-session .nash-session-solution-groups {
     gap: 22px;
-  }
-
-  .nash-session .nash-session-question-actions {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .nash-session .nash-session-result-tab span {
@@ -6853,6 +6406,1380 @@ html:not([data-theme="dark"]) .nash-session .nash-session-offer-tag.add-on {
   .nash-session .nash-session-gallery-footer span {
     display: block;
     margin-top: 5px;
+  }
+}
+
+/* Chat intake: the whole new-assessment setup is one conversation with Fluffy in the
+   assessment column. Scoped to .nash-session.nash-intake-active and built on the real
+   message, button and periodic-table styles. */
+
+.nash-session.nash-intake-active {
+  --intake-accent: #6951b0;
+  --intake-accent-ink: color-mix(in srgb, #6951b0 80%, var(--ink, #111318));
+  --intake-tint: color-mix(in srgb, var(--white, #fff) 93%, #6951b0 7%);
+  --intake-col: 780px;
+}
+
+html[data-theme='dark'] .nash-session.nash-intake-active {
+  --intake-accent: #9d87ec;
+  --intake-accent-ink: #b9a8f5;
+  --intake-tint: color-mix(in srgb, var(--white, #fff) 87%, #9d87ec 13%);
+}
+
+.nash-session.nash-intake-active .nash-session-tabs,
+.nash-session.nash-intake-active .nash-session-thread {
+  display: none;
+}
+
+.nash-session.nash-intake-active .nash-session-assess-head {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--intake-col);
+  margin: 0 auto 18px;
+}
+
+.nash-session.nash-intake-active .nash-session-panel[data-panel='assessment'] {
+  position: relative;
+}
+
+.nash-session.nash-intake-active .nash-session-report-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.nash-session .nash-intake {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--intake-col);
+  margin: 0 auto;
+}
+
+.nash-session .nash-intake.is-empty {
+  justify-content: center;
+}
+
+.nash-session .nash-intake.is-empty .nash-intake__log {
+  display: none;
+}
+
+.nash-session .nash-intake__log {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 6px 0 28px;
+}
+
+/* ── Start state: Claude-style centred composer ─────────────────────── */
+
+.nash-session .nash-intake__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 64px;
+  text-align: center;
+}
+
+.nash-session .nash-intake__hero > .nash-session-pix {
+  margin-bottom: 22px;
+  transform: scale(1.45);
+}
+
+.nash-session .nash-intake__hero > .nash-session-pix i {
+  opacity: 0.75;
+}
+
+.nash-session .nash-intake__hero h2 {
+  margin: 0;
+  color: var(--ink, #111318);
+  font: 400 30px/1.2 var(--serif, 'DM Serif Display', georgia, serif);
+  letter-spacing: -0.2px;
+}
+
+.nash-session .nash-intake__hero > p {
+  max-width: 540px;
+  margin: 10px 0 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.nash-session .nash-intake__hero-dock {
+  width: 100%;
+  margin-top: 26px;
+  text-align: left;
+}
+
+.nash-session .nash-intake__hero > p.nash-intake__hero-hint {
+  margin-top: 12px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-intake__hero .nash-intake__hint {
+  display: none;
+}
+
+.nash-session .nash-intake__hero .nash-intake__composer {
+  padding: 16px 12px 10px 16px;
+  border-radius: 20px;
+}
+
+.nash-session .nash-intake__hero .nash-intake__input {
+  min-height: 60px;
+}
+
+/* ── Messages ───────────────────────────────────────────────────────── */
+
+.nash-session .nash-intake__log .nash-session-msg.assistant .nash-session-bubble {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 0 0 4px;
+}
+
+.nash-session .nash-intake__log .nash-session-msg.user .nash-session-bubble {
+  max-width: 78%;
+}
+
+.nash-session .nash-intake__log .nash-session-msg.user .nash-session-bubble:has(> .nash-intake__files) {
+  max-width: 100%;
+  padding: 0;
+  background: none;
+}
+
+.nash-session .nash-intake__log .nash-session-bubble strong {
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__qtag {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--intake-accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.nash-session .nash-session-bubble .nash-intake__ack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--green, #0d7a45);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__ack svg {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+.nash-session .nash-session-bubble .nash-intake__current {
+  color: var(--ink-40, #9a9da6);
+  font-size: 13px;
+}
+
+.nash-session .nash-intake__notes > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__notes svg {
+  width: 13px;
+  height: 13px;
+}
+
+.nash-session .nash-intake__notes p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+/* File chips: sent by the user, and listed on the brief card. */
+
+.nash-session .nash-intake__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-session .nash-intake__files li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  max-width: min(300px, 100%);
+  padding: 5px 10px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 9px;
+  background: var(--white, #fff);
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nash-session .nash-intake__files svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-intake__files span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nash-session .nash-intake__files.is-sent {
+  justify-content: flex-end;
+}
+
+.nash-session .nash-intake__files.is-sent li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 9px 13px 9px 11px;
+  border-radius: 12px;
+  background: var(--ink-08, #f4f4f6);
+  border-color: transparent;
+}
+
+.nash-session .nash-intake__files.is-sent svg {
+  grid-row: span 2;
+  width: 22px;
+  height: 22px;
+}
+
+.nash-session .nash-intake__files.is-sent span {
+  color: var(--ink, #111318);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__files.is-sent small {
+  color: var(--ink-40, #9a9da6);
+  font-size: 11px;
+}
+
+/* Reading: Copilot-style live steps that collapse into one line. */
+
+.nash-session .nash-intake__work-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  color: var(--ink, #111318);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__work .nash-session-pix i {
+  animation: nash-pix-float 1.5s ease-in-out infinite;
+}
+
+.nash-session .nash-intake__work .nash-session-pix i:nth-child(2n) {
+  animation-duration: 1.15s;
+}
+
+.nash-session .nash-intake__work .nash-session-pix i:nth-child(3n) {
+  animation-duration: 1.9s;
+}
+
+.nash-session .nash-intake__steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-session .nash-intake__steps li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 10px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.nash-session .nash-intake__steps li i {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1.5px solid var(--ink-15, #e8e9ec);
+  border-radius: 50%;
+}
+
+.nash-session .nash-intake__steps li.is-current {
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake__steps li.is-current i {
+  border-color: var(--intake-accent);
+  border-top-color: transparent;
+  animation: nash-intake-spin 0.8s linear infinite;
+}
+
+.nash-session .nash-intake__steps li.is-done {
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__steps li.is-done i {
+  border-color: var(--green, #0d7a45);
+  background: var(--green, #0d7a45);
+  color: #fff;
+}
+
+.nash-session .nash-intake__steps li i svg {
+  width: 10px;
+  height: 10px;
+}
+
+.nash-session .nash-intake__steps small {
+  grid-column: 2;
+  color: var(--ink-40, #9a9da6);
+  font-size: 12px;
+}
+
+.nash-session .nash-intake__steps small:empty {
+  display: none;
+}
+
+@keyframes nash-intake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.nash-session .nash-intake__worked summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: -8px;
+  padding: 5px 9px 5px 8px;
+  border-radius: 9px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 13px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__worked summary::-webkit-details-marker {
+  display: none;
+}
+
+.nash-session .nash-intake__worked summary:hover {
+  background: var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-intake__worked summary svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nash-session .nash-intake__worked summary svg:first-child {
+  color: var(--green, #0d7a45);
+}
+
+.nash-session .nash-intake__worked summary svg:last-child {
+  color: var(--ink-40, #9a9da6);
+  transition: transform 0.15s ease;
+}
+
+.nash-session .nash-intake__worked[open] summary svg:last-child {
+  transform: rotate(180deg);
+}
+
+.nash-session .nash-intake__worked ol {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.nash-session .nash-intake__worked li strong {
+  display: block;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__worked li span {
+  color: var(--ink-40, #9a9da6);
+}
+
+/* Quick replies */
+
+.nash-session .nash-intake__replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.nash-session .nash-intake__reply {
+  padding: 6px 13px;
+  border: 1px solid color-mix(in srgb, var(--intake-accent) 35%, var(--border, #e5e6ea));
+  border-radius: 999px;
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.nash-session .nash-intake__reply:hover:not(:disabled) {
+  border-color: var(--intake-accent);
+  background: var(--intake-tint);
+}
+
+.nash-session .nash-intake__reply:focus-visible {
+  outline: 2px solid var(--intake-accent);
+  outline-offset: 2px;
+}
+
+.nash-session .nash-intake__reply:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.nash-session .nash-intake__reply.is-chosen:disabled {
+  border-color: var(--intake-accent);
+  background: var(--intake-tint);
+  opacity: 1;
+}
+
+.nash-session .nash-intake__reply.is-own {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-style: dashed;
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__reply.is-own svg {
+  width: 13px;
+  height: 13px;
+}
+
+.nash-session .nash-intake__reply.is-active {
+  border-style: solid;
+  border-color: var(--intake-accent);
+  background: var(--intake-tint);
+  color: var(--ink, #111318);
+}
+
+/* "Type my own answer": a small composer anchored to the question it answers. */
+.nash-session .nash-intake__own {
+  display: flex;
+  flex: 1 0 100%;
+  align-items: flex-end;
+  gap: 4px;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 6px 6px 6px 13px;
+  border: 1px solid color-mix(in srgb, var(--intake-accent) 50%, var(--border, #e5e6ea));
+  border-radius: 14px;
+  background: var(--white, #fff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--intake-accent) 12%, transparent);
+  scroll-margin-bottom: 24px;
+}
+
+.nash-session .nash-intake__own textarea {
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 30px;
+  max-height: 132px;
+  margin: 0;
+  padding: 5px 0;
+  overflow-y: auto;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--ink, #111318);
+  font: 400 14px/1.45 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session .nash-intake__own textarea::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-intake__own-cancel {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__own-cancel:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__own-cancel:focus-visible {
+  outline: 2px solid var(--intake-accent);
+  outline-offset: 1px;
+}
+
+.nash-session .nash-intake__own-cancel svg {
+  width: 15px;
+  height: 15px;
+}
+
+.nash-session .nash-intake__own .nash-intake__own-send {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.nash-session .nash-intake__own .nash-intake__own-send svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ── Cards inside Fluffy's messages ─────────────────────────────────── */
+
+.nash-session .nash-intake__card {
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 14px;
+  background: var(--white, #fff);
+  box-shadow: 0 1px 4px rgb(17 19 24 / 4%);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.nash-session .nash-intake__card.is-stale {
+  opacity: 0.55;
+}
+
+.nash-session .nash-intake__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nash-session .nash-intake__card-head strong {
+  display: block;
+  color: var(--ink, #111318);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.nash-session .nash-intake__card-head > div > span {
+  color: var(--ink-40, #9a9da6);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-intake__link {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--intake-accent-ink);
+  font: 600 12.5px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__link:hover:not(:disabled) {
+  background: var(--intake-tint);
+}
+
+.nash-session .nash-intake__link:focus-visible {
+  outline: 2px solid var(--intake-accent);
+  outline-offset: 1px;
+}
+
+.nash-session .nash-intake__link:disabled {
+  color: var(--ink-40, #9a9da6);
+  cursor: default;
+}
+
+.nash-session .nash-intake__card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-intake__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-70, #4a4d55);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-intake__count svg {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  color: var(--green, #0d7a45);
+}
+
+/* What Fluffy read */
+
+.nash-session .nash-intake__brief .nash-intake__files {
+  margin: 12px 0 6px;
+}
+
+.nash-session .nash-intake__facts {
+  margin: 6px 0 0;
+}
+
+.nash-session .nash-intake__facts > div {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-intake__facts > div:last-child {
+  padding-bottom: 0;
+}
+
+.nash-session .nash-intake__facts dt {
+  color: var(--ink-40, #9a9da6);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.nash-session .nash-intake__facts dd {
+  margin: 0;
+  color: var(--ink, #111318);
+  font-size: 13.5px;
+}
+
+.nash-session .nash-intake__identity {
+  padding: 0 0 14px;
+  border-block: 0;
+}
+
+.nash-session .nash-intake__edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+/* Scope: the real periodic table, inside the chat */
+
+.nash-session .nash-intake__matches {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-session .nash-intake__matches li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 13.5px;
+}
+
+.nash-session .nash-intake__matches i {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--intake-accent);
+  transform: translateY(-1px);
+}
+
+.nash-session .nash-intake__matches strong {
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake__scope .nash-session-solution-groups {
+  gap: 12px;
+}
+
+.nash-session .nash-intake__group .nash-session-solution-group-head {
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.nash-session .nash-intake__group.is-open .nash-session-solution-group-head {
+  margin-bottom: 9px;
+}
+
+.nash-session .nash-intake__group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  white-space: nowrap;
+  padding: 3px 4px 3px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-40, #9a9da6);
+  font: 500 11.5px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__group-toggle span {
+  color: inherit;
+  font-size: 11.5px;
+}
+
+.nash-session .nash-intake__group-toggle:hover:not(:disabled) {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__group-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.nash-session .nash-intake__group-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.nash-session .nash-intake__scope .nash-session-periodic {
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 6px;
+}
+
+.nash-session .nash-intake__scope .nash-session-periodic[hidden] {
+  display: none;
+}
+
+.nash-session .nash-intake__scope .nash-session-solution-tile {
+  min-height: 80px;
+}
+
+.nash-session .nash-intake__scope-foot {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  margin: 16px -18px -16px;
+  padding: 12px 18px;
+  border-radius: 0 0 14px 14px;
+  background: var(--white, #fff);
+}
+
+.nash-session .nash-intake__scope.is-locked .nash-intake__card-foot {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.nash-session .nash-intake__picked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nash-session .nash-intake__picked .nash-session-solution-tile {
+  box-sizing: border-box;
+  width: 98px;
+  min-height: 80px;
+  background: color-mix(in srgb, var(--tile-accent) 17%, var(--white, #fff));
+  box-shadow: 0 0 0 2px var(--tile-accent);
+  cursor: default;
+}
+
+/* Ready to run */
+
+.nash-session .nash-intake__review .nash-intake__card-head {
+  align-items: center;
+  padding-bottom: 12px;
+}
+
+.nash-session .nash-intake__meter {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.nash-session .nash-intake__meter i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink-15, #e8e9ec);
+}
+
+.nash-session .nash-intake__meter i.is-on {
+  background: var(--green, #0d7a45);
+}
+
+.nash-session .nash-intake__meter span {
+  margin-left: 4px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 11.5px;
+}
+
+.nash-session .nash-intake__rows {
+  margin: 0;
+}
+
+.nash-session .nash-intake__rows > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 64px;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+  border-top: 1px solid var(--ink-08, #f4f4f6);
+}
+
+.nash-session .nash-intake__rows dt {
+  color: var(--ink-70, #4a4d55);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__rows dt small {
+  display: block;
+  color: var(--ink-40, #9a9da6);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.nash-session .nash-intake__rows dd {
+  margin: 0;
+  color: var(--ink, #111318);
+  font-size: 13.5px;
+}
+
+.nash-session .nash-intake__rows dd em {
+  color: var(--ink-40, #9a9da6);
+  font-style: normal;
+}
+
+.nash-session .nash-intake__rows .nash-intake__dd-warn {
+  display: block;
+  margin-top: 2px;
+  color: var(--amber, #b45309);
+  font-size: 12.5px;
+}
+
+.nash-session .nash-intake__rows .nash-intake__link {
+  justify-self: end;
+}
+
+/* ── Dock: status strip + composer, outside the scrolling conversation ─ */
+
+.nash-session .nash-intake__dock {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--intake-col);
+  margin: 0 auto;
+}
+
+.nash-session .nash-session-panel > .nash-intake__dock {
+  flex: 0 0 auto;
+  padding-top: 8px;
+}
+
+.nash-session .nash-intake__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 2px 8px 8px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nash-session .nash-intake__status[hidden] {
+  display: none;
+}
+
+.nash-session .nash-intake__status-text strong {
+  color: var(--ink, #111318);
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__status-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--intake-accent) 35%, var(--border, #e5e6ea));
+  border-radius: 999px;
+  background: var(--white, #fff);
+  color: var(--ink, #111318);
+  font: 600 12px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__status-btn:hover {
+  border-color: var(--intake-accent);
+  background: var(--intake-tint);
+}
+
+.nash-session .nash-intake__status-btn.is-primary {
+  border-color: var(--spectrum-accent, #1473e6);
+  background: var(--spectrum-accent, #1473e6);
+  color: #fff;
+}
+
+.nash-session .nash-intake__status-btn.is-primary:hover {
+  border-color: var(--spectrum-accent-hover, #0d66d0);
+  background: var(--spectrum-accent-hover, #0d66d0);
+}
+
+.nash-session .nash-intake__composer {
+  display: grid;
+  gap: 4px;
+  padding: 12px 10px 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--intake-accent) 22%, var(--border, #e5e6ea));
+  border-radius: 18px;
+  background: var(--white, #fff);
+  box-shadow: 0 4px 18px rgb(17 19 24 / 6%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nash-session .nash-intake__composer:focus-within {
+  border-color: color-mix(in srgb, var(--intake-accent) 55%, var(--border, #e5e6ea));
+  box-shadow: 0 6px 24px rgb(105 81 176 / 12%);
+}
+
+.nash-session .nash-intake__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 28px;
+  max-height: 180px;
+  margin: 0;
+  padding: 2px 4px 4px 2px;
+  overflow-y: auto;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--ink, #111318);
+  font: 400 15px/1.55 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-session .nash-intake__input::placeholder {
+  color: var(--ink-40, #9a9da6);
+}
+
+.nash-session .nash-intake__tools {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.nash-session .nash-intake__attach {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-70, #4a4d55);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__attach:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake__attach:focus-visible {
+  outline: 2px solid var(--intake-accent);
+  outline-offset: 1px;
+}
+
+.nash-session .nash-intake__attach svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nash-session .nash-intake__model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-70, #4a4d55);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.nash-session .nash-intake__send {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+.nash-session .nash-intake__hint {
+  margin: 6px 0 0;
+  color: var(--ink-40, #9a9da6);
+  font-size: 11px;
+  text-align: center;
+}
+
+.nash-session .nash-intake__drop {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--intake-accent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--white, #fff) 88%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.nash-session .nash-intake__drop[hidden] {
+  display: none;
+}
+
+.nash-session .nash-intake__drop > div {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake__drop svg {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 6px;
+  color: var(--intake-accent);
+}
+
+.nash-session .nash-intake__drop strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake__drop span {
+  color: var(--ink-70, #4a4d55);
+  font-size: 13px;
+}
+
+/* ── States the real documents bring: connect, warnings, failed steps ─ */
+
+.nash-session .nash-intake__hero > p.nash-intake__connect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 8px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.nash-session .nash-session-bubble .nash-intake__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--amber-lt, #fef3c7);
+  color: var(--amber, #b45309);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nash-session .nash-intake__warn svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+/* The technical reason under a plain-language failure message. */
+.nash-session .nash-session-bubble .nash-intake__error {
+  color: var(--ink-40, #9a9da6);
+  font-size: 12.5px;
+}
+
+/* "Pick at least one" and frozen run buttons must not look clickable. */
+.nash-session .nash-intake .nash-session-btn-primary:disabled {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink-40, #9a9da6);
+  cursor: not-allowed;
+}
+
+.nash-session .nash-session-bubble .nash-intake__work-note {
+  margin: 10px 0 0 28px;
+  color: var(--ink-40, #9a9da6);
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+.nash-session .nash-intake__steps li.is-failed {
+  color: var(--ink-70, #4a4d55);
+}
+
+.nash-session .nash-intake__steps li.is-failed i {
+  border-color: var(--amber, #b45309);
+  background: var(--amber, #b45309);
+  color: #fff;
+}
+
+.nash-session .nash-intake__worked.is-failed summary svg:first-child {
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-intake__files li.is-missing {
+  border-color: color-mix(in srgb, var(--amber, #b45309) 45%, transparent);
+  background: var(--amber-lt, #fef3c7);
+}
+
+.nash-session .nash-intake__files li.is-missing svg {
+  color: var(--amber, #b45309);
+}
+
+.nash-session .nash-intake__file-remove {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-40, #9a9da6);
+  cursor: pointer;
+}
+
+.nash-session .nash-intake__file-remove:hover {
+  background: var(--ink-08, #f4f4f6);
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake__file-remove:focus-visible {
+  outline: 2px solid var(--intake-accent);
+  outline-offset: 1px;
+}
+
+.nash-session .nash-intake__files .nash-intake__file-remove svg {
+  width: 12px;
+  height: 12px;
+  color: inherit;
+}
+
+/* The real generation progress, as a card inside Fluffy's "Started" message. */
+
+.nash-session .nash-intake__progress .nash-session-generation {
+  max-width: none;
+  margin: 12px 0 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgb(17 19 24 / 4%);
+}
+
+.nash-session .nash-intake__progress .nash-session-generation__title {
+  margin: 10px 0 4px;
+  font-size: 16px;
+}
+
+.nash-session .nash-intake__progress .nash-session-generation__timing {
+  margin-top: 12px;
+}
+
+/* The intake answers, collapsed above Fluffy's first message next to the report. */
+
+.nash-session .nash-intake-recap {
+  margin: 0 0 10px;
+  border: 1px solid var(--border, #e5e6ea);
+  border-radius: 12px;
+  background: var(--surface, #f8f8fa);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.nash-session .nash-intake-recap summary {
+  padding: 8px 12px;
+  color: var(--ink-70, #4a4d55);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nash-session .nash-intake-recap dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 2px 12px 12px;
+}
+
+.nash-session .nash-intake-recap dt {
+  color: var(--ink-40, #9a9da6);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.nash-session .nash-intake-recap dd {
+  margin: 0;
+  color: var(--ink, #111318);
+}
+
+.nash-session .nash-intake-recap dd + dd {
+  margin-top: 6px;
+}
+
+/* The real assessment lets the column grow with the page below 900px. A
+   conversation needs its composer pinned, so the chat keeps its own scroller. */
+@media (width < 900px) {
+  .nash-session.nash-intake-active .nash-session-assess {
+    height: calc(100dvh - 40px);
+    min-height: 0;
+  }
+
+  .nash-session.nash-intake-active .nash-session-assess-scroll {
+    overflow-y: auto;
+  }
+}
+
+@media (width < 700px) {
+  .nash-session.nash-intake-active .nash-session-assess-head {
+    margin-bottom: 10px;
+  }
+
+  /* Phone: Fluffy's turns use the full column, like Claude and Copilot on mobile. */
+  .nash-session .nash-intake__log .nash-session-msg.assistant .nash-session-avatar {
+    display: none;
+  }
+
+  .nash-session .nash-intake__log .nash-session-msg.assistant,
+  .nash-session .nash-intake__log .nash-session-msg.assistant-cont {
+    padding-left: 0;
+  }
+
+  .nash-session .nash-intake__log .nash-session-msg.assistant .nash-session-bubble {
+    padding-left: 0;
+  }
+
+  .nash-session .nash-intake__log .nash-session-msg.user .nash-session-bubble {
+    max-width: 88%;
+  }
+
+
+  .nash-session .nash-intake__hero h2 {
+    font-size: 25px;
+  }
+
+  .nash-session .nash-intake__card {
+    padding: 14px;
+  }
+
+  .nash-session .nash-intake__scope-foot {
+    margin: 14px -14px -14px;
+    padding: 12px 14px;
+  }
+
+  .nash-session .nash-intake__facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .nash-session .nash-intake__rows > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 2px;
+  }
+
+  .nash-session .nash-intake__rows dd {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  .nash-session .nash-intake__rows .nash-intake__link {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+  }
+
+  .nash-session .nash-intake__review .nash-intake__card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .nash-session .nash-intake__status-text {
+    font-size: 11.5px;
+  }
+
+  .nash-session .nash-intake__status .nash-intake__meter {
+    display: none;
+  }
+
+  .nash-session .nash-intake__status-evidence {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .nash-session .nash-intake__picked .nash-session-solution-tile {
+    width: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nash-session .nash-intake__work .nash-session-pix i,
+  .nash-session .nash-intake__steps li.is-current i {
+    animation: none;
+  }
+
+  .nash-session .nash-intake__reply,
+  .nash-session .nash-intake__composer,
+  .nash-session .nash-intake__group-toggle svg,
+  .nash-session .nash-intake__worked summary svg:last-child {
+    transition: none;
   }
 }
 

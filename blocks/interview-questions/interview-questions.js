@@ -2,9 +2,10 @@
  * interview-questions block
  *
  * Authored by solution experts in the DA solution doc. Each row is one
- * discovery question. Nash reads these (from the page's plain.html) and folds
- * them into the pre-assessment interview for any assessment where this solution
- * is in scope. On the solution page itself we render them as a titled list.
+ * discovery question. The assessment review reads them with the rest of the
+ * solution's plain.html whenever this solution is in scope; the chat intake does
+ * not ask them one by one. On the solution page itself we render them as a
+ * titled list.
  *
  * Authored structure (one question per row):
  *   | Interview Questions |
