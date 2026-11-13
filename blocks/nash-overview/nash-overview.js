@@ -17,6 +17,12 @@ import { canDelete } from '../../scripts/nash-perms.js';
 import { getUserInfo } from '../../scripts/nash-auth.js';
 import { unpublishAssessment } from '../../scripts/da-publish.js';
 import { assessmentScore, dimensionPercent } from '../../scripts/nash-scoring.js';
+import {
+  RUBRIC, ratingValue, ratingsWithoutEvidence, verdictForScore,
+} from '../../scripts/nash-rubric.js';
+import {
+  INTAKE_DIMENSIONS, INTAKE_VERSION, answerCounts, evidencedDimensions,
+} from '../../scripts/nash-intake.js';
 
 const MOCK_REPORTS = [
   {
@@ -70,6 +76,44 @@ function toTitleCase(str) {
   return str.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/* Labels the app writes when there is no real name; never shown as the company. */
+const PLACEHOLDER_NAME = /^(unassigned|untitled)$/i;
+
+function realName(value) {
+  const name = typeof value === 'string' ? value.trim() : '';
+  return PLACEHOLDER_NAME.test(name) ? '' : name;
+}
+
+/* "DR 4710704" only for a real deal-registration number, never free text. */
+function drLabel(value) {
+  const number = String(value || '').trim().replace(/^DR[\s#:-]*/i, '');
+  return /^\d[\d\s-]{3,}$/.test(number) ? `DR ${number.replace(/\s+/g, '')}` : '';
+}
+
+/* A run with no saved progress for this long was interrupted (e.g. the tab closed). */
+const STALLED_AFTER_MS = 30 * 60 * 1000;
+
+function runState(a) {
+  const last = Math.max(Number(a.updatedAt) || 0, Number(a.runStartedAt) || 0);
+  return {
+    status: 'generating',
+    startedAt: Number(a.runStartedAt) || 0,
+    stalled: Boolean(last) && Date.now() - last > STALLED_AFTER_MS,
+    updating: Boolean(a.reportMarkdown || a.report || a.reportHtml),
+  };
+}
+
+/* What a draft already has: dimensions with customer evidence and answered questions. */
+function draftState(a) {
+  if (a.intake?.version !== INTAKE_VERSION) return { status: 'draft', intake: null };
+  const answers = a.interview?.version === INTAKE_VERSION ? (a.interview.answers || {}) : {};
+  const { total, answered } = answerCounts(a.intake, answers);
+  return {
+    status: 'draft',
+    intake: { evidenced: [...evidencedDimensions(a.intake, answers)], total, answered },
+  };
+}
+
 function mapQueryRow(row, idx) {
   const status = (row.status || '').toLowerCase() === 'generating' ? 'generating' : 'done';
   // Blank index metadata is authoritative, not an invitation to reconstruct a rating.
@@ -81,7 +125,8 @@ function mapQueryRow(row, idx) {
   // Strip " | Nash" suffix from <title> and fall back to path slug
   const rawTitle = (row.title || '').replace(/\s*\|.*$/, '').trim();
   const pathSlug = (row.path || '').split('/').pop();
-  const company = row.opportunity || rawTitle || toTitleCase(pathSlug) || 'Unknown';
+  // The opportunity is the customer as the analyst typed it; the extracted title can be noisy.
+  const company = realName(row.opportunity) || realName(rawTitle) || toTitleCase(pathSlug);
   let dimensions = [];
   try {
     const parsed = JSON.parse(row.dimensionvalues || '[]');
@@ -103,13 +148,13 @@ function mapQueryRow(row, idx) {
   return {
     id: idx,
     company,
-    opportunity: company,
     assessmentName: assessmentTitle({
       assessmentName: row.assessmentname,
       company,
       solutionNames: solutions,
     }),
-    domain: row.description || '',
+    // The index description holds the DR number or, without one, the company name.
+    dr: drLabel(row.description),
     status,
     pct: status === 'done' ? 100 : (parseInt(row.progress, 10) || 0),
     steps: parseInt(row.steps, 10) || 0,
@@ -136,17 +181,18 @@ function mapLocalAssessment(a, idx) {
   const ts = Math.floor((a.updatedAt || a.createdAt || Date.now()) / 1000);
   const path = `/indextest?a=${encodeURIComponent(a.id)}`;
   const score = a.status === 'done' ? assessmentScore(a) : null;
+  let state = { status: 'done' };
+  if (a.status === 'running') state = runState(a);
+  else if (a.status !== 'done') state = draftState(a);
   return {
     id: `local-${idx}`,
-    company: a.company || 'Untitled',
-    assessmentName: assessmentTitle(a),
-    opportunity: a.opportunity || a.company || 'Untitled',
-    domain: a.dr ? `DR ${a.dr}` : '',
-    status: a.status === 'done' ? 'done' : 'generating',
-    pct: a.status === 'done' ? 100 : 0,
-    steps: 0,
-    total: 23,
-    task: 'Draft',
+    company: realName(a.opportunity) || realName(a.company),
+    assessmentName: assessmentTitle({
+      ...a, company: realName(a.company), opportunity: realName(a.opportunity),
+    }),
+    dr: drLabel(a.dr),
+    ...state,
+    pct: state.status === 'done' ? 100 : 0,
     user: a.user || (getUserInfo()?.email || ''),
     solutions: (a.solutions || []).map((s) => s.name).join(', ') || a.solutionNames || '',
     dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
@@ -171,12 +217,6 @@ function scoreColor(s) {
   return 'var(--red, #eb1000)';
 }
 
-function verdictLabel(s) {
-  if (s >= 70) return 'Go';
-  if (s >= 50) return 'Conditional';
-  return 'No-go';
-}
-
 function verdictStyle(s) {
   if (s == null) return 'background:var(--ink-08,#f4f4f6);color:var(--ink-70,#4a4d55);';
   if (s >= 70) return 'background:var(--green-lt,#edf7f2);color:var(--green,#0d7a45);';
@@ -184,16 +224,28 @@ function verdictStyle(s) {
   return 'background:var(--red-lt,#fff0ef);color:var(--red,#eb1000);';
 }
 
-/* Verdict chip label + style — prefer the stored verdict, fall back to score. */
+function percentTone(percent) {
+  if (percent == null) return 'none';
+  if (percent >= 70) return 'go';
+  if (percent >= 50) return 'cond';
+  return 'nogo';
+}
+
+/* Verdict chip label + tone — prefer the stored verdict, fall back to score. */
 function verdictInfo(r) {
   const label = typeof r.verdict === 'string' ? r.verdict.trim() : '';
   const v = label.toLowerCase();
-  if (/no.?go/.test(v)) return { label, style: verdictStyle(0) };
-  if (/condition/.test(v)) return { label, style: verdictStyle(60) };
-  if (/\bgo\b/.test(v)) return { label, style: verdictStyle(80) };
-  if (label) return { label, style: verdictStyle(null) };
-  if (r.score != null) return { label: verdictLabel(r.score), style: verdictStyle(r.score) };
-  return { label: '', style: '' };
+  let tone = 'none';
+  if (/no.?go/.test(v)) tone = 'nogo';
+  else if (/condition/.test(v)) tone = 'cond';
+  else if (/\bgo\b/.test(v)) tone = 'go';
+  if (label) return { label, tone, style: verdictStyle({ go: 80, cond: 60, nogo: 0 }[tone]) };
+  if (r.score != null) {
+    return {
+      label: verdictForScore(r.score), tone: percentTone(r.score), style: verdictStyle(r.score),
+    };
+  }
+  return { label: '', tone: 'none', style: '' };
 }
 
 const PILLAR_ACCENTS = {
@@ -223,77 +275,201 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-function radarDimensions(dimensions = []) {
-  const values = dimensions.map((dimension) => {
-    const percent = dimensionPercent(dimension);
-    if (percent === null) return null;
+function solutionNames(solutions = '') {
+  return String(solutions || '').split(',').map((solution) => solution.trim()).filter(Boolean);
+}
+
+/* Display names only: "Adobe Experience Manager Sites as a Cloud Service" → "AEM Sites". */
+const SOLUTION_SHORT_FORMS = [
+  [/^Experience Platform\b/i, 'AEP'],
+  [/^Journey Optimizer\b/i, 'AJO'],
+  [/^Real-Time (?:Customer Data Platform|CDP)\b/i, 'RT-CDP'],
+  [/^Customer Journey Analytics\b/i, 'CJA'],
+];
+
+function shortSolution(name) {
+  const short = SOLUTION_SHORT_FORMS.reduce(
+    (text, [pattern, form]) => text.replace(pattern, form),
+    name
+      .replace(/^Adobe Experience Manager\b/i, 'AEM')
+      .replace(/\s+as\s+(?:an?\s+)?Cloud Service$/i, '')
+      .replace(/^Adobe\s+/i, '')
+      .trim(),
+  );
+  return short || name;
+}
+
+function scopeLine(r) {
+  const names = solutionNames(r.solutions);
+  const short = [...new Set(names.map(shortSolution))];
+  const parts = short.slice(0, 3);
+  if (short.length > 3) parts.push(`+${short.length - 3} more`);
+  if (r.dr) parts.push(r.dr);
+  if (!parts.length) return '';
+  const title = [...names, r.dr].filter(Boolean).join(' · ');
+  return `<p class="nash-overview-scope" title="${esc(title)}">${esc(parts.join(' · '))}</p>`;
+}
+
+const CORE_DIMENSIONS = RUBRIC.filter((rule) => !rule.upside).map((rule) => rule.dimension);
+const shortDimension = (name) => name.split(' ')[0];
+
+function dimensionName(dimension) {
+  return String(dimension?.dimension || dimension?.name || '').trim();
+}
+
+/* The six scored dimensions in rubric order; older reports keep their own names. */
+function cardDimensions(r) {
+  const list = (Array.isArray(r.dimensions) ? r.dimensions : [])
+    .filter((dimension) => dimension && typeof dimension === 'object' && dimensionName(dimension));
+  const byName = new Map(list.map((dimension) => [
+    dimensionName(dimension).toLowerCase(), dimension,
+  ]));
+  const known = CORE_DIMENSIONS.filter((name) => byName.has(name.toLowerCase())).length;
+  const picked = known >= 3
+    ? CORE_DIMENSIONS.map((name) => ({
+      name, label: shortDimension(name), dimension: byName.get(name.toLowerCase()),
+    }))
+    : list.filter((dimension) => !/agentic/i.test(dimensionName(dimension))).slice(0, 6)
+      .map((dimension) => {
+        const name = dimensionName(dimension);
+        return { name, label: name, dimension };
+      });
+  const assumed = new Set(ratingsWithoutEvidence(r.assessmentView).map((item) => item.dimension));
+  return picked.map(({ name, label, dimension }) => {
+    const percent = dimension ? dimensionPercent(dimension) : null;
+    const rating = ratingValue(dimension?.rating);
+    const isAssumed = rating !== null && assumed.has(name);
+    let detail = 'not rated';
+    if (rating !== null) detail = `${rating} of 5`;
+    else if (percent !== null) {
+      const scored = dimension.scored === undefined ? dimension.score : dimension.scored;
+      detail = `${Number(scored)} of ${Number(dimension.max)} points`;
+    }
     return {
-      name: dimension.dimension || dimension.name || 'Dimension',
-      value: percent / 100,
+      name,
+      label,
+      percent,
+      isAssumed,
+      filled: rating ?? (percent === null ? 0 : Math.round(percent / 20)),
+      detail: isAssumed ? `${detail}, a default rating: no customer evidence yet` : detail,
     };
   });
-  return values.some((dimension) => dimension === null) ? [] : values.slice(0, 7);
 }
 
-function polygonPoints(count, radius, center = 56) {
-  return Array.from({ length: count }, (_, index) => {
-    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / count);
-    return `${(center + Math.cos(angle) * radius).toFixed(1)},${(center + Math.sin(angle) * radius).toFixed(1)}`;
-  }).join(' ');
-}
-
-function radarChart(r) {
-  if (r.score == null) {
-    const reason = r.assessmentView?.scoring?.reason || 'A numeric fit score is not available.';
-    return `<div class="nash-overview__unscored" role="group" aria-label="Fit score: Not scored. ${esc(reason)}">
-      <strong>Not scored</strong>
-      <span>No numeric rating</span>
-    </div>`;
-  }
-  const dimensions = radarDimensions(r.dimensions);
-  const { score } = r;
-  const scoreStyle = scoreColor(score);
-  if (dimensions.length < 3) {
-    return `<div class="nash-overview-score-orbit" aria-label="${score} out of 100 fit score">
-      <svg class="nash-overview-score-orbit-svg" viewBox="0 0 112 112" aria-hidden="true">
-        <circle cx="56" cy="56" r="39"></circle>
-        <circle class="nash-overview-score-orbit-value" cx="56" cy="56" r="39" pathLength="100" style="stroke-dasharray:${Math.max(0, Math.min(100, score))} 100"></circle>
-      </svg>
-      <strong style="color:${scoreStyle}">${score}</strong>
-      <span>/100</span>
-    </div>`;
-  }
-
-  const valuePoints = dimensions.map((dimension, index) => {
-    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / dimensions.length);
-    const radius = 40 * dimension.value;
-    return `${(56 + Math.cos(angle) * radius).toFixed(1)},${(56 + Math.sin(angle) * radius).toFixed(1)}`;
-  }).join(' ');
-  const axes = dimensions.map((dimension, index) => {
-    const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / dimensions.length);
-    const x = (56 + Math.cos(angle) * 40).toFixed(1);
-    const y = (56 + Math.sin(angle) * 40).toFixed(1);
-    return `<line x1="56" y1="56" x2="${x}" y2="${y}"></line>`;
+function dimensionBars(dimensions) {
+  const items = dimensions.map((dimension) => {
+    const segments = [1, 2, 3, 4, 5]
+      .map((step) => `<i${step <= dimension.filled ? ' class="on"' : ''}></i>`).join('');
+    const text = `${dimension.name}: ${dimension.detail}`;
+    const classes = [
+      'nash-overview-dim',
+      `tone-${percentTone(dimension.percent)}`,
+      dimension.percent === null ? 'is-unrated' : '',
+      dimension.isAssumed ? 'is-assumed' : '',
+    ].filter(Boolean).join(' ');
+    return `<li class="${classes}" title="${esc(text)}">
+      <span class="nash-overview-dim-name" aria-hidden="true">${esc(dimension.label)}${dimension.isAssumed ? '*' : ''}</span>
+      <span class="nash-overview-dim-bar" aria-hidden="true">${segments}</span>
+      <span class="nash-overview-sr">${esc(text)}</span>
+    </li>`;
   }).join('');
-  const label = dimensions
-    .map((dimension) => `${dimension.name} ${Math.round(dimension.value * 100)}%`)
-    .join(', ');
-  return `<div class="nash-overview-radar-wrap">
-    <svg class="nash-overview-radar" viewBox="0 0 112 112" role="img" aria-label="Score profile: ${esc(label)}">
-      <polygon class="nash-overview-radar-ring" points="${polygonPoints(dimensions.length, 20)}"></polygon>
-      <polygon class="nash-overview-radar-ring" points="${polygonPoints(dimensions.length, 40)}"></polygon>
-      <g class="nash-overview-radar-axes">${axes}</g>
-      <polygon class="nash-overview-radar-value" points="${valuePoints}"></polygon>
-    </svg>
-    <div class="nash-overview-radar-score"><strong style="color:${scoreStyle}">${score}</strong><span>/100</span></div>
+  const note = dimensions.some((dimension) => dimension.isAssumed)
+    ? '<p class="nash-overview-dims-note">* Default rating: no customer evidence yet.</p>' : '';
+  return `<ul class="nash-overview-dims" aria-label="Dimension ratings">${items}</ul>${note}`;
+}
+
+function skeletonBars() {
+  const items = CORE_DIMENSIONS.map((name) => `<li class="nash-overview-dim">
+      <span class="nash-overview-dim-name">${esc(shortDimension(name))}</span>
+      <i class="nash-overview-skel"></i>
+    </li>`).join('');
+  return `<ul class="nash-overview-dims" aria-hidden="true">${items}</ul>`;
+}
+
+function evidenceDots(evidenced = []) {
+  const on = new Set(evidenced);
+  const items = INTAKE_DIMENSIONS.map((dimension) => {
+    const has = on.has(dimension.key);
+    const text = `${dimension.name}: ${has ? 'customer evidence' : 'no customer evidence yet'}`;
+    return `<li class="nash-overview-dim${has ? ' is-on' : ''}" title="${esc(text)}">
+      <span class="nash-overview-dim-name" aria-hidden="true">${esc(shortDimension(dimension.name))}</span>
+      <i class="nash-overview-ev" aria-hidden="true"></i>
+      <span class="nash-overview-sr">${esc(text)}</span>
+    </li>`;
+  }).join('');
+  return `<ul class="nash-overview-dims is-evidence" aria-label="Customer evidence by dimension">${items}</ul>`;
+}
+
+const nextStep = (label, lead = '') => `<p class="nash-overview-next"><span>${lead}</span><span class="nash-overview-cta">${label} →</span></p>`;
+
+function draftBody(r) {
+  if (!r.intake) {
+    return `<p class="nash-overview-line">Nothing analysed yet. Add the customer’s documents or describe the opportunity.</p>
+      ${nextStep('Continue')}`;
+  }
+  const { evidenced, total, answered } = r.intake;
+  return `<p class="nash-overview-line"><span><strong>${evidenced.length} of ${INTAKE_DIMENSIONS.length}</strong> dimensions have customer evidence</span></p>
+    ${evidenceDots(evidenced)}
+    ${nextStep('Continue', total ? `${answered} of ${total} questions answered` : 'No open questions')}`;
+}
+
+function runBody(r) {
+  if (r.stalled) {
+    return `<p class="nash-overview-line">This run stopped before it finished. Open it to pick it up again.</p>
+      ${nextStep('Resume')}`;
+  }
+  const spinner = '<span class="nash-overview-spin" aria-hidden="true"></span>';
+  if (r.isLocal) {
+    const started = r.startedAt ? `Started ${relativeTime(Math.floor(r.startedAt / 1000))}. ` : '';
+    const rest = r.updating
+      ? 'The ratings refresh when the update finishes.' : 'The six ratings appear when it finishes.';
+    return `<p class="nash-overview-line">${spinner}<span>${started}${rest}</span></p>${skeletonBars()}`;
+  }
+  const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+  return `<p class="nash-overview-line">${spinner}<span>${esc(r.task || 'Processing')} · ${r.steps} of ${r.total} tasks</span><strong class="nash-overview-line-end">${pct}%</strong></p>
+    <div class="nash-overview-progress" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+    ${skeletonBars()}`;
+}
+
+function unscoredNote(r) {
+  const scoring = r.assessmentView?.scoring || {};
+  let reason = typeof scoring.reason === 'string' ? scoring.reason.trim() : '';
+  if (!reason && scoring.status === 'incomplete') {
+    reason = 'Not every dimension has a rating, so no total was calculated.';
+  }
+  if (!reason) reason = 'The verdict is qualitative. Open the report for the reasons behind it.';
+  return `<div class="nash-overview-note">
+    <span class="nash-overview-sr">Fit score: Not scored.</span>
+    <strong aria-hidden="true">Not scored</strong>
+    <span class="nash-overview-note-text" title="${esc(reason)}">${esc(reason)}</span>
   </div>`;
 }
 
-function solutionSummary(solutions = '') {
-  const names = solutions.split(',').map((solution) => solution.trim()).filter(Boolean);
-  if (!names.length) return 'Solution scope not recorded';
-  if (names.length <= 2) return names.join(' + ');
-  return `${names.slice(0, 2).join(' + ')} + ${names.length - 2} more`;
+function cardBody(r) {
+  if (r.status === 'draft') return draftBody(r);
+  if (r.status === 'generating') return runBody(r);
+  if (r.score == null) return unscoredNote(r);
+  const dimensions = cardDimensions(r);
+  if (!dimensions.length) {
+    return '<p class="nash-overview-line">Dimension ratings weren’t recorded for this report.</p>';
+  }
+  return dimensionBars(dimensions);
+}
+
+function cardResult(r) {
+  if (r.status === 'draft') return '<span class="nash-overview-pill tone-none">Draft</span>';
+  if (r.status === 'generating') {
+    if (r.stalled) return '<span class="nash-overview-pill tone-cond">Interrupted</span>';
+    return `<span class="nash-overview-pill tone-none">${r.updating ? 'Updating' : 'Generating'}</span>`;
+  }
+  const verdict = verdictInfo(r);
+  const pill = verdict.label
+    ? `<span class="nash-overview-pill tone-${verdict.tone}">${esc(verdict.label)}</span>` : '';
+  if (r.score == null) return pill;
+  return `<p class="nash-overview-score tone-${verdict.tone}">
+      <span class="nash-overview-sr">${esc(r.score)} out of 100 fit score</span>
+      <strong aria-hidden="true">${esc(r.score)}</strong><small aria-hidden="true">/100</small>
+    </p>${pill}`;
 }
 
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
@@ -303,7 +479,7 @@ const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
    again server-side for published reports. */
 async function deleteReport(r) {
   // eslint-disable-next-line no-alert, no-restricted-globals
-  if (!window.confirm(`Delete the assessment for ${r.company}? This can’t be undone.`)) return;
+  if (!window.confirm(`Delete the assessment${r.company ? ` for ${r.company}` : ''}? This can’t be undone.`)) return;
   const card = document.querySelector(`.nash-overview-card[data-id="${CSS.escape(String(r.id))}"]`);
   try {
     if (r.isLocal) {
@@ -328,8 +504,10 @@ async function deleteReport(r) {
 function buildCard(r) {
   const card = document.createElement('div');
   const pillar = solutionPillar(r.solutions);
-  card.className = `nash-overview-card${r.status === 'generating' ? ' generating' : ''}`;
+  const live = r.status === 'generating' && !r.stalled;
+  card.className = `nash-overview-card${live ? ' generating' : ''}`;
   card.style.setProperty('--overview-card-accent', pillar.color);
+  card.setAttribute('role', 'listitem');
   card.dataset.id = r.id;
   card.dataset.status = r.status;
   card.dataset.scoringStatus = r.scoringstatus || (r.score == null ? 'not-calibrated' : 'scored');
@@ -337,69 +515,21 @@ function buildCard(r) {
   const bookmarked = isBookmarked(r.key);
   const allowDelete = canDelete(r.user);
   if (bookmarked) card.classList.add('is-bookmarked');
-
-  const badge = r.status === 'generating'
-    ? `<span class="nash-overview-badge gen">
-        <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-        Generating
-      </span>`
-    : '<span class="nash-overview-badge done">&#10003; Complete</span>';
-
-  const body = r.status === 'generating'
-    ? `<div class="nash-overview-card-status">Your report is being generated.</div>
-       <div class="nash-overview-card-live">
-         <span class="nash-overview-live-dot" aria-hidden="true"></span>
-         <span class="nash-overview-live-label">Live updates</span>
-       </div>
-       <div class="nash-overview-progress-row">
-         <span class="nash-overview-progress-label">${r.task} (${r.steps}/${r.total} tasks)</span>
-         <span class="nash-overview-progress-pct">${r.pct}%</span>
-       </div>
-       <div class="nash-overview-progress-track">
-         <div class="nash-overview-progress-fill" style="width:${r.pct}%" aria-valuenow="${r.pct}" aria-valuemin="0" aria-valuemax="100" role="progressbar"></div>
-       </div>`
-    : `<div class="nash-overview-complete">
-        <div class="nash-overview-scope">
-          <div class="nash-overview-scope-group">
-            <span class="nash-overview-scope-label">Solutions</span>
-            <strong>${esc(solutionSummary(r.solutions))}</strong>
-          </div>
-          <div class="nash-overview-scope-group">
-            <span class="nash-overview-scope-label">Solution pillar</span>
-            <span class="nash-overview-pillar">${pillar.name}</span>
-          </div>
-          ${(() => { const v = verdictInfo(r); return v.label ? `<span class="nash-overview-verdict" style="${v.style}">${esc(v.label)}</span>` : ''; })()}
-        </div>
-        ${radarChart(r)}
-      </div>`;
+  const meta = [r.user, r.time].filter(Boolean).join(' · ');
 
   card.innerHTML = `
-    <div class="nash-overview-card-top">
-      <div class="nash-overview-card-left">
-        <div class="nash-overview-favicon" aria-hidden="true">${r.company.charAt(0)}</div>
-        <div>
-          <div class="nash-overview-company">${r.assessmentName || r.company}<span class="nash-overview-star" aria-label="Bookmarked"${bookmarked ? '' : ' hidden'}>${STAR}</span></div>
-          <div class="nash-overview-domain">
-            <svg width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            ${r.opportunity || r.company}${r.domain && r.domain !== r.company ? ` · ${r.domain}` : ''}
-          </div>
-        </div>
+    <div class="nash-overview-card-head">
+      <div class="nash-overview-card-id">
+        <h2 class="nash-overview-company${r.company ? '' : ' is-missing'}">${r.company ? esc(r.company) : 'Company not set'}<span class="nash-overview-star" role="img" aria-label="Bookmarked"${bookmarked ? '' : ' hidden'}>${STAR}</span></h2>
+        ${scopeLine(r)}
       </div>
-      <div class="nash-overview-card-meta">
-        ${badge}
-        <div class="nash-overview-time">${r.time}</div>
-      </div>
+      <div class="nash-overview-result">${cardResult(r)}</div>
     </div>
-    <div class="nash-overview-card-body">${body}</div>
+    <div class="nash-overview-card-body">${cardBody(r)}</div>
     <div class="nash-overview-card-footer">
-      <div class="nash-overview-footer-meta">
-        <span class="nash-overview-meta-item nash-overview-meta-owner">
-          <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <span>${r.user}</span>
-        </span>
-      </div>
+      <span class="nash-overview-footer-meta" title="${esc(meta)}">${esc(meta)}</span>
       <div class="nash-overview-menuwrap">
-        <button class="nash-overview-menu-btn" aria-label="More options for ${r.company}" type="button" aria-haspopup="true" aria-expanded="false">
+        <button class="nash-overview-menu-btn" aria-label="More options for ${esc(r.company || 'this assessment')}" type="button" aria-haspopup="true" aria-expanded="false">
           <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
         </button>
         <div class="nash-overview-cardmenu" role="menu" hidden>
@@ -461,26 +591,27 @@ function renderCards(block, reports) {
 /* Clean, borderless table for the list view. */
 function tableRow(r) {
   let scoreCell;
-  if (r.status === 'generating') {
-    scoreCell = `<span class="nash-overview-t-gen">Generating ${r.pct}%</span>`;
+  if (r.status === 'draft') {
+    scoreCell = '<span class="nash-overview-t-muted">Draft</span>';
+  } else if (r.status === 'generating') {
+    const label = r.stalled ? 'Interrupted' : `Generating${r.pct ? ` ${r.pct}%` : ''}`;
+    scoreCell = `<span class="nash-overview-t-gen">${label}</span>`;
   } else if (r.score == null) {
     scoreCell = '<span class="nash-overview__unscored-label" aria-label="Fit score: Not scored">Not scored</span>';
   } else {
     scoreCell = `<span class="nash-overview-t-score" style="color:${scoreColor(r.score)}">${r.score}</span><span class="nash-overview-t-of"> / 100</span>`;
   }
   const v = verdictInfo(r);
-  const verdictCell = r.status === 'generating' || !v.label
+  const verdictCell = r.status !== 'done' || !v.label
     ? '<span class="nash-overview-t-muted">—</span>'
     : `<span class="nash-overview-verdict" style="${v.style}">${esc(v.label)}</span>`;
+  const solutions = [...new Set(solutionNames(r.solutions).map(shortSolution))].join(', ');
   return `<tr class="nash-overview-trow" data-id="${esc(r.id)}" data-status="${esc(r.status)}" data-scoring-status="${esc(r.scoringstatus || (r.score == null ? 'not-calibrated' : 'scored'))}" data-company="${esc(r.company.toLowerCase())}"${r.path ? ` data-path="${esc(r.path)}"` : ''}>
-    <td class="nash-overview-t-name">
-      <span class="nash-overview-favicon" aria-hidden="true">${esc(r.company.charAt(0))}</span>
-      <span>${esc(r.company)}</span>
-    </td>
+    <td class="nash-overview-t-name">${r.company ? esc(r.company) : '<span class="nash-overview-t-muted">Company not set</span>'}</td>
     <td>${esc(r.assessmentName || r.company)}</td>
     <td>${scoreCell}</td>
     <td>${verdictCell}</td>
-    <td class="nash-overview-t-muted">${esc(r.solutions || '—')}</td>
+    <td class="nash-overview-t-muted">${esc(solutions || '—')}</td>
     <td class="nash-overview-t-muted">${esc(r.user || '')}</td>
     <td class="nash-overview-t-muted nash-overview-t-time">${esc(r.time || '')}</td>
   </tr>`;
@@ -512,6 +643,7 @@ function reportStats(reports) {
     total: reports.length,
     done: completed.length,
     gen: reports.filter((report) => report.status === 'generating').length,
+    draft: reports.filter((report) => report.status === 'draft').length,
     avg: scored.length
       ? Math.round(scored.reduce((sum, report) => sum + report.score, 0) / scored.length) : null,
     winRate: scored.length ? Math.round((go / scored.length) * 100) : null,
@@ -533,7 +665,7 @@ function statsStrip(s) {
     <div class="nash-overview-stat">
       <div class="nash-overview-stat-num">${s.total}</div>
       <div class="nash-overview-stat-label">Assessments</div>
-      <div class="nash-overview-stat-sub">${s.done} complete &middot; ${s.gen} in progress</div>
+      <div class="nash-overview-stat-sub">${s.done} complete &middot; ${s.total - s.done} in progress</div>
     </div>
     <div class="nash-overview-stat">
       <div class="nash-overview-stat-num${s.avg == null ? unscoredClass : ''}" style="color:${avgColor}">${avg}</div>
@@ -615,6 +747,7 @@ export default async function decorate(block) {
       </div>
       <select class="nash-overview-filter" aria-label="Filter by status">
         <option value="all">Status: All (${reports.length})</option>
+        <option value="draft">Draft (${stats.draft})</option>
         <option value="generating">Generating (${stats.gen})</option>
         <option value="done">Complete (${stats.done})</option>
       </select>
@@ -676,9 +809,11 @@ export default async function decorate(block) {
     const strip = block.querySelector('.nash-overview-stats');
     if (strip) strip.innerHTML = statsStrip(nextStats);
     const optAll = block.querySelector('.nash-overview-filter option[value="all"]');
+    const optDraft = block.querySelector('.nash-overview-filter option[value="draft"]');
     const optGen = block.querySelector('.nash-overview-filter option[value="generating"]');
     const optDone = block.querySelector('.nash-overview-filter option[value="done"]');
     if (optAll) optAll.textContent = `Status: All (${reports.length})`;
+    if (optDraft) optDraft.textContent = `Draft (${nextStats.draft})`;
     if (optGen) optGen.textContent = `Generating (${nextStats.gen})`;
     if (optDone) optDone.textContent = `Complete (${nextStats.done})`;
   }

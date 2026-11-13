@@ -307,7 +307,7 @@
 .nash-overview .nash-overview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
+  align-items: stretch;
   gap: 18px;
 }
 
@@ -358,9 +358,6 @@
 }
 
 .nash-overview .nash-overview-t-name {
-  display: flex;
-  align-items: center;
-  gap: 11px;
   font-weight: 600;
 }
 
@@ -394,10 +391,10 @@
   position: relative;
   display: flex;
   min-width: 0;
-  min-height: 250px;
+  min-height: 268px;
   flex-direction: column;
   overflow: hidden;
-  padding: 20px 20px 16px;
+  padding: 18px 20px 14px;
   border: 1px solid var(--border, #e5e6ea);
   border-radius: 16px;
   background:
@@ -445,355 +442,308 @@
   100% { background-position: -200% 0; }
 }
 
-.nash-overview .nash-overview-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 12px;
+/* ── Card: the company first, then the six dimensions ── */
+
+.nash-overview .nash-overview-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
 }
 
-.nash-overview .nash-overview-card-left {
-  display: flex;
+.nash-overview .nash-overview-card-id {
   min-width: 0;
-  align-items: center;
-  gap: 10px;
-}
-
-.nash-overview .nash-overview-card-left > div:last-child {
-  min-width: 0;
-}
-
-.nash-overview .nash-overview-favicon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--surface, #f8f8fa);
-  border: 1px solid var(--border, #e5e6ea);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-70, #4a4d55);
-  flex-shrink: 0;
 }
 
 .nash-overview .nash-overview-company {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
+  margin: 0;
   color: var(--ink, #111318);
-  letter-spacing: -0.01em;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font: 800 22px/1.15 var(--sans, 'DM Sans', system-ui, sans-serif);
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
+  text-wrap: balance;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.nash-overview .nash-overview-domain {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 1px;
-  font-size: 11.5px;
+.nash-overview .nash-overview-company.is-missing {
   color: var(--ink-40, #9a9da6);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  font-weight: 700;
+}
+
+.nash-overview .nash-overview-scope {
+  display: -webkit-box;
   overflow: hidden;
+  margin: 6px 0 0;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12.5px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.nash-overview .nash-overview-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.nash-overview .tone-go {
+  --tone: var(--green, #0d7a45);
+  --tone-lt: var(--green-lt, #edf7f2);
+}
+
+.nash-overview .tone-cond {
+  --tone: var(--amber, #b45309);
+  --tone-lt: var(--amber-lt, #fef3c7);
+}
+
+.nash-overview .tone-nogo {
+  --tone: var(--red, #eb1000);
+  --tone-lt: var(--red-lt, #fff0ef);
+}
+
+.nash-overview .tone-none {
+  --tone: var(--ink-70, #4a4d55);
+  --tone-lt: var(--ink-08, #f4f4f6);
+}
+
+.nash-overview .nash-overview-score {
+  margin: 0;
+  color: var(--tone);
+  font: 800 28px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.nash-overview .nash-overview-score small {
+  color: var(--ink-40, #9a9da6);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.nash-overview .nash-overview-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
+  border-radius: 999px;
+  background: var(--tone-lt);
+  color: var(--tone);
+  font: 700 12px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
+  white-space: nowrap;
+}
+
+.nash-overview .nash-overview-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  container: nash-overview-card / inline-size;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #e5e6ea);
+}
+
+.nash-overview .nash-overview-dims {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nash-overview .nash-overview-dim {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nash-overview .nash-overview-dim-name {
+  overflow: hidden;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12px/1.2 var(--sans, 'DM Sans', system-ui, sans-serif);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.nash-overview .nash-overview-card-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.nash-overview .nash-overview-time {
-  font-size: 11px;
+.nash-overview .nash-overview-dim.is-unrated .nash-overview-dim-name {
   color: var(--ink-40, #9a9da6);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
 }
 
-/* ── Badges ──────────────────────────────────────────── */
+.nash-overview .nash-overview-dim-bar {
+  display: flex;
+  flex: none;
+  gap: 3px;
+}
 
-.nash-overview .nash-overview-badge {
-  display: inline-flex;
+.nash-overview .nash-overview-dim-bar i {
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--ink-15, #e8e9ec);
+}
+
+.nash-overview .nash-overview-dim-bar i.on {
+  background: var(--tone);
+}
+
+.nash-overview .nash-overview-dim.is-assumed .nash-overview-dim-bar i.on {
+  opacity: 0.45;
+}
+
+/* Names need ~74px beside a 62px bar; narrower cards put the bar under the name. */
+@container nash-overview-card (width < 310px) {
+  .nash-overview .nash-overview-dims:not(.is-evidence) .nash-overview-dim {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+
+.nash-overview .nash-overview-dims-note {
+  margin: 10px 0 0;
+  color: var(--ink-40, #9a9da6);
+  font: 400 11.5px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-skel {
+  width: 64px;
+  height: 6px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--ink-15, #e8e9ec);
+  animation: nash-overview-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes nash-overview-pulse {
+  50% { opacity: 0.45; }
+}
+
+.nash-overview .nash-overview-ev {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border: 1.5px solid var(--ink-40, #9a9da6);
+  border-radius: 50%;
+}
+
+.nash-overview .nash-overview-dim.is-on .nash-overview-ev {
+  border-color: var(--green, #0d7a45);
+  background: var(--green, #0d7a45);
+}
+
+.nash-overview .nash-overview-line {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  gap: 9px;
+  margin: 0 0 12px;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12.5px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
 }
 
-.nash-overview .nash-overview-badge.gen {
-  background: var(--red-lt, #fff0ef);
+.nash-overview .nash-overview-line:last-child {
+  margin-bottom: 0;
+}
+
+.nash-overview .nash-overview-line strong {
+  color: var(--ink, #111318);
+  font-weight: 700;
+}
+
+.nash-overview .nash-overview-line .nash-overview-line-end {
+  margin-left: auto;
+}
+
+.nash-overview .nash-overview-progress {
+  height: 4px;
+  overflow: hidden;
+  margin: -4px 0 14px;
+  border-radius: 99px;
+  background: var(--ink-08, #f4f4f6);
+}
+
+.nash-overview .nash-overview-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red, #eb1000);
+}
+
+.nash-overview .nash-overview-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: auto 0 0;
+  padding-top: 12px;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12.5px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-cta {
+  margin-left: auto;
   color: var(--red, #eb1000);
-  border: 1px solid #fde0de;
+  font: 700 13px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
+  white-space: nowrap;
 }
 
-.nash-overview .nash-overview-badge.gen svg {
-  animation: nash-spin 0.7s linear infinite;
+.nash-overview .nash-overview-card:hover .nash-overview-cta {
+  text-decoration: underline;
+}
+
+.nash-overview .nash-overview-note {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border, #e5e6ea);
+  border-radius: 10px;
+  color: var(--ink-70, #4a4d55);
+  font: 400 12px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-note strong {
+  color: var(--ink, #111318);
+  font: 700 13px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
+}
+
+.nash-overview .nash-overview-note-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.nash-overview .nash-overview-spin {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 2px solid color-mix(in srgb, var(--red, #eb1000) 25%, transparent);
+  border-top-color: var(--red, #eb1000);
+  border-radius: 50%;
+  animation: nash-spin 0.8s linear infinite;
 }
 
 @keyframes nash-spin {
   to { transform: rotate(360deg); }
 }
 
-.nash-overview .nash-overview-badge.done {
-  background: var(--green-lt, #edf7f2);
-  color: var(--green, #0d7a45);
-}
-
-/* ── Card body ───────────────────────────────────────── */
-
-.nash-overview .nash-overview-card-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  padding: 14px 0;
-}
-
-.nash-overview .nash-overview-card-status {
-  font-size: 12.5px;
-  color: var(--ink-40, #9a9da6);
-  margin-bottom: 10px;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-card-live {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 10px;
-}
-
-.nash-overview .nash-overview-live-dot {
-  display: block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green-dot, #22c55e);
-  flex-shrink: 0;
-  animation: nash-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes nash-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.6;
-    transform: scale(0.8);
-  }
-}
-
-.nash-overview .nash-overview-live-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-70, #4a4d55);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-progress-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.nash-overview .nash-overview-progress-label {
-  font-size: 11.5px;
-  color: var(--ink-70, #4a4d55);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-progress-pct {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--red, #eb1000);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-progress-track {
-  height: 5px;
-  background: var(--ink-08, #f4f4f6);
-  border-radius: 100px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.nash-overview .nash-overview-progress-fill {
-  height: 100%;
-  border-radius: 100px;
-  background: linear-gradient(90deg, var(--red, #eb1000), #ff6060);
-  transition: width 0.6s ease;
-}
-
-.nash-overview .nash-overview-complete {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px;
-  align-items: center;
-  gap: 14px;
-  min-height: 120px;
-}
-
-.nash-overview .nash-overview-scope {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.nash-overview .nash-overview-scope-group {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.nash-overview .nash-overview-scope-label {
-  color: var(--ink-40, #9a9da6);
-  font: 500 9.5px/1.2 var(--sans, 'DM Sans', system-ui, sans-serif);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.nash-overview .nash-overview-scope-group strong {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--ink, #111318);
-  font: 600 12px/1.35 var(--sans, 'DM Sans', system-ui, sans-serif);
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.nash-overview .nash-overview__unscored {
-  display: grid;
-  align-content: center;
-  gap: 6px;
-  min-height: 112px;
-  color: var(--ink-70, #4a4d55);
-  text-align: center;
-}
-
-.nash-overview .nash-overview__unscored strong {
-  font: 600 14px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview__unscored span {
-  font: 400 11px/1.4 var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-radar-wrap,
-.nash-overview .nash-overview-score-orbit {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  flex-shrink: 0;
-}
-
-.nash-overview .nash-overview-radar {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  color: var(--overview-card-accent);
-}
-
-.nash-overview .nash-overview-radar-ring,
-.nash-overview .nash-overview-radar-axes line {
-  fill: none;
-  stroke: color-mix(in srgb, var(--ink-40, #9a9da6) 24%, transparent);
-  stroke-width: 0.8;
-}
-
-.nash-overview .nash-overview-radar-value {
-  fill: currentcolor;
-  fill-opacity: 0.16;
-  stroke: currentcolor;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--overview-card-accent) 45%, transparent));
-}
-
-.nash-overview .nash-overview-radar-score {
+.nash-overview .nash-overview-sr {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.nash-overview .nash-overview-radar-score strong,
-.nash-overview .nash-overview-score-orbit strong {
-  font: 700 20px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
-  letter-spacing: -0.03em;
-}
-
-.nash-overview .nash-overview-radar-score span,
-.nash-overview .nash-overview-score-orbit span {
-  margin-top: 2px;
-  color: var(--ink-40, #9a9da6);
-  font: 500 8px/1 var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-score-orbit {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-}
-
-.nash-overview .nash-overview-score-orbit .nash-overview-score-orbit-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.nash-overview .nash-overview-score-orbit circle {
-  fill: none;
-  stroke: color-mix(in srgb, var(--ink-40, #9a9da6) 18%, transparent);
-  stroke-width: 5;
-}
-
-.nash-overview .nash-overview-score-orbit .nash-overview-score-orbit-value {
-  stroke: var(--overview-card-accent);
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--overview-card-accent) 45%, transparent));
-}
-
-.nash-overview .nash-overview-score-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.nash-overview .nash-overview-score {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-.nash-overview .nash-overview-score-of {
-  font-size: 12px;
-  color: var(--ink-40, #9a9da6);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
+/* Table verdict chip */
 .nash-overview .nash-overview-verdict {
   margin-left: 4px;
   padding: 2px 9px;
@@ -801,6 +751,7 @@
   font-size: 11px;
   font-weight: 600;
   font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
+  white-space: nowrap;
 }
 
 /* ── Card footer ─────────────────────────────────────── */
@@ -808,63 +759,19 @@
 .nash-overview .nash-overview-card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid var(--border, #e5e6ea);
+  gap: 10px;
   margin-top: auto;
+  padding-top: 14px;
 }
 
 .nash-overview .nash-overview-footer-meta {
-  display: flex;
   min-width: 0;
   flex: 1;
-  align-items: center;
-  gap: 10px;
-}
-
-.nash-overview .nash-overview-meta-item {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--ink-40, #9a9da6);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-}
-
-/* stylelint-disable-next-line no-descending-specificity */
-.nash-overview .nash-overview-meta-item > svg {
-  flex-shrink: 0;
-}
-
-.nash-overview .nash-overview-meta-item > span {
   overflow: hidden;
+  color: var(--ink-40, #9a9da6);
+  font: 400 12px/1.3 var(--sans, 'DM Sans', system-ui, sans-serif);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.nash-overview .nash-overview-meta-owner {
-  max-width: 170px;
-}
-
-.nash-overview .nash-overview-pillar {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--overview-card-accent);
-  font-family: var(--sans, 'DM Sans', system-ui, sans-serif);
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.nash-overview .nash-overview-pillar::before {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--overview-card-accent);
-  box-shadow: 0 0 7px var(--overview-card-accent);
-  content: "";
 }
 
 @media (width <= 1200px) {
@@ -896,15 +803,8 @@
     padding-inline: 18px;
   }
 
-  .nash-overview .nash-overview-complete {
-    grid-template-columns: minmax(0, 1fr) 96px;
-    gap: 10px;
-  }
-
-  .nash-overview .nash-overview-radar-wrap,
-  .nash-overview .nash-overview-score-orbit {
-    width: 96px;
-    height: 96px;
+  .nash-overview .nash-overview-company {
+    font-size: 20px;
   }
 }
 
@@ -976,9 +876,9 @@
 
 .nash-overview .nash-overview-star {
   display: inline-flex;
-  margin-left: 6px;
+  margin-left: 7px;
   color: #f5a623;
-  vertical-align: -1px;
+  vertical-align: 1px;
 }
 
 .nash-overview .nash-overview-star[hidden] {
@@ -987,8 +887,8 @@
 
 /* stylelint-disable-next-line no-descending-specificity */
 .nash-overview .nash-overview-star svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
 }
 
 /* ── Empty state ─────────────────────────────────────── */

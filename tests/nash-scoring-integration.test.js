@@ -465,6 +465,25 @@ test('overview index row preserves Conditional-Go independently of an explicitly
   assert.match(block.querySelector('.nash-overview-stats').innerHTML, /0 scored &middot; 2 not scored/);
 });
 
+test('card scope uses Adobe short forms and keeps the full product names in its tooltip', async (t) => {
+  const row = queryRow('ABN AMRO Bank N.V.', '', {
+    opportunity: 'ABN AMRO',
+    verdict: 'Conditional-Go',
+    scoringstatus: 'not-calibrated',
+    solutionnames: [
+      'Adobe Experience Platform', 'Adobe Journey Optimizer B2B Edition',
+      'Adobe Real-Time Customer Data Platform', 'Adobe Real-Time CDP',
+      'Adobe Customer Journey Analytics', 'Adobe Experience Manager as Cloud Service',
+    ].join(', '),
+  });
+  const block = browser(t, [], [row]);
+  await decorateOverview(block);
+  const [card] = cards(block);
+  assert.match(card.innerHTML, /<h2 class="nash-overview-company"[^>]*>ABN AMRO</);
+  assert.match(card.innerHTML, />AEP · AJO B2B Edition · RT-CDP · \+2 more<\/p>/);
+  assert.match(card.innerHTML, /title="Adobe Experience Platform · [^"]*Adobe Customer Journey Analytics · Adobe Experience Manager as Cloud Service"/);
+});
+
 test('overview does not coerce missing, blank or invalid index scores to numeric zero', async (t) => {
   const unknown = [undefined, null, '', ' \n\t ', 'unknown', '12 points', Infinity];
   const block = browser(t, [], unknown.map((score, index) => queryRow(`Unknown ${index}`, score)));
@@ -519,7 +538,7 @@ test('overview honors canonical unscored status while preserving qualitative ver
   assert.match(stats, /2 scored &middot; 2 not scored/);
 });
 
-test('partial dimension data never becomes a zero-filled or incomplete radar', async (t) => {
+test('partial dimension data never becomes a zero-filled dimension bar', async (t) => {
   const partial = legacyDimensions();
   partial[1].scored = null;
   const block = browser(t, [
@@ -540,7 +559,154 @@ test('partial dimension data never becomes a zero-filled or incomplete radar', a
   ]);
   await decorateOverview(block);
   assert.match(cards(block)[0].innerHTML, /59 out of 100 fit score/);
-  assert.doesNotMatch(cards(block)[0].innerHTML, /nash-overview-radar-value/);
-  assert.match(cards(block)[1].innerHTML, /nash-overview-radar-value/);
-  assert.match(cards(block)[1].innerHTML, /Dimension 1 60%/);
+  assert.match(cards(block)[0].innerHTML, /Dimension 2: not rated/);
+  assert.match(cards(block)[0].innerHTML, /class="nash-overview-dim tone-none is-unrated"/);
+  assert.doesNotMatch(cards(block)[0].innerHTML, /Dimension 2: 0 of/);
+  assert.match(cards(block)[1].innerHTML, /Dimension 1: 12 of 20 points/);
+  assert.match(cards(block)[1].innerHTML, /class="nash-overview-dim tone-cond"/);
+});
+
+function rubricAssessment(overrides = {}) {
+  const ratings = {
+    'Strategic Fit': 4,
+    'Technical Fit': 4,
+    'Functional Coverage': 3,
+    'Commercial Viability': 3,
+    'Competitive Position': 2,
+    'Delivery Risk': 3,
+    'AI & Agentic Fit': 5,
+  };
+  const weights = [20, 20, 20, 15, 15, 10, 0];
+  const dimensions = Object.entries(ratings).map(([dimension, rating], index) => ({
+    dimension,
+    rating,
+    weight: weights[index],
+    max: weights[index] || null,
+    scored: weights[index] ? (weights[index] * rating) / 5 : null,
+  }));
+  return {
+    id: 'rubric',
+    company: 'GBI (full legal entity name not provided)',
+    opportunity: 'Garanti Bank NV',
+    dr: '4710704',
+    status: 'done',
+    createdAt: 1,
+    score: 65,
+    verdict: 'Conditional-Go',
+    solutions: [
+      { name: 'Adobe Experience Manager Sites', slug: 'aem-sites' },
+      { name: 'AEM Assets as a Cloud Service', slug: 'aem-assets' },
+    ],
+    dimensions,
+    assessmentView: {
+      scoring: { status: 'scored', method: 'nash-rubric-v1' },
+      confidence: [{ dimension: 'Delivery Risk', basis: 'default' }],
+      dimensions,
+    },
+    reportMarkdown: '# Assessment',
+    ...overrides,
+  };
+}
+
+test('cards lead with the customer and show the six rubric dimensions, not AI upside', async (t) => {
+  const block = browser(t, [rubricAssessment()]);
+  await decorateOverview(block);
+  const [card] = cards(block);
+  const html = card.innerHTML;
+  assert.equal(card.dataset.company, 'garanti bank nv', 'The analyst-typed opportunity names the card');
+  assert.match(html, /<h2 class="nash-overview-company">Garanti Bank NV</);
+  assert.match(html, /AEM Sites · AEM Assets · DR 4710704/);
+  assert.match(html, /65 out of 100 fit score/);
+  assert.match(html, /tone-cond">Conditional-Go<\/span>/);
+  ['Strategic Fit: 4 of 5', 'Competitive Position: 2 of 5', 'Delivery Risk: 3 of 5'].forEach((text) => {
+    assert.match(html, new RegExp(text));
+  });
+  assert.equal((html.match(/<li class="nash-overview-dim /g) || []).length, 6);
+  assert.doesNotMatch(html, /AI &amp; Agentic|nash-overview-favicon|nash-overview-radar/);
+  assert.match(html, /is-assumed/);
+  assert.match(html, /Default rating: no customer evidence yet/);
+  assert.equal((html.match(/is-assumed/g) || []).length, 1, 'Only the default-rated dimension is marked');
+});
+
+test('drafts, runs and interrupted runs each say what state they are in', async (t) => {
+  const now = Date.now();
+  const block = browser(t, [
+    {
+      id: 'draft-intake',
+      company: 'Medline',
+      opportunity: '',
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+      intake: {
+        version: 2,
+        evidence: { functional: true, technical: true },
+        questions: [
+          { id: 'q1', dimension: 'commercial' },
+          { id: 'q2', dimension: 'delivery' },
+        ],
+      },
+      interview: { version: 2, answers: { q1: { text: 'Budget approved for 2027' } } },
+    },
+    {
+      id: 'draft-empty', company: '', opportunity: 'Unassigned', status: 'draft', createdAt: now,
+    },
+    {
+      id: 'running',
+      company: 'ABN AMRO',
+      status: 'running',
+      createdAt: now,
+      runStartedAt: now - (3 * 60 * 1000),
+      updatedAt: now - (60 * 1000),
+    },
+    {
+      id: 'stalled',
+      company: 'Ethias',
+      status: 'running',
+      createdAt: now,
+      runStartedAt: now - (3 * 60 * 60 * 1000),
+      updatedAt: now - (2 * 60 * 60 * 1000),
+    },
+  ], [
+    queryRow('Albert Heijn', '71', { scoringstatus: 'scored', description: 'Mickey Navis — Strategic Account Director' }),
+    queryRow('Amsterdam', '58', { scoringstatus: 'scored', description: 'DR 1234562', opportunity: 'Unassigned' }),
+  ]);
+  await decorateOverview(block);
+  const byId = (id) => cards(block).find((card) => card.dataset.id === id);
+
+  const draft = byId('local-0');
+  assert.equal(draft.dataset.status, 'draft');
+  assert.match(draft.innerHTML, />Draft<\/span>/);
+  assert.match(draft.innerHTML, /<strong>3 of 6<\/strong> dimensions have customer evidence/);
+  assert.match(draft.innerHTML, /1 of 2 questions answered/);
+  assert.doesNotMatch(draft.innerHTML, /Generating|Live updates|0%/);
+
+  const empty = byId('local-1');
+  assert.equal(empty.dataset.company, '');
+  assert.match(empty.innerHTML, /nash-overview-company is-missing">Company not set/);
+  assert.match(empty.innerHTML, /Nothing analysed yet/);
+
+  const running = byId('local-2');
+  assert.equal(running.dataset.status, 'generating');
+  assert.match(running.className, /\bgenerating\b/);
+  assert.match(running.innerHTML, />Generating<\/span>/);
+  assert.match(running.innerHTML, /Started 3m ago\. The six ratings appear when it finishes\./);
+
+  const stalled = byId('local-3');
+  assert.doesNotMatch(stalled.className, /\bgenerating\b/);
+  assert.match(stalled.innerHTML, />Interrupted<\/span>/);
+  assert.match(stalled.innerHTML, /Resume →/);
+
+  const [albert, amsterdam] = [byId(0), byId(1)];
+  assert.doesNotMatch(albert.innerHTML, /Mickey Navis|DR /, 'Free text in the index description is not a DR');
+  assert.equal(amsterdam.dataset.company, 'amsterdam', 'Unassigned is not a company name');
+  assert.match(amsterdam.innerHTML, /DR 1234562/);
+
+  const stats = block.querySelector('.nash-overview-stats').innerHTML;
+  assert.match(stats, /2 complete &middot; 4 in progress/);
+  const table = block.querySelector('.nash-overview-listwrap').innerHTML;
+  assert.match(table, /Company not set/);
+  assert.match(table, /Untitled assessment/);
+  assert.doesNotMatch(table, /Unassigned assessment/);
+  assert.doesNotMatch(table, /nash-overview-favicon/);
 });
